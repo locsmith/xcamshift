@@ -6,6 +6,11 @@ Created on 30 Dec 2011
 import os
 from yaml import load
 from test.distance_table import Distance_table
+from random_coil_table import Random_coil_table
+
+
+
+
 
 class Table_manager(object):
     '''
@@ -115,5 +120,5 @@ class Table_manager(object):
         return Distance_table(self.__get_table(self.BACKBONE, residue_type))
     
     def get_RC_table(self):
-        return self.__get_table(self.RANDOM_COIL)
+        return Random_coil_table(self.__get_table(self.RANDOM_COIL))
             
