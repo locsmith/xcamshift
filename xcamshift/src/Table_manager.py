@@ -8,11 +8,13 @@ from yaml import load
 
 class Table_manager(object):
     '''
-    classdocs
+    class to load an store a set of yaml tables for the camshift forcefield, 
+    results are looked up in order favouring specific residue types 
+    and then a table name
     '''
 
     BASE_TABLE =  'base'
-    TEMPLATE = '%s_%s_%s_%s.json'
+    TEMPLATE = '%s_%s_%s_%s.yaml'
     TYPE = 'cams'
     VERSION = '1_35_0'
     DEFAULT_DIRECTORY = 'data'
@@ -27,45 +29,66 @@ class Table_manager(object):
         
         
     
-    def get_table_name(self, table_type, residue_type):
+    def __get_table_name(self, table_type, residue_type):
         return self.TEMPLATE % (self.TYPE,self.VERSION,table_type,residue_type)
     
     def add_search_path(self,path):
         self.search_paths.insert(0, path)
         
-    def load_table(self, table_type, residue_type):
+
+    def __raise_table_load_error(self, table_name, detail):
+        raise IOError("ERROR: couldn't load %s because %s" % (table_name, detail))
+
+    def __load_table(self, table_type, residue_type):
         
         for residue_type in (residue_type,self.BASE_TABLE):
-            table_name = self.get_table_name(table_type,residue_type)
+            table_name = self.__get_table_name(table_type,residue_type)
             
+            new_table = None
             for search_path in self.search_paths:
-                print os.getcwd()
                 path = os.path.join(search_path, table_name)
-                print path
+                
                 if os.path.exists(path):
                     key = (table_type,residue_type)
                     
                     try:
                         table_fp = open(path)
-                        self.tables[key] = load(table_fp)
-                        print self.tables
+                        new_table = load(table_fp)
+                        if new_table != None:
+                            break
                     except Exception as detail:
-                        raise IOError("ERROR: couldn't load %s because %s"  % (table_name, detail))
+                        self.__raise_table_load_error(table_name, detail)
+                        
+        if new_table == None:
+            self.__raise_table_load_error(table_name, "the table couldn't be found in %s" % ", ".join(self.search_paths))
+        self.tables[key]=new_table
     
+
+    def __get_seach_keys(self,table_type, residue_type):
+        result = ((table_type,residue_type),(table_type,self.BASE_TABLE))
+        return result
     
-    def get_table(self,table_type,residue_type):
-        key = (table_type,residue_type)
-        base_key = (table_type,self.BASE_TABLE)
-        
+    def __search_for_table(self, table_type, residue_type):
+        keys= self.__get_seach_keys(table_type, residue_type)
         tables = self.tables
-        result = None
-        if key in tables:
-            result = tables[key]
-        elif base_key in tables:
-            result = tables[key]
-        else:
-            result = self.load_table(table_type,residue_type)
         
+        result = None
+        for key in keys:
+            if key in  tables:
+                result = tables[key]
+                break
+        
+        return result
+
+    def get_table(self,table_type,residue_type):
+
+        
+        result = self.__search_for_table(table_type,residue_type)
+        
+        if result == None:
+            self.__load_table(table_type,residue_type)
+            
+        result = self.__search_for_table(table_type,residue_type)
         return result
             
             
