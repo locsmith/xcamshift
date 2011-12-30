@@ -5,6 +5,7 @@ Created on 30 Dec 2011
 '''
 import os
 from yaml import load
+from test.distance_table import Distance_table
 
 class Table_manager(object):
     '''
@@ -18,6 +19,8 @@ class Table_manager(object):
     TYPE = 'cams'
     VERSION = '1_35_0'
     DEFAULT_DIRECTORY = 'data'
+    
+    BACKBONE = "bb"
     
     def __init__(self):
         '''
@@ -80,7 +83,7 @@ class Table_manager(object):
         
         return result
 
-    def get_table(self,table_type,residue_type):
+    def __get_table(self,table_type,residue_type):
 
         
         result = self.__search_for_table(table_type,residue_type)
@@ -91,4 +94,6 @@ class Table_manager(object):
         result = self.__search_for_table(table_type,residue_type)
         return result
             
+    def get_BB_Distance_Table(self,residue_type):
+        return Distance_table(self.__get_table(self.BACKBONE, residue_type))
             
