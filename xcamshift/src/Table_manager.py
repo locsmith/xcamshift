@@ -9,18 +9,20 @@ from test.distance_table import Distance_table
 
 class Table_manager(object):
     '''
-    class to load an store a set of yaml tables for the camshift forcefield, 
+    class to load and store a set of yaml tables for the camshift forcefield, 
     results are looked up in order favouring specific residue types 
     and then a table name
     '''
 
     BASE_TABLE =  'base'
-    TEMPLATE = '%s_%s_%s_%s.yaml'
+    TEMPLATE_3 = '%s_%s_%s_%s.yaml'
+    TEMPLATE_2 = '%s_%s_%s.yaml'
     TYPE = 'cams'
     VERSION = '1_35_0'
     DEFAULT_DIRECTORY = 'data'
     
     BACKBONE = "bb"
+    RANDOM_COIL = "rc"
     
     def __init__(self):
         '''
@@ -33,7 +35,11 @@ class Table_manager(object):
         
     
     def __get_table_name(self, table_type, residue_type):
-        return self.TEMPLATE % (self.TYPE,self.VERSION,table_type,residue_type)
+        if residue_type == None:
+            result  = self.TEMPLATE_2 % (self.TYPE,self.VERSION,table_type)
+        else:
+            result =  self.TEMPLATE_3 % (self.TYPE,self.VERSION,table_type,residue_type)
+        return result
     
     def add_search_path(self,path):
         self.search_paths.insert(0, path)
@@ -42,9 +48,19 @@ class Table_manager(object):
     def __raise_table_load_error(self, table_name, detail):
         raise IOError("ERROR: couldn't load %s because %s" % (table_name, detail))
 
-    def __load_table(self, table_type, residue_type):
+
+    def __get_residue_types(self, residue_type):
+        if residue_type != None:
+            residue_types = residue_type, self.BASE_TABLE
+        else:
+            residue_types = (None,)
+        return residue_types
+
+    def __load_table(self, table_type, residue_type=None):
         
-        for residue_type in (residue_type,self.BASE_TABLE):
+        residue_types = self.__get_residue_types(residue_type)
+            
+        for residue_type in residue_types:
             table_name = self.__get_table_name(table_type,residue_type)
             
             new_table = None
@@ -64,6 +80,7 @@ class Table_manager(object):
                         
         if new_table == None:
             self.__raise_table_load_error(table_name, "the table couldn't be found in %s" % ", ".join(self.search_paths))
+        
         self.tables[key]=new_table
     
 
@@ -83,7 +100,7 @@ class Table_manager(object):
         
         return result
 
-    def __get_table(self,table_type,residue_type):
+    def __get_table(self,table_type,residue_type=None):
 
         
         result = self.__search_for_table(table_type,residue_type)
@@ -96,4 +113,7 @@ class Table_manager(object):
             
     def get_BB_Distance_Table(self,residue_type):
         return Distance_table(self.__get_table(self.BACKBONE, residue_type))
+    
+    def get_RC_table(self):
+        return self.__get_table(self.RANDOM_COIL)
             
