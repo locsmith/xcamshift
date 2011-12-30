@@ -39,13 +39,13 @@ class Test(unittest2.TestCase):
     def testFromAtomList(self):
         table = self.table_manager.get_BB_Distance_Table('glu') 
         from_atom_list = table.get_from_atoms()
-        expected = set(('N','H','CA','HA','C','O'))
+        expected = set(('N','HN','CA','HA','C','O'))
         self.assertItemsEqual(expected, from_atom_list)
 
     def testToAtomList(self):
         table = self.table_manager.get_BB_Distance_Table('glu') 
         to_atom_list = table.get_to_atoms()
-        expected = set(('N','H','CA','HA','C','CB'))
+        expected = set(('N','HN','CA','HA','C','CB'))
         self.assertItemsEqual(expected, to_atom_list)
         
 if __name__ == "__main__":
