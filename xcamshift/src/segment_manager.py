@@ -5,6 +5,7 @@ Created on 31 Dec 2011
 '''
 
 from atomSel import AtomSel
+from textwrap import dedent
 
 class Segment_Manager():
 
@@ -20,6 +21,8 @@ class Segment_Manager():
             
             self.first_residue=first_residue
             self.last_residue=last_residue
+            
+            self.segment_length = self.last_residue -  first_residue + 1
             
         def __str__(self):
             template =  ''' 
@@ -71,12 +74,18 @@ class Segment_Manager():
         
         return tuple(self.__segments)
     
-    def get_segment_info(self,segment):
-        
+
+    def __check_segment(self, segment):
         if segment not in self.__segments:
             template = "segment %s is not defined  should be one of %s"
             message = template % (segment, ', '.join(self.segments))
             raise KeyError(message)
+
+    def get_segment_info(self,segment):
+        
+        self.__check_segment(segment)
         
         return self.__segment_info_map[segment]
+    
+    
          

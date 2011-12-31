@@ -33,6 +33,8 @@ class Test(unittest2.TestCase):
         
         self.assertEqual(segment_info.first_atom_index, 0)
         self.assertEqual(segment_info.last_atom_index, 32)
+        
+        self.assertEqual(segment_info.segment_length, 3)
 
 
 if __name__ == "__main__":
