@@ -58,6 +58,11 @@ class Test(unittest2.TestCase):
         shift = table.get_random_coil_shift('ALA', 'HN')
         
         self.assertAlmostEqual(expected, shift)
+        
+    def testGetDefaultTableManager(self):
+        table_manager = Table_manager.get_default_table_manager()
+        
+        self.assertIsInstance(table_manager, Table_manager)
     
 if __name__ == "__main__":
     unittest2.main()

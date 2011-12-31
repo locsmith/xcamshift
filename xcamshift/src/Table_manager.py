@@ -13,6 +13,16 @@ from random_coil_table import Random_coil_table
 
 
 class Table_manager(object):
+    
+    
+    __default = None
+    
+    @staticmethod
+    def get_default_table_manager():
+        if Table_manager.__default == None:
+            Table_manager.__default = Table_manager()
+        return Table_manager.__default
+    
     '''
     class to load and store a set of yaml tables for the camshift forcefield, 
     results are looked up in order favouring specific residue types 
