@@ -52,7 +52,7 @@ class Test(unittest2.TestCase):
         self.assertItemsEqual(expected, to_atom_list)
     
     def testLoadRandomCoil(self):
-        table = self.table_manager.get_RC_table()
+        table = self.table_manager.get_random_coil_table()
         
         expected = 8.24
         shift = table.get_random_coil_shift('ALA', 'HN')

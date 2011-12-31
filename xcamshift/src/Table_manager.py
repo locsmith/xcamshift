@@ -129,6 +129,6 @@ class Table_manager(object):
     def get_BB_Distance_Table(self,residue_type):
         return Distance_table(self.__get_table(self.BACKBONE, residue_type))
     
-    def get_RC_table(self):
+    def get_random_coil_table(self):
         return Random_coil_table(self.__get_table(self.RANDOM_COIL))
             
