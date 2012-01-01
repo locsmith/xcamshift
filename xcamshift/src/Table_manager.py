@@ -31,7 +31,6 @@ class Table_manager(object):
 
     BASE_TABLE =  'base'
     TEMPLATE_3 = '%s_%s_%s_%s.yaml'
-    TEMPLATE_2 = '%s_%s_%s.yaml'
     TYPE = 'cams'
     VERSION = '1_35_0'
     DEFAULT_DIRECTORY = 'data'
@@ -50,11 +49,7 @@ class Table_manager(object):
         
     
     def __get_table_name(self, table_type, residue_type):
-        if residue_type == None:
-            result  = self.TEMPLATE_2 % (self.TYPE,self.VERSION,table_type)
-        else:
-            result =  self.TEMPLATE_3 % (self.TYPE,self.VERSION,table_type,residue_type)
-        return result
+        return self.TEMPLATE_3 % (self.TYPE,self.VERSION,table_type,residue_type)
     
     def add_search_path(self,path):
         self.search_paths.insert(0, path)
@@ -72,7 +67,7 @@ class Table_manager(object):
         return residue_types
 
     def __load_table(self, table_type, residue_type=None):
-        
+
         residue_types = self.__get_residue_types(residue_type)
             
         for residue_type in residue_types:
@@ -97,6 +92,7 @@ class Table_manager(object):
             self.__raise_table_load_error(table_name, "the table couldn't be found in %s" % ", ".join(self.search_paths))
         
         self.tables[key]=new_table
+        
     
 
     def __get_seach_keys(self,table_type, residue_type):
@@ -117,7 +113,6 @@ class Table_manager(object):
 
     def __get_table(self,table_type,residue_type=None):
 
-        
         result = self.__search_for_table(table_type,residue_type)
         
         if result == None:
@@ -129,6 +124,6 @@ class Table_manager(object):
     def get_BB_Distance_Table(self,residue_type):
         return Distance_table(self.__get_table(self.BACKBONE, residue_type))
     
-    def get_random_coil_table(self):
-        return Random_coil_table(self.__get_table(self.RANDOM_COIL))
+    def get_random_coil_table(self, residue_type):
+        return Random_coil_table(self.__get_table(self.RANDOM_COIL, residue_type))
             

@@ -1,8 +1,11 @@
 # backbone random coil chemical shifts from camshift 1.35.0
 ---
 
+offsets:   [-1,0,1]
+atoms:     ["HA", "HN", "N", "C", "CB"]
 data: {
 
+  
    -1 : {
           ALA : {  HA  : ,           CA   ,            HN : ,       N : -0.2,      C : ,         CB  : ,    },
           ARG : {  HA  : ,           CA   ,            HN : ,       N :  1.45,     C : ,         CB  : ,    },

@@ -9,8 +9,6 @@ from Table_manager import Table_manager
 
 class Test(unittest2.TestCase):
 
-   
-
     def setUp(self):
         self.table_manager = Table_manager()
         self.table_manager.add_search_path('../../data')
@@ -52,11 +50,10 @@ class Test(unittest2.TestCase):
         self.assertItemsEqual(expected, to_atom_list)
     
     def testLoadRandomCoil(self):
-        table = self.table_manager.get_random_coil_table()
+        table = self.table_manager.get_random_coil_table('ALA')
         
         expected = 8.24
-        shift = table.get_random_coil_shift('ALA', 'HN')
-        
+        shift = table.get_random_coil_shift( 0, 'ALA','HN')
         self.assertAlmostEqual(expected, shift)
         
     def testGetDefaultTableManager(self):
