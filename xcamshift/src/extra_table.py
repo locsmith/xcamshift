@@ -11,7 +11,6 @@ class Extra_table(object):
     ATOM_1=0
     ATOM_2=1
     
-    ATOMS=ATOM_1,ATOM_2
     EXTRA_ATOMS='extra_atoms_1','extra_atoms_2'
     OFFSETS='extra_offsets_1','extra_offsets_2'
     
@@ -21,14 +20,14 @@ class Extra_table(object):
     def __init__(self, table):
         self.table = table
     
-    def _get_atoms(self,atom):
-        return self.table[self.DATA][atom]
+    def _get_atoms(self,atom_index):
+        return self.table[self.EXTRA_ATOMS[atom_index]]
     
-    def _get_offsets(self,atom):
-        return self.table[self.DATA][atom]
+    def _get_offsets(self,atom_index):
+        return self.table[self.OFFSETS[atom_index]]
     
     def _get_target_atoms(self):
-        return self.table[self.DATA][self.TARGET_ATOMS]
+        return self.table[self.TARGET_ATOMS]
     
 
     def _check_offset(self, atom_index, offset):
@@ -41,18 +40,18 @@ class Extra_table(object):
             message = "atom_%i offset %s is not in %s" % message_values
             raise KeyError(message)
     
-    def _check_atom(self, atom_index, atom_name):
+    def _check_extra_atom(self, atom_index, atom_name):
         
-        atoms = self._get_atoms(self.atom_index)
+        atoms = self._get_atoms(atom_index)
         if atom_name not in atoms:
             message = "atom_name %s not in extra shift table atoms_%i (%s)" % (atom_name, atom_index, ', '.join(atoms))
             raise KeyError(message)
 
     def _check_distance_key(self, atom_index, offset, atom_name):
         
-        self._check_offset(atom_index, offset, atom_name)
+        self._check_offset(atom_index, offset)
         
-        self._check_atom(atom_index, atom_name)
+        self._check_extra_atom(atom_index, atom_name)
 
     def _check_target_atom_key(self, atom):
         
@@ -62,13 +61,13 @@ class Extra_table(object):
             raise KeyError(message)
 
     def get_extra_shift(self,offset_1,atom_1,offset_2,atom_2,target_atom):
-        self._check_atom_keys(self.ATOM_1,offset_1,atom_1)
-        self._check_atom_2_keys(self.ATOM_2, offset_2,atom_2)
+        self._check_distance_key(self.ATOM_1,offset_1,atom_1)
+        self._check_distance_key(self.ATOM_2, offset_2,atom_2)
         self._check_target_atom_key(target_atom)
         
         result = None
-        key_1 = (offset_1,atom_1)
-        key_2 = (offset_2,atom_2)
+        key_1 = atom_1,offset_1
+        key_2 = atom_2,offset_2
         
         extra_table  = self.table[self.DATA]
         
