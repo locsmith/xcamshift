@@ -7,7 +7,6 @@ extra_atoms_2:     ["C", "CA", "CB", "HA", "HA", "N"]
 extra_offsets_1: [-1, 0 , 1]
 extra_offsets_2: [-1, 0 , 1]
 target_atoms: ["HA", "CA", "HN", "N", "C", "CB"]
-extra1_offsets:   [-1, 0 , 1]
 data: {
   [HN, 0] : {
             [HA, 0] : {  HA :  -0.23275377251202,   CA :  -0.74346108533364,   HN :  0.06477265674876,   N :  15.4137967310169,    C :   2.11923184335736,   CB :  -1.48286475299281    },
