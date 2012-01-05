@@ -63,7 +63,7 @@ class Table_manager(object):
         if residue_type != None:
             residue_types = residue_type, self.BASE_TABLE
         else:
-            residue_types = (None,)
+            residue_types = (self.BASE_TABLE,)
         return residue_types
 
     def __load_table(self, table_type, residue_type=None):
@@ -126,4 +126,5 @@ class Table_manager(object):
     
     def get_random_coil_table(self, residue_type):
         return Random_coil_table(self.__get_table(self.RANDOM_COIL, residue_type))
+
             
