@@ -64,8 +64,23 @@ class Test(unittest2.TestCase):
     def testLoadExtra(self):
 
         table = self.table_manager.get_extra_Table()
-
-#        expected = 8.24
+        
+        table.get_extra_shift(0,"HN",0,"HA","HN")
+        
+        target_atoms = "HA","CA", "HN", "N", "C", "CB"
+        
+        atoms_1 =    "HN", "HN", "HN", "C", "C", "C", "O", "O", "O", "N", "N", "N", "O", "O", "O", "N", "N", "N", "CG", "CG", "CG", "CG", "CG", "CG", "CG", "CA"
+        offsets_1 =  0, 0, 0, -1, -1, -1, 0, 0, 0, 1, 1, 1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, -1
+        atoms_2 =    "HA", "C", "CB", "HA", "C", "CB", "HA", "N", "CB", "HA", "N", "CB", "HA", "N", "CB", "HA", "N", "CB", "HA", "N", "C", "C", "N", "CA", "CA", "CA"
+        offets_2 =   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, 0, 0, 0, -1, 1, 0, 0, 1
+        
+        for i,(atom_1,offset_1,atom_2,offset_2) in enumerate(zip(atoms_1,offsets_1,atoms_2,offets_2)):
+            for target_atom in target_atoms:
+                extra  = table.get_extra_shift(offset_1,atom_1,offset_2,atom_2,target_atom)
+                
+                print i,atom_1,offset_1,atom_2,offset_2,target_atom
+                self.assertIsNotNone(extra)
+        #        expected = 8.24
 #        shift = table.get_random_coil_shift( 0, 'ALA','HN')
 #        self.assertAlmostEqual(expected, shift)
     
