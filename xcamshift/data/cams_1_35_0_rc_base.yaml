@@ -2,31 +2,31 @@
 ---
 
 offsets:   [-1,0,1]
-atoms:     ["HA", "HN", "N", "C", "CB"]
+atoms:     ["HA", "CA", "HN", "N", "C", "CB"]
 data: {
 
   
    -1 : {
-          ALA : {  HA  : ,           CA   ,            HN : ,       N : -0.2,      C : ,         CB  : ,    },
-          ARG : {  HA  : ,           CA   ,            HN : ,       N :  1.45,     C : ,         CB  : ,    },
-          ASN : {  HA  : ,           CA   ,            HN : ,       N :  1.15,     C : ,         CB  : ,    },
-          ASP : {  HA  : ,           CA   ,            HN : ,       N :  1.18,     C : ,         CB  : ,    },
-          CYS : {  HA  : ,           CA   ,            HN : ,       N :  2.43,     C : ,         CB  : ,    },
-          GLN : {  HA  : ,           CA   ,            HN : ,       N :  1.57,     C : ,         CB  : ,    },
-          GLU : {  HA  : ,           CA   ,            HN : ,       N :  1.8,      C : ,         CB  : ,    },
-          GLY : {  HA  : ,           CA   ,            HN : ,       N :  1.07,     C :                      },
-          HIS : {  HA  : ,           CA   ,            HN : ,       N :  1.2,      C : ,         CB  : ,    },
-          ILE : {  HA  : ,           CA   ,            HN : ,       N :  4.14,     C : ,         CB  : ,    },
-          LEU : {  HA  : ,           CA   ,            HN : ,       N :  1.5,      C : ,         CB  : ,    },
-          LYS : {  HA  : ,           CA   ,            HN : ,       N :  1.55,     C : ,         CB  : ,    },
-          MET : {  HA  : ,           CA   ,            HN : ,       N :  1.33,     C : ,         CB  : ,    },
-          PHE : {  HA  : ,           CA   ,            HN : ,       N :  1.25,     C : ,         CB  : ,    },
-          PRO : {  HA  : ,           CA   ,                         N :  0.6,      C : ,         CB  : ,    },
-          SER : {  HA  : ,           CA   ,            HN : ,       N :  2.59,     C : ,         CB  : ,    },
-          THR : {  HA  : ,           CA   ,            HN : ,       N :  3.2,      C : ,         CB  : ,    },
-          TRP : {  HA  : ,           CA   ,            HN : ,       N :  1.64,     C : ,         CB  : ,    },
-          TYR : {  HA  : ,           CA   ,            HN : ,       N :  1.75,     C : ,         CB  : ,    },
-          VAL : {  HA  : ,           CA   ,            HN : ,       N :  3.83,     C : ,         CB  : ,    }
+          ALA : {  HA  : ,           CA : ,            HN : ,       N : -0.2,      C : ,         CB  : ,    },
+          ARG : {  HA  : ,           CA : ,            HN : ,       N :  1.45,     C : ,         CB  : ,    },
+          ASN : {  HA  : ,           CA : ,            HN : ,       N :  1.15,     C : ,         CB  : ,    },
+          ASP : {  HA  : ,           CA : ,            HN : ,       N :  1.18,     C : ,         CB  : ,    },
+          CYS : {  HA  : ,           CA : ,            HN : ,       N :  2.43,     C : ,         CB  : ,    },
+          GLN : {  HA  : ,           CA : ,            HN : ,       N :  1.57,     C : ,         CB  : ,    },
+          GLU : {  HA  : ,           CA : ,            HN : ,       N :  1.8,      C : ,         CB  : ,    },
+          GLY : {  HA  : ,           CA : ,            HN : ,       N :  1.07,     C :                      },
+          HIS : {  HA  : ,           CA : ,            HN : ,       N :  1.2,      C : ,         CB  : ,    },
+          ILE : {  HA  : ,           CA : ,            HN : ,       N :  4.14,     C : ,         CB  : ,    },
+          LEU : {  HA  : ,           CA : ,            HN : ,       N :  1.5,      C : ,         CB  : ,    },
+          LYS : {  HA  : ,           CA : ,            HN : ,       N :  1.55,     C : ,         CB  : ,    },
+          MET : {  HA  : ,           CA : ,            HN : ,       N :  1.33,     C : ,         CB  : ,    },
+          PHE : {  HA  : ,           CA : ,            HN : ,       N :  1.25,     C : ,         CB  : ,    },
+          PRO : {  HA  : ,           CA : ,                         N :  0.6,      C : ,         CB  : ,    },
+          SER : {  HA  : ,           CA : ,            HN : ,       N :  2.59,     C : ,         CB  : ,    },
+          THR : {  HA  : ,           CA : ,            HN : ,       N :  3.2,      C : ,         CB  : ,    },
+          TRP : {  HA  : ,           CA : ,            HN : ,       N :  1.64,     C : ,         CB  : ,    },
+          TYR : {  HA  : ,           CA : ,            HN : ,       N :  1.75,     C : ,         CB  : ,    },
+          VAL : {  HA  : ,           CA : ,            HN : ,       N :  3.83,     C : ,         CB  : ,    }
         },
         
     0 : {
@@ -52,27 +52,27 @@ data: {
           VAL : {  HA : 4.086605,    CA : 62.512466,   HN : 8.03,   N : 119.2,    C : 177.1,    CB : 31.7  }
         },
         
-   -1 : {
-          ALA : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          ARG : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          ASN : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          ASP : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          CYS : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          GLN : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          GLU : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          GLY : {  HA  : ,           CA   ,            HN : ,       N :   ,        C :                      },
-          HIS : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          ILE : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          LEU : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          LYS : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          MET : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          PHE : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          PRO : {  HA  : ,           CA   ,                         N :   ,        C : ,         CB  : ,    },
-          SER : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          THR : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          TRP : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          TYR : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    },
-          VAL : {  HA  : ,           CA   ,            HN : ,       N :   ,        C : ,         CB  : ,    }
+    1 : {
+          ALA : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          ARG : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          ASN : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          ASP : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          CYS : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          GLN : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          GLU : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          GLY : {  HA  : ,           CA : ,            HN : ,       N :   ,        C :                      },
+          HIS : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          ILE : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          LEU : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          LYS : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          MET : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          PHE : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          PRO : {  HA  : ,           CA : ,                         N :   ,        C : ,         CB  : ,    },
+          SER : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          THR : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          TRP : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          TYR : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          VAL : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    }
         },
 
 }
