@@ -7,6 +7,7 @@ import os
 from yaml import load
 from test.distance_table import Distance_table
 from random_coil_table import Random_coil_table
+import yaml
 
 
 
@@ -38,6 +39,7 @@ class Table_manager(object):
     BACKBONE = "bb"
     RANDOM_COIL = "rc"
     
+
     def __init__(self):
         '''
         Constructor
@@ -46,8 +48,19 @@ class Table_manager(object):
         self.search_paths = ['.',self.DEFAULT_DIRECTORY]
         self.tables ={}
         
-        
+        self._add_acess_to_yaml_list_based_keys()
+                
+
+    def _add_acess_to_yaml_list_based_keys(self):
+        return yaml.add_constructor(u'tag:yaml.org,2002:map', Table_manager.construct_yaml_map)
     
+    @staticmethod
+    def construct_yaml_map(loader, node):
+        pairs = [(tuple(key) if isinstance(key, list) else key, value)
+                 for (key, value) in loader.construct_pairs(node, deep=True)]
+        return dict(pairs)
+        
+
     def __get_table_name(self, table_type, residue_type):
         return self.TEMPLATE_3 % (self.TYPE,self.VERSION,table_type,residue_type)
     
