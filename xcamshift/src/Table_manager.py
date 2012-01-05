@@ -8,6 +8,7 @@ from yaml import load
 from test.distance_table import Distance_table
 from random_coil_table import Random_coil_table
 import yaml
+import extra_table
 
 
 
@@ -38,6 +39,7 @@ class Table_manager(object):
     
     BACKBONE = "bb"
     RANDOM_COIL = "rc"
+    EXTRA="extra"
     
 
     def __init__(self):
@@ -141,5 +143,5 @@ class Table_manager(object):
         return Random_coil_table(self.__get_table(self.RANDOM_COIL, residue_type))
     
     def get_extra_Table(self):
-        return self.__get_table('extra')
+        return extra_table.Extra_table(self.__get_table(self.EXTRA))
             
