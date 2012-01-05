@@ -60,6 +60,14 @@ class Test(unittest2.TestCase):
         table_manager = Table_manager.get_default_table_manager()
         
         self.assertIsInstance(table_manager, Table_manager)
+        
+    def testLoadExtra(self):
+
+        table = self.table_manager.get_extra_Table()
+
+#        expected = 8.24
+#        shift = table.get_random_coil_shift( 0, 'ALA','HN')
+#        self.assertAlmostEqual(expected, shift)
     
 if __name__ == "__main__":
     unittest2.main()
