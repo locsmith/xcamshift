@@ -11,11 +11,14 @@ from segment_manager import Segment_Manager
 from Table_manager import Table_manager
 from simulation import currentSimulation
 from atom import Atom
+from atomSel import intersection
 from vec3 import  norm
 import sys
 
         
 class Base_potential(object):
+    ALL = '(all)'
+            
     def __init__(self):
         self._segment_manager = Segment_Manager()
         self._table_manager = Table_manager.get_default_table_manager()
@@ -40,7 +43,11 @@ class Base_potential(object):
         atom_name = atom.atomName()
         
         return template % (atom_index, segid, residue_number, residue_type, atom_name)
-    
+
+    def _get_atom_pos(self, atom_id):
+        atom = Atom(currentSimulation(), atom_id)
+        atom_pos = atom.pos()
+        return atom_pos
 #    def _print_atom(self,atom):
 #        return "%i. [%s]:%i[%s]@%s" % (atom.index(),atom.segmentName(), atom.residueNum(),atom.residueName(), atom.atomName())
         
@@ -48,11 +55,7 @@ class Distance_potential(Base_potential):
     '''
     classdocs
     '''
-    distance_set = {
-        (-1,'CA')  : {'HA': 0.1049538},
-        ( 0,'CA')  : 2,
-        ( 1,'CA')  : 3  
-    }
+
 
     def __init__(self):
         super(Distance_potential, self).__init__()
@@ -119,10 +122,7 @@ class Distance_potential(Base_potential):
 
     
 
-    def _get_atom_pos(self, atom_id):
-        atom = Atom(currentSimulation(), atom_id)
-        atom_pos = atom.pos()
-        return atom_pos
+
 
     def set_shifts(self, result):
         
@@ -134,51 +134,54 @@ class Distance_potential(Base_potential):
             xyz_distance = from_atom_pos - to_atom_pos
             distance  = norm(xyz_distance)
             
-            shift = distance * coefficent ** exponent
-            print >> sys.stderr, self._get_atom_name(from_atom_id), self._get_atom_name(to_atom_id)
-            print >> sys.stderr, shift, coefficent, exponent,distance,shift
+            shift = distance ** exponent * coefficent 
             result[from_atom_id] += shift
             
-        print >> sys.stderr
         return shift
-#    
-#        seg_residue_atom = {}
-#        
-#        atom_selection = AtomSel(atom_selection)
-#        
-#        for atom in atom_selection:
-#            key = (atom.segmentName(),atom.residueNum(),atom.atomName())
-#            seg_residue_atom[key]=atom
-#        
-#        for atom in atom_selection:
-#            
-#            segment = atom.segmentName()
-#            residue_num = atom.residueNum()
-#            for distance in self.distance_set:
-#                offset, atom_name = distance
-#                
-#                key = (segment,residue_num+offset,atom_name)
-#                if key in seg_residue_atom:
-#                    print self.print_atom(atom),self.print_atom(seg_residue_atom[key])
 
+class ExtraDistanceShifts(Base_potential):
+    def __init__(self):
+        Base_potential.__init__(self)
+        
+        self._shifts_list =  self._create_shift_list()
 
-
+    def _create_shift_list(self, all):
+        pass
+    
+    
 
 class RandomCoilShifts(Base_potential):
     
+
     def __init__(self):
         super(RandomCoilShifts, self).__init__()
 
-        self._shifts_list = self._create_shift_list('(all)')
+        #TODO bad name
+        self._shifts_list = self._create_shift_list(self.ALL)
         
 
-    def _create_shift_list(self,atom_selection):
+
+    def add_distances_for_residue(self, segment, residue_number, atom_selection, result):
+        from_residue_type = self._get_residue_type(segment, residue_number)
+        random_coil_table = self._table_manager.get_random_coil_table(from_residue_type)
+        for offset in random_coil_table.get_offsets():
+            to_residue_type = self._get_residue_type(segment, residue_number + offset)
+            selected_atoms = intersection(self._select_atoms(segment, residue_number), atom_selection)
+            for atom in selected_atoms:
+                atom_name = atom.atomName()
+                atom_index = atom.index()
+                value = None
+                if atom_name in random_coil_table.get_atoms():
+                    value = random_coil_table.get_random_coil_shift(offset, to_residue_type, atom_name)
+                if value != None:
+                    result.append((atom_index, value))
+
+    def _create_shift_list(self,global_atom_selection):
         
         result  = []
         
-        random_coil_table = self._table_manager.get_random_coil_table()
         
-        atom_selection = AtomSel(atom_selection)
+        global_atom_selection = AtomSel(global_atom_selection)
         for segment in self._segment_manager.get_segments():
             segment_info = self._segment_manager.get_segment_info(segment)
             
@@ -189,15 +192,10 @@ class RandomCoilShifts(Base_potential):
                 continue
             
             for residue_number in range(segment_info.first_residue+1,segment_info.last_residue):
-        
-                residue_type = self._get_residue_type(segment, residue_number)
-                for atom in self._select_atoms(segment, residue_number):
-                    atom_name = atom.atomName()
-                    atom_index = atom.index()
-                    value  = random_coil_table.get_random_coil_shift(residue_type,atom_name)
-                    
-                    if value != None:
-                        result.append((atom_index,value))
+                residue_atom_selection = self._select_atoms(segment, residue_number)
+                target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
+                self.add_distances_for_residue(segment, residue_number, target_atom_selection, result)
+                
         return result
         
     def set_shifts(self,shift_list):
