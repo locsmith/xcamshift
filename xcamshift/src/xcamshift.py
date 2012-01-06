@@ -14,6 +14,7 @@ from atom import Atom
 from atomSel import intersection
 from vec3 import  norm
 import sys
+from bzrlib.osutils import stat
 
         
 class Base_potential(object):
@@ -22,19 +23,20 @@ class Base_potential(object):
     def __init__(self):
         self._segment_manager = Segment_Manager()
         self._table_manager = Table_manager.get_default_table_manager()
-        
-    def _select_atoms(self, segment='*', residue_number='#',atom='*'):
+    
+    @staticmethod
+    def _select_atoms(segment='*', residue_number='#',atom='*'):
         selection = '(segid "%s" and resid %i and name %s)' % (segment, residue_number, atom)
         residue_atoms = AtomSel(selection)
         return residue_atoms
 
-
-    def _get_residue_type(self, segment, residue_number):
-        residue_atoms = self._select_atoms(segment, residue_number)
+    @staticmethod
+    def _get_residue_type(segment, residue_number):
+        residue_atoms = Base_potential._select_atoms(segment, residue_number)
         return residue_atoms[0].residueName()
     
-    
-    def _get_atom_name(self, atom_index, template="%-5i '%4s' %i [%3s] %-4s"):
+    @staticmethod
+    def _get_atom_name(atom_index, template="%-5i '%4s' %i [%3s] %-4s"):
         atom = AtomSel("(id %i)" % (atom_index+1))[0]
         
         segid = atom.segmentName()
@@ -43,13 +45,22 @@ class Base_potential(object):
         atom_name = atom.atomName()
         
         return template % (atom_index, segid, residue_number, residue_type, atom_name)
-
-    def _get_atom_pos(self, atom_id):
+    
+    @staticmethod
+    def _get_atom_pos(atom_id):
         atom = Atom(currentSimulation(), atom_id)
         atom_pos = atom.pos()
         return atom_pos
 #    def _print_atom(self,atom):
 #        return "%i. [%s]:%i[%s]@%s" % (atom.index(),atom.segmentName(), atom.residueNum(),atom.residueName(), atom.atomName())
+
+    def _check_segment_length(self, segment):
+        segment_info = self._segment_manager.get_segment_info(segment)
+        if segment_info.segment_length < 3:
+            template = "Warning: segment '%s' only contains < 3 residues (%i) and will be ignored"
+            message = template % (segment, segment_info.segment_length)
+            print >> sys.stderr, message
+        return segment_info
         
 class Distance_potential(Base_potential):
     '''
@@ -158,23 +169,66 @@ class RandomCoilShifts(Base_potential):
 
         #TODO bad name
         self._shifts_list = self._create_shift_list(self.ALL)
+
+
+    def _get_table(self, from_residue_type):
+        return self._table_manager.get_random_coil_table(from_residue_type)
+
+
+    def _get_coefficents(self, atom, context):
+        value = None
+        atom_name = atom.atomName()
+        if atom_name in context.table.get_atoms():
+            value = context.table.get_random_coil_shift(context.offset, context.to_residue_type, atom_name)
+        return value
+    
+    class ResidueOffsetContext :
+        def __init__(self,atom,offset,table):
+            
+            self.table = table
+            
+            self.segment = atom.segmentName()
+            
+            self.offset = offset
+            
+            self.from_residue_number = atom.residueNum()
+            self.from_residue_type = Base_potential._get_residue_type(self.segment, self.from_residue_number)
+            
+            self.to_residue_number = self.from_residue_number+1
+            self.to_residue_type = Base_potential._get_residue_type(self.segment, self.from_residue_number + offset)
+
+
+    def _build_contexts(self, atom, table):
+        contexts = []
+        for offset in table.get_offsets():
+            context = RandomCoilShifts.ResidueOffsetContext(atom, offset, table)
+            contexts.append(context)
+        return contexts
+
+    def add_components_for_residue(self, segment, target_residue_number, atom_selection):
+        result  = []
         
-
-
-    def add_distances_for_residue(self, segment, residue_number, atom_selection, result):
-        from_residue_type = self._get_residue_type(segment, residue_number)
-        random_coil_table = self._table_manager.get_random_coil_table(from_residue_type)
-        for offset in random_coil_table.get_offsets():
-            to_residue_type = self._get_residue_type(segment, residue_number + offset)
-            selected_atoms = intersection(self._select_atoms(segment, residue_number), atom_selection)
-            for atom in selected_atoms:
-                atom_name = atom.atomName()
-                atom_index = atom.index()
+        from_residue_type = self._get_residue_type(segment, target_residue_number)
+        random_coil_table = self._get_table(from_residue_type)
+        selected_atoms = intersection(self._select_atoms(segment, target_residue_number), atom_selection)
+        
+        for atom in selected_atoms:
+            
+            contexts = self._build_contexts(atom, random_coil_table)
+            
+            for context in contexts:
+                
                 value = None
-                if atom_name in random_coil_table.get_atoms():
-                    value = random_coil_table.get_random_coil_shift(offset, to_residue_type, atom_name)
+                value = self._get_coefficents(atom, context)
+                    
                 if value != None:
+                    atom_index = atom.index()
                     result.append((atom_index, value))
+                    
+        return result
+
+
+
 
     def _create_shift_list(self,global_atom_selection):
         
@@ -183,18 +237,13 @@ class RandomCoilShifts(Base_potential):
         
         global_atom_selection = AtomSel(global_atom_selection)
         for segment in self._segment_manager.get_segments():
-            segment_info = self._segment_manager.get_segment_info(segment)
             
-            if segment_info.segment_length < 3:
-                template = "Warning: segment '%s' only contains < 3 residues (%i) and will be ignored"
-                message = template % (segment,segment_info.segment_length)
-                print >> sys.stderr, message
-                continue
-            
-            for residue_number in range(segment_info.first_residue+1,segment_info.last_residue):
-                residue_atom_selection = self._select_atoms(segment, residue_number)
-                target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
-                self.add_distances_for_residue(segment, residue_number, target_atom_selection, result)
+            if self._check_segment_length(segment):
+                segment_info = self._segment_manager.get_segment_info(segment)
+                for residue_number in range(segment_info.first_residue+1,segment_info.last_residue):
+                    residue_atom_selection = self._select_atoms(segment, residue_number)
+                    target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
+                    result.extend(self.add_components_for_residue(segment, residue_number, target_atom_selection))
                 
         return result
         
