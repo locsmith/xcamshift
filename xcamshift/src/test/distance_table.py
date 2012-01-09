@@ -20,6 +20,7 @@ class Distance_table(object):
         self.FROM_ATOMS = 'from_atoms'
         self.TO_ATOMS = 'to_atoms'
         self.OFFSETS='offsets'
+        self.TRANSLATION_TABLE = "translation_table"
         
     def get_offsets(self):
         return self.table[self.OFFSETS]
@@ -32,6 +33,15 @@ class Distance_table(object):
         
     def get_exponent(self):
         return self.table[self.EXPONENT]
+    
+    def get_translation(self,atom_name):
+        translation_table = self.table[self.TRANSLATION_TABLE]
+        
+        result =  atom_name
+        if atom_name in translation_table:
+            result = translation_table[atom_name]
+        
+        return result
     
 
     def __check_distance_coefficient_keys(self, to_atom, offset, from_atom):
