@@ -13,7 +13,20 @@ from atomSel import AtomSel
 #class testSegmentManager(object):
 class Test(unittest2.TestCase):
 
-
+    def assertSequenceAlmostEqual(self,result,expected, delta = 1e-7):
+        len_result = len(result)
+        len_expected = len(expected)
+        if len_result != len_expected:
+            raise AssertionError("the two lists are of different length %i and %i" % (len_result,len_expected))
+        
+        for i,(elem_1, elem_2) in enumerate(zip(result,expected)):
+            
+            diff = abs(elem_1 - elem_2)
+            if diff > delta:
+                template = "lists differ at item %i: %s - %s > %s"
+                message = template % (i, `elem_1`,`elem_2`,delta)
+                raise AssertionError(message)
+            
     def setUp(self):
         initStruct("test_data/3_ala/3ala.psf")
         PDBTool("test_data/3_ala/3ala.pdb").read()
@@ -34,7 +47,7 @@ class Test(unittest2.TestCase):
                      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         random_coil_potential.set_shifts(result)
-        self.assertSequenceEqual(expected, result)
+        self.assertSequenceAlmostEqual(expected, result)
         
     def testDistancePotential(self):
         distance_potential =  Distance_potential()
