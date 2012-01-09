@@ -54,7 +54,16 @@ class Test(unittest2.TestCase):
         result=self.make_result_array()
         distance_potential.set_shifts(result)
         
-        print result
+        expected = self.make_result_array()
+        expected[15] =   0.82775
+        expected[14] =  41.5303
+        expected[13] =  -5.56269
+        expected[12] = -12.185
+        expected[20] = -12.584
+        expected[16] =  -3.6896
+        
+
+        self.assertSequenceAlmostEqual(result, expected,delta=0.001)
         
 
 
