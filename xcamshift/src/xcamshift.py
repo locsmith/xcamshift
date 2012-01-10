@@ -129,7 +129,7 @@ class Base_potential(object):
         pass
     
     @abc.abstractmethod
-    def _get_table(self):
+    def _get_table(self, from_residue_type):
         pass
 
 
@@ -152,7 +152,7 @@ class Distance_potential(Base_potential):
         
         self._distances = self._create_component_list("(all)")
         
-    class ResidueAtomOffsetContext :
+    class ResidueAtomOffsetContext:
 
         
         
@@ -190,8 +190,8 @@ class Distance_potential(Base_potential):
                 self.complete = True
             
             
-    def _translate_atom_name(self, atom_name):
-        return atom_name
+    def _translate_atom_name(self, atom_name, context):
+        return context.table.get_translation(atom_name)
     
     def _build_contexts(self, atom, table):
         contexts = []
@@ -206,9 +206,10 @@ class Distance_potential(Base_potential):
         table = context.table
         
         from_atom_name = atom.atomName()
-        from_atom_name = context.table.get_translation(from_atom_name)
+        from_atom_name = self._translate_atom_name(from_atom_name, context)
         offset = context.offset
         to_atom_name = context.to_atom_name
+        to_atom_name = self._translate_atom_name(to_atom_name,context)
         
         
         result = None
@@ -302,7 +303,10 @@ class Extra_potential(Base_potential):
         Base_potential.__init__(self)
         
         self._shifts_list =  self._create_component_list(self.ALL)
+    
 
+    def _build_contexts(self, atom, table):
+        pass
 
     
     
@@ -317,7 +321,8 @@ class RandomCoilShifts(Base_potential):
         self._shifts_list = self._create_component_list(self.ALL)
 
     def _translate_atom_name(self, atom_name):
-        super(RandomCoilShifts, self)._translate_atom_name(atom_name)
+        print >> sys.stderr, "WARNING no atom name translations in radom coil shifts yet!"
+        return super(RandomCoilShifts, self)._translate_atom_name(atom_name)
     
     def _get_table(self, from_residue_type):
         return self._table_manager.get_random_coil_table(from_residue_type)
