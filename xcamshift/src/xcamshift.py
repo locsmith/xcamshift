@@ -135,7 +135,7 @@ class Base_potential(object):
 
     @abc.abstractmethod
     def _translate_atom_name(self,atom_name):
-        pass
+        return atom_name
         
 class Distance_potential(Base_potential):
     '''
@@ -297,14 +297,13 @@ class Distance_potential(Base_potential):
             
         return shift
 
-class ExtraDistanceShifts(Base_potential):
+class Extra_potential(Base_potential):
     def __init__(self):
         Base_potential.__init__(self)
         
-        self._shifts_list =  self._create_component_list()
+        self._shifts_list =  self._create_component_list(self.ALL)
 
-    def _create_component_list(self, all):
-        pass
+
     
     
 
@@ -318,7 +317,7 @@ class RandomCoilShifts(Base_potential):
         self._shifts_list = self._create_component_list(self.ALL)
 
     def _translate_atom_name(self, atom_name):
-        return atom_name
+        super(RandomCoilShifts, self)._translate_atom_name(atom_name)
     
     def _get_table(self, from_residue_type):
         return self._table_manager.get_random_coil_table(from_residue_type)
