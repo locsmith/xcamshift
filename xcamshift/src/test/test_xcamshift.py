@@ -6,8 +6,9 @@ Created on 31 Dec 2011
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
-from xcamshift import RandomCoilShifts, Distance_potential
+from xcamshift import RandomCoilShifts, Distance_potential, Extra_potential
 from atomSel import AtomSel
+from test.xdists import xdists_ala_3
 
 
 #class testSegmentManager(object):
@@ -65,6 +66,21 @@ class Test(unittest2.TestCase):
 
         self.assertSequenceAlmostEqual(result, expected,delta=0.001)
         
+        
+    @staticmethod
+    def assertElemeInSet( elem, xdist_set):
+        if not elem in xdist_set:
+            raise AssertionError("%s not found in set" % `elem`)
+
+    def testExtraPotential(self):
+        extra_potential = Extra_potential()
+        
+        xdists_ala_3_copy =  dict(xdists_ala_3)
+        for elem in extra_potential.dump():
+            elem_key = elem[:-1]
+            self.assertElemeInSet(elem_key, xdists_ala_3)
+            del xdists_ala_3_copy[elem_key]
+        self.assertEqual(0, len(xdists_ala_3_copy))
 
 
 if __name__ == "__main__":
