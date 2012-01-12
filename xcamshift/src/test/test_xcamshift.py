@@ -72,24 +72,43 @@ class Test(unittest2.TestCase):
         if not elem in xdist_set:
             raise AssertionError("%s not found in set" % `elem`)
 
-    def testExtraPotential(self):
+
+    def testExtraPotentialComponentsCorrect(self):
         extra_potential = Extra_potential()
         
-        xdists_ala_3_copy =  dict(xdists_ala_3)
-        
-        for elem in extra_potential.dump():
-            elem_key = elem[:-1]
+        xdists_ala_3_copy = dict(xdists_ala_3)
+        for extra_elem in extra_potential.dump():
+            elem_key = extra_elem[:-1]
             self.assertElemeInSet(elem_key, xdists_ala_3)
             del xdists_ala_3_copy[elem_key]
+        
         self.assertEqual(0, len(xdists_ala_3_copy))
-        
-        for elem in extra_potential.dump():
-            elem_key = elem[:-1]
-            coefficient,distance  = xdists_ala_3[elem_key]
+
+
+    def testExtraPotentialCoefficientsCorrect(self):
+        extra_potential = Extra_potential()
+        for extra_elem in extra_potential.dump():
+            elem_key = extra_elem[:-1]
+            coefficient = xdists_ala_3[elem_key][0]
+
             # TODO add extra places
-            self.assertAlmostEqual(coefficient, elem[-1],places=5)
-            
+            self.assertAlmostEqual(coefficient, extra_elem[-1], places=5)
         
+
+    def testExtraPotentialComponentShiftsCorrect(self):
+        extra_potential = Extra_potential()
+        
+        result=self.make_result_array()
+        extra_potential.set_shifts(result)
+        
+        for i,extra_elem in enumerate(extra_potential.dump()):
+            
+            elem_key = extra_elem[:-1]
+            shift = extra_potential._calc_single_shift(i)
+            
+            expected_shift = xdists_ala_3[elem_key][2]
+            
+            self.assertAlmostEqual(shift, expected_shift,places=4)
 
 
 if __name__ == "__main__":
