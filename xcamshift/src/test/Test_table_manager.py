@@ -74,6 +74,12 @@ class Test(unittest2.TestCase):
         atoms_2 =    "HA", "C", "CB", "HA", "C", "CB", "HA", "N", "CB", "HA", "N", "CB", "HA", "N", "CB", "HA", "N", "CB", "HA", "N", "C", "C", "N", "CA", "CA", "CA"
         offets_2 =   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, 0, 0, 0, -1, 1, 0, 0, 1
         
+        for atom_1,offset_1:
+            key_1 = 
+            result = 
+            
+            
+            
         for atom_1,offset_1,atom_2,offset_2 in zip(atoms_1,offsets_1,atoms_2,offets_2):
             for target_atom in target_atoms:
                 extra  = table.get_extra_shift(offset_1,atom_1,offset_2,atom_2,target_atom)

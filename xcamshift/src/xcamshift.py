@@ -39,9 +39,19 @@ class Base_potential(object):
         residue_atoms = Base_potential._select_atoms(segment, residue_number)
         return residue_atoms[0].residueName()
     
+
+    @staticmethod
+    def _get_atom_by_index(atom_index):
+        return AtomSel("(id %i)" % (atom_index + 1))[0]
+    
+    @staticmethod
+    def _get_atom_info_from_index(atom_index):
+        atom = Base_potential._get_atom_by_index(atom_index)
+        return atom.segmentName(), atom.residueNum(), atom.atomName()
+            
     @staticmethod
     def _get_atom_name(atom_index, template="%-5i '%4s' %i [%3s] %-4s"):
-        atom = AtomSel("(id %i)" % (atom_index+1))[0]
+        atom = Base_potential._get_atom_by_index(atom_index)
         
         segid = atom.segmentName()
         residue_number = atom.residueNum()
@@ -302,15 +312,123 @@ class Extra_potential(Base_potential):
     def __init__(self):
         Base_potential.__init__(self)
         
-        self._shifts_list =  self._create_component_list(self.ALL)
+        self._distances =  self._create_component_list(self.ALL)
     
+    def _translate_atom_name(self, atom_name,context):
+        return context.table.get_translation(atom_name)
+        
+    def _get_table(self, residue_type):
+        return self._table_manager.get_extra_table(residue_type)
+    
+    class ExtraContext(object):
 
+        def _select_atoms(self, segment, residue_number_1, atom_name_1):
+            target_atom_1 = Base_potential._select_atoms(segment, residue_number_1, atom_name_1)
+            if len(target_atom_1) == 0:
+                atom_name_1 = self.table.get_translation(atom_name_1)
+                target_atom_1 = Base_potential._select_atoms(segment, residue_number_1, atom_name_1)
+            num_to_atom = len(target_atom_1)
+            if num_to_atom > 1:
+                self._get_atom_names(target_atom_1)
+                raise Exception("unexpected number of to atoms selected (> 1) %d" % num_to_atom)
+            return target_atom_1
+
+        def __init__(self, from_atom, key_1, key_2 ,table):
+            
+            self.complete = False
+            self.table = table
+            
+            segment = from_atom.segmentName()
+            
+            residue_number_1 = from_atom.residueNum() + key_1.offset
+            atom_name_1 = key_1.atom
+            target_atom_1 = self._select_atoms(segment, residue_number_1, atom_name_1)
+            
+            atom_name_2 = key_2.atom
+            residue_number_2 = from_atom.residueNum() + key_2.offset
+            target_atom_2 =self._select_atoms(segment, residue_number_2, atom_name_2)
+            
+            if len(target_atom_1) == 1 and len(target_atom_2) == 1:
+                self.distance_atom_index_1 = target_atom_1[0].index()
+                self.distance_atom_index_2 = target_atom_2[0].index()
+                self.key_1=key_1
+                self.key_2=key_2
+                self.complete = True
+
+    class Atom_key(object):
+        def __init__(self, offset,atom):
+            self.offset = offset
+            self.atom = atom
+            
+        def __str__(self):
+            message = "atom key (offset: %1i, atom: %s)"
+            return message % (self.offset,self.atom)
+        
+        def get_key(self):
+            return self.atom,self.offset
+        
     def _build_contexts(self, atom, table):
+        contexts = []
+        for offset_1 in table.get_offsets(table.ATOM_1):
+            for offset_2 in table.get_offsets(table.ATOM_2):
+                for distance_atom_1 in table.get_distance_atoms(table.ATOM_1):
+                    for distance_atom_2 in table.get_distance_atoms(table.ATOM_2):
+                        key_1 = Extra_potential.Atom_key(offset_1,distance_atom_1)
+                        key_2 = Extra_potential.Atom_key(offset_2,distance_atom_2)
+                        context = Extra_potential.ExtraContext(atom,key_1,key_2,table)
+                        if context.complete:
+                            contexts.append(context)
+        return contexts
+    
+    def  _get_component_for_atom(self, atom, context):
+        table = context.table
+
+        
+        from_atom_name = atom.atomName()
+        from_atom_name = self._translate_atom_name(from_atom_name, context)
+        
+        result = None
+        if from_atom_name in table.get_target_atoms():
+            value = context.table.get_extra_shift(from_atom_name,context.key_1,context.key_2)
+#            print self._get_atom_name(atom.index()),value
+            if value != None:
+                from_atom_index = atom.index()
+                distance_index_1 = context.distance_atom_index_1
+                distance_index_2 = context.distance_atom_index_2
+                exponent = context.table.get_exponent()
+                result = (from_atom_index,distance_index_1,distance_index_2,value,exponent)
+        return result
+    
+    def set_shifts(self,shift_list):
         pass
-
     
-    
+    def __str__(self):
+        print len( self._distances)
+        result = []
+        for from_index,distance_index_1,distance_index_2,value,exponent in self._distances:
+            from_atom = self._get_atom_name(from_index)
+            distance_atom_1 = self._get_atom_name(distance_index_1)
+            distance_atom_2 = self._get_atom_name(distance_index_2)
+            
+            template = '[%s] - [%s] - [%s] %7.3f %7.3f'
+            values = from_atom, distance_atom_1, distance_atom_2, value, exponent
+            result.append( template % values)
+        return '\n'.join(result)
 
+    def dump(self):
+        result  = []
+        for from_index,distance_index_1,distance_index_2,value,exponent in self._distances:
+            sub_result  = []
+            sub_result.extend(self._get_atom_info_from_index(from_index)[1:])
+            
+            sub_result.extend(self._get_atom_info_from_index(distance_index_1)[1:])
+            sub_result.extend(self._get_atom_info_from_index(distance_index_2)[1:])
+            
+            sub_result.append(value)
+            
+            result.append(tuple(sub_result))
+        return result
+            
 class RandomCoilShifts(Base_potential):
     
 
@@ -321,7 +439,7 @@ class RandomCoilShifts(Base_potential):
         self._shifts_list = self._create_component_list(self.ALL)
 
     def _translate_atom_name(self, atom_name):
-        print >> sys.stderr, "WARNING no atom name translations in radom coil shifts yet!"
+        #print >> sys.stderr, "WARNING no atom name translations in radom coil shifts yet!"
         return super(RandomCoilShifts, self)._translate_atom_name(atom_name)
     
     def _get_table(self, from_residue_type):
