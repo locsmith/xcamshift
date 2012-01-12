@@ -65,6 +65,7 @@ class Test(unittest2.TestCase):
 
         table = self.table_manager.get_extra_Table()
         
+        
         table.get_extra_shift(0,"HN",0,"HA","HN")
         
         target_atoms = "HA","CA", "HN", "N", "C", "CB"
@@ -73,10 +74,6 @@ class Test(unittest2.TestCase):
         offsets_1 =  0, 0, 0, -1, -1, -1, 0, 0, 0, 1, 1, 1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, -1
         atoms_2 =    "HA", "C", "CB", "HA", "C", "CB", "HA", "N", "CB", "HA", "N", "CB", "HA", "N", "CB", "HA", "N", "CB", "HA", "N", "C", "C", "N", "CA", "CA", "CA"
         offets_2 =   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, 0, 0, 0, -1, 1, 0, 0, 1
-        
-        for atom_1,offset_1:
-            key_1 = 
-            result = 
             
             
             
