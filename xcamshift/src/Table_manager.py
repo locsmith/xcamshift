@@ -162,5 +162,5 @@ class Table_manager(object):
         return extra_table.Extra_table(self.__get_table(self.EXTRA,residue_type))
     
     def get_dihedral_table(self,residue_type):
-        return extra_table.Extra_table(self.__get_table(self.DIHEDRAL,residue_type))
+        return extra_table.Dihedral_table(self.__get_table(self.DIHEDRAL,residue_type))
             
