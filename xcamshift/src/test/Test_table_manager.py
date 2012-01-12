@@ -95,6 +95,12 @@ class Test(unittest2.TestCase):
         self.assertTrue(isinstance(result, tuple))
         self.assertTrue(isinstance(result[0], tuple))
         self.assertTrue(isinstance(result[1], tuple))
-    
+        
+    def testLoadDihedral(self):
+
+        table = self.table_manager.get_dihedral_table('ALA')
+        
+        
+
 if __name__ == "__main__":
     unittest2.main()

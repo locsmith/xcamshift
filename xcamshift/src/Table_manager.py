@@ -51,6 +51,7 @@ class Table_manager(object):
     BACKBONE = "bb"
     RANDOM_COIL = "rc"
     EXTRA="extra"
+    DIHEDRAL="dihedral"
     
 
     def __init__(self):
@@ -160,4 +161,6 @@ class Table_manager(object):
     def get_extra_table(self,residue_type):
         return extra_table.Extra_table(self.__get_table(self.EXTRA,residue_type))
     
+    def get_dihedral_table(self,residue_type):
+        return extra_table.Extra_table(self.__get_table(self.DIHEDRAL,residue_type))
             
