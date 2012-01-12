@@ -4,7 +4,7 @@ Created on 30 Dec 2011
 @author: garyt
 '''
 import unittest2
-from Table_manager import Table_manager
+from Table_manager import Table_manager, Atom_key
 
 
 class Test(unittest2.TestCase):
@@ -63,10 +63,11 @@ class Test(unittest2.TestCase):
         
     def testLoadExtra(self):
 
-        table = self.table_manager.get_extra_Table()
+        table = self.table_manager.get_extra_table('ALA')
         
         
-        table.get_extra_shift(0,"HN",0,"HA","HN")
+#        key_1 = xcamshift.Extra_potential.Atom_key(0,"H")
+#        table.get_extra_shift(0,"HN",0,"HA","HN")
         
         target_atoms = "HA","CA", "HN", "N", "C", "CB"
         
@@ -78,8 +79,11 @@ class Test(unittest2.TestCase):
             
             
         for atom_1,offset_1,atom_2,offset_2 in zip(atoms_1,offsets_1,atoms_2,offets_2):
+            
+            key_1 =  Atom_key(offset_1,atom_1)
+            key_2 = Atom_key(offset_2,atom_2)
             for target_atom in target_atoms:
-                extra  = table.get_extra_shift(offset_1,atom_1,offset_2,atom_2,target_atom)
+                extra  = table.get_extra_shift(target_atom,key_1,key_2)
                 
                 self.assertIsNotNone(extra)
                 

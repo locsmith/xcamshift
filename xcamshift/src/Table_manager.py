@@ -11,12 +11,23 @@ import yaml
 import extra_table
 
 
-
+class Atom_key(object):
+    def __init__(self, offset,atom):
+        self.offset = offset
+        self.atom = atom
+        
+    def __str__(self):
+        message = "atom key (offset: %1i, atom: %s)"
+        return message % (self.offset,self.atom)
+    
+    def get_key(self):
+        return self.atom,self.offset
 
 
 class Table_manager(object):
     
-    
+
+        
     __default = None
     
     @staticmethod

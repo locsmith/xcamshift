@@ -17,6 +17,7 @@ from atomSel import intersection
 from vec3 import  norm
 import sys
 import abc 
+from Table_manager import Atom_key
         
 class Base_potential(object):
     
@@ -367,17 +368,7 @@ class Extra_potential(Base_potential):
                 self.key_2=key_2
                 self.complete = True
 
-    class Atom_key(object):
-        def __init__(self, offset,atom):
-            self.offset = offset
-            self.atom = atom
-            
-        def __str__(self):
-            message = "atom key (offset: %1i, atom: %s)"
-            return message % (self.offset,self.atom)
-        
-        def get_key(self):
-            return self.atom,self.offset
+
         
     def _build_contexts(self, atom, table):
         contexts = []
@@ -385,8 +376,8 @@ class Extra_potential(Base_potential):
             for offset_2 in table.get_offsets(table.ATOM_2):
                 for distance_atom_1 in table.get_distance_atoms(table.ATOM_1):
                     for distance_atom_2 in table.get_distance_atoms(table.ATOM_2):
-                        key_1 = Extra_potential.Atom_key(offset_1,distance_atom_1)
-                        key_2 = Extra_potential.Atom_key(offset_2,distance_atom_2)
+                        key_1 = Atom_key(offset_1,distance_atom_1)
+                        key_2 = Atom_key(offset_2,distance_atom_2)
                         context = Extra_potential.ExtraContext(atom,key_1,key_2,table)
                         if context.complete:
                             contexts.append(context)
