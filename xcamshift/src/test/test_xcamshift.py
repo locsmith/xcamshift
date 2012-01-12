@@ -76,11 +76,20 @@ class Test(unittest2.TestCase):
         extra_potential = Extra_potential()
         
         xdists_ala_3_copy =  dict(xdists_ala_3)
+        
         for elem in extra_potential.dump():
             elem_key = elem[:-1]
             self.assertElemeInSet(elem_key, xdists_ala_3)
             del xdists_ala_3_copy[elem_key]
         self.assertEqual(0, len(xdists_ala_3_copy))
+        
+        for elem in extra_potential.dump():
+            elem_key = elem[:-1]
+            coefficient,distance  = xdists_ala_3[elem_key]
+            # TODO add extra places
+            self.assertAlmostEqual(coefficient, elem[-1],places=5)
+            
+        
 
 
 if __name__ == "__main__":
