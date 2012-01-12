@@ -57,8 +57,12 @@ class Table_manager(object):
         return yaml.add_constructor(u'tag:yaml.org,2002:map', Table_manager.construct_yaml_map)
     
     @staticmethod
+    def tupleit(t):
+        return tuple(map(Table_manager.tupleit, t)) if isinstance(t, (list, tuple)) else t
+    
+    @staticmethod
     def construct_yaml_map(loader, node):
-        pairs = [(tuple(key) if isinstance(key, list) else key, value)
+        pairs = [(Table_manager.tupleit(key) if isinstance(key, list) else key, value)
                  for (key, value) in loader.construct_pairs(node, deep=True)]
         return dict(pairs)
         
@@ -144,4 +148,5 @@ class Table_manager(object):
     
     def get_extra_table(self,residue_type):
         return extra_table.Extra_table(self.__get_table(self.EXTRA,residue_type))
+    
             

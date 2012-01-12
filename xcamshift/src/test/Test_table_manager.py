@@ -82,7 +82,15 @@ class Test(unittest2.TestCase):
                 extra  = table.get_extra_shift(offset_1,atom_1,offset_2,atom_2,target_atom)
                 
                 self.assertIsNotNone(extra)
-
+                
+    def testTupleIt(self):
+           test = [[1, 2], [3, 4]]
+           
+           result = Table_manager.tupleit(test)
+           
+           self.assertTrue(isinstance(result, tuple))
+           self.assertTrue(isinstance(result[0], tuple))
+           self.assertTrue(isinstance(result[1], tuple))
     
 if __name__ == "__main__":
     unittest2.main()
