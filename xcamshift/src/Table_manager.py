@@ -142,6 +142,6 @@ class Table_manager(object):
     def get_random_coil_table(self, residue_type):
         return Random_coil_table(self.__get_table(self.RANDOM_COIL, residue_type))
     
-    def get_extra_Table(self):
-        return extra_table.Extra_table(self.__get_table(self.EXTRA))
+    def get_extra_table(self,residue_type):
+        return extra_table.Extra_table(self.__get_table(self.EXTRA,residue_type))
             
