@@ -29,6 +29,18 @@ class Base_potential(object):
         self._table_manager = Table_manager.get_default_table_manager()
         
     @staticmethod
+    def _calculate_distance(distance_atom_id_1, distance_atom_id_2):
+        
+        from_atom_pos = Base_potential._get_atom_pos(distance_atom_id_1)
+        to_atom_pos = Base_potential._get_atom_pos(distance_atom_id_2)
+        
+        xyz_distance = from_atom_pos - to_atom_pos
+        
+        distance = norm(xyz_distance)
+        
+        return distance
+    
+    @staticmethod
     def _select_atom_with_translation(segment='*', residue_number='#',atom='*'):
         selection = '(segid "%s" and resid %i and name %s)' % (segment, residue_number, atom)
         residue_atoms = AtomSel(selection)
@@ -427,14 +439,12 @@ class Extra_potential(Base_potential):
         return result
     
 
+
+
     def _calc_single_shift(self, index):
-        from_atom_id, distance_atom_id_1, distance_atom_id_2, coefficient, exponent = self._distances[index]
+        distance_atom_id_1, distance_atom_id_2, coefficient, exponent = self._distances[index][1:]
         
-        from_atom_pos = self._get_atom_pos(distance_atom_id_1)
-        to_atom_pos = self._get_atom_pos(distance_atom_id_2)
-        
-        xyz_distance = from_atom_pos - to_atom_pos
-        distance = norm(xyz_distance)
+        distance = self._calculate_distance(distance_atom_id_1, distance_atom_id_2)
         
         shift = distance ** exponent * coefficient
         
