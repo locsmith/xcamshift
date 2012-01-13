@@ -5,6 +5,7 @@ Created on 30 Dec 2011
 '''
 import unittest2
 from Table_manager import Table_manager, Atom_key
+from dihedral_table import Dihedral_key
 
 
 class Test(unittest2.TestCase):
@@ -100,6 +101,15 @@ class Test(unittest2.TestCase):
 
         table = self.table_manager.get_dihedral_table('ALA')
         
+        for raw_key in [[["C", -1],  ["N",  0], ["CA", 0], ["C",  0]], 
+                        [["C", -1],  ["N",  1], ["CA", 0], ["C",  0]], 
+                        [["N",  0],  ["CA", 0], ["CB", 0], ["CG", 0]]]:
+            for target_atom in ["HA",  "CA", "HN", "N", "C", "CB"]:
+                keys = [Atom_key(offset,atom) for atom,offset in raw_key]
+                 
+                dihedral_key = Dihedral_key(*keys)
+                table.get_dihedral_shift(target_atom, dihedral_key) 
+    
         
 
 if __name__ == "__main__":
