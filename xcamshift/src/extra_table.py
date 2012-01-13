@@ -59,7 +59,7 @@ class Extra_table(object):
         
         self._check_extra_atom(atom_index, atom_name)
     
-    def _check_target_atom_key(self, atom):
+    def _check_target_atom(self, atom):
         
         atoms = self._get_target_atoms()
         if not atom in atoms:
