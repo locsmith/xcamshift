@@ -4,8 +4,9 @@ Created on 30 Dec 2011
 @author: garyt
 '''
 import unittest2
-from Table_manager import Table_manager, Atom_key
-from dihedral_table import Dihedral_key
+from Table_manager import Table_manager
+from keys import Atom_key, Dihedral_key
+
 
 
 class Test(unittest2.TestCase):
@@ -109,6 +110,18 @@ class Test(unittest2.TestCase):
                  
                 dihedral_key = Dihedral_key(*keys)
                 table.get_dihedral_shift(target_atom, dihedral_key) 
+                
+    def testGetDihdedralKeys(self):
+        table = self.table_manager.get_dihedral_table('ALA')
+        
+        expected = set (((('C', 0), ('N', 0), ('CA', 0), ('C', 1)),
+                        (('C', -1), ('N', 0), ('CA', 0), ('C', 0)),
+                        (('N', 0), ('CA', 0), ('CB', 0), ('CG', 0))))
+        
+        for atom_key in table.get_dihedral_keys():
+            raw_key = tuple([(key.atom,key.offset) for key in atom_key])
+            self.assertIn(raw_key, expected)
+        self.assertEqual(len(expected),len(table.get_dihedral_keys()) )
     
         
 

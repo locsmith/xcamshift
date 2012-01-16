@@ -9,20 +9,9 @@ from test.distance_table import Distance_table
 from random_coil_table import Random_coil_table
 import yaml
 import extra_table
-import dihedral_table
+from dihedral_table import Dihedral_table
 
 
-class Atom_key(object):
-    def __init__(self, offset,atom):
-        self.offset = offset
-        self.atom = atom
-        
-    def __str__(self):
-        message = "atom key (offset: %1i, atom: %s)"
-        return message % (self.offset,self.atom)
-    
-    def get_key(self):
-        return self.atom,self.offset
 
 
 class Table_manager(object):
@@ -163,5 +152,5 @@ class Table_manager(object):
         return extra_table.Extra_table(self.__get_table(self.EXTRA,residue_type))
     
     def get_dihedral_table(self,residue_type):
-        return dihedral_table.Dihedral_table(self.__get_table(self.DIHEDRAL,residue_type))
+        return Dihedral_table(self.__get_table(self.DIHEDRAL,residue_type))
             
