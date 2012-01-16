@@ -114,7 +114,7 @@ class Test(unittest2.TestCase):
     def testDihdedralPotential(self):
         dihedral_portential = Dihedral_potential()
         
-#        print dihedral_portential.dump()
+        print dihedral_portential.dump()
 #        
 #        
 #        

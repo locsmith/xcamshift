@@ -18,6 +18,7 @@ from vec3 import  norm
 import sys
 import abc 
 from keys import Atom_key, Dihedral_key
+
         
 class Base_potential(object):
     
@@ -563,12 +564,9 @@ class Dihedral_potential(Base_potential):
                     self.complete =  False
                     
             if self.complete:
-                self.dihedral_atom_index_pair_1 = (target_atoms[0][0].index(),
-                                                   target_atoms[1][0].index())
-                self.distance_atom_index_pair_2 = (target_atoms[2][0].index(),
-                                                   target_atoms[3][0].index())
-                
+                self.dihedral_indices = [target_atom[0].index()  for target_atom in target_atoms]
                 self.dihedral_key = dihedral_key
+                
         
     def _build_contexts(self, atom, table):
         contexts = []
@@ -583,26 +581,28 @@ class Dihedral_potential(Base_potential):
         return contexts
 
 
-#    
     def  _get_component_for_atom(self, atom, context):
-        pass
-#        table = context.table
-#
-#        
-#        from_atom_name = atom.atomName()
-#        from_atom_name = self._translate_atom_name(from_atom_name, context)
-#        
-#        result = None
-#        if from_atom_name in table.get_target_atoms():
-#            value = context.table.get_extra_shift(from_atom_name,context.key_1,context.key_2)
-##            print self._get_atom_name(atom.index()),value
-#            if value != None:
-#                from_atom_index = atom.index()
-#                distance_index_1 = context.distance_atom_index_1
-#                distance_index_2 = context.distance_atom_index_2
-#                exponent = context.table.get_exponent()
-#                result = (from_atom_index,distance_index_1,distance_index_2,value,exponent)
-#        return result
+        table = context.table
+        
+        from_atom_name = atom.atomName()
+        from_atom_name = self._translate_atom_name(from_atom_name, context)
+        
+        result = None
+        if from_atom_name in table.get_target_atoms():
+            
+            value = context.table.get_dihedral_shift(from_atom_name,context.dihedral_key)
+            if value != None:
+                from_atom_index = atom.index()
+                
+                dihedral_indices = context.dihedral_indices
+                exponent = context.table.get_exponent()
+                
+                result = [from_atom_index]
+                result.extend(dihedral_indices)
+                result.extend((value,exponent))
+                result = tuple(result)
+                
+        return result
 #    
 #    def __str__(self):
 #        print len( self._distances)
@@ -621,16 +621,22 @@ class Dihedral_potential(Base_potential):
         result  = []
         for from_index,atom_1,atom_2, atom_3, atom_4,value,exponent in self._distances:
             sub_result  = []
-            sub_result.extend(self._get_atom_info_from_index(from_index)[1:])
+            sub_result.append(tuple(self._get_atom_info_from_index(from_index)[1:]))
             
-            for atom in atom_1,atom_2, atom_3, atom_4:
+            dihedral_atom_info = []
+            for atom_pair in (atom_1,atom_2), (atom_3, atom_4):
+                
+                info_pair  = []
+                info_pair.append(self._get_atom_info_from_index(atom_pair[0])[1:])
+                info_pair.append(self._get_atom_info_from_index(atom_pair[1])[1:])
             
-                sub_result.extend(self._get_atom_info_from_index(atom)[1:])
-            
+                dihedral_atom_info.append(tuple(info_pair))
+            sub_result.appendtuple((dihedral_atom_info))
             sub_result.append(value)
-            
+            sub_result.append(exponent)
             result.append(tuple(sub_result))
-        return result
+            
+        return tuple(result)
 #    
 #
 #
