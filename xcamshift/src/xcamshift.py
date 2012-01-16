@@ -10,7 +10,7 @@ from atomSel import AtomSel
 from protocol import initStruct
 from pdbTool import PDBTool
 from segment_manager import Segment_Manager
-from Table_manager import Table_manager
+from table_manager import Table_manager
 from simulation import currentSimulation
 from atom import Atom
 from atomSel import intersection
@@ -617,19 +617,20 @@ class Dihedral_potential(Base_potential):
 #            result.append( template % values)
 #        return '\n'.join(result)
 #
-#    def dump(self):
-#        result  = []
-#        for from_index,distance_index_1,distance_index_2,value,exponent in self._distances:
-#            sub_result  = []
-#            sub_result.extend(self._get_atom_info_from_index(from_index)[1:])
-#            
-#            sub_result.extend(self._get_atom_info_from_index(distance_index_1)[1:])
-#            sub_result.extend(self._get_atom_info_from_index(distance_index_2)[1:])
-#            
-#            sub_result.append(value)
-#            
-#            result.append(tuple(sub_result))
-#        return result
+    def dump(self):
+        result  = []
+        for from_index,atom_1,atom_2, atom_3, atom_4,value,exponent in self._distances:
+            sub_result  = []
+            sub_result.extend(self._get_atom_info_from_index(from_index)[1:])
+            
+            for atom in atom_1,atom_2, atom_3, atom_4:
+            
+                sub_result.extend(self._get_atom_info_from_index(atom)[1:])
+            
+            sub_result.append(value)
+            
+            result.append(tuple(sub_result))
+        return result
 #    
 #
 #
