@@ -4,7 +4,7 @@ Created on 30 Dec 2011
 @author: garyt
 '''
 import unittest2
-from Table_manager import Table_manager
+from table_manager import Table_manager
 from keys import Atom_key, Dihedral_key
 
 
