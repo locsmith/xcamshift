@@ -5,7 +5,7 @@ exponent: 1.0
 extra_atoms_1:   ["C", "CA", "CG", "HN", "N", "O"]
 extra_atoms_2:   ["C", "CA", "CB", "HA", "N"]
 extra_offsets_1: [-1, 0 , 1]
-extra_offsets_2: [-1, 0 , 1]
+extra_offsets_2: [-1, 0 , 1] 
 target_atoms: ["HA", "CA", "HN", "N", "C", "CB"]
 data: {
   [HN, 0] : {
