@@ -29,3 +29,6 @@ class Dihedral_key(object):
         
     def get_keys(self):
         return tuple(self._atom_keys)
+    
+    def get_dihedral_key(self):
+        return tuple([atom_key.get_atom_key() for atom_key in self._atom_keys])
