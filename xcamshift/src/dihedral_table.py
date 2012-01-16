@@ -3,19 +3,9 @@ Created on 30 Dec 2011
 
 @author: garyt
 '''
+from keys import Atom_key
 
-class Dihedral_key(object):
 
-    MAX_INDEX = 3
-    def __init__(self, atom_key_1, atom_key_2,atom_key_3,atom_key_4):
-        self.atom_keys=[atom_key_1, atom_key_2,atom_key_3,atom_key_4]
-    
-    def get_key(self,index):
-        if index > self.MAX_INDEX:
-            raise IndexError("dihedrals only contain 4 atoms you requested atom %d" % index +1)
-        
-    def get_keys(self):
-        return tuple(self.atom_keys)
         
 class Dihedral_table(object):
     
@@ -79,6 +69,17 @@ class Dihedral_table(object):
             message = "atom %s not in target atoms %s" % (atom,', '.join(atoms))
             raise KeyError(message)
     
+    def get_dihedral_keys(self):
+        keys = self.table[self.DATA].keys()
+        
+        result = []
+        for index in range(len(keys)):
+            atom_keys = [Atom_key(offset,atom) for atom,offset in keys[index]]
+            result.append(tuple(atom_keys))
+            
+        return result
+            
+            
     
     def get_dihedral_shift(self,target_atom,dihedral_key):
         self._check_target_atom(target_atom)
