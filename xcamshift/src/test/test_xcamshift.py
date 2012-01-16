@@ -6,7 +6,8 @@ Created on 31 Dec 2011
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
-from xcamshift import RandomCoilShifts, Distance_potential, Extra_potential
+from xcamshift import RandomCoilShifts, Distance_potential, Extra_potential,\
+    Dihedral_potential
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 
@@ -110,6 +111,28 @@ class Test(unittest2.TestCase):
             
             self.assertAlmostEqual(shift, expected_shift,places=4)
 
-
+    def testDihdedralPotential(self):
+        dihedral_portential = Dihedral_potential()
+        
+#        print dihedral_portential.dump()
+#        
+#        
+#        
+#        self.make_result_array()
+        
+        
+#        result=self.make_result_array()
+#        extra_potential.set_shifts(result)
+#        
+#        for i,extra_elem in enumerate(extra_potential.dump()):
+#            
+#            elem_key = extra_elem[:-1]
+#            shift = extra_potential._calc_single_shift(i)
+#            
+#            expected_shift = xdists_ala_3[elem_key][2]
+#            
+#            self.assertAlmostEqual(shift, expected_shift,places=4)
+##    def testDihdedralPotential(self):
+#        dihedral_potential  = 
 if __name__ == "__main__":
     unittest2.main()
