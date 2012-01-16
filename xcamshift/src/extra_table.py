@@ -73,10 +73,10 @@ class Extra_table(object):
         
         result = None
         
-        key_1 = key_values_1.get_key()
-        key_2 = key_values_2.get_key()
+        key_1 = key_values_1.get_atom_key()
+        key_2 = key_values_2.get_atom_key()
         if key_1 in self.table[self.DATA]:
-            data_1 = self.table[self.DATA][key_values_1.get_key()]
+            data_1 = self.table[self.DATA][key_values_1.get_atom_key()]
             if key_2 in data_1:
                 target_atoms = data_1[key_2]
                 if target_atom in target_atoms:
