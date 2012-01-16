@@ -513,7 +513,145 @@ class RandomCoilShifts(Base_potential):
             string = template % (atom_name,shift)
             result.append(string)
         return '\n'.join(result)
+
+class Dihedral_potential(Base_potential):
+
+    def __init__(self):
+        Base_potential.__init__(self)
+        
+        self._distances =  self._create_component_list(self.ALL)
     
+    def _translate_atom_name(self, atom_name,context):
+        return context.table.get_translation(atom_name)
+        
+    def _get_table(self, residue_type):
+        return self._table_manager.get_dihedral_table(residue_type)
+#    
+    class DihedralContext(object):
+
+        def _select_atom_with_translation(self, segment, residue_number_1, atom_name_1):
+            target_atom_1 = Base_potential._select_atom_with_translation(segment, residue_number_1, atom_name_1)
+            if len(target_atom_1) == 0:
+                atom_name_1 = self.table.get_translation(atom_name_1)
+                target_atom_1 = Base_potential._select_atom_with_translation(segment, residue_number_1, atom_name_1)
+            num_to_atom = len(target_atom_1)
+            if num_to_atom > 1:
+                self._get_atom_names(target_atom_1)
+                raise Exception("unexpected number of to atoms selected (> 1) %d" % num_to_atom)
+            return target_atom_1
+
+
+        def get_atom_info(self, segment, from_atom, key_1):
+            residue_number_1 = from_atom.residueNum() + key_1.offset
+            atom_name_1 = key_1.atom
+            target_atom_1 = self._select_atom_with_translation(segment, residue_number_1, atom_name_1)
+            return target_atom_1
+
+        def __init__(self, from_atom, dihedral_key ,table):
+            
+            self.table = table
+            
+            segment = from_atom.segmentName()
+            
+            target_atoms = []
+            for key in dihedral_key.get_keys():
+                target_atoms.append(self.get_atom_info(segment, from_atom, key))
+            
+            self.complete=True
+            for target_atom in target_atoms:
+                if len(target_atom) !=  1:
+                    self.complete =  False
+                    
+            if self.complete:
+                self.dihedral_atom_index_pair_1 = (target_atoms[0][0].index(),
+                                                   target_atoms[1][0].index())
+                self.distance_atom_index_pair_2 = (target_atoms[2][0].index(),
+                                                   target_atoms[3][0].index())
+                
+                self.dihedral_key = dihedral_key
+        
+    def _build_contexts(self, atom, table):
+        contexts = []
+        
+        for key in table.get_dihedral_keys():
+            dihedral_key = Dihedral_key(*key)
+            context = Dihedral_potential.DihedralContext(atom,dihedral_key,table)
+            
+            if context.complete:
+                contexts.append(context)
+                
+        return contexts
+
+
+#    
+    def  _get_component_for_atom(self, atom, context):
+        pass
+#        table = context.table
+#
+#        
+#        from_atom_name = atom.atomName()
+#        from_atom_name = self._translate_atom_name(from_atom_name, context)
+#        
+#        result = None
+#        if from_atom_name in table.get_target_atoms():
+#            value = context.table.get_extra_shift(from_atom_name,context.key_1,context.key_2)
+##            print self._get_atom_name(atom.index()),value
+#            if value != None:
+#                from_atom_index = atom.index()
+#                distance_index_1 = context.distance_atom_index_1
+#                distance_index_2 = context.distance_atom_index_2
+#                exponent = context.table.get_exponent()
+#                result = (from_atom_index,distance_index_1,distance_index_2,value,exponent)
+#        return result
+#    
+#    def __str__(self):
+#        print len( self._distances)
+#        result = []
+#        for from_index,distance_index_1,distance_index_2,value,exponent in self._distances:
+#            from_atom = self._get_atom_name(from_index)
+#            distance_atom_1 = self._get_atom_name(distance_index_1)
+#            distance_atom_2 = self._get_atom_name(distance_index_2)
+#            
+#            template = '[%s] - [%s] - [%s] %7.3f %7.3f'
+#            values = from_atom, distance_atom_1, distance_atom_2, value, exponent
+#            result.append( template % values)
+#        return '\n'.join(result)
+#
+#    def dump(self):
+#        result  = []
+#        for from_index,distance_index_1,distance_index_2,value,exponent in self._distances:
+#            sub_result  = []
+#            sub_result.extend(self._get_atom_info_from_index(from_index)[1:])
+#            
+#            sub_result.extend(self._get_atom_info_from_index(distance_index_1)[1:])
+#            sub_result.extend(self._get_atom_info_from_index(distance_index_2)[1:])
+#            
+#            sub_result.append(value)
+#            
+#            result.append(tuple(sub_result))
+#        return result
+#    
+#
+#
+#
+#    def _calc_single_shift(self, index):
+#        distance_atom_id_1, distance_atom_id_2, coefficient, exponent = self._distances[index][1:]
+#        
+#        distance = self._calculate_distance(distance_atom_id_1, distance_atom_id_2)
+#        
+#        shift = distance ** exponent * coefficient
+#        
+#        return shift
+#
+    def set_shifts(self,result):
+        pass
+#        for index in range(len(self._distances)):
+#            shift = self._calc_single_shift(index)
+#            from_atom_id = self._distances[index][0]
+#            result[from_atom_id] += shift
+#
+#        return result
+
 if __name__ == "__main__":
     initStruct("test_data/3_ala/3ala.psf")
     PDBTool("test_data/3_ala/3ala.pdb").read()
