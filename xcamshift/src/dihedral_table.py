@@ -87,7 +87,8 @@ class Dihedral_table(object):
         
         result = None
         
-        raw_dihedral_key = dihedral_key.get_keys()
+        raw_dihedral_key = dihedral_key.get_dihedral_key()
+
         if raw_dihedral_key in self.table[self.DATA]:
             data = self.table[self.DATA][raw_dihedral_key]
             if target_atom in data:
