@@ -17,7 +17,7 @@ from atomSel import intersection
 from vec3 import  norm
 import sys
 import abc 
-from Table_manager import Atom_key
+from keys import Atom_key, Dihedral_key
         
 class Base_potential(object):
     
