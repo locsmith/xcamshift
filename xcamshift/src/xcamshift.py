@@ -18,6 +18,7 @@ from vec3 import  norm
 import sys
 import abc 
 from keys import Atom_key, Dihedral_key
+from utils import tupleit
 
         
 class Base_potential(object):
@@ -621,7 +622,9 @@ class Dihedral_potential(Base_potential):
         result  = []
         for from_index,atom_1,atom_2, atom_3, atom_4,value,exponent in self._distances:
             sub_result  = []
-            sub_result.append(tuple(self._get_atom_info_from_index(from_index)[1:]))
+            key = []
+            sub_result.append(key)
+            key.append(tuple(self._get_atom_info_from_index(from_index)[1:]))
             
             dihedral_atom_info = []
             for atom_pair in (atom_1,atom_2), (atom_3, atom_4):
@@ -631,10 +634,13 @@ class Dihedral_potential(Base_potential):
                 info_pair.append(self._get_atom_info_from_index(atom_pair[1])[1:])
             
                 dihedral_atom_info.append(tuple(info_pair))
-            sub_result.appendtuple((dihedral_atom_info))
+            key.append(tuple(dihedral_atom_info))
+            
             sub_result.append(value)
             sub_result.append(exponent)
-            result.append(tuple(sub_result))
+            
+            result.append(tupleit(sub_result))
+            
             
         return tuple(result)
 #    
