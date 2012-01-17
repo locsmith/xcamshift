@@ -9,7 +9,8 @@ from test.distance_table import Distance_table
 from random_coil_table import Random_coil_table
 import yaml
 import extra_table
-from dihedral_table import Dihedral_table, Dihedral_parameter_table
+from dihedral_table import Dihedral_table, Dihedral_parameter_table,\
+    Composite_dihedral_table
 from utils import tupleit
 
 
@@ -149,9 +150,14 @@ class Table_manager(object):
     def get_extra_table(self,residue_type):
         return extra_table.Extra_table(self.__get_table(self.EXTRA,residue_type))
     
-    def get_dihedral_table(self,residue_type):
+    def _get_dihedral_table(self,residue_type):
         return Dihedral_table(self.__get_table(self.DIHEDRAL,residue_type))
     
-    def get_dihedral_parameter_table(self,residue_type):
+    def _get_dihedral_parameter_table(self,residue_type):
         return Dihedral_parameter_table(self.__get_table(self.DIHEDRAL_PARS,residue_type))
+    
+    def get_dihedral_table(self,residue_type):
+        dihedral_table = self._get_dihedral_table(residue_type)
+        dihedral_parameter_table =  self._get_dihedral_parameter_table(residue_type)
+        return Composite_dihedral_table(dihedral_table, dihedral_parameter_table)
             

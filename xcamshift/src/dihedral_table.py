@@ -111,7 +111,7 @@ class Dihedral_parameter_table(Dihedral_table_base):
         return self.table[self.PARAMETERS]
     
     
-    def check_parameter_key(self, parameter):
+    def _check_parameter_key(self, parameter):
         parameters = self.get_parameters()
         if not parameter in parameters:
             message = "parameter %s not in parameters %s" % (parameter,', '.join(parameters))
@@ -121,7 +121,7 @@ class Dihedral_parameter_table(Dihedral_table_base):
     def get_dihedral_parameter(self,target_atom,dihedral_key,parameter):
         self._check_target_atom(target_atom)
         self._check_dihedral_key(dihedral_key)
-        self.check_parameter_key(parameter)
+        self._check_parameter_key(parameter)
         
         result = None
         
@@ -135,3 +135,37 @@ class Dihedral_parameter_table(Dihedral_table_base):
                     result  = parameter[target_atom]
 #            
         return result    
+    
+class Composite_dihedral_table():
+    
+    def __init__(self,shift_table,parameter_table):
+        self._shift_table = shift_table
+        self._parameter_table  = parameter_table
+        
+    def get_translation(self,atom):
+        return self._shift_table.get_translation()
+#    
+    def get_dihedral_atoms(self):
+        return self._shift_table.get_dihedral_atoms()
+    
+    def get_offsets(self):
+        return  self._shift_table.get_offsets()
+    
+    def get_target_atoms(self):
+        return  self._shift_table.get_target_atoms()
+
+    def get_exponent(self):
+        return  self._shift_table.get_exponent_atoms()
+        
+    def get_dihedral_keys(self):
+        return self._shift_table.get_dihedral_keys()
+        
+    def get_parameters(self):
+        return self._parameter_table.get_parameters()
+    
+    def get_dihedral_shift(self,target_atom,dihedral_key):
+        return self._shift_table.get_dihedral_shift(target_atom,dihedral_key)
+    
+    def get_dihedral_parameter(self,target_atom,dihedral_key,parameter):
+        return self._parameter_table.get_dihedral_parameter(target_atom,dihedral_key,parameter)
+    
