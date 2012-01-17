@@ -10,6 +10,7 @@ from xcamshift import RandomCoilShifts, Distance_potential, Extra_potential,\
     Dihedral_potential
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
+from test.dihedrals import dihedrals_ala_3
 
 
 #class testSegmentManager(object):
@@ -111,28 +112,17 @@ class Test(unittest2.TestCase):
             
             self.assertAlmostEqual(shift, expected_shift,places=4)
 
-    def testDihdedralPotential(self):
+    def testDihdedralPotentialComponentsCorrect(self):
         dihedral_portential = Dihedral_potential()
         
-        print dihedral_portential.dump()
-#        
-#        
-#        
-#        self.make_result_array()
         
+        dihedrals_ala_3_copy = dict(dihedrals_ala_3)
+        for dihedral_elem_key in dihedral_portential.dump():
+            self.assertElemeInSet(dihedral_elem_key[0], dihedrals_ala_3_copy)
+            del dihedrals_ala_3_copy[dihedral_elem_key[0]]
+
+        self.assertEqual(0, len(dihedrals_ala_3_copy))
         
-#        result=self.make_result_array()
-#        extra_potential.set_shifts(result)
-#        
-#        for i,extra_elem in enumerate(extra_potential.dump()):
-#            
-#            elem_key = extra_elem[:-1]
-#            shift = extra_potential._calc_single_shift(i)
-#            
-#            expected_shift = xdists_ala_3[elem_key][2]
-#            
-#            self.assertAlmostEqual(shift, expected_shift,places=4)
-##    def testDihdedralPotential(self):
-#        dihedral_potential  = 
+
 if __name__ == "__main__":
     unittest2.main()
