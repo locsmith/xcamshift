@@ -6,7 +6,6 @@ Created on 30 Dec 2011
 import unittest2
 from table_manager import Table_manager
 from keys import Atom_key, Dihedral_key
-from utils import tupleit
 
 
 
