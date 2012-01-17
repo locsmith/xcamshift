@@ -9,7 +9,7 @@ from test.distance_table import Distance_table
 from random_coil_table import Random_coil_table
 import yaml
 import extra_table
-from dihedral_table import Dihedral_table
+from dihedral_table import Dihedral_table, Dihedral_parameter_table
 
 
 
@@ -42,6 +42,7 @@ class Table_manager(object):
     RANDOM_COIL = "rc"
     EXTRA="extra"
     DIHEDRAL="dihedral"
+    DIHEDRAL_PARS="dihedral_pars"
     
 
     def __init__(self):
@@ -153,4 +154,7 @@ class Table_manager(object):
     
     def get_dihedral_table(self,residue_type):
         return Dihedral_table(self.__get_table(self.DIHEDRAL,residue_type))
+    
+    def get_dihedral_parameter_table(self,residue_type):
+        return Dihedral_parameter_table(self.__get_table(self.DIHEDRAL_PARS,residue_type))
             

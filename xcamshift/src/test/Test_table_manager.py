@@ -123,7 +123,32 @@ class Test(unittest2.TestCase):
             self.assertIn(raw_key, expected)
         self.assertEqual(len(expected),len(table.get_dihedral_keys()) )
     
+    def testLoadDihedralParameters(self):
+
+        table = self.table_manager.get_dihedral_parameter_table('ALA')
         
+        for raw_key in [[["C", -1],  ["N",  0], ["CA", 0], ["C",  0]], 
+                        [["C", -1],  ["N",  1], ["CA", 0], ["C",  0]], 
+                        [["N",  0],  ["CA", 0], ["CB", 0], ["CG", 0]]]:
+            for target_atom in ["HA",  "CA", "HN", "N", "C", "CB"]:
+                keys = [Atom_key(offset,atom) for atom,offset in raw_key]
+                for parameter in range(5):
+                 
+                    dihedral_key = Dihedral_key(*keys)
+                    table.get_dihedral_parameter(target_atom, dihedral_key, parameter) 
+                
+    def testGetDihdedralParameterKeys(self):
+        table = self.table_manager.get_dihedral_parameter_table('ALA')
+        
+        expected = set (((('C', 0), ('N', 0), ('CA', 0), ('C', 1)),
+                        (('C', -1), ('N', 0), ('CA', 0), ('C', 0)),
+                        (('N', 0), ('CA', 0), ('CB', 0), ('CG', 0))))
+        
+        for atom_key in table.get_dihedral_keys():
+            raw_key = tuple([(key.atom,key.offset) for key in atom_key])
+            self.assertIn(raw_key, expected)
+        self.assertEqual(len(expected),len(table.get_dihedral_keys()) )
+            
 
 if __name__ == "__main__":
     unittest2.main()
