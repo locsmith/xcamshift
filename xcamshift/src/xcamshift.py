@@ -591,16 +591,23 @@ class Dihedral_potential(Base_potential):
         result = None
         if from_atom_name in table.get_target_atoms():
             
-            value = context.table.get_dihedral_shift(from_atom_name,context.dihedral_key)
+            dihedral_key = context.dihedral_key
+            value = context.table.get_dihedral_shift(from_atom_name,dihedral_key)
             if value != None:
                 from_atom_index = atom.index()
                 
                 dihedral_indices = context.dihedral_indices
-                exponent = context.table.get_exponent()
-                
+
                 result = [from_atom_index]
                 result.extend(dihedral_indices)
-                result.extend((value,exponent))
+                result.append(value)
+                
+                for parameter in context.table.get_parameters():
+                    parameter = context.table.get_parameter(from_atom_name,dihedral_key,parameter)
+                    result.append(parameter)
+                
+                
+                result.append(context.table.get_exponent())
                 result = tuple(result)
                 
         return result
@@ -620,7 +627,7 @@ class Dihedral_potential(Base_potential):
 #
     def dump(self):
         result  = []
-        for from_index,atom_1,atom_2, atom_3, atom_4,value,exponent in self._distances:
+        for from_index,atom_1,atom_2, atom_3, atom_4,value,param_0,param_1,param_2,param_3,param_4,exponent in self._distances:
             sub_result  = []
             key = []
             sub_result.append(key)

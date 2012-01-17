@@ -143,7 +143,7 @@ class Composite_dihedral_table():
         self._parameter_table  = parameter_table
         
     def get_translation(self,atom):
-        return self._shift_table.get_translation()
+        return self._shift_table.get_translation(atom)
 #    
     def get_dihedral_atoms(self):
         return self._shift_table.get_dihedral_atoms()
@@ -155,7 +155,7 @@ class Composite_dihedral_table():
         return  self._shift_table.get_target_atoms()
 
     def get_exponent(self):
-        return  self._shift_table.get_exponent_atoms()
+        return  self._shift_table.get_exponent()
         
     def get_dihedral_keys(self):
         return self._shift_table.get_dihedral_keys()
@@ -166,6 +166,6 @@ class Composite_dihedral_table():
     def get_dihedral_shift(self,target_atom,dihedral_key):
         return self._shift_table.get_dihedral_shift(target_atom,dihedral_key)
     
-    def get_dihedral_parameter(self,target_atom,dihedral_key,parameter):
+    def get_parameter(self,target_atom,dihedral_key,parameter):
         return self._parameter_table.get_dihedral_parameter(target_atom,dihedral_key,parameter)
     
