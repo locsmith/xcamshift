@@ -147,7 +147,7 @@ class Test(unittest2.TestCase):
          
         dihedral_key = self.raw_key_to_dihedral_key(self.raw_dihderal_keys[0])
             
-        result = table.get_dihedral_parameter("HA",dihedral_key,0)
+        result = table.get_parameter("HA",dihedral_key,0)
         self.assertAlmostEqual(result, 0.3)
                 
             
