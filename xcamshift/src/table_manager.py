@@ -10,6 +10,7 @@ from random_coil_table import Random_coil_table
 import yaml
 import extra_table
 from dihedral_table import Dihedral_table, Dihedral_parameter_table
+from utils import tupleit
 
 
 
@@ -60,12 +61,8 @@ class Table_manager(object):
         return yaml.add_constructor(u'tag:yaml.org,2002:map', Table_manager.construct_yaml_map)
     
     @staticmethod
-    def tupleit(t):
-        return tuple(map(Table_manager.tupleit, t)) if isinstance(t, (list, tuple)) else t
-    
-    @staticmethod
     def construct_yaml_map(loader, node):
-        pairs = [(Table_manager.tupleit(key) if isinstance(key, list) else key, value)
+        pairs = [(tupleit(key) if isinstance(key, list) else key, value)
                  for (key, value) in loader.construct_pairs(node, deep=True)]
         return dict(pairs)
         

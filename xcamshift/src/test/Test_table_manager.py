@@ -6,6 +6,7 @@ Created on 30 Dec 2011
 import unittest2
 from table_manager import Table_manager
 from keys import Atom_key, Dihedral_key
+from utils import tupleit
 
 
 
@@ -92,14 +93,7 @@ class Test(unittest2.TestCase):
                 
                 self.assertIsNotNone(extra)
                 
-    def testTupleIt(self):
-        test = [[1, 2], [3, 4]]
-       
-        result = Table_manager.tupleit(test)
-       
-        self.assertTrue(isinstance(result, tuple))
-        self.assertTrue(isinstance(result[0], tuple))
-        self.assertTrue(isinstance(result[1], tuple))
+
         
     def testLoadDihedral(self):
 
