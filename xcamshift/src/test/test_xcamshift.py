@@ -16,6 +16,9 @@ from test.dihedrals import dihedrals_ala_3
 #class testSegmentManager(object):
 class Test(unittest2.TestCase):
 
+    # TODO add extra places
+    DEFAULT_DECIMAL_PLACES = 5
+    
     def assertSequenceAlmostEqual(self,result,expected, delta = 1e-7):
         len_result = len(result)
         len_expected = len(expected)
@@ -93,8 +96,7 @@ class Test(unittest2.TestCase):
             elem_key = extra_elem[:-1]
             coefficient = xdists_ala_3[elem_key][0]
 
-            # TODO add extra places
-            self.assertAlmostEqual(coefficient, extra_elem[-1], places=5)
+            self.assertAlmostEqual(coefficient, extra_elem[-1], places=self.DEFAULT_DECIMAL_PLACES)
         
 
     def testExtraPotentialComponentShiftsCorrect(self):
@@ -117,12 +119,19 @@ class Test(unittest2.TestCase):
         
         
         dihedrals_ala_3_copy = dict(dihedrals_ala_3)
-        for dihedral_elem_key in dihedral_portential.dump():
-            self.assertElemeInSet(dihedral_elem_key[0], dihedrals_ala_3_copy)
-            del dihedrals_ala_3_copy[dihedral_elem_key[0]]
+        for dihedral_elem in dihedral_portential.dump():
+            self.assertElemeInSet(dihedral_elem[0], dihedrals_ala_3_copy)
+            del dihedrals_ala_3_copy[dihedral_elem[0]]
 
         self.assertEqual(0, len(dihedrals_ala_3_copy))
         
+    def testDihedralPotentialCoefficientsCorrect(self):
+        dihedral_potential = Dihedral_potential()
+        for dihedral_elem_key, coeff,exponent in  dihedral_potential.dump():
+            expected = dihedrals_ala_3[dihedral_elem_key][0]
+            self.assertAlmostEqual(expected, coeff, self.DEFAULT_DECIMAL_PLACES)
+            self.assertAlmostEqual(exponent, 1.0)
+
 
 if __name__ == "__main__":
     unittest2.main()
