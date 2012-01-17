@@ -140,7 +140,7 @@ class Test(unittest2.TestCase):
                 dihedral_key = self.raw_key_to_dihedral_key(raw_key)
                 for parameter in range(5):
                  
-                    table.get_dihedral_parameter(target_atom, dihedral_key, parameter)
+                    table.get_parameter(target_atom, dihedral_key, parameter)
             
     def testGetDihedralParameter(self):        
         table = self.table_manager.get_dihedral_table('ALA')
