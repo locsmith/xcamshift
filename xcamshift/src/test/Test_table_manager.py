@@ -10,6 +10,9 @@ from keys import Atom_key, Dihedral_key
 
 
 class Test(unittest2.TestCase):
+    raw_dihderal_keys = ((("C", -1), ("N", 0), ("CA", 0), ("C",  0)), 
+                         (("C",  0), ("N", 0), ("CA", 0), ("C",  1)), 
+                         (("N", 0), ("CA", 0), ("CB", 0), ("CG", 0)))
 
     def setUp(self):
         self.table_manager = Table_manager()
@@ -102,9 +105,7 @@ class Test(unittest2.TestCase):
 
         table = self.table_manager.get_dihedral_table('ALA')
         
-        for raw_key in [[["C", -1],  ["N",  0], ["CA", 0], ["C",  0]], 
-                        [["C", -1],  ["N",  1], ["CA", 0], ["C",  0]], 
-                        [["N",  0],  ["CA", 0], ["CB", 0], ["CG", 0]]]:
+        for raw_key in self.raw_dihderal_keys:
             for target_atom in ["HA",  "CA", "HN", "N", "C", "CB"]:
                 keys = [Atom_key(offset,atom) for atom,offset in raw_key]
                  
@@ -114,35 +115,51 @@ class Test(unittest2.TestCase):
     def testGetDihdedralKeys(self):
         table = self.table_manager.get_dihedral_table('ALA')
         
-        expected = set (((('C', 0), ('N', 0), ('CA', 0), ('C', 1)),
-                        (('C', -1), ('N', 0), ('CA', 0), ('C', 0)),
-                        (('N', 0), ('CA', 0), ('CB', 0), ('CG', 0))))
+        expected = set (self.raw_dihderal_keys)
         
         for atom_key in table.get_dihedral_keys():
             raw_key = tuple([(key.atom,key.offset) for key in atom_key])
             self.assertIn(raw_key, expected)
         self.assertEqual(len(expected),len(table.get_dihedral_keys()) )
     
+    def testGetDihedral(self):        
+        table = self.table_manager.get_dihedral_table('ALA')
+         
+        dihedral_key = self.raw_key_to_dihedral_key(self.raw_dihderal_keys[0])
+            
+        result = table.get_dihedral_shift("HA",dihedral_key)
+        self.assertAlmostEqual(result, 0.39606482662562)
+    def raw_key_to_dihedral_key(self, raw_key):
+        keys = [Atom_key(offset, atom) for atom, offset in raw_key]
+        dihedral_key = Dihedral_key(*keys)
+        return dihedral_key
+
     def testLoadDihedralParameters(self):
 
         table = self.table_manager.get_dihedral_parameter_table('ALA')
         
-        for raw_key in [[["C", -1],  ["N",  0], ["CA", 0], ["C",  0]], 
-                        [["C", -1],  ["N",  1], ["CA", 0], ["C",  0]], 
-                        [["N",  0],  ["CA", 0], ["CB", 0], ["CG", 0]]]:
+        
+        
+        for raw_key in self.raw_dihderal_keys:
             for target_atom in ["HA",  "CA", "HN", "N", "C", "CB"]:
-                keys = [Atom_key(offset,atom) for atom,offset in raw_key]
+                dihedral_key = self.raw_key_to_dihedral_key(raw_key)
                 for parameter in range(5):
                  
-                    dihedral_key = Dihedral_key(*keys)
-                    table.get_dihedral_parameter(target_atom, dihedral_key, parameter) 
+                    table.get_dihedral_parameter(target_atom, dihedral_key, parameter)
+            
+    def testGetDihedralParameter(self):        
+        table = self.table_manager.get_dihedral_parameter_table('ALA')
+         
+        dihedral_key = self.raw_key_to_dihedral_key(self.raw_dihderal_keys[0])
+            
+        result = table.get_dihedral_parameter("HA",dihedral_key,0)
+        self.assertAlmostEqual(result, 0.3)
                 
     def testGetDihdedralParameterKeys(self):
         table = self.table_manager.get_dihedral_parameter_table('ALA')
         
-        expected = set (((('C', 0), ('N', 0), ('CA', 0), ('C', 1)),
-                        (('C', -1), ('N', 0), ('CA', 0), ('C', 0)),
-                        (('N', 0), ('CA', 0), ('CB', 0), ('CG', 0))))
+        expected = set (self.raw_dihderal_keys)
+        
         
         for atom_key in table.get_dihedral_keys():
             raw_key = tuple([(key.atom,key.offset) for key in atom_key])
