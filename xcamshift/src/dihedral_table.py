@@ -118,10 +118,10 @@ class Dihedral_parameter_table(Dihedral_table_base):
             raise KeyError(message)
     
     
-    def get_dihedral_parameter(self,target_atom,dihedral_key,parameter):
+    def  get_dihedral_parameter(self,target_atom,dihedral_key,parameter_id):
         self._check_target_atom(target_atom)
         self._check_dihedral_key(dihedral_key)
-        self._check_parameter_key(parameter)
+        self._check_parameter_key(parameter_id)
         
         result = None
         
@@ -129,8 +129,8 @@ class Dihedral_parameter_table(Dihedral_table_base):
 
         if raw_dihedral_key in self.table[self.DATA]:
             data = self.table[self.DATA][raw_dihedral_key]
-            if parameter in data:
-                parameter = data[parameter]
+            if parameter_id in data:
+                parameter = data[parameter_id]
                 if target_atom in parameter:
                     result  = parameter[target_atom]
 #            
