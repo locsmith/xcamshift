@@ -57,7 +57,7 @@ class Test(unittest2.TestCase):
         random_coil_potential = RandomCoilShifts()
         result = self.make_result_array() 
         expected  = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
-                     123.8, 8.2400000000000002, 52.266440000000003, 4.4328469999999998, 
+                     123.6, 8.2400000000000002, 52.266440000000003, 4.4328469999999998, 
                      19.0, 0.0, 0.0, 0.0, 177.09999999999999, 0.0, 0.0, 0.0, 0.0, 0.0, 
                      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -187,6 +187,6 @@ class Test(unittest2.TestCase):
         result = self.make_result_array()
         xcamshift_potential.set_shifts(result)
         
-        print result
+        print "TOTL",['%- 7.4f' % elem for elem in filter(lambda x: abs(x)>0.0,result)]
 if __name__ == "__main__":
     unittest2.main()
