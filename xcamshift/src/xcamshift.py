@@ -618,20 +618,7 @@ class Dihedral_potential(Base_potential):
                 result = tuple(result)
                 
         return result
-#    
-#    def __str__(self):
-#        print len( self._distances)
-#        result = []
-#        for from_index,distance_index_1,distance_index_2,value,exponent in self._distances:
-#            from_atom = self._get_atom_name(from_index)
-#            distance_atom_1 = self._get_atom_name(distance_index_1)
-#            distance_atom_2 = self._get_atom_name(distance_index_2)
-#            
-#            template = '[%s] - [%s] - [%s] %7.3f %7.3f'
-#            values = from_atom, distance_atom_1, distance_atom_2, value, exponent
-#            result.append( template % values)
-#        return '\n'.join(result)
-#
+    
     def dump(self):
         result  = []
         for from_index,atom_1,atom_2, atom_3, atom_4,value,param_0,param_1,param_2,param_3,param_4,exponent in self._distances:
@@ -658,7 +645,29 @@ class Dihedral_potential(Base_potential):
             
             
         return tuple(result)
-
+    
+    def __str__(self):
+        print len( self._distances)
+        result = []
+        for from_index, \
+            atom_1,atom_2, atom_3, atom_4,                           \
+            value,                                                   \
+            param_0,param_1,param_2,param_3,param_4,                 \
+            exponent in self._distances:
+                                             
+            from_atom = self._get_atom_name(from_index)
+            distance_atom_1 = self._get_atom_name(atom_1)
+            distance_atom_2 = self._get_atom_name(atom_2)
+            distance_atom_3 = self._get_atom_name(atom_3)
+            distance_atom_4 = self._get_atom_name(atom_4)
+                        
+            template = '[%s] - [[%s] - [%s] - [%s] - [%s]] (%7.3f %7.3f %7.3f %7.3f %7.3f) %7.3f %7.3f'
+            values = from_atom, distance_atom_1, distance_atom_2,         \
+                                distance_atom_3, distance_atom_4,         \
+                                param_0,param_1,param_2,param_3,param_4,  \
+                                value, exponent
+            result.append( template % values)
+        return '\n'.join(result)
 
     def _get_dihedral_angle(self, dihedral_1_atom_id_1, dihedral_1_atom_id_2, 
                                  dihedral_2_atom_id_1, dihedral_2_atom_id_2):
