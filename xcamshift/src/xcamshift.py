@@ -19,6 +19,8 @@ import sys
 import abc 
 from keys import Atom_key, Dihedral_key
 from utils import tupleit
+from dihedral import Dihedral
+from math import cos
 
         
 class Base_potential(object):
@@ -44,9 +46,14 @@ class Base_potential(object):
         return distance
     
     @staticmethod
-    def _select_atom_with_translation(segment='*', residue_number='#',atom='*'):
-        selection = '(segid "%s" and resid %i and name %s)' % (segment, residue_number, atom)
+    def find_atom(segment='*', residue_number='#', atom='*'):
+        selection = '(segid "%s" and resid %i and name %s)' % (segment, int(residue_number), atom)
         residue_atoms = AtomSel(selection)
+        return residue_atoms
+
+    @staticmethod
+    def _select_atom_with_translation(segment='*', residue_number='#',atom='*'):
+        residue_atoms = Base_potential.find_atom(segment, residue_number, atom)
         return residue_atoms
 
     @staticmethod
@@ -651,27 +658,50 @@ class Dihedral_potential(Base_potential):
             
             
         return tuple(result)
-#    
-#
-#
-#
-#    def _calc_single_shift(self, index):
-#        distance_atom_id_1, distance_atom_id_2, coefficient, exponent = self._distances[index][1:]
-#        
-#        distance = self._calculate_distance(distance_atom_id_1, distance_atom_id_2)
-#        
-#        shift = distance ** exponent * coefficient
-#        
-#        return shift
-#
+
+
+    def _get_dihedral_angle(self, dihedral_1_atom_id_1, dihedral_1_atom_id_2, 
+                                 dihedral_2_atom_id_1, dihedral_2_atom_id_2):
+        
+        atom_1  = self._get_atom_by_index(dihedral_1_atom_id_1)
+        atom_2  = self._get_atom_by_index(dihedral_1_atom_id_2)
+        atom_3  = self._get_atom_by_index(dihedral_2_atom_id_1)
+        atom_4  = self._get_atom_by_index(dihedral_2_atom_id_2)
+        
+        return Dihedral(atom_1,atom_2,atom_3,atom_4).value();
+    
+    
+    def _calc_single_shift(self, index):
+        
+        data = self._distances[index]
+        
+        dihedral_1_atom_id_1, dihedral_1_atom_id_2, \
+        dihedral_2_atom_id_1, dihedral_2_atom_id_2 = data[1:5]
+        
+        coefficient =  data[5]
+        
+        parameter_0, parameter_1,parameter_2,parameter_3,parameter_4 = data[6:11]
+        
+        angle = self._get_dihedral_angle(dihedral_1_atom_id_1, dihedral_1_atom_id_2, 
+                                        dihedral_2_atom_id_1, dihedral_2_atom_id_2)
+
+        
+        angle_term = parameter_0 * cos(3.0 * angle + parameter_3) + \
+                     parameter_1 * cos(angle + parameter_4) +       \
+                     parameter_2
+        
+        shift = coefficient * angle_term
+
+        return shift
+    
+    # TODO move to base_class
     def set_shifts(self,result):
-        pass
-#        for index in range(len(self._distances)):
-#            shift = self._calc_single_shift(index)
-#            from_atom_id = self._distances[index][0]
-#            result[from_atom_id] += shift
-#
-#        return result
+        for index in range(len(self._distances)):
+            shift = self._calc_single_shift(index)
+            from_atom_id = self._distances[index][0]
+            result[from_atom_id] += shift
+
+        return result
 
 if __name__ == "__main__":
     initStruct("test_data/3_ala/3ala.psf")

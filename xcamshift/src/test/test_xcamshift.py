@@ -7,10 +7,19 @@ from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
 from xcamshift import RandomCoilShifts, Distance_potential, Extra_potential,\
-    Dihedral_potential
+    Dihedral_potential, Base_potential
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
+
+
+def text_key_to_atom_ids(key, segment = '*'):
+    result = []
+    for residue_number, atom_name in key:
+        atoms = Base_potential.find_atom(segment, residue_number, atom_name)
+        atom_ids = [atom.index() for atom in atoms]
+        result.extend(atom_ids)
+    return result
 
 
 #class testSegmentManager(object):
@@ -140,6 +149,38 @@ class Test(unittest2.TestCase):
             
             self.assertAlmostEqual(exponent, 1.0)
 
+
+    def dihedral_key_to_atom_ids(self, dihedral_element):
+        dihedral_atoms = []
+        for vector in dihedral_element[0][1]:
+            dihedral_atoms.extend(vector)
+        
+        return dihedral_atoms
+
+    def testDihedralPotentialAngleCorrect(self):
+        dihedral_potential = Dihedral_potential()
+        
+        for dihedral_element in dihedral_potential.dump():
+            
+            dihedral_atoms = self.dihedral_key_to_atom_ids(dihedral_element)
+            atom_ids  = text_key_to_atom_ids(dihedral_atoms)
+            
+            expected  =  dihedrals_ala_3[dihedral_element[0]][2]
+            angle =  dihedral_potential._get_dihedral_angle(*atom_ids)
+            
+            self.assertAlmostEqual(expected, angle,self.DEFAULT_DECIMAL_PLACES)
+
+            
+    def testDihedralPotentialComponentShiftsCorrect(self):
+        dihedral_potential = Dihedral_potential()
+        
+        for i,dihedral_element in enumerate(dihedral_potential.dump()):
+            
+            expected  =  dihedrals_ala_3[dihedral_element[0]][3]
+            angle =  dihedral_potential._calc_single_shift(i)
+            
+            self.assertAlmostEqual(expected, angle,self.DEFAULT_DECIMAL_PLACES)
+#
 
 if __name__ == "__main__":
     unittest2.main()
