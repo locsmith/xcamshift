@@ -169,6 +169,10 @@ class Base_potential(object):
     def _translate_atom_name(self,atom_name):
         return atom_name
         
+    @abc.abstractmethod
+    def get_abbreviated_name(self):
+        pass
+    
 class Distance_potential(Base_potential):
     '''
     classdocs
@@ -183,7 +187,10 @@ class Distance_potential(Base_potential):
         '''
         
         self._distances = self._create_component_list("(all)")
-        
+    
+    def get_abbreviated_name(self):
+        return "BB  "
+    
     class ResidueAtomOffsetContext:
 
         
@@ -336,6 +343,9 @@ class Extra_potential(Base_potential):
         
         self._distances =  self._create_component_list(self.ALL)
     
+    def get_abbreviated_name(self):
+        return "XTRA"
+
     def _translate_atom_name(self, atom_name,context):
         return context.table.get_translation(atom_name)
         
@@ -466,7 +476,10 @@ class RandomCoilShifts(Base_potential):
 
         #TODO bad name
         self._shifts_list = self._create_component_list(self.ALL)
-
+    
+    def get_abbreviated_name(self):
+        return "RC  "
+    
     def _translate_atom_name(self, atom_name):
         #print >> sys.stderr, "WARNING no atom name translations in radom coil shifts yet!"
         return super(RandomCoilShifts, self)._translate_atom_name(atom_name)
@@ -511,7 +524,7 @@ class RandomCoilShifts(Base_potential):
         
     def set_shifts(self,shift_list):
         for atom_index,shift in self._shifts_list:
-            shift_list[atom_index] = shift
+            shift_list[atom_index] += shift
             
 
     def __str__(self): 
@@ -529,6 +542,9 @@ class Dihedral_potential(Base_potential):
         Base_potential.__init__(self)
         
         self._distances =  self._create_component_list(self.ALL)
+
+    def get_abbreviated_name(self):
+        return "DHA "
     
     def _translate_atom_name(self, atom_name,context):
         return context.table.get_translation(atom_name)
@@ -723,8 +739,9 @@ class Xcamshift():
         for potential in self.potential:
             sub_result  = [0.0] * len(result)
             potential.set_shifts(sub_result)
-            print sub_result
-            result += sub_result
+            for i,(result_elem,sub_result_elem) in enumerate(zip(result,sub_result)):
+                result[i] =result_elem + sub_result_elem
+            print potential.get_abbreviated_name(), ['%- 7.4f' % elem for elem in filter(lambda x: abs(x)>0.0,sub_result)]
         return result
     
     
