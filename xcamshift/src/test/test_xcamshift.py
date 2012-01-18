@@ -7,7 +7,7 @@ from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
 from xcamshift import RandomCoilShifts, Distance_potential, Extra_potential,\
-    Dihedral_potential, Base_potential
+    Dihedral_potential, Base_potential, Xcamshift
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
@@ -181,6 +181,12 @@ class Test(unittest2.TestCase):
             
             self.assertAlmostEqual(expected, angle,self.DEFAULT_DECIMAL_PLACES)
 #
-
+    def testXcamshift(self):
+        xcamshift_potential =  Xcamshift()
+        
+        result = self.make_result_array()
+        xcamshift_potential.set_shifts(result)
+        
+        print result
 if __name__ == "__main__":
     unittest2.main()

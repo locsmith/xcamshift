@@ -712,6 +712,24 @@ class Dihedral_potential(Base_potential):
 
         return result
 
+class Xcamshift():
+    def __init__(self):
+        self.potential = [RandomCoilShifts(),
+                          Distance_potential(),
+                          Extra_potential(),
+                          Dihedral_potential()]
+    
+    def set_shifts(self, result):
+        for potential in self.potential:
+            sub_result  = [0.0] * len(result)
+            potential.set_shifts(sub_result)
+            print sub_result
+            result += sub_result
+        return result
+    
+    
+        
+                          
 if __name__ == "__main__":
     initStruct("test_data/3_ala/3ala.psf")
     PDBTool("test_data/3_ala/3ala.pdb").read()
