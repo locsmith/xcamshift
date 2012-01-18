@@ -602,8 +602,8 @@ class Dihedral_potential(Base_potential):
                 result.extend(dihedral_indices)
                 result.append(value)
                 
-                for parameter in context.table.get_parameters():
-                    parameter = context.table.get_parameter(from_atom_name,dihedral_key,parameter)
+                for parameter_id in context.table.get_parameters():
+                    parameter = context.table.get_parameter(from_atom_name,dihedral_key,parameter_id)
                     result.append(parameter)
                 
                 
@@ -644,6 +644,7 @@ class Dihedral_potential(Base_potential):
             key.append(tuple(dihedral_atom_info))
             
             sub_result.append(value)
+            sub_result.extend((param_0,param_1,param_2,param_3,param_4,))
             sub_result.append(exponent)
             
             result.append(tupleit(sub_result))
