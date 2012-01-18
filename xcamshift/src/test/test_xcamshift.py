@@ -127,9 +127,17 @@ class Test(unittest2.TestCase):
         
     def testDihedralPotentialCoefficientsCorrect(self):
         dihedral_potential = Dihedral_potential()
-        for dihedral_elem_key, coeff,exponent in  dihedral_potential.dump():
-            expected = dihedrals_ala_3[dihedral_elem_key][0]
-            self.assertAlmostEqual(expected, coeff, self.DEFAULT_DECIMAL_PLACES)
+        for dihedral_elem_key, coeff, param_0,param_1,param_2,param_3,param_4, exponent in  dihedral_potential.dump():
+            expected_values = [dihedrals_ala_3[dihedral_elem_key][0]]
+            expected_values.extend(dihedrals_ala_3[dihedral_elem_key][1])
+
+            actual_values =(coeff, param_0,param_1,param_2,param_3,param_4)
+            
+            self.assertEqual(len(expected_values), len(actual_values))
+            for expected,actual in zip(expected_values,actual_values):
+                self.assertAlmostEqual(expected, actual, self.DEFAULT_DECIMAL_PLACES)
+
+            
             self.assertAlmostEqual(exponent, 1.0)
 
 
