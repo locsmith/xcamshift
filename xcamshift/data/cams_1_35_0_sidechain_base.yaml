@@ -1,0 +1,19 @@
+# side chain distance dependent chemical shifts from camshift 1.35.0
+---
+
+exponent
+target_atoms : ["HA", "CA", "HN", "N", "C", "CB"]
+atoms:     {
+   ALA : ["CB","HB1", "HB2", "HB3"]
+}
+data: {
+
+  
+   ALA : {
+              CB :  {  HA  : -3.4713212,  CA : ,            HN : ,       N :  ,        C : ,         CB  : 1.06e-9     },
+              HB1 : {  HA  : ,            CA : ,            HN : ,       N :  ,        C : ,         CB  : ,           },
+              HB2 : {  HA  : ,            CA : ,            HN : ,       N :  ,        C : ,         CB  : ,           },
+              HB3 : {  HA  : ,            CA : ,            HN : ,       N :  ,        C : ,         CB  : ,           },
+         },
+}
+
