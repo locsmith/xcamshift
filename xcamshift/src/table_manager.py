@@ -45,7 +45,7 @@ class Table_manager(object):
     EXTRA="extra"
     DIHEDRAL="dihedral"
     DIHEDRAL_PARS="dihedral_pars"
-    
+    SIDECHAIN="sidechain"
 
     def __init__(self):
         '''
@@ -160,4 +160,10 @@ class Table_manager(object):
         dihedral_table = self._get_dihedral_table(residue_type)
         dihedral_parameter_table =  self._get_dihedral_parameter_table(residue_type)
         return Composite_dihedral_table(dihedral_table, dihedral_parameter_table)
+
+    
+    def get_sidechain_table(self,residue_type):
+        return self.__get_table(self.SIDECHAIN,residue_type)
+    
+    
             

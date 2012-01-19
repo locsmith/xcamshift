@@ -149,7 +149,9 @@ class Test(unittest2.TestCase):
             
         result = table.get_parameter("HA",dihedral_key,0)
         self.assertAlmostEqual(result, 0.3)
-                
+    
+    def testGetSidechainTable(self):
+        table = self.table_manager.get_sidechain_table('ALA')           
             
 
 if __name__ == "__main__":
