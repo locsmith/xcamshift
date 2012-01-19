@@ -12,8 +12,7 @@ import extra_table
 from dihedral_table import Dihedral_table, Dihedral_parameter_table,\
     Composite_dihedral_table
 from utils import tupleit
-
-
+from sidechain_table import Sidechain_table
 
 
 class Table_manager(object):
@@ -163,7 +162,7 @@ class Table_manager(object):
 
     
     def get_sidechain_table(self,residue_type):
-        return self.__get_table(self.SIDECHAIN,residue_type)
+        return Sidechain_table(self.__get_table(self.SIDECHAIN,residue_type))
     
     
             
