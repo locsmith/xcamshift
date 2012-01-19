@@ -13,6 +13,7 @@ class Test(unittest2.TestCase):
     raw_dihderal_keys = ((("C", -1), ("N", 0), ("CA", 0), ("C",  0)), 
                          (("N",  0), ("CA", 0), ("C", 0), ("N",  1)), 
                          (("N", 0), ("CA", 0), ("CB", 0), ("CG", 0)))
+    TARGET_ATOMS = ["HA", "CA", "HN", "N", "C", "CB"]
 
     def setUp(self):
         self.table_manager = Table_manager()
@@ -136,7 +137,7 @@ class Test(unittest2.TestCase):
         
         
         for raw_key in self.raw_dihderal_keys:
-            for target_atom in ["HA",  "CA", "HN", "N", "C", "CB"]:
+            for target_atom in self.TARGET_ATOMS:
                 dihedral_key = self.raw_key_to_dihedral_key(raw_key)
                 for parameter in range(5):
                  
@@ -151,7 +152,13 @@ class Test(unittest2.TestCase):
         self.assertAlmostEqual(result, 0.3)
     
     def testGetSidechainTable(self):
-        table = self.table_manager.get_sidechain_table('ALA')           
+        table = self.table_manager.get_sidechain_table('ALA')   
+        
+        self.assertAlmostEqual(table.get_exponent(), 1.0) 
+        self.assertIn("ALA", table.get_residue_types())
+        self.assertIn("CB", table.get_sidechain_atoms("ALA"))
+        self.assertAlmostEqual(table.get_sidechain_coefficient("ALA", "CA", "CB"),-3.4713212)
+        self.assertSequenceEqual(self.TARGET_ATOMS, table.get_target_atoms())
             
 
 if __name__ == "__main__":
