@@ -727,7 +727,6 @@ class Dihedral_potential(Base_potential):
 
         return result
 
-
     
 class Sidechain_potential(Base_potential):
     
@@ -820,16 +819,80 @@ class Xcamshift():
         self.potential = [RandomCoilShifts(),
                           Distance_potential(),
                           Extra_potential(),
-                          Dihedral_potential()]
-    
-    def set_shifts(self, result):
+                          Dihedral_potential(),
+                          Sidechain_potential()]
+    def print_shifts(self):
+        result  = [0] * Segment_Manager().get_number_atoms()
+        
+        result_elements = {}
+        keys=[]
         for potential in self.potential:
-            sub_result  = [0.0] * len(result)
+            num_atoms = len(result)
+            sub_result  = [0.0] * num_atoms
             potential.set_shifts(sub_result)
-            for i,(result_elem,sub_result_elem) in enumerate(zip(result,sub_result)):
-                result[i] =result_elem + sub_result_elem
-#            print potential.get_abbreviated_name(), ['%- 7.4f' % elem for elem in filter(lambda x: abs(x)>0.0,sub_result)]
-        return result        
+            key = potential.get_abbreviated_name()
+            keys.append(key)
+            result_elements[key] = sub_result
+        
+        
+        keys = []
+        for potential in self.potential:
+            num_atoms = len(result)
+            sub_result  = [0.0] * num_atoms
+            potential.set_shifts(sub_result)
+            key = potential.get_abbreviated_name()
+            keys.append(key)
+            result_elements[key] = sub_result
+        
+        
+        total = [sum(elems) for elems in zip(*result_elements.values())]
+        keys.append('TOTL')
+        
+        result_elements['TOTL'] = total
+        residues  = []
+        atoms = []
+        result_elements['ATOM'] =  atoms
+        result_elements['RESD'] =  residues
+        
+        keys.insert(0, 'RESD')
+        keys.insert(0,'ATOM')
+        
+        for i in range(num_atoms):
+            segments,residue,atom = Base_potential._get_atom_info_from_index(i)
+            residues.append(('%5i' %residue))
+            atoms.append(atom)
+        
+        for key in keys:
+            values = []
+            print key.ljust(5),
+            for total,value in zip(result_elements['TOTL'],result_elements[key]):
+                if total > 0:
+                    if isinstance(value, float):
+                        string  = '%- 7.4f' % value
+                    else:
+                        string = value
+                    string = string.rjust(9)
+                    
+                    values.append(string)
+            print ' '.join(values)
+            
+        
+    def set_shifts(self, result):
+        keys = []
+        result_elements = {}
+        for potential in self.potential:
+            num_atoms = len(result)
+            sub_result  = [0.0] * num_atoms
+            potential.set_shifts(sub_result)
+            key = potential.get_abbreviated_name()
+            keys.append(key)
+            result_elements[key] = sub_result
+        
+        
+        result = [sum(elems) for elems in zip(*result_elements.values())]
+        
+        return result
+       
                           
 if __name__ == "__main__":
     initStruct("test_data/3_ala/3ala.psf")

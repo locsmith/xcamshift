@@ -11,6 +11,7 @@ from xcamshift import RandomCoilShifts, Distance_potential, Extra_potential,\
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
+from segment_manager import Segment_Manager
 
 
 def text_key_to_atom_ids(key, segment = '*'):
@@ -234,19 +235,27 @@ class Test(unittest2.TestCase):
         sidechain_potential = Sidechain_potential()
         
         for i in range(1):
-        #i,dihedral_element in enumerate(sidechain_potential.dump()):
-            
-            #expected  =  dihedrals_ala_3[dihedral_element[0]][3]
+
             shift =  sidechain_potential._calc_single_shift(i)
 #            self.assertAlmostEqual(expected, angle,self.DEFAULT_DECIMAL_PLACES)
 
     def testXcamshift(self):
         xcamshift_potential =  Xcamshift()
         
-        result = self.make_result_array()
-        xcamshift_potential.set_shifts(result)
+        shifts = self.make_result_array()
+        shifts = xcamshift_potential.set_shifts(shifts)
         
-#        xcamshift_potential.print_shifts()
+        expected  = [0.0] * len(shifts)
+        expected[12] = 120.2627    # N
+        expected[13] =   8.2373    # HN
+        expected[14] =  52.6395    # CA 
+        expected[15] =   4.2651    # HA
+        expected[16] =  18.3505    # CB
+        expected[20] = 177.7649    # C
+        
+        self.assertSequenceAlmostEqual(expected, shifts, delta=0.0001)
+        
+        xcamshift_potential.print_shifts()
         
 if __name__ == "__main__":
     unittest2.main()
