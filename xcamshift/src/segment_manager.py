@@ -37,11 +37,16 @@ class Segment_Manager():
                     self.first_atom_index, self.last_atom_index)
             
             return template % data
+        
+    def get_number_atoms(self):
+        return self._num_atoms
     
     def __build_segments_and_residues(self):
         
         atom_selection = AtomSel('(all)')
-       
+        
+        self._num_atoms = len(atom_selection)
+        
         segments  =  set()
         segment_residues = {}
         
