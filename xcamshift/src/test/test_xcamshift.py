@@ -7,7 +7,7 @@ from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
 from xcamshift import RandomCoilShifts, Distance_potential, Extra_potential,\
-    Dihedral_potential, Base_potential, Xcamshift
+    Dihedral_potential, Base_potential, Sidechain_potential, Xcamshift
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
@@ -181,12 +181,72 @@ class Test(unittest2.TestCase):
             
             self.assertAlmostEqual(expected, angle,self.DEFAULT_DECIMAL_PLACES)
 #
+####
+    def testSidechainPotentialComponentsCorrect(self):
+        sidechain_potential = Sidechain_potential()
+        
+        
+#        dihedrals_ala_3_copy = dict(dihedrals_ala_3)
+#        for dihedral_elem in dihedral_portential.dump():
+#            self.assertElemeInSet(dihedral_elem[0], dihedrals_ala_3_copy)
+#            del dihedrals_ala_3_copy[dihedral_elem[0]]
+#
+#        self.assertEqual(0, len(dihedrals_ala_3_copy))
+        
+#    def testDihedralPotentialCoefficientsCorrect(self):
+#        dihedral_potential = Dihedral_potential()
+#        for dihedral_elem_key, coeff, param_0,param_1,param_2,param_3,param_4, exponent in  dihedral_potential.dump():
+#            expected_values = [dihedrals_ala_3[dihedral_elem_key][0]]
+#            expected_values.extend(dihedrals_ala_3[dihedral_elem_key][1])
+#
+#            actual_values =(coeff, param_0,param_1,param_2,param_3,param_4)
+#            
+#            self.assertEqual(len(expected_values), len(actual_values))
+#            for expected,actual in zip(expected_values,actual_values):
+#                self.assertAlmostEqual(expected, actual, self.DEFAULT_DECIMAL_PLACES)
+#
+#            
+#            self.assertAlmostEqual(exponent, 1.0)
+#
+#
+#    def dihedral_key_to_atom_ids(self, dihedral_element):
+#        dihedral_atoms = []
+#        for vector in dihedral_element[0][1]:
+#            dihedral_atoms.extend(vector)
+#        
+#        return dihedral_atoms
+#
+#    def testDihedralPotentialAngleCorrect(self):
+#        dihedral_potential = Dihedral_potential()
+#        
+#        for dihedral_element in dihedral_potential.dump():
+#            
+#            dihedral_atoms = self.dihedral_key_to_atom_ids(dihedral_element)
+#            atom_ids  = text_key_to_atom_ids(dihedral_atoms)
+#            
+#            expected  =  dihedrals_ala_3[dihedral_element[0]][2]
+#            angle =  dihedral_potential._get_dihedral_angle(*atom_ids)
+#            
+#            self.assertAlmostEqual(expected, angle,self.DEFAULT_DECIMAL_PLACES)
+#
+#            
+    def testSidechainlPotentialComponentShiftsCorrect(self):
+        sidechain_potential = Sidechain_potential()
+        
+        for i in range(1):
+        #i,dihedral_element in enumerate(sidechain_potential.dump()):
+            
+            #expected  =  dihedrals_ala_3[dihedral_element[0]][3]
+            shift =  sidechain_potential._calc_single_shift(i)
+#            self.assertAlmostEqual(expected, angle,self.DEFAULT_DECIMAL_PLACES)
+
     def testXcamshift(self):
         xcamshift_potential =  Xcamshift()
         
         result = self.make_result_array()
         xcamshift_potential.set_shifts(result)
         
-        print "TOTL",['%- 7.4f' % elem for elem in filter(lambda x: abs(x)>0.0,result)]
+#        xcamshift_potential.print_shifts()
+        
 if __name__ == "__main__":
     unittest2.main()
