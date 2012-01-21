@@ -813,7 +813,22 @@ class Sidechain_potential(Base_potential):
         distance = self._calculate_distance(target_atom_index, sidechain_atom_index)
 
         return distance ** exponent * value
-
+    
+    def dump(self):
+        result  = []
+        for from_index,sidechain_index,value,exponent in self._distances:
+            sub_result  = []
+            
+            target_atom_key = list(self._get_atom_info_from_index(from_index)[1:])
+            target_atom_key.append(self._get_atom_info_from_index(sidechain_index)[1:][1])
+            sub_result.append(tuple(target_atom_key))
+            
+            sub_result.append(value)
+            sub_result.append(exponent)
+            
+            result.append(tuple(sub_result))
+        return result
+    
 class Xcamshift():
     def __init__(self):
         self.potential = [RandomCoilShifts(),
@@ -892,7 +907,8 @@ class Xcamshift():
         result = [sum(elems) for elems in zip(*result_elements.values())]
         
         return result
-       
+    
+
                           
 if __name__ == "__main__":
     initStruct("test_data/3_ala/3ala.psf")
