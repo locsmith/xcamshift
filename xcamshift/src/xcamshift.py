@@ -829,6 +829,17 @@ class Sidechain_potential(Base_potential):
             result.append(tuple(sub_result))
         return result
     
+    def __str__(self):
+        result = []
+        for target_index,sidechain_index,value,exponent in self._distances:
+            target_atom = self._get_atom_name(target_index)
+            sidechain_atom = self._get_atom_name(sidechain_index)
+            
+            template = '[%s] - [%s] %7.3f %7.3f'
+            values = target_atom, sidechain_atom, value, exponent
+            result.append( template % values)
+        return '\n'.join(result)
+    
 class Xcamshift():
     def __init__(self):
         self.potential = [RandomCoilShifts(),
