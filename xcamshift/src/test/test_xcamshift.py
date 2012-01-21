@@ -12,6 +12,7 @@ from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
 from segment_manager import Segment_Manager
+from test.sidechains import sidechains_ala_3
 
 
 def text_key_to_atom_ids(key, segment = '*'):
@@ -186,51 +187,27 @@ class Test(unittest2.TestCase):
     def testSidechainPotentialComponentsCorrect(self):
         sidechain_potential = Sidechain_potential()
         
+        sidechains_ala_3_copy = dict(sidechains_ala_3)
+        for sidechain_elem  in sidechain_potential.dump():
+            self.assertElemeInSet(sidechain_elem[0], sidechains_ala_3_copy)
+            del sidechains_ala_3_copy[sidechain_elem[0]]
+
+        self.assertEqual(0, len(sidechains_ala_3_copy))
         
-#        dihedrals_ala_3_copy = dict(dihedrals_ala_3)
-#        for dihedral_elem in dihedral_portential.dump():
-#            self.assertElemeInSet(dihedral_elem[0], dihedrals_ala_3_copy)
-#            del dihedrals_ala_3_copy[dihedral_elem[0]]
-#
-#        self.assertEqual(0, len(dihedrals_ala_3_copy))
-        
-#    def testDihedralPotentialCoefficientsCorrect(self):
-#        dihedral_potential = Dihedral_potential()
-#        for dihedral_elem_key, coeff, param_0,param_1,param_2,param_3,param_4, exponent in  dihedral_potential.dump():
-#            expected_values = [dihedrals_ala_3[dihedral_elem_key][0]]
-#            expected_values.extend(dihedrals_ala_3[dihedral_elem_key][1])
-#
-#            actual_values =(coeff, param_0,param_1,param_2,param_3,param_4)
-#            
-#            self.assertEqual(len(expected_values), len(actual_values))
-#            for expected,actual in zip(expected_values,actual_values):
-#                self.assertAlmostEqual(expected, actual, self.DEFAULT_DECIMAL_PLACES)
-#
-#            
-#            self.assertAlmostEqual(exponent, 1.0)
-#
-#
-#    def dihedral_key_to_atom_ids(self, dihedral_element):
-#        dihedral_atoms = []
-#        for vector in dihedral_element[0][1]:
-#            dihedral_atoms.extend(vector)
-#        
-#        return dihedral_atoms
-#
-#    def testDihedralPotentialAngleCorrect(self):
-#        dihedral_potential = Dihedral_potential()
-#        
-#        for dihedral_element in dihedral_potential.dump():
-#            
-#            dihedral_atoms = self.dihedral_key_to_atom_ids(dihedral_element)
-#            atom_ids  = text_key_to_atom_ids(dihedral_atoms)
-#            
-#            expected  =  dihedrals_ala_3[dihedral_element[0]][2]
-#            angle =  dihedral_potential._get_dihedral_angle(*atom_ids)
-#            
-#            self.assertAlmostEqual(expected, angle,self.DEFAULT_DECIMAL_PLACES)
-#
-#            
+    def testSidechainPotentialCoefficientsCorrect(self):
+        sidechain_potential = Sidechain_potential()
+        for sidechain_potential_key, coeff, exponent in  sidechain_potential.dump():
+            expected_values = sidechains_ala_3[sidechain_potential_key][:2]
+            
+            actual_values  = (coeff,exponent)
+            
+            self.assertEqual(len(expected_values), len(actual_values))
+            for expected,actual in zip(expected_values,actual_values):
+                self.assertAlmostEqual(expected, actual, self.DEFAULT_DECIMAL_PLACES)
+
+            
+            self.assertAlmostEqual(exponent, 1.0)
+         
     def testSidechainlPotentialComponentShiftsCorrect(self):
         sidechain_potential = Sidechain_potential()
         
