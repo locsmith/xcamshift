@@ -13,6 +13,8 @@ from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
 from segment_manager import Segment_Manager
 from test.sidechains import sidechains_ala_3
+from test.ala_3 import ala_3_total_shifts
+from test import sidechains
 
 
 def text_key_to_atom_ids(key, segment = '*'):
@@ -211,10 +213,13 @@ class Test(unittest2.TestCase):
     def testSidechainlPotentialComponentShiftsCorrect(self):
         sidechain_potential = Sidechain_potential()
         
-        for i in range(1):
+        for i,elem in enumerate(sidechain_potential.dump()):
 
+            key = elem[0]
+            
             shift =  sidechain_potential._calc_single_shift(i)
-#            self.assertAlmostEqual(expected, angle,self.DEFAULT_DECIMAL_PLACES)
+            expected_shift  = sidechains.sidechains_ala_3[key][2]
+            self.assertAlmostEqual(expected_shift, shift, self.DEFAULT_DECIMAL_PLACES)
 
     def testXcamshift(self):
         xcamshift_potential =  Xcamshift()
@@ -223,12 +228,12 @@ class Test(unittest2.TestCase):
         shifts = xcamshift_potential.set_shifts(shifts)
         
         expected  = [0.0] * len(shifts)
-        expected[12] = 120.2627    # N
-        expected[13] =   8.2373    # HN
-        expected[14] =  52.6395    # CA 
-        expected[15] =   4.2651    # HA
-        expected[16] =  18.3505    # CB
-        expected[20] = 177.7649    # C
+        expected[12] = ala_3_total_shifts[2]['N']
+        expected[13] = ala_3_total_shifts[2]['HN']
+        expected[14] = ala_3_total_shifts[2]['CA']
+        expected[15] = ala_3_total_shifts[2]['HA']
+        expected[16] = ala_3_total_shifts[2]['CB']
+        expected[20] = ala_3_total_shifts[2]['C']
         
         self.assertSequenceAlmostEqual(expected, shifts, delta=0.0001)
         
