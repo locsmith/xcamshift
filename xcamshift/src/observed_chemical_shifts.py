@@ -10,7 +10,7 @@ class Observed_shift_table(object):
     classdocs
     '''
 
-    def __init__(self,shift_data):
+    def __init__(self,shift_data={}):
         self._chemical_shifts = self.process_observed_shifts(shift_data)
         
     def process_observed_shifts(self,shift_data):
