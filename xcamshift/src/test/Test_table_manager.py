@@ -9,7 +9,7 @@ from keys import Atom_key, Dihedral_key
 
 
 
-class Test(unittest2.TestCase):
+class Test_table_manager(unittest2.TestCase):
     raw_dihderal_keys = ((("C", -1), ("N", 0), ("CA", 0), ("C",  0)), 
                          (("N",  0), ("CA", 0), ("C", 0), ("N",  1)), 
                          (("N", 0), ("CA", 0), ("CB", 0), ("CG", 0)))
