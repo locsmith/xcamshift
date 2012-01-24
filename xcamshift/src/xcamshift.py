@@ -259,22 +259,34 @@ class Distance_potential(Base_potential):
 
     
 
-
-
-    def set_shifts(self, result):
+    def _calc_single_shift(self,i):
+        from_atom_id,to_atom_id,coefficent,exponent = self._distances[i]
+        from_atom_pos = Atom_utils._get_atom_pos(from_atom_id)
+        to_atom_pos = Atom_utils._get_atom_pos(to_atom_id)
         
-        for from_atom_id,to_atom_id,coefficent,exponent in self._distances:
-            
-            from_atom_pos = Atom_utils._get_atom_pos(from_atom_id)
-            to_atom_pos = Atom_utils._get_atom_pos(to_atom_id)
-            
-            xyz_distance = from_atom_pos - to_atom_pos
-            distance  = norm(xyz_distance)
-            
-            shift = distance ** exponent * coefficent 
+        xyz_distance = from_atom_pos - to_atom_pos
+        distance  = norm(xyz_distance)
+        
+        return  distance ** exponent * coefficent 
+
+    #TODO move to Base_potential
+    def set_shifts(self, result):
+        for index in range(len(self._distances)):
+            shift = self._calc_single_shift(index)
+            from_atom_id = self._distances[index][0]
             result[from_atom_id] += shift
+#        for from_atom_id,to_atom_id,coefficent,exponent in self._distances:
+#            
+#            from_atom_pos = Atom_utils._get_atom_pos(from_atom_id)
+#            to_atom_pos = Atom_utils._get_atom_pos(to_atom_id)
+#            
+#            xyz_distance = from_atom_pos - to_atom_pos
+#            distance  = norm(xyz_distance)
+#            
+#            shift = distance ** exponent * coefficent 
+#            result[from_atom_id] += shift
             
-        return shift
+        return result
     
 
     
@@ -308,7 +320,10 @@ class Distance_potential(Base_potential):
 
     
     def _calc_single_energy(self, i):
-        print self
+#        print self._distances[i]
+        pass
+        
+#        self.set_shifts(result)
     
     
     
