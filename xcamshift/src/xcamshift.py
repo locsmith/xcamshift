@@ -289,6 +289,30 @@ class Distance_potential(Base_potential):
 #    
     def set_observed_shifts(self, shift_table):
         self._shift_table  =  shift_table
+
+    
+    def dump(self):
+        result  = []
+        for from_index,distance_index_1,value,exponent in self._distances:
+            sub_result  = []
+            sub_result.append(Atom_utils._get_atom_info_from_index(from_index))
+            
+            sub_result.append(Atom_utils._get_atom_info_from_index(distance_index_1))
+            
+            sub_result.append(value)
+            
+            sub_result.append(exponent)
+            
+            result.append(tuple(sub_result))
+        return result   
+
+    
+    def _calc_single_energy(self, i):
+        print self
+    
+    
+    
+    
     
     
 
