@@ -6,7 +6,7 @@ Created on 31 Dec 2011
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
-from xcamshift import RandomCoilShifts, Distance_potential, Extra_potential,\
+from xcamshift import RandomCoilShifts, Distance_potential,  Extra_potential,\
     Dihedral_potential, Base_potential, Sidechain_potential, Xcamshift
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
@@ -14,13 +14,15 @@ from test.dihedrals import dihedrals_ala_3
 from segment_manager import Segment_Manager
 from test.sidechains import sidechains_ala_3
 from test.ala_3 import ala_3_total_shifts
-from test import sidechains
+from test import sidechains, ala_3
+from observed_chemical_shifts import Observed_shift_table
+from utils import Atom_utils
 
 
 def text_key_to_atom_ids(key, segment = '*'):
     result = []
     for residue_number, atom_name in key:
-        atoms = Base_potential.find_atom(segment, residue_number, atom_name)
+        atoms = Atom_utils.find_atom(segment, residue_number, atom_name)
         atom_ids = [atom.index() for atom in atoms]
         result.extend(atom_ids)
     return result
@@ -238,6 +240,25 @@ class Test(unittest2.TestCase):
         self.assertSequenceAlmostEqual(expected, shifts, delta=0.0001)
         
         xcamshift_potential.print_shifts()
+        
+    def testDistancePotentialSingleEnergies(self):
+        test_shifts = ala_3.ala_3_test_shifts
+        
+        distance_potential = Distance_potential()
+        
+        shift_table = Observed_shift_table(test_shifts)
+        distance_potential.set_observed_shifts(shift_table)
+#        
+#        for elem in distance_potential.d():
+#            print elem
+        
+#        for i,distance_elem in enumerate(distance_potential.dump()):
+#            
+#            energy = distance_potential._calc_single_energy(i)
+                    
+#        distance_potential.get_single_energy(i)
+        
+        
         
 if __name__ == "__main__":
     unittest2.main()

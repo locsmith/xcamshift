@@ -5,22 +5,22 @@ Created on 27 Dec 2011
 TODO need to translate from_atom names
 '''
 
-from atomSel import AtomSel
+
 
 from protocol import initStruct
 from pdbTool import PDBTool
 from segment_manager import Segment_Manager
 from table_manager import Table_manager
-from simulation import currentSimulation
-from atom import Atom
+from atomSel import AtomSel
 from atomSel import intersection
 from vec3 import  norm
 import sys
 import abc 
 from keys import Atom_key, Dihedral_key
-from utils import tupleit
+from utils import tupleit, Atom_utils
 from dihedral import Dihedral
 from math import cos
+from observed_chemical_shifts import Observed_shift_table
 
         
 class Base_potential(object):
@@ -33,67 +33,6 @@ class Base_potential(object):
         self._segment_manager = Segment_Manager()
         self._table_manager = Table_manager.get_default_table_manager()
         
-    @staticmethod
-    def _calculate_distance(distance_atom_id_1, distance_atom_id_2):
-        
-        from_atom_pos = Base_potential._get_atom_pos(distance_atom_id_1)
-        to_atom_pos = Base_potential._get_atom_pos(distance_atom_id_2)
-        
-        xyz_distance = from_atom_pos - to_atom_pos
-        
-        distance = norm(xyz_distance)
-        
-        return distance
-    
-    @staticmethod
-    def find_atom(segment='*', residue_number='#', atom='*'):
-        selection = '(segid "%s" and resid %i and name %s)' % (segment, int(residue_number), atom)
-        residue_atoms = AtomSel(selection)
-        return residue_atoms
-
-    @staticmethod
-    def _select_atom_with_translation(segment='*', residue_number='#',atom='*'):
-        residue_atoms = Base_potential.find_atom(segment, residue_number, atom)
-        return residue_atoms
-
-    @staticmethod
-    def _get_residue_type(segment, residue_number):
-        residue_atoms = Base_potential._select_atom_with_translation(segment, residue_number)
-        return residue_atoms[0].residueName()
-    
-
-    @staticmethod
-    def _get_atom_by_index(atom_index):
-        return AtomSel("(id %i)" % (atom_index + 1))[0]
-    
-    @staticmethod
-    def _get_atom_info_from_index(atom_index):
-        atom = Base_potential._get_atom_by_index(atom_index)
-        return atom.segmentName(), atom.residueNum(), atom.atomName()
-            
-    @staticmethod
-    def _get_atom_name(atom_index, template="%-5i '%4s' %i [%3s] %-4s"):
-        atom = Base_potential._get_atom_by_index(atom_index)
-        
-        segid = atom.segmentName()
-        residue_number = atom.residueNum()
-        residue_type = atom.residueName()
-        atom_name = atom.atomName()
-        
-        return template % (atom_index, segid, residue_number, residue_type, atom_name)
-    
-    @staticmethod
-    def _get_atom_names(atoms,template  = "%-5i '%4s' %i [%3s] %-4s", joiner=", "):
-        atom_names = []
-        for atom in atoms:
-            atom_names.append(Base_potential._get_atom_name(atom))
-        return joiner.join(atom_names)
-            
-    @staticmethod
-    def _get_atom_pos(atom_id):
-        atom = Atom(currentSimulation(), atom_id)
-        atom_pos = atom.pos()
-        return atom_pos
 #    def _print_atom(self,atom):
 #        return "%i. [%s]:%i[%s]@%s" % (atom.index(),atom.segmentName(), atom.residueNum(),atom.residueName(), atom.atomName())
 
@@ -108,9 +47,9 @@ class Base_potential(object):
     def add_components_for_residue(self, segment, target_residue_number, atom_selection):
         result  = []
         
-        from_residue_type = self._get_residue_type(segment, target_residue_number)
+        from_residue_type = Atom_utils._get_residue_type(segment, target_residue_number)
         random_coil_table = self._get_table(from_residue_type)
-        selected_atoms = intersection(self._select_atom_with_translation(segment, target_residue_number), atom_selection)
+        selected_atoms = intersection(Atom_utils._select_atom_with_translation(segment, target_residue_number), atom_selection)
         
         for atom in selected_atoms:
             
@@ -137,7 +76,7 @@ class Base_potential(object):
             if self._check_segment_length(segment):
                 segment_info = self._segment_manager.get_segment_info(segment)
                 for residue_number in range(segment_info.first_residue+1,segment_info.last_residue):
-                    residue_atom_selection = self._select_atom_with_translation(segment, residue_number)
+                    residue_atom_selection = Atom_utils._select_atom_with_translation(segment, residue_number)
                     target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
                     result.extend(self.add_components_for_residue(segment, residue_number, target_atom_selection))
                 
@@ -186,6 +125,7 @@ class Distance_potential(Base_potential):
         '''
         
         self._distances = self._create_component_list("(all)")
+        self.observed_shifts = Observed_shift_table()
     
     def get_abbreviated_name(self):
         return "BB  "
@@ -211,11 +151,11 @@ class Distance_potential(Base_potential):
             
             self.to_atom_name = to_atom_name
             self.to_residue_number = from_residue_number+offset
-            to_atom = Base_potential._select_atom_with_translation(self.segment, self.to_residue_number, self.to_atom_name)
+            to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, self.to_atom_name)
             
             if len(to_atom) == 0:
                 self.to_atom_name =  self.table.get_translation(self.to_atom_name)
-                to_atom = Base_potential._select_atom_with_translation(self.segment, self.to_residue_number, self.to_atom_name)
+                to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, self.to_atom_name)
                 
             num_to_atom = len(to_atom)
             if num_to_atom > 1:
@@ -223,7 +163,7 @@ class Distance_potential(Base_potential):
                 raise Exception("unexpected number of to atoms selected (> 1) %d" % num_to_atom)
                 
             if len(to_atom) == 1:
-                self.to_residue_type = Base_potential._get_residue_type(self.segment, self.to_residue_number)
+                self.to_residue_type = Atom_utils._get_residue_type(self.segment, self.to_residue_number)
                 self.to_atom_index = to_atom[0].index()
                 self.complete = True
             
@@ -325,8 +265,8 @@ class Distance_potential(Base_potential):
         
         for from_atom_id,to_atom_id,coefficent,exponent in self._distances:
             
-            from_atom_pos = self._get_atom_pos(from_atom_id)
-            to_atom_pos = self._get_atom_pos(to_atom_id)
+            from_atom_pos = Atom_utils._get_atom_pos(from_atom_id)
+            to_atom_pos = Atom_utils._get_atom_pos(to_atom_id)
             
             xyz_distance = from_atom_pos - to_atom_pos
             distance  = norm(xyz_distance)
@@ -335,6 +275,22 @@ class Distance_potential(Base_potential):
             result[from_atom_id] += shift
             
         return shift
+    
+
+    
+#    def get_shift(self):
+#        pass
+#    def get_energies(self, data):
+#        pass
+#    
+#    def get_derivatives(self,data):
+#        pass
+#
+#    
+    def set_observed_shifts(self, shift_table):
+        self._shift_table  =  shift_table
+    
+    
 
 class Extra_potential(Base_potential):
     def __init__(self):
@@ -354,10 +310,10 @@ class Extra_potential(Base_potential):
     class ExtraContext(object):
 
         def _select_atom_with_translation(self, segment, residue_number_1, atom_name_1):
-            target_atom_1 = Base_potential._select_atom_with_translation(segment, residue_number_1, atom_name_1)
+            target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
             if len(target_atom_1) == 0:
                 atom_name_1 = self.table.get_translation(atom_name_1)
-                target_atom_1 = Base_potential._select_atom_with_translation(segment, residue_number_1, atom_name_1)
+                target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
             num_to_atom = len(target_atom_1)
             if num_to_atom > 1:
                 self._get_atom_names(target_atom_1)
@@ -437,10 +393,10 @@ class Extra_potential(Base_potential):
         result  = []
         for from_index,distance_index_1,distance_index_2,value,exponent in self._distances:
             sub_result  = []
-            sub_result.extend(self._get_atom_info_from_index(from_index)[1:])
+            sub_result.extend(Atom_utils._get_atom_info_from_index(from_index)[1:])
             
-            sub_result.extend(self._get_atom_info_from_index(distance_index_1)[1:])
-            sub_result.extend(self._get_atom_info_from_index(distance_index_2)[1:])
+            sub_result.extend(Atom_utils._get_atom_info_from_index(distance_index_1)[1:])
+            sub_result.extend(Atom_utils._get_atom_info_from_index(distance_index_2)[1:])
             
             sub_result.append(value)
             
@@ -453,7 +409,7 @@ class Extra_potential(Base_potential):
     def _calc_single_shift(self, index):
         distance_atom_id_1, distance_atom_id_2, coefficient, exponent = self._distances[index][1:]
         
-        distance = self._calculate_distance(distance_atom_id_1, distance_atom_id_2)
+        distance = Atom_utils._calculate_distance(distance_atom_id_1, distance_atom_id_2)
         
         shift = distance ** exponent * coefficient
         
@@ -509,7 +465,7 @@ class RandomCoilShifts(Base_potential):
             from_residue_number = atom.residueNum()
             
             self.to_residue_number = from_residue_number + offset
-            self.to_residue_type = Base_potential._get_residue_type(segment, from_residue_number + offset)
+            self.to_residue_type = Atom_utils._get_residue_type(segment, from_residue_number + offset)
             
             self.complete = True
 
@@ -554,10 +510,10 @@ class Dihedral_potential(Base_potential):
     class DihedralContext(object):
 
         def _select_atom_with_translation(self, segment, residue_number_1, atom_name_1):
-            target_atom_1 = Base_potential._select_atom_with_translation(segment, residue_number_1, atom_name_1)
+            target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
             if len(target_atom_1) == 0:
                 atom_name_1 = self.table.get_translation(atom_name_1)
-                target_atom_1 = Base_potential._select_atom_with_translation(segment, residue_number_1, atom_name_1)
+                target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
             num_to_atom = len(target_atom_1)
             if num_to_atom > 1:
                 self._get_atom_names(target_atom_1)
@@ -640,14 +596,14 @@ class Dihedral_potential(Base_potential):
             sub_result  = []
             key = []
             sub_result.append(key)
-            key.append(tuple(self._get_atom_info_from_index(from_index)[1:]))
+            key.append(tuple(Atom_utils._get_atom_info_from_index(from_index)[1:]))
             
             dihedral_atom_info = []
             for atom_pair in (atom_1,atom_2), (atom_3, atom_4):
                 
                 info_pair  = []
-                info_pair.append(self._get_atom_info_from_index(atom_pair[0])[1:])
-                info_pair.append(self._get_atom_info_from_index(atom_pair[1])[1:])
+                info_pair.append(Atom_utils._get_atom_info_from_index(atom_pair[0])[1:])
+                info_pair.append(Atom_utils._get_atom_info_from_index(atom_pair[1])[1:])
             
                 dihedral_atom_info.append(tuple(info_pair))
             key.append(tuple(dihedral_atom_info))
@@ -687,10 +643,10 @@ class Dihedral_potential(Base_potential):
     def _get_dihedral_angle(self, dihedral_1_atom_id_1, dihedral_1_atom_id_2, 
                                  dihedral_2_atom_id_1, dihedral_2_atom_id_2):
         
-        atom_1  = self._get_atom_by_index(dihedral_1_atom_id_1)
-        atom_2  = self._get_atom_by_index(dihedral_1_atom_id_2)
-        atom_3  = self._get_atom_by_index(dihedral_2_atom_id_1)
-        atom_4  = self._get_atom_by_index(dihedral_2_atom_id_2)
+        atom_1  = Atom_utils._get_atom_by_index(dihedral_1_atom_id_1)
+        atom_2  = Atom_utils._get_atom_by_index(dihedral_1_atom_id_2)
+        atom_3  = Atom_utils._get_atom_by_index(dihedral_2_atom_id_1)
+        atom_4  = Atom_utils._get_atom_by_index(dihedral_2_atom_id_2)
         
         return Dihedral(atom_1,atom_2,atom_3,atom_4).value();
     
@@ -757,7 +713,7 @@ class Sidechain_potential(Base_potential):
             
             segment = from_atom.segmentName()
             sidechain_residue_number = from_atom.residueNum()
-            sidechain_atom = Base_potential._select_atom_with_translation(segment, sidechain_residue_number, sidechain_atom)
+            sidechain_atom = Atom_utils._select_atom_with_translation(segment, sidechain_residue_number, sidechain_atom)
             
             
             self.sidechain_atom_index = sidechain_atom[0].index()
@@ -810,7 +766,7 @@ class Sidechain_potential(Base_potential):
         target_atom_index,sidechain_atom_index,value,exponent =  data
         
         
-        distance = self._calculate_distance(target_atom_index, sidechain_atom_index)
+        distance = Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
 
         return distance ** exponent * value
     
@@ -819,8 +775,8 @@ class Sidechain_potential(Base_potential):
         for from_index,sidechain_index,value,exponent in self._distances:
             sub_result  = []
             
-            target_atom_key = list(self._get_atom_info_from_index(from_index)[1:])
-            target_atom_key.append(self._get_atom_info_from_index(sidechain_index)[1:][1])
+            target_atom_key = list(Atom_utils._get_atom_info_from_index(from_index)[1:])
+            target_atom_key.append(Atom_utils._get_atom_info_from_index(sidechain_index)[1:][1])
             sub_result.append(tuple(target_atom_key))
             
             sub_result.append(value)
@@ -884,7 +840,7 @@ class Xcamshift():
         keys.insert(0,'ATOM')
         
         for i in range(num_atoms):
-            segments,residue,atom = Base_potential._get_atom_info_from_index(i)
+            segments,residue,atom = Atom_utils._get_atom_info_from_index(i)
             residues.append(('%5i' %residue))
             atoms.append(atom)
         
@@ -919,6 +875,14 @@ class Xcamshift():
         
         return result
     
+#    def set_observed_shifts(self, observed_shifts):
+#        self.observed_shifts = observed_shifts
+#        
+#    def get_energy(self):
+#        pass
+#    
+#    def get_derivatives(self):
+#        pass
 
                           
 if __name__ == "__main__":

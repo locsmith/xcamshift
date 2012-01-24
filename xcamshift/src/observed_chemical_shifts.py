@@ -3,9 +3,7 @@ Created on 24 Jan 2012
 
 @author: garyt
 '''
-from xcamshift import Base_potential
-import sys
-from utils import tupleit
+from utils import tupleit, Atom_utils
 
 class Observed_shift_table(object):
     '''
@@ -24,7 +22,7 @@ class Observed_shift_table(object):
                 search_key.insert(0,"*")
                 search_key =  tuple(search_key)
                 #TODO move Base_potential components to utilities
-                atoms = Base_potential.find_atom(*search_key)
+                atoms = Atom_utils.find_atom(*search_key)
                 for atom in atoms:
                     result[atom.index()] = shift_data[key]
         return result
@@ -35,7 +33,7 @@ class Observed_shift_table(object):
         for atom_index in self._chemical_shifts:
             sub_result  = []
             results.append(sub_result)
-            sub_result.append(Base_potential._get_atom_info_from_index(atom_index))
+            sub_result.append(Atom_utils._get_atom_info_from_index(atom_index))
             sub_result.append(self._chemical_shifts[atom_index])
         return tupleit(results)
         
