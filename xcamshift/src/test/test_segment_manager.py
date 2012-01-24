@@ -10,7 +10,7 @@ import unittest2
 
 
 #class testSegmentManager(object):
-class Test(unittest2.TestCase):
+class Test_segment_manager(unittest2.TestCase):
 
 
     def setUp(self):
