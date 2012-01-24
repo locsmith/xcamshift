@@ -7,7 +7,7 @@ import unittest2
 from utils import tupleit
 
 
-class Test(unittest2.TestCase):
+class TestObservedShiftTable(unittest2.TestCase):
 
 
     def testTupleIt(self):
@@ -21,5 +21,5 @@ class Test(unittest2.TestCase):
 
 
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
+    #import sys;sys.argv = ['', 'TestObservedShiftTable.testName']
     unittest2.main()
