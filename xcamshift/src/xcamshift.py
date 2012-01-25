@@ -125,7 +125,7 @@ class Distance_potential(Base_potential):
         '''
         
         self._distances = self._create_component_list("(all)")
-        self.observed_shifts = Observed_shift_table()
+
     
     def get_abbreviated_name(self):
         return "BB  "
@@ -298,9 +298,6 @@ class Distance_potential(Base_potential):
 #    def get_derivatives(self,data):
 #        pass
 #
-#    
-    def set_observed_shifts(self, shift_table):
-        self._shift_table  =  shift_table
 
     
     def dump(self):
@@ -319,9 +316,7 @@ class Distance_potential(Base_potential):
         return result   
 
     
-    def _calc_single_energy(self, i):
-#        print self._distances[i]
-        pass
+
         
 #        self.set_shifts(result)
     
@@ -842,6 +837,8 @@ class Xcamshift():
                           Extra_potential(),
                           Dihedral_potential(),
                           Sidechain_potential()]
+        self._shift_table = Observed_shift_table()
+                
     def print_shifts(self):
         result  = [0] * Segment_Manager().get_number_atoms()
         
@@ -914,6 +911,28 @@ class Xcamshift():
         
         return result
     
+    def set_observed_shifts(self, shift_table):
+        self._shift_table  =  shift_table
+        
+    #TODO grossly inefficient!
+    def _calc_single_shift(self,atom_index):
+        shifts = [0.0] * Segment_Manager().get_number_atoms()
+        shifts = self.set_shifts(shifts)
+        return shifts[atom_index]
+    
+    
+    def _calc_single_energy(self, target_atom_index):
+        
+        result  =0.0
+        if target_atom_index in self._shift_table.get_atom_indices():
+            
+            theory_shift = self._calc_single_shift(target_atom_index)
+            observed_shift = self._shift_table.get_chemical_shift(target_atom_index)
+            shift_diff = observed_shift - theory_shift
+            result= shift_diff
+        
+#        print self._distances[i]
+        return result
 #    def set_observed_shifts(self, observed_shifts):
 #        self.observed_shifts = observed_shifts
 #        

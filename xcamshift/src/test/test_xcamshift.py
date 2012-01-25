@@ -244,17 +244,18 @@ class Test(unittest2.TestCase):
     def testDistancePotentialSingleEnergies(self):
         test_shifts = ala_3.ala_3_test_shifts
         
-        distance_potential = Distance_potential()
+        xcamshift = Xcamshift()
         
         shift_table = Observed_shift_table(test_shifts)
-        distance_potential.set_observed_shifts(shift_table)
+        xcamshift.set_observed_shifts(shift_table)
+        print shift_table
 #        
 #        for elem in distance_potential.d():
 #            print elem
         
-#        for i,distance_elem in enumerate(distance_potential.dump()):
-#            
-#            energy = distance_potential._calc_single_energy(i)
+        for atom_index in shift_table.get_atom_indices():
+            energy = xcamshift._calc_single_energy(atom_index)
+            Atom_utils._get_atom_name(atom_index),energy
                     
 #        distance_potential.get_single_energy(i)
         
