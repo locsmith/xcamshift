@@ -19,7 +19,7 @@ import abc
 from keys import Atom_key, Dihedral_key
 from utils import tupleit, Atom_utils
 from dihedral import Dihedral
-from math import cos
+from math import cos,sqrt
 from observed_chemical_shifts import Observed_shift_table
 
         
@@ -137,14 +137,14 @@ class Distance_potential(Base_potential):
         def __init__(self, from_atom, offset, to_atom_name ,table):
             
             self.complete = False
-            self.table = table
+            self._table = table
             
             self.segment = from_atom.segmentName()
             
             self.offset = offset
             
 #            self.from_atom_name = from_atom.atomName()
-#            self.from_atom_name = self.table.get_translation(self.from_atom_name)
+#            self.from_atom_name = self._table.get_translation(self.from_atom_name)
 #            self.from_atom_index = from_atom.index()
             from_residue_number = from_atom.residueNum()
 #            self.from_residue_type = Base_potential._get_residue_type(self.segment, self.from_residue_number)
@@ -154,7 +154,7 @@ class Distance_potential(Base_potential):
             to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, self.to_atom_name)
             
             if len(to_atom) == 0:
-                self.to_atom_name =  self.table.get_translation(self.to_atom_name)
+                self.to_atom_name =  self._table.get_translation(self.to_atom_name)
                 to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, self.to_atom_name)
                 
             num_to_atom = len(to_atom)
@@ -169,7 +169,7 @@ class Distance_potential(Base_potential):
             
             
     def _translate_atom_name(self, atom_name, context):
-        return context.table.get_translation(atom_name)
+        return context._table.get_translation(atom_name)
     
     def _build_contexts(self, atom, table):
         contexts = []
@@ -181,7 +181,7 @@ class Distance_potential(Base_potential):
         return contexts
                 
     def _get_component_for_atom(self, atom, context):
-        table = context.table
+        table = context._table
         
         from_atom_name = atom.atomName()
         from_atom_name = self._translate_atom_name(from_atom_name, context)
@@ -193,11 +193,11 @@ class Distance_potential(Base_potential):
         result = None
         if from_atom_name in table.get_from_atoms():
             if to_atom_name in table.get_to_atoms():
-                value = context.table.get_distance_coeeficent(from_atom_name,offset,to_atom_name)
+                value = context._table.get_distance_coeeficent(from_atom_name,offset,to_atom_name)
                 if value != None:
                     from_atom_index = atom.index()
                     to_atom_index = context.to_atom_index
-                    exponent = context.table.get_exponent()
+                    exponent = context._table.get_exponent()
                     result = (from_atom_index,to_atom_index,value,exponent)
         return result
 
@@ -336,7 +336,7 @@ class Extra_potential(Base_potential):
         return "XTRA"
 
     def _translate_atom_name(self, atom_name,context):
-        return context.table.get_translation(atom_name)
+        return context._table.get_translation(atom_name)
         
     def _get_table(self, residue_type):
         return self._table_manager.get_extra_table(residue_type)
@@ -346,7 +346,7 @@ class Extra_potential(Base_potential):
         def _select_atom_with_translation(self, segment, residue_number_1, atom_name_1):
             target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
             if len(target_atom_1) == 0:
-                atom_name_1 = self.table.get_translation(atom_name_1)
+                atom_name_1 = self._table.get_translation(atom_name_1)
                 target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
             num_to_atom = len(target_atom_1)
             if num_to_atom > 1:
@@ -357,7 +357,7 @@ class Extra_potential(Base_potential):
         def __init__(self, from_atom, key_1, key_2 ,table):
             
             self.complete = False
-            self.table = table
+            self._table = table
             
             segment = from_atom.segmentName()
             
@@ -392,7 +392,7 @@ class Extra_potential(Base_potential):
         return contexts
     
     def  _get_component_for_atom(self, atom, context):
-        table = context.table
+        table = context._table
 
         
         from_atom_name = atom.atomName()
@@ -400,13 +400,13 @@ class Extra_potential(Base_potential):
         
         result = None
         if from_atom_name in table.get_target_atoms():
-            value = context.table.get_extra_shift(from_atom_name,context.key_1,context.key_2)
+            value = context._table.get_extra_shift(from_atom_name,context.key_1,context.key_2)
 #            print self._get_atom_name(atom.index()),value
             if value != None:
                 from_atom_index = atom.index()
                 distance_index_1 = context.distance_atom_index_1
                 distance_index_2 = context.distance_atom_index_2
-                exponent = context.table.get_exponent()
+                exponent = context._table.get_exponent()
                 result = (from_atom_index,distance_index_1,distance_index_2,value,exponent)
         return result
     
@@ -481,8 +481,8 @@ class RandomCoilShifts(Base_potential):
         result = None
         atom_name = atom.atomName()
         atom_name = self._translate_atom_name(atom_name)
-        if atom_name in context.table.get_atoms():
-            value = context.table.get_random_coil_shift(context.offset, context.to_residue_type, atom_name)
+        if atom_name in context._table.get_atoms():
+            value = context._table.get_random_coil_shift(context.offset, context.to_residue_type, atom_name)
             if value != None:
                 result = atom.index(), value
         return result
@@ -490,7 +490,7 @@ class RandomCoilShifts(Base_potential):
     class ResidueOffsetContext :
         def __init__(self,atom,offset,table):
             
-            self.table = table
+            self._table = table
             
             segment = atom.segmentName()
             
@@ -536,7 +536,7 @@ class Dihedral_potential(Base_potential):
         return "DHA "
     
     def _translate_atom_name(self, atom_name,context):
-        return context.table.get_translation(atom_name)
+        return context._table.get_translation(atom_name)
         
     def _get_table(self, residue_type):
         return self._table_manager.get_dihedral_table(residue_type)
@@ -546,7 +546,7 @@ class Dihedral_potential(Base_potential):
         def _select_atom_with_translation(self, segment, residue_number_1, atom_name_1):
             target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
             if len(target_atom_1) == 0:
-                atom_name_1 = self.table.get_translation(atom_name_1)
+                atom_name_1 = self._table.get_translation(atom_name_1)
                 target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
             num_to_atom = len(target_atom_1)
             if num_to_atom > 1:
@@ -563,7 +563,7 @@ class Dihedral_potential(Base_potential):
 
         def __init__(self, from_atom, dihedral_key ,table):
             
-            self.table = table
+            self._table = table
             
             segment = from_atom.segmentName()
             
@@ -595,7 +595,7 @@ class Dihedral_potential(Base_potential):
 
 
     def  _get_component_for_atom(self, atom, context):
-        table = context.table
+        table = context._table
         
         from_atom_name = atom.atomName()
         from_atom_name = self._translate_atom_name(from_atom_name, context)
@@ -604,7 +604,7 @@ class Dihedral_potential(Base_potential):
         if from_atom_name in table.get_target_atoms():
             
             dihedral_key = context.dihedral_key
-            value = context.table.get_dihedral_shift(from_atom_name,dihedral_key)
+            value = context._table.get_dihedral_shift(from_atom_name,dihedral_key)
             if value != None:
                 from_atom_index = atom.index()
                 
@@ -614,12 +614,12 @@ class Dihedral_potential(Base_potential):
                 result.extend(dihedral_indices)
                 result.append(value)
                 
-                for parameter_id in context.table.get_parameters():
-                    parameter = context.table.get_parameter(from_atom_name,dihedral_key,parameter_id)
+                for parameter_id in context._table.get_parameters():
+                    parameter = context._table.get_parameter(from_atom_name,dihedral_key,parameter_id)
                     result.append(parameter)
                 
                 
-                result.append(context.table.get_exponent())
+                result.append(context._table.get_exponent())
                 result = tuple(result)
                 
         return result
@@ -743,7 +743,7 @@ class Sidechain_potential(Base_potential):
         
         def __init__(self, from_atom, residue_type, sidechain_atom, table):
             
-            self.table = table
+            self._table = table
             
             segment = from_atom.segmentName()
             sidechain_residue_number = from_atom.residueNum()
@@ -763,7 +763,7 @@ class Sidechain_potential(Base_potential):
         return "SDCH"
     
     def  _get_component_for_atom(self, target_atom, context):
-        table = context.table
+        table = context._table
         table = table
 
         
