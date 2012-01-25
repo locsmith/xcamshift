@@ -921,18 +921,71 @@ class Xcamshift():
         return shifts[atom_index]
     
     
+    def _get_flat_bottom_shift_limit(self, residue_type, atom_name):
+        table_manager = Table_manager.get_default_table_manager()
+        constants_table = table_manager.get_constants_table(residue_type)
+        
+        flat_bottom_limit = constants_table.get_flat_bottom_limit(atom_name)
+        #TODO move to class body this is a global scaling for the 
+        # whole force field
+        flat_bottom_constant  = constants_table.get_flat_bottom_constant()
+        return flat_bottom_limit * flat_bottom_constant
+    
+
+    def _adjust_shift(self, shift_diff, flat_bottom_shift_limit):
+        result  = 0.0
+        if (shift_diff > 0.0):
+            result = shift_diff-flat_bottom_shift_limit
+        else:
+            result = shift_diff + flat_bottom_shift_limit
+        return result
+    
+    
+    def _get_end_harmonic(self, residue_type, atom_name):
+        table_manager = Table_manager.get_default_table_manager()
+        constants_table = table_manager.get_constants_table(residue_type)
+        
+        return constants_table.get_end_harmonic(atom_name)
+    
+    
+    def _get_scale_harmonic(self, residue_type, atom_name):
+        table_manager = Table_manager.get_default_table_manager()
+        constants_table = table_manager.get_constants_table(residue_type)
+        
+        return constants_table.get_scale_harmonic(atom_name)
+    
+    
     def _calc_single_energy(self, target_atom_index):
         
-        result  =0.0
+        energy  =0.0
         if target_atom_index in self._shift_table.get_atom_indices():
             
             theory_shift = self._calc_single_shift(target_atom_index)
             observed_shift = self._shift_table.get_chemical_shift(target_atom_index)
+            
             shift_diff = observed_shift - theory_shift
-            result= shift_diff
+            
+            residue_type = Atom_utils._get_residue_type_from_atom_id(target_atom_index)
+            atom_name = Atom_utils._get_atom_name_from_index(target_atom_index)
+            
+            flat_bottom_shift_limit = self._get_flat_bottom_shift_limit(residue_type, atom_name)
+            
+            if abs(shift_diff) > flat_bottom_shift_limit:
+                adjusted_shift = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
+                
+                end_harmonic = self._get_end_harmonic(residue_type, atom_name)
+                scale_harmonic = self._get_scale_harmonic(residue_type, atom_name)
+                
+                
+                energy_component = 0.0
+                if adjusted_shift < end_harmonic:
+                    energy_component = (adjusted_shift/scale_harmonic)**2
+                else:
+                    raise Exception("not implemented")
+                energy += energy_component
         
 #        print self._distances[i]
-        return result
+        return energy
 #    def set_observed_shifts(self, observed_shifts):
 #        self.observed_shifts = observed_shifts
 #        

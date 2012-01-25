@@ -29,7 +29,7 @@ def text_key_to_atom_ids(key, segment = '*'):
 
 
 #class testSegmentManager(object):
-class Test(unittest2.TestCase):
+class TestXcamshift(unittest2.TestCase):
 
     # TODO add extra places
     DEFAULT_DECIMAL_PLACES = 5
@@ -239,7 +239,7 @@ class Test(unittest2.TestCase):
         
         self.assertSequenceAlmostEqual(expected, shifts, delta=0.0001)
         
-        xcamshift_potential.print_shifts()
+#        xcamshift_potential.print_shifts()
         
     def testDistancePotentialSingleEnergies(self):
         test_shifts = ala_3.ala_3_test_shifts
@@ -252,11 +252,14 @@ class Test(unittest2.TestCase):
 #        
 #        for elem in distance_potential.d():
 #            print elem
-        
+        total_energy = 0.0
         for atom_index in shift_table.get_atom_indices():
-            energy = xcamshift._calc_single_energy(atom_index)
-            Atom_utils._get_atom_name(atom_index),energy
-                    
+#            print atom_index
+                energy = xcamshift._calc_single_energy(atom_index)
+                atom_name  = Atom_utils._get_atom_name(atom_index)
+                print atom_name,energy
+                total_energy += energy
+        print total_energy           
 #        distance_potential.get_single_energy(i)
         
         
