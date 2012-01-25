@@ -27,6 +27,11 @@ class Observed_shift_table(object):
                     result[atom.index()] = shift_data[key]
         return result
     
+    def get_chemical_shift(self,atom_index):
+        return self._chemical_shifts[atom_index]
+    
+    def get_atom_indices(self):
+        return self._chemical_shifts.get_atom_indices()
     #TODO add more generic dump capabilities
     def dump_observed_shifts(self):
         results = []
@@ -36,4 +41,10 @@ class Observed_shift_table(object):
             sub_result.append(Atom_utils._get_atom_info_from_index(atom_index))
             sub_result.append(self._chemical_shifts[atom_index])
         return tupleit(results)
-        
+    
+    def __str__(self): 
+        result  = []
+        for (segid,resid,atom_name),shift in self.dump_observed_shifts():
+            result.append("[%4s]:%i@%s  %7.4f" % (segid,resid,atom_name,shift))
+        return "\n".join(result)
+            
