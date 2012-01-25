@@ -1,0 +1,8 @@
+# constants and defaults for camshift 1.35.0
+---
+
+flat_bottom_constant : 0.4
+flat_bottom_limit : {
+  CA : 1.151132, CB : 1.302082, C : 1.274562, HA : 0.273254, H : 0.506166, N : 2.899991
+  
+}

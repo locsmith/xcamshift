@@ -13,6 +13,7 @@ from dihedral_table import Dihedral_table, Dihedral_parameter_table,\
     Composite_dihedral_table
 from utils import tupleit
 from sidechain_table import Sidechain_table
+from constants_table import Constants_table
 
 
 class Table_manager(object):
@@ -45,6 +46,7 @@ class Table_manager(object):
     DIHEDRAL="dihedral"
     DIHEDRAL_PARS="dihedral_pars"
     SIDECHAIN="sidechain"
+    CONSTANTS="constants"
 
     def __init__(self):
         '''
@@ -159,10 +161,10 @@ class Table_manager(object):
         dihedral_table = self._get_dihedral_table(residue_type)
         dihedral_parameter_table =  self._get_dihedral_parameter_table(residue_type)
         return Composite_dihedral_table(dihedral_table, dihedral_parameter_table)
-
     
     def get_sidechain_table(self,residue_type):
         return Sidechain_table(self.__get_table(self.SIDECHAIN,residue_type))
     
-    
+    def get_constants_table(self,residue_type):
+        return Constants_table(self.__get_table(self.CONSTANTS,residue_type))
             

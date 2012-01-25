@@ -159,6 +159,11 @@ class Test_table_manager(unittest2.TestCase):
         self.assertIn("CB", table.get_sidechain_atoms("ALA"))
         self.assertAlmostEqual(table.get_sidechain_coefficient("ALA", "CA", "CB"),-3.4713212)
         self.assertSequenceEqual(self.TARGET_ATOMS, table.get_target_atoms())
+    
+    def testGetConstantTable(self):
+        table  =  self.table_manager.get_constants_table('ALA')
+        self.assertAlmostEqual(0.4, table.get_flat_bottom_constant())
+        self.assertAlmostEqual(1.151132, table.get_flat_bottom_limit("CA"))
             
 
 if __name__ == "__main__":
