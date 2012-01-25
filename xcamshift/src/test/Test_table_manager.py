@@ -164,6 +164,8 @@ class Test_table_manager(unittest2.TestCase):
         table  =  self.table_manager.get_constants_table('ALA')
         self.assertAlmostEqual(0.4, table.get_flat_bottom_constant())
         self.assertAlmostEqual(1.151132, table.get_flat_bottom_limit("CA"))
+        self.assertAlmostEqual(20.000000,table.get_end_harmonic("CA"))
+        self.assertAlmostEqual(2.360000,table.get_scale_harmonic("CA"))
             
 
 if __name__ == "__main__":
