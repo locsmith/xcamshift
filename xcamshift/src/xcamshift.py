@@ -19,7 +19,7 @@ import abc
 from keys import Atom_key, Dihedral_key
 from utils import tupleit, Atom_utils
 from dihedral import Dihedral
-from math import cos,sqrt
+from math import cos
 from observed_chemical_shifts import Observed_shift_table
 
         
