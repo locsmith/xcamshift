@@ -30,6 +30,7 @@ class Atom_utils(object):
         residue_atoms = AtomSel(selection)
         return residue_atoms
 
+    
     @staticmethod
     def _select_atom_with_translation(segment='*', residue_number='#',atom='*'):
         residue_atoms = Atom_utils.find_atom(segment, residue_number, atom)
@@ -40,6 +41,10 @@ class Atom_utils(object):
         residue_atoms = Atom_utils._select_atom_with_translation(segment, residue_number)
         return residue_atoms[0].residueName()
     
+    @staticmethod
+    def _get_residue_type_from_atom_id(atom_index):
+        atom = Atom_utils._get_atom_by_index(atom_index)
+        return atom.residueName()
 
     @staticmethod
     def _get_atom_by_index(atom_index):
@@ -49,7 +54,12 @@ class Atom_utils(object):
     def _get_atom_info_from_index(atom_index):
         atom = Atom_utils._get_atom_by_index(atom_index)
         return atom.segmentName(), atom.residueNum(), atom.atomName()
-            
+    
+    @staticmethod
+    def _get_atom_name_from_index(atom_index):
+        atom = Atom_utils._get_atom_by_index(atom_index)
+        return atom.atomName()
+    
     @staticmethod
     def _get_atom_name(atom_index, template="%-5i '%4s' %i [%3s] %-4s"):
         atom = Atom_utils._get_atom_by_index(atom_index)
