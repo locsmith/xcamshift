@@ -15,22 +15,22 @@ class Dihedral_table_base(object):
     TRANSLATIONS='translations'
     
     def __init__(self, table):
-        self.table = table
+        self._table = table
     
     def get_translation(self,atom):
         return atom
 #    
     def get_dihedral_atoms(self):
-        return self.table[self.DIHEDRAL_ATOMS]
+        return self._table[self.DIHEDRAL_ATOMS]
     
     def get_offsets(self):
-        return self.table[self.OFFSETS]
+        return self._table[self.OFFSETS]
     
     def get_target_atoms(self):
-        return self.table[self.TARGET_ATOMS]
+        return self._table[self.TARGET_ATOMS]
 
     def get_exponent(self):
-        return self.table[self.EXPONENT]
+        return self._table[self.EXPONENT]
 
     def _check_offset(self, offset):
         
@@ -44,7 +44,7 @@ class Dihedral_table_base(object):
         
         atoms = self.get_dihedral_atoms()
         if atom_name not in atoms:
-            message = "atom_name %s not in dihedral shift table atoms (%s)" % (atom_name, ', '.join(atoms))
+            message = "atom_name %s not in dihedral shift _table atoms (%s)" % (atom_name, ', '.join(atoms))
             raise KeyError(message)
 
     def _check_dihedral_key(self,dihedral_key):
@@ -67,7 +67,7 @@ class Dihedral_table_base(object):
             raise KeyError(message)
     
     def get_dihedral_keys(self):
-        keys = self.table[self.DATA].keys()
+        keys = self._table[self.DATA].keys()
         
         result = []
         for index in range(len(keys)):
@@ -91,8 +91,8 @@ class Dihedral_table(Dihedral_table_base):
         
         raw_dihedral_key = dihedral_key.get_dihedral_key()
 
-        if raw_dihedral_key in self.table[self.DATA]:
-            data = self.table[self.DATA][raw_dihedral_key]
+        if raw_dihedral_key in self._table[self.DATA]:
+            data = self._table[self.DATA][raw_dihedral_key]
             if target_atom in data:
                 result  = data[target_atom]
 #            
@@ -108,7 +108,7 @@ class Dihedral_parameter_table(Dihedral_table_base):
 
 
     def get_parameters(self):
-        return self.table[self.PARAMETERS]
+        return self._table[self.PARAMETERS]
     
     
     def _check_parameter_key(self, parameter):
@@ -127,8 +127,8 @@ class Dihedral_parameter_table(Dihedral_table_base):
         
         raw_dihedral_key = dihedral_key.get_dihedral_key()
 
-        if raw_dihedral_key in self.table[self.DATA]:
-            data = self.table[self.DATA][raw_dihedral_key]
+        if raw_dihedral_key in self._table[self.DATA]:
+            data = self._table[self.DATA][raw_dihedral_key]
             if parameter_id in data:
                 parameter = data[parameter_id]
                 if target_atom in parameter:

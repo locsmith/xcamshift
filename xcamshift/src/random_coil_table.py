@@ -8,16 +8,16 @@ class Random_coil_table(object):
     
     DATA = 'data'
     def __init__(self, table):
-        self.table = table
+        self._table = table
         
         self.ATOMS = 'atoms'
         self.OFFSETS='offsets'
         
     def get_offsets(self):
-        return self.table[self.OFFSETS]
+        return self._table[self.OFFSETS]
     
     def get_atoms(self):
-        return self.table[self.ATOMS]
+        return self._table[self.ATOMS]
     
     def __check_residue_keys(self, offset, residue, atom):
         
@@ -28,7 +28,7 @@ class Random_coil_table(object):
             raise KeyError(message)
         
         if atom not in self.get_atoms():
-            message = "atom %s not in random coil shift table atoms %s" % (atom,', '.join(self.get_atoms()))
+            message = "atom %s not in random coil shift _table atoms %s" % (atom,', '.join(self.get_atoms()))
             raise KeyError(message)
         
     def get_random_coil_shift(self,offset, residue, atom):
@@ -36,7 +36,7 @@ class Random_coil_table(object):
         
         result = None
         
-        atom_random_coil_table  = self.table[self.DATA][offset][residue]
+        atom_random_coil_table  = self._table[self.DATA][offset][residue]
         if atom in atom_random_coil_table:
             result =  atom_random_coil_table[atom]
             

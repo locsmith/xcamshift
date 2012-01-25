@@ -19,22 +19,22 @@ class Extra_table(object):
     TARGET_ATOMS='target_atoms'
     
     def __init__(self, table):
-        self.table = table
+        self._table = table
     
     def get_translation(self,atom):
         return atom
     
     def get_distance_atoms(self,atom_index):
-        return self.table[self.EXTRA_ATOMS[atom_index]]
+        return self._table[self.EXTRA_ATOMS[atom_index]]
     
     def get_offsets(self,atom_index):
-        return self.table[self.OFFSETS[atom_index]]
+        return self._table[self.OFFSETS[atom_index]]
     
     def get_target_atoms(self):
-        return self.table[self.TARGET_ATOMS]
+        return self._table[self.TARGET_ATOMS]
     
     def get_exponent(self):
-        return self.table[self.EXPONENT]
+        return self._table[self.EXPONENT]
 
     def _check_offset(self, atom_index, offset):
         
@@ -50,7 +50,7 @@ class Extra_table(object):
         
         atoms = self.get_distance_atoms(atom_index)
         if atom_name not in atoms:
-            message = "atom_name %s not in extra shift table atoms_%i (%s)" % (atom_name, atom_index, ', '.join(atoms))
+            message = "atom_name %s not in extra shift _table atoms_%i (%s)" % (atom_name, atom_index, ', '.join(atoms))
             raise KeyError(message)
 
     def _check_distance_key(self, atom_index, offset, atom_name):
@@ -75,8 +75,8 @@ class Extra_table(object):
         
         key_1 = key_values_1.get_atom_key()
         key_2 = key_values_2.get_atom_key()
-        if key_1 in self.table[self.DATA]:
-            data_1 = self.table[self.DATA][key_values_1.get_atom_key()]
+        if key_1 in self._table[self.DATA]:
+            data_1 = self._table[self.DATA][key_values_1.get_atom_key()]
             if key_2 in data_1:
                 target_atoms = data_1[key_2]
                 if target_atom in target_atoms:
