@@ -241,8 +241,8 @@ class TestXcamshift(unittest2.TestCase):
         
 #        xcamshift_potential.print_shifts()
         
-    def testDistancePotentialSingleEnergies(self):
-        test_shifts = ala_3.ala_3_test_shifts
+    def testDistancePotentialSingleEnergiesHarmonic(self):
+        test_shifts = ala_3.ala_3_test_shifts_harmonic
         
         xcamshift = Xcamshift()
         
@@ -263,6 +263,6 @@ class TestXcamshift(unittest2.TestCase):
             total_energy += energy
         self.assertAlmostEqual(total_energy, expected_total_energy,self.DEFAULT_DECIMAL_PLACES)
         
-        
+
 if __name__ == "__main__":
     unittest2.main()

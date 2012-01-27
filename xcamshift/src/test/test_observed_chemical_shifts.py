@@ -9,7 +9,7 @@ from observed_chemical_shifts import Observed_shift_table
 import sys
 from protocol import initStruct
 from pdbTool import PDBTool
-from test.ala_3 import ala_3_test_shifts
+from test.ala_3 import ala_3_test_shifts_harmonic
 
 
 class TestObservedShiftTable(unittest2.TestCase):
@@ -48,7 +48,7 @@ class TestObservedShiftTable(unittest2.TestCase):
             short_atom_key = elem[0][1:]
             value = elem[1]
             
-            expected = ala_3_test_shifts[short_atom_key]
+            expected = ala_3_test_shifts_harmonic[short_atom_key]
             self.assertAlmostEqual(expected, value)
 
 if __name__ == "__main__":
