@@ -19,7 +19,7 @@ import abc
 from keys import Atom_key, Dihedral_key
 from utils import tupleit, Atom_utils
 from dihedral import Dihedral
-from math import cos
+from math import cos,tanh
 from observed_chemical_shifts import Observed_shift_table
 
         
@@ -957,7 +957,7 @@ class Xcamshift():
     
     def _calc_single_energy(self, target_atom_index):
         
-        energy  =0.0
+        energy = 0.0
         if target_atom_index in self._shift_table.get_atom_indices():
             
             theory_shift = self._calc_single_shift(target_atom_index)
@@ -971,26 +971,37 @@ class Xcamshift():
             flat_bottom_shift_limit = self._get_flat_bottom_shift_limit(residue_type, atom_name)
             
             if abs(shift_diff) > flat_bottom_shift_limit:
-                adjusted_shift = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
+                adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
                 
                 end_harmonic = self._get_end_harmonic(residue_type, atom_name)
                 scale_harmonic = self._get_scale_harmonic(residue_type, atom_name)
                 
                 
                 energy_component = 0.0
-                if adjusted_shift < end_harmonic:
-                    energy_component = (adjusted_shift/scale_harmonic)**2
+                if adjusted_shift_diff < end_harmonic:
+                    energy_component = (adjusted_shift_diff/scale_harmonic)**2
                 else:
+#                    tanh_amplitude = self._get_tanh_amplitude(residue_type,atom_name)
+#                    tanh_elongation = self._get_tanh_elongation(residue_type, atom_name)
+#                    tan_y_offset = self._get_tan_y_offset(residue_type, atom_name)
+#
+#                    tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
+#                    energy_component = tanh_amplitude * tanh(tanh_argument) + tan_y_offset;
+
                     raise Exception("not implemented")
                 energy += energy_component
         
-#        print self._distances[i]
         return energy
-#    def set_observed_shifts(self, observed_shifts):
-#        self.observed_shifts = observed_shifts
-#        
-#    def get_energy(self):
-#        pass
+    
+
+##    def set_observed_shifts(self, observed_shifts):
+##        self.observed_shifts = observed_shifts
+##        
+#    def set_energys(self):
+#        for atom_index in self._shift_table.get_atom_indices():
+#
+#            energy = self._calc_single_energy(atom_index)
+        
 #    
 #    def get_derivatives(self):
 #        pass
