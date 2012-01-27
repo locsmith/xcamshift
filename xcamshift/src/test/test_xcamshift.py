@@ -263,6 +263,22 @@ class TestXcamshift(unittest2.TestCase):
             total_energy += energy
         self.assertAlmostEqual(total_energy, expected_total_energy,self.DEFAULT_DECIMAL_PLACES)
         
+    def testDistancePotentialSingleEnergiesWell(self):
+        test_shifts = ala_3.ala_3_test_shifts_well
+        
+        xcamshift = Xcamshift()
+        
+        shift_table = Observed_shift_table(test_shifts)
+        xcamshift.set_observed_shifts(shift_table)
+        
+        
+        total_energy = 0.0
+        for atom_index in shift_table.get_atom_indices():
+            key = Atom_utils._get_atom_info_from_index(atom_index)[1:]
+            expected_energy = 0.0
+
+            energy = xcamshift._calc_single_energy(atom_index)
+            self.assertAlmostEqual(energy, expected_energy,self.DEFAULT_DECIMAL_PLACES,msg=`key`)
 
 if __name__ == "__main__":
     unittest2.main()
