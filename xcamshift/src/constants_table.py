@@ -13,6 +13,7 @@ class Constants_table(object):
     FLAT_BOTTOM_CONSTANT  = 'flat_bottom_constant'
     END_HARMONIC = 'end_harmonic'
     SCALE_HARMONIC = 'scale_harmonic'
+    WEIGHT = 'weight'
     
     def __init__(self, table):
         self._table = table
@@ -41,3 +42,8 @@ class Constants_table(object):
     def get_scale_harmonic(self, target_atom):
         self._check_target_atom(target_atom) 
         return self._table[self.SCALE_HARMONIC][target_atom]
+    
+    def get_weight(self,target_atom):
+        
+        self._check_target_atom(target_atom)
+        return self._table[self.WEIGHT][target_atom]
