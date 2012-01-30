@@ -6,7 +6,6 @@ Created on 24 Jan 2012
 import unittest2
 from test import ala_3
 from observed_chemical_shifts import Observed_shift_table
-import sys
 from protocol import initStruct
 from pdbTool import PDBTool
 from test.ala_3 import ala_3_test_shifts_harmonic
@@ -14,7 +13,7 @@ from test.ala_3 import ala_3_test_shifts_harmonic
 
 class TestObservedShiftTable(unittest2.TestCase):
     
-    EXPECTED_ALA_3_KEYS = ala_3.ala_3_test_shifts.keys()
+    EXPECTED_ALA_3_KEYS = ala_3.ala_3_test_shifts_harmonic.keys()
     
     def setUp(self):
         initStruct("test_data/3_ala/3ala.psf")
@@ -24,12 +23,12 @@ class TestObservedShiftTable(unittest2.TestCase):
         return self.assertEqual(len(expected_keys), 0, msg)
     
     def create_ala_3_shift_table(self):
-        test_shifts = ala_3.ala_3_test_shifts
+        test_shifts = ala_3.ala_3_test_shifts_harmonic
         shift_table = Observed_shift_table(test_shifts)
         return shift_table
 
     def testObservedShiftTableKeys(self):
-        test_shifts = ala_3.ala_3_test_shifts
+        test_shifts = ala_3.ala_3_test_shifts_harmonic
         
         shift_table = Observed_shift_table(test_shifts)
         
