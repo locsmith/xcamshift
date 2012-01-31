@@ -53,7 +53,11 @@ class TestXcamshift(unittest2.TestCase):
         PDBTool("test_data/3_ala/3ala.pdb").read()
 
 
-
+    def make_result_array_forces(self):
+        num_atoms = len(AtomSel('(all)').indices())
+        result = [[0.0,0.0,0.0],] * num_atoms
+        return result
+    
     def make_result_array(self):
         num_atoms = len(AtomSel('(all)').indices())
         result = [0.0] * num_atoms
@@ -280,5 +284,24 @@ class TestXcamshift(unittest2.TestCase):
             energy = xcamshift._calc_single_energy(atom_index)
             self.assertAlmostEqual(energy, expected_energy,self.DEFAULT_DECIMAL_PLACES,msg=`key`)
 
+    def testSingleFactorHarmonic(self):
+        test_shifts = ala_3.ala_3_test_shifts_harmonic
+        
+        xcamshift = Xcamshift()
+        
+        shift_table = Observed_shift_table(test_shifts)
+        xcamshift.set_observed_shifts(shift_table)
+        
+        
+        for atom_index in shift_table.get_atom_indices():
+            key = Atom_utils._get_atom_info_from_index(atom_index)[1:]
+            factor  = xcamshift._calc_single_factor(atom_index)
+            expected_factor = ala_3.ala_3_factors_harmonic[key]
+            
+            self.assertAlmostEqual(factor, expected_factor, self.DEFAULT_DECIMAL_PLACES)
+
+    
 if __name__ == "__main__":
-    unittest2.main()
+#    unittest2.main()
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistancePotentialSingleForceHarmonic')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')

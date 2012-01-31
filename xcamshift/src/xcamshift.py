@@ -32,6 +32,7 @@ class Base_potential(object):
     def __init__(self):
         self._segment_manager = Segment_Manager()
         self._table_manager = Table_manager.get_default_table_manager()
+        self._observed_shifts = Observed_shift_table()
         
 #    def _print_atom(self,atom):
 #        return "%i. [%s]:%i[%s]@%s" % (atom.index(),atom.segmentName(), atom.residueNum(),atom.residueName(), atom.atomName())
@@ -110,6 +111,9 @@ class Base_potential(object):
     @abc.abstractmethod
     def get_abbreviated_name(self):
         pass
+    #TODO should be abc
+    def set_observed_shifts(self, shift_table):
+        self._observed_shifts = shift_table
     
 class Distance_potential(Base_potential):
     '''
@@ -990,8 +994,66 @@ class Xcamshift():
 
                     raise Exception("not implemented")
                 energy += energy_component
-        
         return energy
+    
+
+    def _get_weight(self, residue_type, atom_name):
+        table_manager = Table_manager.get_default_table_manager()
+        constants_table = table_manager.get_constants_table(residue_type)
+        
+        return constants_table.get_weight(atom_name)
+    
+    
+    def _calc_single_factor(self, target_atom_index):
+        
+        factor = 0.0
+        if target_atom_index in self._shift_table.get_atom_indices():
+            
+            theory_shift = self._calc_single_shift(target_atom_index)
+            observed_shift = self._shift_table.get_chemical_shift(target_atom_index)
+            
+            shift_diff = observed_shift - theory_shift
+            
+            residue_type = Atom_utils._get_residue_type_from_atom_id(target_atom_index)
+            atom_name = Atom_utils._get_atom_name_from_index(target_atom_index)
+            
+            flat_bottom_shift_limit = self._get_flat_bottom_shift_limit(residue_type, atom_name)
+            
+            if abs(shift_diff) > flat_bottom_shift_limit:
+                adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
+                
+                end_harmonic = self._get_end_harmonic(residue_type, atom_name)
+                scale_harmonic = self._get_scale_harmonic(residue_type, atom_name)
+                sqr_scale_harmonic = scale_harmonic**2
+                
+                weight = self._get_weight(residue_type,atom_name)
+                
+                # TODO add factor and lambda to give fact
+                fact =1.0
+                if adjusted_shift_diff < end_harmonic:
+                    factor = 2.0 * weight * adjusted_shift_diff * fact / sqr_scale_harmonic;
+                else:
+                    raise Exception("not implemented")
+                
+        else:
+            msg = "requested factor for target [%s] which is not in shift table"
+            target_atom_info = Atom_utils._get_atom_info_from_index(target_atom_index)
+            raise Exception(msg % target_atom_info)
+        return factor
+
+    def _calc_single_force(self,target_atom_index,forces):
+        for potential in self.potential:
+            if isinstance(potential, Distance_potential):
+                print >> sys.stderr, "warning forces only set for distance potential!"
+                potential.set_observed_shifts(self._shift_table)
+                
+                if target_atom_index in self._shift_table.get_atom_indices():
+                    factor = self._calc_single_factor(target_atom_index)
+                    potential._calc_single_force(target_atom_index,factor,forces)
+                
+                
+                
+            
     
 
 ##    def set_observed_shifts(self, observed_shifts):
