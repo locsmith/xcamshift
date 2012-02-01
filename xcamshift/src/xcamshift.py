@@ -201,8 +201,9 @@ class Distance_potential(Base_potential):
                 if value != None:
                     from_atom_index = atom.index()
                     to_atom_index = context.to_atom_index
-                    exponent = context._table.get_exponent()
-                    result = (from_atom_index,to_atom_index,value,exponent)
+                    if from_atom_index != to_atom_index:
+                        exponent = context._table.get_exponent()
+                        result = (from_atom_index,to_atom_index,value,exponent)
         return result
 
     def _get_table(self, from_residue_type):
@@ -272,8 +273,46 @@ class Distance_potential(Base_potential):
         distance  = norm(xyz_distance)
         
         return  distance ** exponent * coefficent 
-
-    #TODO move to Base_potential
+    
+    def _calc_single_force_factor(self,index,factor,forces):
+        target_atom,distance_atom,coefficient, exponent = self._distances[index]
+        target_pos = Atom_utils._get_atom_by_index(target_atom).pos()
+        distant_pos =  Atom_utils._get_atom_by_index(distance_atom).pos()
+        
+        distance  = target_pos - distant_pos
+        distance_2 = sum([elem**2 for elem in distance])
+        
+#        shiftDist = 
+        
+#        print self.dump()
+#        for elem in self._distances:
+#            print elem
+#        sys.exit(-1)
+#        print index,distance
+#        factor  = 0.0
+#        if self._smooth:
+#             factor = fact * (float_type) ((exponent * pow(distance2, (float_type) ((exponent - 2) / 2.0))) - ((exponent + cutOffSmoothExp) * pow(distance2, (float_type) ((exponent + cutOffSmoothExp - 2) / 2.0)) * cutOffDistInverseToPowerOfSmoothExp));
+#        cout << "FBB in smoothing" << endl;
+#        // calculate ratio corresponding to exponent used in creating CamShift data base
+#        float_type ratio = distance2 / cutOffDist2;
+#        for (int i = 0; i < 2; i++) { ratio *= ratio; };
+#        factor = fact * (float_type) (pow(distance2, (float_type) ((exponent - 2.0) / 2.0)) * (exponent - (exponent + 8.0) * ratio));
+#      }
+#    //float_type factor = fact * (float_type) (exponent * pow(distance2, (float_type) ((exponent - 2) / 2.0)));
+#        else 
+        target_atom_info = Atom_utils._get_atom_name(target_atom)
+        distant_atom_info = Atom_utils._get_atom_name(distance_atom)
+        factor= factor *coefficient
+        modified_exponent = (exponent - 2.0) / 2.0
+        distance_factor = factor *  exponent * distance_2**modified_exponent
+#        print target_atom_info, distant_atom_info, distance_factor
+#        if 
+        return distance_factor
+#        print target_atom_info, distant_atom_info,distance_atom,distance 
+#        for elem in 
+#        
+#        pass
+#    #TODO move to Base_potential
     def set_shifts(self, result):
         for index in range(len(self._distances)):
             shift = self._calc_single_shift(index)
@@ -1041,7 +1080,7 @@ class Xcamshift():
             raise Exception(msg % target_atom_info)
         return factor
 
-    def _calc_single_force(self,target_atom_index,forces):
+    def _calc_single_force_factor(self,target_atom_index,forces):
         for potential in self.potential:
             if isinstance(potential, Distance_potential):
                 print >> sys.stderr, "warning forces only set for distance potential!"
@@ -1049,7 +1088,7 @@ class Xcamshift():
                 
                 if target_atom_index in self._shift_table.get_atom_indices():
                     factor = self._calc_single_factor(target_atom_index)
-                    potential._calc_single_force(target_atom_index,factor,forces)
+                    potential._calc_single_factor(target_atom_index,factor,forces)
                 
                 
                 

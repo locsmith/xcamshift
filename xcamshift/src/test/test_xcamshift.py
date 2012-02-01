@@ -17,6 +17,7 @@ from test.ala_3 import ala_3_total_shifts
 from test import sidechains, ala_3
 from observed_chemical_shifts import Observed_shift_table
 from utils import Atom_utils
+import sys
 
 
 def text_key_to_atom_ids(key, segment = '*'):
@@ -301,7 +302,27 @@ class TestXcamshift(unittest2.TestCase):
             self.assertAlmostEqual(factor, expected_factor, self.DEFAULT_DECIMAL_PLACES)
 
     
+    def testDistancePotentialSingleForceFactorHarmonic(self):
+        test_shifts = ala_3.ala_3_test_shifts_well
+        
+        shift_table = Observed_shift_table(test_shifts)
+        distance_potential = Distance_potential()
+        distance_potential.set_observed_shifts(shift_table)
+        
+        #Todo remove distance to self!
+        result_array =self.make_result_array_forces()
+        for i,data in enumerate(distance_potential.dump()):
+            target_atom_key = data[0][1:]
+            distant_atom_key = data[1][1:]
+            expected_key = (target_atom_key,distant_atom_key)
+            test_factor  =  ala_3.ala_3_factors_harmonic[target_atom_key]
+            
+            force = distance_potential._calc_single_force_factor(i, test_factor, result_array)
+            expected_force = ala_3.ala_3_distance_forces_harmonic[expected_key]
+#            print expected_key,test_factor,force, expected_force
+            self.assertAlmostEqual(force, expected_force, self.DEFAULT_DECIMAL_PLACES-2)
+##            print result_array
 if __name__ == "__main__":
-#    unittest2.main()
+    unittest2.main()
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistancePotentialSingleForceHarmonic')
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
