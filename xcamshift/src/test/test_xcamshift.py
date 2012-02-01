@@ -29,6 +29,12 @@ def text_key_to_atom_ids(key, segment = '*'):
     return result
 
 
+def almostEqual(first, second, places = 7):
+    result  = False
+    if round(abs(second-first), places) == 0:
+        result=True
+    return result
+
 #class testSegmentManager(object):
 class TestXcamshift(unittest2.TestCase):
 
@@ -302,6 +308,12 @@ class TestXcamshift(unittest2.TestCase):
             self.assertAlmostEqual(factor, expected_factor, self.DEFAULT_DECIMAL_PLACES)
 
     
+
+    def remove_zero_valued_keys(self, expected_force_factors):
+        for key, value in expected_force_factors.items():
+            if almostEqual(value, 0.0, self.DEFAULT_DECIMAL_PLACES):
+                del expected_force_factors[key]
+
     def testDistancePotentialSingleForceFactorHarmonic(self):
         test_shifts = ala_3.ala_3_test_shifts_well
         
@@ -311,6 +323,8 @@ class TestXcamshift(unittest2.TestCase):
         
         #Todo remove distance to self!
         result_array =self.make_result_array_forces()
+        expected_force_factors = dict(ala_3.ala_3_distance_forces_harmonic)
+        print >> sys.stderr, len(expected_force_factors)
         for i,data in enumerate(distance_potential.dump()):
             target_atom_key = data[0][1:]
             distant_atom_key = data[1][1:]
@@ -318,10 +332,14 @@ class TestXcamshift(unittest2.TestCase):
             test_factor  =  ala_3.ala_3_factors_harmonic[target_atom_key]
             
             force = distance_potential._calc_single_force_factor(i, test_factor, result_array)
-            expected_force = ala_3.ala_3_distance_forces_harmonic[expected_key]
-#            print expected_key,test_factor,force, expected_force
-            self.assertAlmostEqual(force, expected_force, self.DEFAULT_DECIMAL_PLACES-2)
-##            print result_array
+            expected_force_factor = expected_force_factors[expected_key]
+            del expected_force_factors[expected_key]
+
+            self.assertAlmostEqual(force, expected_force_factor, self.DEFAULT_DECIMAL_PLACES-2)
+        
+        self.remove_zero_valued_keys(expected_force_factors)
+        self.assertEqual(len(expected_force_factors), 0)
+        
 if __name__ == "__main__":
     unittest2.main()
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistancePotentialSingleForceHarmonic')
