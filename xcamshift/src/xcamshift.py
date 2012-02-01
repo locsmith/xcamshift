@@ -274,7 +274,7 @@ class Distance_potential(Base_potential):
         
         return  distance ** exponent * coefficent 
     
-    def _calc_single_force_factor(self,index,factor,forces):
+    def _calc_single_force_factor(self,index,factor):
         target_atom,distance_atom,coefficient, exponent = self._distances[index]
         target_pos = Atom_utils._get_atom_by_index(target_atom).pos()
         distant_pos =  Atom_utils._get_atom_by_index(distance_atom).pos()
@@ -300,14 +300,40 @@ class Distance_potential(Base_potential):
 #      }
 #    //float_type factor = fact * (float_type) (exponent * pow(distance2, (float_type) ((exponent - 2) / 2.0)));
 #        else 
-        target_atom_info = Atom_utils._get_atom_name(target_atom)
-        distant_atom_info = Atom_utils._get_atom_name(distance_atom)
         factor= factor *coefficient
         modified_exponent = (exponent - 2.0) / 2.0
-        distance_factor = factor *  exponent * distance_2**modified_exponent
-#        print target_atom_info, distant_atom_info, distance_factor
+        force_factor = factor *  exponent * distance_2**modified_exponent
+#        print target_atom_info, distant_atom_info, force_factor
 #        if 
-        return distance_factor
+        return force_factor
+
+    def _calc_single_force_set(self,index,factor, forces):
+        target_atom,distance_atom,coefficient, exponent = self._distances[index]
+        
+        target_pos = Atom_utils._get_atom_by_index(target_atom).pos()
+        distant_pos =  Atom_utils._get_atom_by_index(distance_atom).pos()
+        
+        distance  = target_pos - distant_pos
+        
+        force_factor  = self._calc_single_force_factor(index, factor)
+        
+        DIM_3 = 3
+        target_offset = target_atom * DIM_3
+        distant_offset = distance_atom * DIM_3
+        X_OFFSET = 0
+        Y_OFFSET = 1
+        Z_OFFSET = 2
+        
+        OFFSETS_3 = (X_OFFSET,Y_OFFSET,Z_OFFSET)
+        
+        for offset in OFFSETS_3:
+#            print distance
+#            print forces
+            forces[target_offset+offset] -= distance[offset] * force_factor
+            forces[distant_offset+offset] += distance[offset] * force_factor
+        
+        return forces
+
 #        print target_atom_info, distant_atom_info,distance_atom,distance 
 #        for elem in 
 #        
@@ -1093,7 +1119,7 @@ class Xcamshift():
                 
                 
             
-    
+
 
 ##    def set_observed_shifts(self, observed_shifts):
 ##        self.observed_shifts = observed_shifts

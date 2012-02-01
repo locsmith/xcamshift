@@ -20,14 +20,18 @@ from utils import Atom_utils
 import sys
 
 
-def text_key_to_atom_ids(key, segment = '*'):
+def text_keys_to_atom_ids(keys, segment = '*'):
     result = []
-    for residue_number, atom_name in key:
-        atoms = Atom_utils.find_atom(segment, residue_number, atom_name)
-        atom_ids = [atom.index() for atom in atoms]
+    for key in keys:
+        atom_ids = single_text_key_to_atom_ids(key, segment)
         result.extend(atom_ids)
     return result
 
+def single_text_key_to_atom_ids(key,segment = "*"):
+    residue_number, atom_name  =  key
+    atoms = Atom_utils.find_atom(segment, residue_number, atom_name)
+    return [atom.index() for atom in atoms]
+    
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -62,7 +66,7 @@ class TestXcamshift(unittest2.TestCase):
 
     def make_result_array_forces(self):
         num_atoms = len(AtomSel('(all)').indices())
-        result = [[0.0,0.0,0.0],] * num_atoms
+        result = [0.0] * num_atoms * 3
         return result
     
     def make_result_array(self):
@@ -180,7 +184,7 @@ class TestXcamshift(unittest2.TestCase):
         for dihedral_element in dihedral_potential.dump():
             
             dihedral_atoms = self.dihedral_key_to_atom_ids(dihedral_element)
-            atom_ids  = text_key_to_atom_ids(dihedral_atoms)
+            atom_ids  = text_keys_to_atom_ids(dihedral_atoms)
             
             expected  =  dihedrals_ala_3[dihedral_element[0]][2]
             angle =  dihedral_potential._get_dihedral_angle(*atom_ids)
@@ -314,6 +318,10 @@ class TestXcamshift(unittest2.TestCase):
             if almostEqual(value, 0.0, self.DEFAULT_DECIMAL_PLACES):
                 del expected_force_factors[key]
 
+
+    def assertEmpty(self, expected_force_factors,msg = None):
+        return self.assertEqual(len(expected_force_factors), 0)
+
     def testDistancePotentialSingleForceFactorHarmonic(self):
         test_shifts = ala_3.ala_3_test_shifts_well
         
@@ -322,24 +330,75 @@ class TestXcamshift(unittest2.TestCase):
         distance_potential.set_observed_shifts(shift_table)
         
         #Todo remove distance to self!
-        result_array =self.make_result_array_forces()
+#        result_array =self.make_result_array_forces()
         expected_force_factors = dict(ala_3.ala_3_distance_forces_harmonic)
-        print >> sys.stderr, len(expected_force_factors)
+
         for i,data in enumerate(distance_potential.dump()):
             target_atom_key = data[0][1:]
             distant_atom_key = data[1][1:]
             expected_key = (target_atom_key,distant_atom_key)
             test_factor  =  ala_3.ala_3_factors_harmonic[target_atom_key]
             
-            force = distance_potential._calc_single_force_factor(i, test_factor, result_array)
+            force = distance_potential._calc_single_force_factor(i, test_factor)
             expected_force_factor = expected_force_factors[expected_key]
             del expected_force_factors[expected_key]
 
             self.assertAlmostEqual(force, expected_force_factor, self.DEFAULT_DECIMAL_PLACES-2)
         
         self.remove_zero_valued_keys(expected_force_factors)
-        self.assertEqual(len(expected_force_factors), 0)
+        self.assertEmpty(expected_force_factors)
+
+
+    def get_force_triplet(self, target_atom_index, forces):
+        DIM_3 = 3
+        target_atom_start_index = target_atom_index * DIM_3
+        target_atom_end_index = target_atom_index * DIM_3 + DIM_3
+        target_atom_forces = forces[target_atom_start_index:target_atom_end_index]
+        return target_atom_forces
+
+    def testDistancePotentialSingleForceHarmonic(self):
+        test_shifts = ala_3.ala_3_test_shifts_well
         
+        shift_table = Observed_shift_table(test_shifts)
+        distance_potential = Distance_potential()
+        distance_potential.set_observed_shifts(shift_table)
+        
+        expected_forces_dict = dict(ala_3.ala_3_distance_real_forces_harmonic)
+
+        for i,data in enumerate(distance_potential.dump()):
+            target_atom_key = data[0][1:]
+#            print target_atom_key
+            target_atom_index = single_text_key_to_atom_ids(target_atom_key)[0]
+#            print target_atom_index
+            
+            distant_atom_key = data[1][1:]
+            distant_atom_index  = single_text_key_to_atom_ids(distant_atom_key)[0]
+            
+            expected_key = (target_atom_key,distant_atom_key)
+            expected_forces = expected_forces_dict[expected_key]
+            test_factor  =  ala_3.ala_3_factors_harmonic[target_atom_key]
+            
+            result_array =self.make_result_array_forces()
+            forces = distance_potential._calc_single_force_set(i, test_factor, result_array)
+            
+            target_atom_forces = self.get_force_triplet(target_atom_index, forces)
+            distant_atom_forces = self.get_force_triplet(distant_atom_index, forces)
+            self.assertSequenceAlmostEqual(target_atom_forces,expected_forces, self.DEFAULT_DECIMAL_PLACES)
+
+            negative_expected_forces = [elem * -1 for elem in expected_forces] 
+            self.assertSequenceAlmostEqual(distant_atom_forces,negative_expected_forces, self.DEFAULT_DECIMAL_PLACES)
+
+            print target_atom_forces,distant_atom_forces
+#            print target_atom_forces
+            
+#            expected_force_factor = expected_force_factors[expected_key]
+#            del expected_force_factors[expected_key]
+
+#            self.assertAlmostEqual(force, expected_force_factor, self.DEFAULT_DECIMAL_PLACES-2)
+        
+#        self.remove_zero_valued_keys(expected_force_factors)
+#        self.assertEmpty(expected_force_factors)
+
 if __name__ == "__main__":
     unittest2.main()
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistancePotentialSingleForceHarmonic')
