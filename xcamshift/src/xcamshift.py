@@ -7,20 +7,19 @@ TODO need to translate from_atom names
 
 
 
-from protocol import initStruct
+from atomSel import AtomSel, intersection
+from dihedral import Dihedral
+from keys import Atom_key, Dihedral_key
+from math import cos, tanh
+from observed_chemical_shifts import Observed_shift_table
 from pdbTool import PDBTool
+from protocol import initStruct
 from segment_manager import Segment_Manager
 from table_manager import Table_manager
-from atomSel import AtomSel
-from atomSel import intersection
-from vec3 import  norm
-import sys
-import abc 
-from keys import Atom_key, Dihedral_key
 from utils import tupleit, Atom_utils
-from dihedral import Dihedral
-from math import cos,tanh
-from observed_chemical_shifts import Observed_shift_table
+from vec3 import norm
+import abc
+import sys
 
         
 class Base_potential(object):
@@ -114,8 +113,109 @@ class Base_potential(object):
     #TODO should be abc
     def set_observed_shifts(self, shift_table):
         self._observed_shifts = shift_table
+
+class Distance_based_potential(Base_potential):
     
-class Distance_potential(Base_potential):
+    class indices(object):
+        def __init__(self, target_atom_index,distance_atom_index_1,
+                     distance_atom_index_2, coefficent_index, exponent_index):
+            self.target_atom_index =  target_atom_index
+            self.distance_atom_index_1 = distance_atom_index_1
+            self.distance_atom_index_2 =  distance_atom_index_2
+            self.exponent_index = exponent_index
+            self.coefficent_index = coefficent_index
+            
+#    @abc.abstractmethod
+    def _get_indices(self):
+        pass
+    
+#    @abc.abstractmethod
+    def _get_data_table(self):
+        pass
+    
+    def _calc_single_force_factor(self,index,factor):
+        values  = self._get_data_table()[index]
+        
+        indices = self._get_indices()
+        
+        distance_atom_index_1 = indices.distance_atom_index_1
+        distance_atom_index_2 =indices.distance_atom_index_2
+        coefficient_index = indices.coefficent_index
+        exponent_index  = indices.exponent_index
+        
+        
+        target_atom=values[distance_atom_index_1]
+        distance_atom = values[distance_atom_index_2]
+        coefficient  =  values[coefficient_index]
+        exponent =  values[exponent_index]
+        
+        target_pos = Atom_utils._get_atom_by_index(target_atom).pos()
+        distant_pos =  Atom_utils._get_atom_by_index(distance_atom).pos()
+        
+        distance  = target_pos - distant_pos
+        distance_2 = sum([elem**2 for elem in distance])
+        
+#        shiftDist = 
+        
+#        print self.dump()
+#        for elem in self._distances:
+#            print elem
+#        sys.exit(-1)
+#        print index,distance
+#        factor  = 0.0
+#        if self._smooth:
+#             factor = fact * (float_type) ((exponent * pow(distance2, (float_type) ((exponent - 2) / 2.0))) - ((exponent + cutOffSmoothExp) * pow(distance2, (float_type) ((exponent + cutOffSmoothExp - 2) / 2.0)) * cutOffDistInverseToPowerOfSmoothExp));
+#        cout << "FBB in smoothing" << endl;
+#        // calculate ratio corresponding to exponent used in creating CamShift data base
+#        float_type ratio = distance2 / cutOffDist2;
+#        for (int i = 0; i < 2; i++) { ratio *= ratio; };
+#        factor = fact * (float_type) (pow(distance2, (float_type) ((exponent - 2.0) / 2.0)) * (exponent - (exponent + 8.0) * ratio));
+#      }
+#    //float_type factor = fact * (float_type) (exponent * pow(distance2, (float_type) ((exponent - 2) / 2.0)));
+#        else 
+        factor= factor *coefficient
+        modified_exponent = (exponent - 2.0) / 2.0
+        force_factor = factor *  exponent * distance_2**modified_exponent
+#        print target_atom_info, distant_atom_info, force_factor
+#        if 
+        return force_factor
+
+    def _calc_single_force_set(self,index,factor, forces):
+        values  = self._get_data_table()[index]
+        
+        indices = self._get_indices()
+        
+        distance_atom_index_1 = indices.distance_atom_index_1
+        distance_atom_index_2 =indices.distance_atom_index_2
+        
+        target_atom=values[distance_atom_index_1]
+        distance_atom = values[distance_atom_index_2]
+        
+        target_pos = Atom_utils._get_atom_by_index(target_atom).pos()
+        distant_pos =  Atom_utils._get_atom_by_index(distance_atom).pos()
+        
+        distance  = target_pos - distant_pos
+        
+        force_factor  = self._calc_single_force_factor(index, factor)
+        
+        DIM_3 = 3
+        target_offset = target_atom * DIM_3
+        distant_offset = distance_atom * DIM_3
+        X_OFFSET = 0
+        Y_OFFSET = 1
+        Z_OFFSET = 2
+        
+        OFFSETS_3 = (X_OFFSET,Y_OFFSET,Z_OFFSET)
+        
+        for offset in OFFSETS_3:
+#            print distance
+#            print forces
+            forces[target_offset+offset] -= distance[offset] * force_factor
+            forces[distant_offset+offset] += distance[offset] * force_factor
+        
+        return forces
+    
+class Distance_potential(Distance_based_potential):
     '''
     classdocs
     '''
@@ -130,7 +230,13 @@ class Distance_potential(Base_potential):
         
         self._distances = self._create_component_list("(all)")
 
+    def _get_data_table(self):
+        return self._distances
     
+    def _get_indices(self):
+        return Distance_based_potential.indices(target_atom_index=0,distance_atom_index_1=0,
+                                                distance_atom_index_2=1,coefficent_index=2,
+                                                exponent_index=3)
     def get_abbreviated_name(self):
         return "BB  "
     
@@ -274,65 +380,6 @@ class Distance_potential(Base_potential):
         
         return  distance ** exponent * coefficent 
     
-    def _calc_single_force_factor(self,index,factor):
-        target_atom,distance_atom,coefficient, exponent = self._distances[index]
-        target_pos = Atom_utils._get_atom_by_index(target_atom).pos()
-        distant_pos =  Atom_utils._get_atom_by_index(distance_atom).pos()
-        
-        distance  = target_pos - distant_pos
-        distance_2 = sum([elem**2 for elem in distance])
-        
-#        shiftDist = 
-        
-#        print self.dump()
-#        for elem in self._distances:
-#            print elem
-#        sys.exit(-1)
-#        print index,distance
-#        factor  = 0.0
-#        if self._smooth:
-#             factor = fact * (float_type) ((exponent * pow(distance2, (float_type) ((exponent - 2) / 2.0))) - ((exponent + cutOffSmoothExp) * pow(distance2, (float_type) ((exponent + cutOffSmoothExp - 2) / 2.0)) * cutOffDistInverseToPowerOfSmoothExp));
-#        cout << "FBB in smoothing" << endl;
-#        // calculate ratio corresponding to exponent used in creating CamShift data base
-#        float_type ratio = distance2 / cutOffDist2;
-#        for (int i = 0; i < 2; i++) { ratio *= ratio; };
-#        factor = fact * (float_type) (pow(distance2, (float_type) ((exponent - 2.0) / 2.0)) * (exponent - (exponent + 8.0) * ratio));
-#      }
-#    //float_type factor = fact * (float_type) (exponent * pow(distance2, (float_type) ((exponent - 2) / 2.0)));
-#        else 
-        factor= factor *coefficient
-        modified_exponent = (exponent - 2.0) / 2.0
-        force_factor = factor *  exponent * distance_2**modified_exponent
-#        print target_atom_info, distant_atom_info, force_factor
-#        if 
-        return force_factor
-
-    def _calc_single_force_set(self,index,factor, forces):
-        target_atom,distance_atom,coefficient, exponent = self._distances[index]
-        
-        target_pos = Atom_utils._get_atom_by_index(target_atom).pos()
-        distant_pos =  Atom_utils._get_atom_by_index(distance_atom).pos()
-        
-        distance  = target_pos - distant_pos
-        
-        force_factor  = self._calc_single_force_factor(index, factor)
-        
-        DIM_3 = 3
-        target_offset = target_atom * DIM_3
-        distant_offset = distance_atom * DIM_3
-        X_OFFSET = 0
-        Y_OFFSET = 1
-        Z_OFFSET = 2
-        
-        OFFSETS_3 = (X_OFFSET,Y_OFFSET,Z_OFFSET)
-        
-        for offset in OFFSETS_3:
-#            print distance
-#            print forces
-            forces[target_offset+offset] -= distance[offset] * force_factor
-            forces[distant_offset+offset] += distance[offset] * force_factor
-        
-        return forces
 
 #        print target_atom_info, distant_atom_info,distance_atom,distance 
 #        for elem in 
