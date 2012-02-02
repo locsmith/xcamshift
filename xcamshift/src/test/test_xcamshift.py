@@ -294,6 +294,8 @@ class TestXcamshift(unittest2.TestCase):
 
             energy = xcamshift._calc_single_energy(atom_index)
             self.assertAlmostEqual(energy, expected_energy,self.DEFAULT_DECIMAL_PLACES,msg=`key`)
+        print total_energy
+        total_energy += energy
 
     def testSingleFactorHarmonic(self):
         test_shifts = ala_3.ala_3_test_shifts_harmonic
@@ -387,17 +389,7 @@ class TestXcamshift(unittest2.TestCase):
 
             negative_expected_forces = [elem * -1 for elem in expected_forces] 
             self.assertSequenceAlmostEqual(distant_atom_forces,negative_expected_forces, self.DEFAULT_DECIMAL_PLACES)
-
-            print target_atom_forces,distant_atom_forces
-#            print target_atom_forces
             
-#            expected_force_factor = expected_force_factors[expected_key]
-#            del expected_force_factors[expected_key]
-
-#            self.assertAlmostEqual(force, expected_force_factor, self.DEFAULT_DECIMAL_PLACES-2)
-        
-#        self.remove_zero_valued_keys(expected_force_factors)
-#        self.assertEmpty(expected_force_factors)
 
 if __name__ == "__main__":
     unittest2.main()
