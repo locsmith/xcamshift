@@ -45,19 +45,36 @@ class TestXcamshift(unittest2.TestCase):
     # TODO add extra places
     DEFAULT_DECIMAL_PLACES = 5
     
+
+    def check_almost_equal(self, list_1, list_2, delta = 1e-7):
+        difference_offset = -1
+        for i, (elem_1, elem_2) in enumerate(zip(list_1, list_2)):
+            diff = abs(elem_1 - elem_2)
+            if diff > delta:
+                difference_offset = i
+        
+        return difference_offset
+    
+    def are_almost_equal_sequences(self, list_1, list_2, delta =  1e-7):
+        result = True
+        if self.check_almost_equal(list_1, list_2, delta) > 0:
+            result = False
+        return result
+        
     def assertSequenceAlmostEqual(self,result,expected, delta = 1e-7):
         len_result = len(result)
         len_expected = len(expected)
         if len_result != len_expected:
             raise AssertionError("the two lists are of different length %i and %i" % (len_result,len_expected))
         
-        for i,(elem_1, elem_2) in enumerate(zip(result,expected)):
-            
-            diff = abs(elem_1 - elem_2)
-            if diff > delta:
-                template = "lists differ at item %i: %s - %s > %s"
-                message = template % (i, `elem_1`,`elem_2`,delta)
-                raise AssertionError(message)
+        difference_offset = self.check_almost_equal(result, expected, delta)
+                
+        if difference_offset > 0:
+            template = "lists differ at item %i: %s - %s > %s"
+            elem_1 = result[difference_offset]
+            elem_2 = expected[difference_offset]
+            message = template % (difference_offset, `elem_1`,`elem_2`,delta)
+            raise AssertionError(message)
             
     def setUp(self):
         initStruct("test_data/3_ala/3ala.psf")
@@ -358,6 +375,13 @@ class TestXcamshift(unittest2.TestCase):
         target_atom_forces = forces[target_atom_start_index:target_atom_end_index]
         return target_atom_forces
 
+
+    def remove_almost_zero_force_elems(self, expected_forces_dict, delta = 1e-7):
+        ZEROS_3 = 0.0, 0.0, 0.0
+        for key, value in expected_forces_dict.items():
+            if self.check_almost_equal(ZEROS_3, value):
+                del expected_forces_dict[key]
+
     def testDistancePotentialSingleForceHarmonic(self):
         test_shifts = ala_3.ala_3_test_shifts_well
         
@@ -390,6 +414,10 @@ class TestXcamshift(unittest2.TestCase):
             negative_expected_forces = [elem * -1 for elem in expected_forces] 
             self.assertSequenceAlmostEqual(distant_atom_forces,negative_expected_forces, self.DEFAULT_DECIMAL_PLACES)
             
+            del expected_forces_dict[expected_key]
+            
+        self.remove_almost_zero_force_elems(expected_forces_dict)
+        self.assertEmpty(expected_forces_dict)
 
 if __name__ == "__main__":
     unittest2.main()
