@@ -382,39 +382,46 @@ class TestXcamshift(unittest2.TestCase):
                 del expected_forces_dict[key]
 
 
-    def _test_forces(self, test_shifts, distance_potential,expected_forces):
-        shift_table = Observed_shift_table(test_shifts)
-        distance_potential.set_observed_shifts(shift_table)
+    def _test_forces(self, test_factors, distance_potential,expected_forces):
         expected_forces_dict = dict(expected_forces)
+        test_factors = ala_3.ala_3_factors_harmonic
+        
         for i, data in enumerate(distance_potential.dump()):
             target_atom_key = data[0][1:]
-    #            print target_atom_key
             target_atom_index = single_text_key_to_atom_ids(target_atom_key)[0] #            print target_atom_index
             distant_atom_key = data[1][1:]
             distant_atom_index = single_text_key_to_atom_ids(distant_atom_key)[0]
+            
             expected_key = target_atom_key, distant_atom_key
             expected_forces = expected_forces_dict[expected_key]
-            test_factor = ala_3.ala_3_factors_harmonic[target_atom_key]
+            negative_expected_forces = [elem * -1 for elem in expected_forces]
+            
+            test_factor = test_factors[target_atom_key]
+            
             result_array = self.make_result_array_forces()
+            
             forces = distance_potential._calc_single_force_set(i, test_factor, result_array)
+            print forces
+            
             target_atom_forces = self.get_force_triplet(target_atom_index, forces)
             distant_atom_forces = self.get_force_triplet(distant_atom_index, forces)
+            
             self.assertSequenceAlmostEqual(target_atom_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES)
-            negative_expected_forces = [elem * -1 for elem in expected_forces]
             self.assertSequenceAlmostEqual(distant_atom_forces, negative_expected_forces, self.DEFAULT_DECIMAL_PLACES)
+
             del expected_forces_dict[expected_key]
         
         self.remove_almost_zero_force_elems(expected_forces_dict)
         self.assertEmpty(expected_forces_dict)
 
-    def testDistancePotentialSingleForceWell(self):
-        test_shifts = ala_3.ala_3_test_shifts_well
+    def testDistancePotentialSingleForceHarmonic(self):
         distance_potential = Distance_potential()
-        expected_forces = ala_3.ala_3_distance_real_forces_well
+        expected_forces = ala_3.ala_3_distance_real_forces_harmonic
+        factors_harmonic = ala_3.ala_3_factors_harmonic
         
-        self._test_forces(test_shifts, distance_potential,expected_forces)
+        self._test_forces(factors_harmonic, distance_potential,expected_forces)
 
 if __name__ == "__main__":
-    unittest2.main()
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistancePotentialSingleForceHarmonic')
+#    unittest2.main()
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistancePotentialSingleForceHarmonic')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
