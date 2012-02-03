@@ -311,7 +311,6 @@ class TestXcamshift(unittest2.TestCase):
 
             energy = xcamshift._calc_single_energy(atom_index)
             self.assertAlmostEqual(energy, expected_energy,self.DEFAULT_DECIMAL_PLACES,msg=`key`)
-        print total_energy
         total_energy += energy
 
     def testSingleFactorHarmonic(self):
