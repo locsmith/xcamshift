@@ -52,7 +52,7 @@ ala_3_factors_harmonic =  {
      (2, "CB") : -1.359170,
 }
 
-ala_3_distance_forces_harmonic = {
+ala_3_distance_forces_well = {
     ((2,"CA"),(1,"N"))   : -0.0746,
     ((2,"CA"),(1,"CA"))  : -0.0461,
     ((2,"CA"),(1,"HA"))  : -0.2823,
@@ -146,7 +146,7 @@ ala_3_distance_forces_harmonic = {
     ((2,"CB"),(2,"O"))   : -0.4933
 }
 
-ala_3_distance_real_forces_harmonic = {
+ala_3_distance_real_forces_well = {
     ((2,"CA"),(1,"N"))   :   (-0.0699008,-0.2829600,-0.0893715),
     ((2,"CA"),(1,"CA"))  :   (-0.0130589,-0.1393100,-0.1056710),
     ((2,"CA"),(1,"HA"))  :   (-0.2551660,-0.8614670,-0.8959030),
