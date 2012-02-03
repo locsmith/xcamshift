@@ -116,7 +116,7 @@ class Base_potential(object):
 
 class Distance_based_potential(Base_potential):
     
-    class indices(object):
+    class Indices(object):
         def __init__(self, target_atom_index,distance_atom_index_1,
                      distance_atom_index_2, coefficent_index, exponent_index):
             self.target_atom_index =  target_atom_index
@@ -127,7 +127,9 @@ class Distance_based_potential(Base_potential):
             
 #    @abc.abstractmethod
     def _get_indices(self):
-        pass
+        return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=0,
+                                                distance_atom_index_2=1,coefficent_index=2,
+                                                exponent_index=3)
     
 #    @abc.abstractmethod
     def _get_data_table(self):
@@ -234,9 +236,8 @@ class Distance_potential(Distance_based_potential):
         return self._distances
     
     def _get_indices(self):
-        return Distance_based_potential.indices(target_atom_index=0,distance_atom_index_1=0,
-                                                distance_atom_index_2=1,coefficent_index=2,
-                                                exponent_index=3)
+        return super(Distance_potential, self)._get_indices()
+       
     def get_abbreviated_name(self):
         return "BB  "
     
@@ -834,7 +835,7 @@ class Dihedral_potential(Base_potential):
         return result
 
     
-class Sidechain_potential(Base_potential):
+class Sidechain_potential(Distance_based_potential):
     
     def __init__(self):
         Base_potential.__init__(self)
@@ -843,6 +844,12 @@ class Sidechain_potential(Base_potential):
         
     def  _get_table(self, residue_type):
         return self._table_manager.get_sidechain_table(residue_type)
+    
+    def _get_data_table(self):
+        return self._distances
+    
+    def _get_indices(self):
+        super(Sidechain_potential, self)._get_indices()
     
     def _build_contexts(self,atom, table):
         contexts = []
