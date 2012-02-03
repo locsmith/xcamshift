@@ -156,30 +156,11 @@ class Distance_based_potential(Base_potential):
         
         distance  = target_pos - distant_pos
         distance_2 = sum([elem**2 for elem in distance])
-        
-#        shiftDist = 
-        
-#        print self.dump()
-#        for elem in self._distances:
-#            print elem
-#        sys.exit(-1)
-#        print index,distance
-#        factor  = 0.0
-#        if self._smooth:
-#             factor = fact * (float_type) ((exponent * pow(distance2, (float_type) ((exponent - 2) / 2.0))) - ((exponent + cutOffSmoothExp) * pow(distance2, (float_type) ((exponent + cutOffSmoothExp - 2) / 2.0)) * cutOffDistInverseToPowerOfSmoothExp));
-#        cout << "FBB in smoothing" << endl;
-#        // calculate ratio corresponding to exponent used in creating CamShift data base
-#        float_type ratio = distance2 / cutOffDist2;
-#        for (int i = 0; i < 2; i++) { ratio *= ratio; };
-#        factor = fact * (float_type) (pow(distance2, (float_type) ((exponent - 2.0) / 2.0)) * (exponent - (exponent + 8.0) * ratio));
-#      }
-#    //float_type factor = fact * (float_type) (exponent * pow(distance2, (float_type) ((exponent - 2) / 2.0)));
-#        else 
+
         factor= factor *coefficient
         modified_exponent = (exponent - 2.0) / 2.0
         force_factor = factor *  exponent * distance_2**modified_exponent
-#        print target_atom_info, distant_atom_info, force_factor
-#        if 
+
         return force_factor
 
     def _calc_single_force_set(self,index,factor, forces):
@@ -1140,7 +1121,7 @@ class Xcamshift():
             
             if abs(shift_diff) > flat_bottom_shift_limit:
                 adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
-                
+                print observed_shift,theory_shift,shift_diff,adjusted_shift_diff
                 end_harmonic = self._get_end_harmonic(residue_type, atom_name)
                 scale_harmonic = self._get_scale_harmonic(residue_type, atom_name)
                 sqr_scale_harmonic = scale_harmonic**2
@@ -1169,23 +1150,6 @@ class Xcamshift():
                 if target_atom_index in self._shift_table.get_atom_indices():
                     factor = self._calc_single_factor(target_atom_index)
                     potential._calc_single_factor(target_atom_index,factor,forces)
-                
-                
-                
-            
-
-
-##    def set_observed_shifts(self, observed_shifts):
-##        self.observed_shifts = observed_shifts
-##        
-#    def set_energys(self):
-#        for atom_index in self._shift_table.get_atom_indices():
-#
-#            energy = self._calc_single_energy(atom_index)
-        
-#    
-#    def get_derivatives(self):
-#        pass
 
                           
 if __name__ == "__main__":
