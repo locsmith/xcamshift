@@ -525,13 +525,14 @@ class Extra_potential(Base_potential):
         result  = []
         for from_index,distance_index_1,distance_index_2,value,exponent in self._distances:
             sub_result  = []
-            sub_result.extend(Atom_utils._get_atom_info_from_index(from_index)[1:])
+            sub_result.append(Atom_utils._get_atom_info_from_index(from_index))
             
-            sub_result.extend(Atom_utils._get_atom_info_from_index(distance_index_1)[1:])
-            sub_result.extend(Atom_utils._get_atom_info_from_index(distance_index_2)[1:])
+            sub_result.append(Atom_utils._get_atom_info_from_index(distance_index_1))
+            sub_result.append(Atom_utils._get_atom_info_from_index(distance_index_2))
             
             sub_result.append(value)
             
+            print sub_result
             result.append(tuple(sub_result))
         return result
     
