@@ -424,7 +424,7 @@ class Distance_potential(Distance_based_potential):
     
     
 
-class Extra_potential(Base_potential):
+class Extra_potential(Distance_based_potential):
     def __init__(self):
         Base_potential.__init__(self)
         
@@ -438,6 +438,9 @@ class Extra_potential(Base_potential):
         
     def _get_table(self, residue_type):
         return self._table_manager.get_extra_table(residue_type)
+    
+    def _get_data_table(self):
+        return self._distances
     
     class ExtraContext(object):
 
@@ -475,7 +478,10 @@ class Extra_potential(Base_potential):
                 self.complete = True
 
 
-        
+    def _get_indices(self):
+        return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=1,
+                                                distance_atom_index_2=2,coefficent_index=3,
+                                                exponent_index=4)    
     def _build_contexts(self, atom, table):
         contexts = []
         for offset_1 in table.get_offsets(table.ATOM_1):
@@ -532,7 +538,6 @@ class Extra_potential(Base_potential):
             
             sub_result.append(value)
             
-            print sub_result
             result.append(tuple(sub_result))
         return result
     
@@ -1122,7 +1127,6 @@ class Xcamshift():
             
             if abs(shift_diff) > flat_bottom_shift_limit:
                 adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
-                print observed_shift,theory_shift,shift_diff,adjusted_shift_diff
                 end_harmonic = self._get_end_harmonic(residue_type, atom_name)
                 scale_harmonic = self._get_scale_harmonic(residue_type, atom_name)
                 sqr_scale_harmonic = scale_harmonic**2

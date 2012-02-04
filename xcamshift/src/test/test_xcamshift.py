@@ -386,13 +386,19 @@ class TestXcamshift(unittest2.TestCase):
         expected_forces_dict = dict(expected_forces)
         test_factors = ala_3.ala_3_factors_harmonic
         
+        indices = distance_potential._get_indices()
+        
+        #TODO don't like using dump here
         for i, data in enumerate(distance_potential.dump()):
-            target_atom_key = data[0][1:]
-            target_atom_index = single_text_key_to_atom_ids(target_atom_key)[0] #            print target_atom_index
-            distant_atom_key = data[1][1:]
-            distant_atom_index = single_text_key_to_atom_ids(distant_atom_key)[0]
+            target_atom_key = data[indices.target_atom_index][1:]
+            distant_atom_key_1 = data[indices.distance_atom_index_1][1:]
+           
+#            target_atom_index = single_text_key_to_atom_ids(target_atom_key)[0] #            print target_atom_index
+            distant_atom_key_2 = data[indices.distance_atom_index_2][1:]
+            distant_atom_index_1 = single_text_key_to_atom_ids(distant_atom_key_1)[0]
+            distant_atom_index_2 = single_text_key_to_atom_ids(distant_atom_key_2)[0]
             
-            expected_key = target_atom_key, distant_atom_key
+            expected_key = target_atom_key,distant_atom_key_1,distant_atom_key_2
             expected_forces = expected_forces_dict[expected_key]
             negative_expected_forces = [elem * -1 for elem in expected_forces]
             
@@ -401,16 +407,15 @@ class TestXcamshift(unittest2.TestCase):
             result_array = self.make_result_array_forces()
             
             forces = distance_potential._calc_single_force_set(i, test_factor, result_array)
-            print forces
             
-            target_atom_forces = self.get_force_triplet(target_atom_index, forces)
-            distant_atom_forces = self.get_force_triplet(distant_atom_index, forces)
+            distant_atom_forces_1 = self.get_force_triplet(distant_atom_index_1, forces)
+            distant_atom_forces_2 = self.get_force_triplet(distant_atom_index_2, forces)
             
-            self.assertSequenceAlmostEqual(target_atom_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES)
-            self.assertSequenceAlmostEqual(distant_atom_forces, negative_expected_forces, self.DEFAULT_DECIMAL_PLACES)
+            self.assertSequenceAlmostEqual(distant_atom_forces_1, expected_forces, self.DEFAULT_DECIMAL_PLACES)
+            self.assertSequenceAlmostEqual(distant_atom_forces_2, negative_expected_forces, self.DEFAULT_DECIMAL_PLACES)
 
             del expected_forces_dict[expected_key]
-        
+        del expected_forces_dict['name']
         self.remove_almost_zero_force_elems(expected_forces_dict)
         self.assertEmpty(expected_forces_dict)
 
@@ -421,7 +426,13 @@ class TestXcamshift(unittest2.TestCase):
         
         self._test_forces(factors_harmonic, distance_potential,expected_forces)
 
+    def testExtraPotentialSingleForceHarmonic(self):
+        extra_potential = Extra_potential()
+        expected_forces = ala_3.ala_3_extra_real_forces_harmonic
+        factors_harmonic = ala_3.ala_3_factors_harmonic
+        
+        self._test_forces(factors_harmonic, extra_potential,expected_forces)
 if __name__ == "__main__":
 #    unittest2.main()
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistancePotentialSingleForceHarmonic')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testExtraPotentialSingleForceHarmonic')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
