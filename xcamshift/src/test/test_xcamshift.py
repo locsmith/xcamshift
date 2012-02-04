@@ -225,14 +225,16 @@ class TestXcamshift(unittest2.TestCase):
         
         sidechains_ala_3_copy = dict(sidechains_ala_3)
         for sidechain_elem  in sidechain_potential.dump():
-            self.assertElemeInSet(sidechain_elem[0], sidechains_ala_3_copy)
-            del sidechains_ala_3_copy[sidechain_elem[0]]
+            expected_key = tuple(sidechain_elem[:2])
+            self.assertElemeInSet(expected_key, sidechains_ala_3_copy)
+            del sidechains_ala_3_copy[expected_key]
 
         self.assertEqual(0, len(sidechains_ala_3_copy))
         
     def testSidechainPotentialCoefficientsCorrect(self):
         sidechain_potential = Sidechain_potential()
-        for sidechain_potential_key, coeff, exponent in  sidechain_potential.dump():
+        for target_atom,distant_atom, coeff, exponent in  sidechain_potential.dump():
+            sidechain_potential_key=target_atom,distant_atom
             expected_values = sidechains_ala_3[sidechain_potential_key][:2]
             
             actual_values  = (coeff,exponent)
@@ -249,7 +251,7 @@ class TestXcamshift(unittest2.TestCase):
         
         for i,elem in enumerate(sidechain_potential.dump()):
 
-            key = elem[0]
+            key = tuple(elem[:2])
             
             shift =  sidechain_potential._calc_single_shift(i)
             expected_shift  = sidechains.sidechains_ala_3[key][2]
@@ -393,7 +395,6 @@ class TestXcamshift(unittest2.TestCase):
             target_atom_key = data[indices.target_atom_index][1:]
             distant_atom_key_1 = data[indices.distance_atom_index_1][1:]
            
-#            target_atom_index = single_text_key_to_atom_ids(target_atom_key)[0] #            print target_atom_index
             distant_atom_key_2 = data[indices.distance_atom_index_2][1:]
             distant_atom_index_1 = single_text_key_to_atom_ids(distant_atom_key_1)[0]
             distant_atom_index_2 = single_text_key_to_atom_ids(distant_atom_key_2)[0]
@@ -431,8 +432,14 @@ class TestXcamshift(unittest2.TestCase):
         expected_forces = ala_3.ala_3_extra_real_forces_harmonic
         factors_harmonic = ala_3.ala_3_factors_harmonic
         
-        self._test_forces(factors_harmonic, extra_potential,expected_forces)
+        self._test_forces(factors_harmonic, extra_potential ,expected_forces)
+        
+    def testSidechainPotentialSingleForceHarmonic(self):
+        sidechain_potential = Sidechain_potential()
+        expected_forces = ala_3.ala_3_sidechain_real_forces_harmonic
+        factors_harmonic = ala_3.ala_3_factors_harmonic
+        self._test_forces(factors_harmonic, sidechain_potential,expected_forces)
 if __name__ == "__main__":
 #    unittest2.main()
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testExtraPotentialSingleForceHarmonic')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSidechainPotentialSingleForceHarmonic')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')

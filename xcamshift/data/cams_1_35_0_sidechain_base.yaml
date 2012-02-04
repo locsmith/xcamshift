@@ -10,7 +10,7 @@ data: {
 
   
    ALA : {
-              CB  : {  HA  : ,            CA : -3.4713212,  HN : ,       N :  ,        C : ,         CB  : 1.06e-9     },
+              CB  : {  HA  : ,            CA : -3.4713212,  HN : ,       N :  ,        C : ,         CB  : ,           },
             # HB1 : {  HA  : ,            CA : ,            HN : ,       N :  ,        C : ,         CB  : ,           },
             # HB2 : {  HA  : ,            CA : ,            HN : ,       N :  ,        C : ,         CB  : ,           },
             # HB3 : {  HA  : ,            CA : ,            HN : ,       N :  ,        C : ,         CB  : ,           },

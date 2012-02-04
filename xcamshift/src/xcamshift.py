@@ -123,7 +123,13 @@ class Distance_based_potential(Base_potential):
             self.distance_atom_index_1 = distance_atom_index_1
             self.distance_atom_index_2 =  distance_atom_index_2
             self.exponent_index = exponent_index
-            self.coefficent_index = coefficent_index
+            self.coefficient_index = coefficent_index
+            
+        def __str__(self):
+            result = 'indices target= %i distance atom index 1 = %i index 2 = %i coefficent = %i exponent = %i'
+            msg = result % (self.target_atom_index, self.distance_atom_index_1,
+                            self.distance_atom_index_2, self.coefficient_index, self.exponent_index)
+            return msg                 
             
 #    @abc.abstractmethod
     def _get_indices(self):
@@ -142,7 +148,7 @@ class Distance_based_potential(Base_potential):
         
         distance_atom_index_1 = indices.distance_atom_index_1
         distance_atom_index_2 =indices.distance_atom_index_2
-        coefficient_index = indices.coefficent_index
+        coefficient_index = indices.coefficient_index
         exponent_index  = indices.exponent_index
         
         
@@ -836,7 +842,7 @@ class Sidechain_potential(Distance_based_potential):
         return self._distances
     
     def _get_indices(self):
-        super(Sidechain_potential, self)._get_indices()
+        return super(Sidechain_potential, self)._get_indices()
     
     def _build_contexts(self,atom, table):
         contexts = []
@@ -919,9 +925,8 @@ class Sidechain_potential(Distance_based_potential):
         for from_index,sidechain_index,value,exponent in self._distances:
             sub_result  = []
             
-            target_atom_key = list(Atom_utils._get_atom_info_from_index(from_index)[1:])
-            target_atom_key.append(Atom_utils._get_atom_info_from_index(sidechain_index)[1:][1])
-            sub_result.append(tuple(target_atom_key))
+            sub_result.append(Atom_utils._get_atom_info_from_index(from_index))
+            sub_result.append(Atom_utils._get_atom_info_from_index(sidechain_index))
             
             sub_result.append(value)
             sub_result.append(exponent)
