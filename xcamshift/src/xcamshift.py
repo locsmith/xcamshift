@@ -32,6 +32,7 @@ class Base_potential(object):
         self._segment_manager = Segment_Manager()
         self._table_manager = Table_manager.get_default_table_manager()
         self._observed_shifts = Observed_shift_table()
+        self._smoothed = True
         
 #    def _print_atom(self,atom):
 #        return "%i. [%s]:%i[%s]@%s" % (atom.index(),atom.segmentName(), atom.residueNum(),atom.residueName(), atom.atomName())
@@ -113,6 +114,9 @@ class Base_potential(object):
     #TODO should be abc
     def set_observed_shifts(self, shift_table):
         self._observed_shifts = shift_table
+        
+    def set_smoothed(self, smoothed):
+        self._smoothed = smoothed
 
 class Distance_based_potential(Base_potential):
     
@@ -162,10 +166,20 @@ class Distance_based_potential(Base_potential):
         
         distance  = target_pos - distant_pos
         distance_2 = sum([elem**2 for elem in distance])
-
+        
+        #TODO move to a parameter class
+        cutoff_dist = 5.0
+        cutoff_dist_2 = cutoff_dist**2
+        
         factor= factor *coefficient
-        modified_exponent = (exponent - 2.0) / 2.0
-        force_factor = factor *  exponent * distance_2**modified_exponent
+        if self._smoothed:
+            ratio = distance_2/cutoff_dist_2
+            ratio_3 = ratio **3
+            modified_exponent = ((exponent - 2.0) / 2.0) * (exponent - (exponent + 8.0) * ratio_3)
+            force_factor = factor * exponent * distance_2**modified_exponent
+        else:
+            modified_exponent = (exponent - 2.0) / 2.0
+            force_factor = factor *  exponent * distance_2**modified_exponent
 
         return force_factor
 

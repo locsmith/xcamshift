@@ -440,6 +440,6 @@ class TestXcamshift(unittest2.TestCase):
         factors_harmonic = ala_3.ala_3_factors_harmonic
         self._test_forces(factors_harmonic, sidechain_potential,expected_forces)
 if __name__ == "__main__":
-#    unittest2.main()
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSidechainPotentialSingleForceHarmonic')
+    unittest2.main()
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSidechainPotentialSingleForceHarmonic')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
