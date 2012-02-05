@@ -1114,7 +1114,7 @@ class Xcamshift():
         
         return constants_table.get_weight(atom_name)
     
-    
+    #TODO maybe call this a scaling??
     def _calc_single_factor(self, target_atom_index):
         
         factor = 0.0
