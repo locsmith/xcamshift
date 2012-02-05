@@ -327,7 +327,7 @@ class TestXcamshift(unittest2.TestCase):
         for atom_index in shift_table.get_atom_indices():
             key = Atom_utils._get_atom_info_from_index(atom_index)[1:]
             factor  = xcamshift._calc_single_factor(atom_index)
-            expected_factor = ala_3.ala_3_force_factors[key]
+            expected_factor = ala_3.ala_3_factors_harmonic[key]
             
             self.assertAlmostEqual(factor, expected_factor, self.DEFAULT_DECIMAL_PLACES)
 
@@ -342,19 +342,19 @@ class TestXcamshift(unittest2.TestCase):
     def assertEmpty(self, expected_force_factors,msg = None):
         return self.assertEqual(len(expected_force_factors), 0)
 
-    def testDistancePotentialSingleForceFactor(self):
-
-        distance_potential = Distance_potential()
+    def testDistanceBasedPotentialSingleForceFactor(self):
         
-        #Todo remove distance to self!
-#        result_array =self.make_result_array_forces()
+        # TODO make this a dummy distance based potential, 
+        # _calc_single_force_factor is in distance based potential
+        distance_potential = Distance_potential()
         expected_force_factors = dict(ala_3.ala_3_distance_forces_well)
-
+        test_force_factors = ala_3.ala_3_factors_harmonic
+        
         for i,data in enumerate(distance_potential.dump()):
             target_atom_key = data[0][1:]
             distant_atom_key = data[1][1:]
             expected_key = (target_atom_key,distant_atom_key)
-            test_factor  =  ala_3.ala_3_force_factors[target_atom_key]
+            test_factor  =  test_force_factors[target_atom_key]
             
             force = distance_potential._calc_single_force_factor(i, test_factor)
             expected_force_factor = expected_force_factors[expected_key]
@@ -383,7 +383,7 @@ class TestXcamshift(unittest2.TestCase):
 
     def _test_forces(self, test_factors, distance_potential,expected_forces):
         expected_forces_dict = dict(expected_forces)
-        test_factors = ala_3.ala_3_force_factors
+        test_factors = ala_3.ala_3_factors_harmonic
         
         indices = distance_potential._get_indices()
         
@@ -420,23 +420,24 @@ class TestXcamshift(unittest2.TestCase):
     def testDistancePotentialSingleForceHarmonic(self):
         distance_potential = Distance_potential()
         expected_forces = ala_3.ala_3_distance_real_forces_harmonic
-        factors_harmonic = ala_3.ala_3_force_factors
+        factors_harmonic = ala_3.ala_3_factors_harmonic
         
         self._test_forces(factors_harmonic, distance_potential,expected_forces)
 
     def testExtraPotentialSingleForceHarmonic(self):
         extra_potential = Extra_potential()
         expected_forces = ala_3.ala_3_extra_real_forces_harmonic
-        factors_harmonic = ala_3.ala_3_force_factors
+        factors_harmonic = ala_3.ala_3_factors_harmonic
         
         self._test_forces(factors_harmonic, extra_potential ,expected_forces)
         
     def testSidechainPotentialSingleForceHarmonic(self):
         sidechain_potential = Sidechain_potential()
         expected_forces = ala_3.ala_3_sidechain_real_forces_harmonic
-        factors_harmonic = ala_3.ala_3_force_factors
+        factors_harmonic = ala_3.ala_3_factors_harmonic
         self._test_forces(factors_harmonic, sidechain_potential,expected_forces)
+        
 if __name__ == "__main__":
-#    unittest2.main()
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSidechainPotentialSingleForceHarmonic')
+    unittest2.main()
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSidechainPotentialSingleForceHarmonic')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
