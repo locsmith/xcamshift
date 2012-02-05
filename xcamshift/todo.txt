@@ -6,3 +6,5 @@
 6. glycine an proline tables
 7. test data generation scripts for comprehensive tests suite
 8. code force and energy routines in C
+9. rename factors scalings??
+10. add parameter class to hand down  parameters from xcamshift to
