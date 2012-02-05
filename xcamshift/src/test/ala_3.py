@@ -32,7 +32,7 @@ ala_3_test_shifts_well = {
     (2, "N") : 120.2627
 }
 
-ala_3_energies = {
+ala_3_energies_harmonic = {
     (2, "CA") :  0.425554,
     (2, "CB") :  1.68482,
     (2, "C")  :  0.583972,
@@ -43,13 +43,33 @@ ala_3_energies = {
     'total' : 7.98102
 }
 
-ala_3_force_factors =  {
+ala_3_energies_well = {
+    (2, "CA") :  0.0,
+    (2, "CB") :  0.0,
+    (2, "C")  :  0.0,
+    (2, "HA") :  0.0,
+    (2, "HN") :  0.0,
+    (2, "N")  :  0.0,
+    
+    'total' : 0.0
+}
+
+ala_3_factors_harmonic =  {
      (2, "CA") :  0.552835,
      (2, "HA") :  8.064630,
      (2, "N")  :  0.096157,
      (2, "HN")  :  4.149330,
      (2, "C")  :  0.783775,
      (2, "CB") : -1.359170,
+}
+
+ala_3_factors_well =  {
+     (2, "CA") :  0.0,
+     (2, "HA") :  0.0,
+     (2, "N")  :  0.0,
+     (2, "HN") :  0.0,
+     (2, "C")  :  0.0,
+     (2, "CB") :  0.0,
 }
 
 ala_3_distance_forces_well = {

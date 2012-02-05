@@ -275,63 +275,55 @@ class TestXcamshift(unittest2.TestCase):
         
 #        xcamshift_potential.print_shifts()
         
-    def testDistancePotentialSingleEnergiesHarmonic(self):
-        test_shifts = ala_3.ala_3_test_shifts_harmonic
-        
+
+    def _test_single_energies_ala_3(self, test_shifts, expected_energys):
         xcamshift = Xcamshift()
-        
         shift_table = Observed_shift_table(test_shifts)
         xcamshift.set_observed_shifts(shift_table)
-        
-        expected_energys = ala_3.ala_3_energies
-        expected_total_energy = ala_3.ala_3_energies['total']
-        
+        expected_total_energy = expected_energys['total']
         total_energy = 0.0
         for atom_index in shift_table.get_atom_indices():
             key = Atom_utils._get_atom_info_from_index(atom_index)[1:]
             expected_energy = expected_energys[key]
-
             energy = xcamshift._calc_single_energy(atom_index)
-            self.assertAlmostEqual(energy, expected_energy,self.DEFAULT_DECIMAL_PLACES)
-
+            self.assertAlmostEqual(energy, expected_energy, self.DEFAULT_DECIMAL_PLACES)
             total_energy += energy
-        self.assertAlmostEqual(total_energy, expected_total_energy,self.DEFAULT_DECIMAL_PLACES)
         
-    def testDistancePotentialSingleEnergiesWell(self):
+        self.assertAlmostEqual(total_energy, expected_total_energy, self.DEFAULT_DECIMAL_PLACES)
+
+    def testSingleEnergiesHarmonic(self):
+        test_shifts = ala_3.ala_3_test_shifts_harmonic
+        expected_energys = ala_3.ala_3_energies_harmonic
+        
+        self._test_single_energies_ala_3(test_shifts, expected_energys)
+        
+    def testSingleEnergiesWell(self):
         test_shifts = ala_3.ala_3_test_shifts_well
+        expected_energys = ala_3.ala_3_energies_well
         
+        self._test_single_energies_ala_3(test_shifts, expected_energys)
+
+    def _test_single_factor_set(self, test_shifts, expected_factors):
         xcamshift = Xcamshift()
-        
         shift_table = Observed_shift_table(test_shifts)
         xcamshift.set_observed_shifts(shift_table)
-        
-        
-        total_energy = 0.0
         for atom_index in shift_table.get_atom_indices():
             key = Atom_utils._get_atom_info_from_index(atom_index)[1:]
-            expected_energy = 0.0
-
-            energy = xcamshift._calc_single_energy(atom_index)
-            self.assertAlmostEqual(energy, expected_energy,self.DEFAULT_DECIMAL_PLACES,msg=`key`)
-        total_energy += energy
+            factor = xcamshift._calc_single_factor(atom_index)
+            expected_factor = expected_factors[key]
+            self.assertAlmostEqual(factor, expected_factor, self.DEFAULT_DECIMAL_PLACES)
 
     def testSingleFactorHarmonic(self):
         test_shifts = ala_3.ala_3_test_shifts_harmonic
+        expected_factors = ala_3.ala_3_factors_harmonic
         
-        xcamshift = Xcamshift()
-        
-        shift_table = Observed_shift_table(test_shifts)
-        xcamshift.set_observed_shifts(shift_table)
-        
-        
-        for atom_index in shift_table.get_atom_indices():
-            key = Atom_utils._get_atom_info_from_index(atom_index)[1:]
-            factor  = xcamshift._calc_single_factor(atom_index)
-            expected_factor = ala_3.ala_3_factors_harmonic[key]
-            
-            self.assertAlmostEqual(factor, expected_factor, self.DEFAULT_DECIMAL_PLACES)
+        self._test_single_factor_set(test_shifts, expected_factors)
 
-    
+    def testSingleFactorWell(self):
+        test_shifts = ala_3.ala_3_test_shifts_well
+        expected_factors = ala_3.ala_3_factors_well
+        
+        self._test_single_factor_set(test_shifts, expected_factors)
 
     def remove_zero_valued_keys(self, expected_force_factors):
         for key, value in expected_force_factors.items():
@@ -417,6 +409,7 @@ class TestXcamshift(unittest2.TestCase):
         self.remove_almost_zero_force_elems(expected_forces_dict)
         self.assertEmpty(expected_forces_dict)
 
+    #TODO for completeness there ought to be tests that the well forces are zero here
     def testDistancePotentialSingleForceHarmonic(self):
         distance_potential = Distance_potential()
         expected_forces = ala_3.ala_3_distance_real_forces_harmonic
