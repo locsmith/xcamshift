@@ -953,6 +953,9 @@ class Xcamshift():
                           Dihedral_potential(),
                           Sidechain_potential()]
         self._shift_table = Observed_shift_table()
+        
+        ### flag to set use of smoothed forces with a tanh rollloff
+        self._smmothed = True
                 
     def print_shifts(self):
         result  = [0] * Segment_Manager().get_number_atoms()
