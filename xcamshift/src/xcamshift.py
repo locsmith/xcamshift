@@ -10,7 +10,7 @@ TODO need to translate from_atom names
 from atomSel import AtomSel, intersection
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
-from math import cos, tanh
+from math import cos, tanh, cosh
 from observed_chemical_shifts import Observed_shift_table
 from pdbTool import PDBTool
 from protocol import initStruct
@@ -1096,14 +1096,13 @@ class Xcamshift():
                 if adjusted_shift_diff < end_harmonic:
                     energy_component = (adjusted_shift_diff/scale_harmonic)**2
                 else:
-#                    tanh_amplitude = self._get_tanh_amplitude(residue_type,atom_name)
-#                    tanh_elongation = self._get_tanh_elongation(residue_type, atom_name)
-#                    tan_y_offset = self._get_tan_y_offset(residue_type, atom_name)
-#
-#                    tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
-#                    energy_component = tanh_amplitude * tanh(tanh_argument) + tan_y_offset;
+                    tanh_amplitude = self._get_tanh_amplitude(residue_type,atom_name)
+                    tanh_elongation = self._get_tanh_elongation(residue_type, atom_name)
+                    tan_y_offset = self._get_tan_y_offset(residue_type, atom_name)
 
-                    raise Exception("not implemented")
+                    tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
+                    energy_component = tanh_amplitude * tanh(tanh_argument) + tan_y_offset;
+
                 energy += energy_component
         return energy
     
@@ -1138,12 +1137,15 @@ class Xcamshift():
                 
                 weight = self._get_weight(residue_type,atom_name)
                 
+                tanh_amplitude = self._get_tanh_amplitude(residue_type,atom_name)
+                tanh_elongation = self._get_tanh_elongation(residue_type,atom_name)
+                
                 # TODO add factor and lambda to give fact
                 fact =1.0
                 if adjusted_shift_diff < end_harmonic:
                     factor = 2.0 * weight * adjusted_shift_diff * fact / sqr_scale_harmonic;
                 else:
-                    raise Exception("not implemented")
+                    factor = weight * tanh_amplitude * tanh_elongation / (cosh(tanh_elongation * (adjusted_shift_diff - end_harmonic)))**2.0 * fact;
                 
         else:
             msg = "requested factor for target [%s] which is not in shift table"
