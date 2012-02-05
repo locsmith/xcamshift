@@ -43,7 +43,7 @@ ala_3_energies = {
     'total' : 7.98102
 }
 
-ala_3_factors_harmonic =  {
+ala_3_force_factors =  {
      (2, "CA") :  0.552835,
      (2, "HA") :  8.064630,
      (2, "N")  :  0.096157,

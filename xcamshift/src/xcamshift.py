@@ -163,7 +163,7 @@ class Distance_based_potential(Base_potential):
         distance  = target_pos - distant_pos
         distance_2 = sum([elem**2 for elem in distance])
 
-        factor= factor *coefficient
+        factor= factor * coefficient
         modified_exponent = (exponent - 2.0) / 2.0
         force_factor = factor *  exponent * distance_2**modified_exponent
 
