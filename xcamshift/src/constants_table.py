@@ -14,6 +14,7 @@ class Constants_table(object):
     END_HARMONIC = 'end_harmonic'
     SCALE_HARMONIC = 'scale_harmonic'
     WEIGHT = 'weight'
+    TANH_AMPLITUDE = 'tanh_amplitude'
     
     def __init__(self, table):
         self._table = table
@@ -46,4 +47,26 @@ class Constants_table(object):
     def get_weight(self,target_atom):
         
         self._check_target_atom(target_atom)
+        
         return self._table[self.WEIGHT][target_atom]
+    def get_tanh_amplitude(self,target_atom):
+        
+        self._check_target_atom(target_atom)
+        return self._table[self.TANH_AMPLITUDE][target_atom]
+    
+    def get_tanh_elongation(self,target_atom):
+        self._check_target_atom(target_atom)
+        
+        tanh_amplitude =self.get_tanh_amplitude(target_atom)
+        end_harmonic = self.get_end_harmonic(target_atom)
+        scale_harmonic  =  self.get_scale_harmonic(target_atom)
+        
+        return 2.0 * end_harmonic / ((scale_harmonic**2.0) * tanh_amplitude);
+    
+    def get_tanh_y_offset(self,target_atom):
+        self._check_target_atom(target_atom)
+        
+        end_harmonic = self.get_end_harmonic(target_atom)
+        scale_harmonic  =  self.get_scale_harmonic(target_atom)
+        
+        return (end_harmonic / scale_harmonic)**2.0

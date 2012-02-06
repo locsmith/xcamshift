@@ -21,6 +21,8 @@ ala_3_test_shifts_harmonic = {
     (2, "N") : 122.2627
 }
 
+
+
 ala_3_test_shifts_well = {
 #      N        HN        CA        HA        CB         C
 #    120.2627    8.2373   52.6395    4.2651   18.3505  177.7649
@@ -30,6 +32,28 @@ ala_3_test_shifts_well = {
     (2, "HA") :  4.2651,
     (2, "HN") :  8.2373,
     (2, "N") : 120.2627
+}
+
+FLAT_BOTTOM_CA = 1.151132
+FLAT_BOTTOM_CB = 1.302082
+FLAT_BOTTOM_C = 1.274562
+FLAT_BOTTOM_HA = 0.273254
+FLAT_BOTTOM_HN = 0.506166
+FLAT_BOTTOM_N = 2.899991
+
+END_HARMONIC_H = 4.0
+END_HARMONIC_CN =  20.0
+OFFSET = 0.5
+
+ala_3_test_shifts_tanh = {
+#      N        HN        CA        HA        CB         C
+#    120.2627    8.2373   52.6395    4.2651   18.3505  177.7649
+    (2, "CA") : ala_3_test_shifts_well[(2, "CA")] + FLAT_BOTTOM_CA + END_HARMONIC_CN + OFFSET,
+    (2, "CB") : ala_3_test_shifts_well[(2, "CB")] + FLAT_BOTTOM_CB + END_HARMONIC_CN + OFFSET,
+    (2, "C") :  ala_3_test_shifts_well[(2, "C")]  + FLAT_BOTTOM_C  + END_HARMONIC_CN + OFFSET,
+    (2, "HA") : ala_3_test_shifts_well[(2, "HA")] + FLAT_BOTTOM_HA + END_HARMONIC_H + OFFSET,
+    (2, "HN") : ala_3_test_shifts_well[(2, "HN")] + FLAT_BOTTOM_HN + END_HARMONIC_H + OFFSET,
+    (2, "N") :  ala_3_test_shifts_well[(2, "N")]  + FLAT_BOTTOM_N  + END_HARMONIC_CN + OFFSET
 }
 
 ala_3_energies_harmonic = {
@@ -54,6 +78,17 @@ ala_3_energies_well = {
     'total' : 0.0
 }
 
+ala_3_energies_tanh = {
+    (2,"CA")   :   79.884029,
+    (2,"HA")   :   89.118307,
+    (2,"N")    :   27.911908,
+    (2,"HN")   :   55.300013,
+    (2,"C")    :  116.830242,
+    (2,"CB")   :  121.763979,
+    
+    'total'    :  490.808478,
+}
+
 ala_3_factors_harmonic =  {
      (2, "CA") :  0.552835,
      (2, "HA") :  8.064630,
@@ -70,6 +105,15 @@ ala_3_factors_well =  {
      (2, "HN") :  0.0,
      (2, "C")  :  0.0,
      (2, "CB") :  0.0,
+}
+
+ala_3_factors_tanh =  {
+    (2,"CA")   :    6.013830,
+    (2,"HA")   :   11.003404,
+    (2,"N")    :    2.145172,
+    (2,"HN")   :   11.079489,
+    (2,"C")    :    6.958494,
+    (2,"CB")   :    6.939432,
 }
 
 ala_3_distance_forces_well = {

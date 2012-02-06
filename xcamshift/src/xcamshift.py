@@ -1070,6 +1070,13 @@ class Xcamshift():
         return constants_table.get_scale_harmonic(atom_name)
     
     
+    def _get_tanh_y_offset(self, residue_type, atom_name):
+        table_manager = Table_manager.get_default_table_manager()
+        constants_table = table_manager.get_constants_table(residue_type)
+        
+        return constants_table.get_tanh_y_offset(atom_name)
+    
+    
     def _calc_single_energy(self, target_atom_index):
         
         energy = 0.0
@@ -1098,10 +1105,10 @@ class Xcamshift():
                 else:
                     tanh_amplitude = self._get_tanh_amplitude(residue_type,atom_name)
                     tanh_elongation = self._get_tanh_elongation(residue_type, atom_name)
-                    tan_y_offset = self._get_tan_y_offset(residue_type, atom_name)
-
+                    tanh_y_offset = self._get_tanh_y_offset(residue_type, atom_name)
+                    
                     tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
-                    energy_component = tanh_amplitude * tanh(tanh_argument) + tan_y_offset;
+                    energy_component = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset;
 
                 energy += energy_component
         return energy
@@ -1114,6 +1121,22 @@ class Xcamshift():
         return constants_table.get_weight(atom_name)
     
     #TODO maybe call this a scaling??
+
+    
+    def _get_tanh_amplitude(self, residue_type, atom_name):
+        table_manager = Table_manager.get_default_table_manager()
+        constants_table = table_manager.get_constants_table(residue_type)
+        
+        return constants_table.get_tanh_amplitude(atom_name)
+    
+    
+    def _get_tanh_elongation(self, residue_type, atom_name):
+        table_manager = Table_manager.get_default_table_manager()
+        constants_table = table_manager.get_constants_table(residue_type)
+        
+        return constants_table.get_tanh_elongation(atom_name)
+    
+    
     def _calc_single_factor(self, target_atom_index):
         
         factor = 0.0

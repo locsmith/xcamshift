@@ -302,6 +302,12 @@ class TestXcamshift(unittest2.TestCase):
         expected_energys = ala_3.ala_3_energies_well
         
         self._test_single_energies_ala_3(test_shifts, expected_energys)
+        
+    def testSingleEnergiesTanh(self):
+        test_shifts = ala_3.ala_3_test_shifts_tanh
+        expected_energys = ala_3.ala_3_energies_tanh
+        
+        self._test_single_energies_ala_3(test_shifts, expected_energys)
 
     def _test_single_factor_set(self, test_shifts, expected_factors):
         xcamshift = Xcamshift()
@@ -324,6 +330,16 @@ class TestXcamshift(unittest2.TestCase):
         expected_factors = ala_3.ala_3_factors_well
         
         self._test_single_factor_set(test_shifts, expected_factors)
+
+    def testSingleFactorTanh(self):
+        test_shifts = ala_3.ala_3_test_shifts_tanh
+        expected_factors = ala_3.ala_3_factors_tanh
+        
+        
+        
+        
+        self._test_single_factor_set(test_shifts, expected_factors)
+
 
     def remove_zero_valued_keys(self, expected_force_factors):
         for key, value in expected_force_factors.items():
@@ -430,7 +446,13 @@ class TestXcamshift(unittest2.TestCase):
         factors_harmonic = ala_3.ala_3_factors_harmonic
         self._test_forces(factors_harmonic, sidechain_potential,expected_forces)
         
+    @staticmethod
+    def list_test_shifts():
+        for item in ala_3.ala_3_test_shifts_tanh.items():
+            print item
+        
 if __name__ == "__main__":
     unittest2.main()
+    TestXcamshift.list_test_shifts()
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSidechainPotentialSingleForceHarmonic')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')

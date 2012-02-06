@@ -18,3 +18,8 @@ scale_harmonic : {
 weight : {
   CA : 1.0,      CB : 1.0,      C : 1.0,      HA : 1.0,      HN : 1.0,      N : 1.0
 }
+
+tanh_amplitude : {
+  CA : 20.0,     CB : 20.0,     C : 20.0,     HA : 20.0,     HN : 20.0,     N : 20.
+
+}
