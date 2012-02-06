@@ -8,3 +8,4 @@
 8. code force and energy routines in C
 9. rename factors scalings??
 10. add parameter class to hand down  parameters from xcamshift to
+11. add factor and lambda to give fact in xcamshift._calc_single_factor
