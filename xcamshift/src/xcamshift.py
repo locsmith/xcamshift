@@ -10,7 +10,7 @@ TODO need to translate from_atom names
 from atomSel import AtomSel, intersection
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
-from math import cos, tanh, cosh
+from math import cos, tanh, cosh, sin
 from observed_chemical_shifts import Observed_shift_table
 from pdbTool import PDBTool
 from protocol import initStruct
@@ -746,6 +746,7 @@ class Dihedral_potential(Base_potential):
             for atom_pair in (atom_1,atom_2), (atom_3, atom_4):
                 
                 info_pair  = []
+                #TODO flatten this array
                 info_pair.append(Atom_utils._get_atom_info_from_index(atom_pair[0])[1:])
                 info_pair.append(Atom_utils._get_atom_info_from_index(atom_pair[1])[1:])
             
@@ -795,19 +796,40 @@ class Dihedral_potential(Base_potential):
         return Dihedral(atom_1,atom_2,atom_3,atom_4).value();
     
     
+
+    def _get_dihedral_atom_ids(self, index):
+        data = self._distances[index]
+        dihedrals = data[1:5]
+        return dihedrals
+
+
+    def _get_coefficient(self, index):
+        data = self._distances[index]
+        coefficient = data[5]
+        return coefficient
+
+
+    def _get_parameters(self, index):
+        data = self._distances[index]
+        parameters = data[6:11]
+        parameter_0, parameter_1, parameter_2, parameter_3, parameter_4 = parameters
+        return parameter_0, parameter_3, parameter_1, parameter_4, parameter_2
+    
+    def _get_force_parameters(self,index):
+        return self._get_parameters(index)[:-1]
+
     def _calc_single_shift(self, index):
         
-        data = self._distances[index]
+       
+        dihedral_atom_ids= self._get_dihedral_atom_ids(index)
         
-        dihedral_1_atom_id_1, dihedral_1_atom_id_2, \
-        dihedral_2_atom_id_1, dihedral_2_atom_id_2 = data[1:5]
+        coefficient = self._get_coefficient(index)
         
-        coefficient =  data[5]
+        parameter_0, parameter_3, parameter_1, \
+        parameter_4, parameter_2               \
+        = self._get_parameters(index)
         
-        parameter_0, parameter_1,parameter_2,parameter_3,parameter_4 = data[6:11]
-        
-        angle = self._get_dihedral_angle(dihedral_1_atom_id_1, dihedral_1_atom_id_2, 
-                                        dihedral_2_atom_id_1, dihedral_2_atom_id_2)
+        angle = self._get_dihedral_angle(*dihedral_atom_ids)
 
         
         angle_term = parameter_0 * cos(3.0 * angle + parameter_3) + \
@@ -826,8 +848,27 @@ class Dihedral_potential(Base_potential):
             result[from_atom_id] += shift
 
         return result
-
     
+    def _calc_single_force_factor(self,index):
+        
+        dihedral_atom_ids= self._get_dihedral_atom_ids(index)
+        
+#        coefficient = self._get_coefficient(index)
+        
+        parameter_0, parameter_3, parameter_1, \
+        parameter_4 = self._get_force_parameters(index)
+        
+        angle = self._get_dihedral_angle(*dihedral_atom_ids)
+        
+        result = -3.0 * parameter_0 * sin(3.0 * angle + parameter_3) - \
+                        parameter_1 * sin(angle + parameter_4)
+        return result
+
+#        print 'here',self._distances[index][1:5],angle
+        
+    def _calc_single_force_set(self,index,factor,forces):
+        print self._distances[index]
+        
 class Sidechain_potential(Distance_based_potential):
     
     def __init__(self):
