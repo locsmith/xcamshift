@@ -434,12 +434,11 @@ class TestXcamshift(unittest2.TestCase):
         return dihedral_angle_key
 
     def testDihedralPotentialSingleForceFactor(self):
-        expected_force_factors = ala_3.ala_3_dihedral_force_factors_tanh
+        expected_force_factors = dict(ala_3.ala_3_dihedral_force_factors_tanh)
         potential = Dihedral_potential()
         
         
         for i, data in enumerate(potential.dump()):
-#            print data,potential._calc_single_force_factor(i)
             SELECTION_INDEX = 0
             TARGET_ATOM_INDEX = 0
             dump_selection_data = data[SELECTION_INDEX]
@@ -450,32 +449,9 @@ class TestXcamshift(unittest2.TestCase):
             expected_force_factor =  expected_force_factors[force_factor_key]
             force_factor = potential._calc_single_force_factor(i)
             self.assertAlmostEqual(expected_force_factor, force_factor,self.DEFAULT_DECIMAL_PLACES)
-#            distant_atom_key_1 = data[TARGET_ATOM_INDEX][1:]
-           
-#            distant_atom_key_2 = data[indices.distance_atom_index_2][1:]
-#            distant_atom_index_1 = single_text_key_to_atom_ids(distant_atom_key_1)[0]
-#            distant_atom_index_2 = single_text_key_to_atom_ids(distant_atom_key_2)[0]
-#            
-#            expected_key = target_atom_key,distant_atom_key_1,distant_atom_key_2
-#            expected_forces = expected_forces_dict[expected_key]
-#            negative_expected_forces = [elem * -1 for elem in expected_forces]
-#            
-#            test_factor = test_factors[target_atom_key]
-#            
-#            result_array = self.make_result_array_forces()
-#            
-#            forces = distance_potential._calc_single_force_set(i, test_factor, result_array)
-#            
-#            distant_atom_forces_1 = self.get_force_triplet(distant_atom_index_1, forces)
-#            distant_atom_forces_2 = self.get_force_triplet(distant_atom_index_2, forces)
-#            
-#            self.assertSequenceAlmostEqual(distant_atom_forces_1, expected_forces, self.DEFAULT_DECIMAL_PLACES)
-#            self.assertSequenceAlmostEqual(distant_atom_forces_2, negative_expected_forces, self.DEFAULT_DECIMAL_PLACES)
-#
-#            del expected_forces_dict[expected_key]
-#        del expected_forces_dict['name']
-#        self.remove_almost_zero_force_elems(expected_forces_dict)
-#        self.assertEmpty(expected_forces_dict)
+
+            del expected_force_factors[force_factor_key]
+        self.assertEmpty(expected_force_factors)
 
         
 #        potential._calc_single_force_factor(index)
