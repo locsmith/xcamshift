@@ -422,23 +422,29 @@ class TestXcamshift(unittest2.TestCase):
         self.remove_almost_zero_force_elems(expected_forces_dict)
         self.assertEmpty(expected_forces_dict)
 
+    # TODO this is a shim and will disapear once we unify keys formats
+    def _convert_dump_dihedral_key(self, dump_selection_data):
+        DIHEDRAL_ATOMS_INDEX = 1
+        DIHEDRAL_PAIR_1 = 0
+        DIHEDRAL_PAIR_2 = 1
+        dihedral_angle_key = []
+        dihedral_angle_key.extend(dump_selection_data[DIHEDRAL_ATOMS_INDEX][DIHEDRAL_PAIR_1])
+        dihedral_angle_key.extend(dump_selection_data[DIHEDRAL_ATOMS_INDEX][DIHEDRAL_PAIR_2])
+        dihedral_angle_key = tuple(dihedral_angle_key)
+        return dihedral_angle_key
+
     def testDihedralPotentialSingleForceFactor(self):
         expected_force_factors = ala_3.ala_3_dihedral_force_factors_tanh
         potential = Dihedral_potential()
         
-        TARGET_ATOM_INDEX = 0
-        SELECTION_INDEX = 0
-        DIHEDRAL_ATOMS_INDEX = 1
-        DIHEDRAL_PAIR_1 = 0
-        DIHEDRAL_PAIR_2 = 1
         
         for i, data in enumerate(potential.dump()):
 #            print data,potential._calc_single_force_factor(i)
-            target_atom_key = data[SELECTION_INDEX][TARGET_ATOM_INDEX]
-            dihedral_angle_key = []
-            dihedral_angle_key.extend(data[SELECTION_INDEX][DIHEDRAL_ATOMS_INDEX][DIHEDRAL_PAIR_1])
-            dihedral_angle_key.extend(data[SELECTION_INDEX][DIHEDRAL_ATOMS_INDEX][DIHEDRAL_PAIR_2])
-            dihedral_angle_key =  tuple(dihedral_angle_key)
+            SELECTION_INDEX = 0
+            TARGET_ATOM_INDEX = 0
+            dump_selection_data = data[SELECTION_INDEX]
+            target_atom_key = dump_selection_data[TARGET_ATOM_INDEX]
+            dihedral_angle_key = self._convert_dump_dihedral_key(dump_selection_data)
             
             force_factor_key = target_atom_key,dihedral_angle_key
             expected_force_factor =  expected_force_factors[force_factor_key]
@@ -474,16 +480,54 @@ class TestXcamshift(unittest2.TestCase):
         
 #        potential._calc_single_force_factor(index)
         
+
+    def _extract_dihedral_forces(self, dihedral_atom_ids, forces):
+        result = []
+        
+        DIM_3 = 3
+        
+        
+        print dihedral_atom_ids
+        for atom_id in dihedral_atom_ids:
+            atom_offset = atom_id * DIM_3
+            print atom_offset,atom_offset+DIM_3
+            result.append(forces[atom_offset:atom_offset+DIM_3])
+            
+        return result
+                
+    
+    
     def _test_dihedral_forces(self, test_factors, potential,expected_forces):
-        return
-        expected_forces_dict = dict()
+        expected_forces = dict(expected_forces)
 #        dict(expected_forces)
-        test_factors = ala_3.ala_3_factors_harmonic
         
-        
-        TARGET_ATOM_INDEX = 0
         for i, data in enumerate(potential.dump()):
-            print data,potential._calc_single_force_factor(i)
+            
+            
+            forces = self.make_result_array_forces()
+            print 'forces',forces
+            print data[0]
+            #TODO imporve names and dihdedral atom lookup
+            SELECTION_INDEX = 0
+            TARGET_ATOM_INDEX = 0
+            dump_selection_data = data[SELECTION_INDEX]
+            target_atom_key = dump_selection_data[TARGET_ATOM_INDEX]
+            dihedral_atoms_key = self._convert_dump_dihedral_key(dump_selection_data)
+            dihedral_angle_key = target_atom_key,dihedral_atoms_key
+            dihedral_atom_ids =  []
+            for elem in dihedral_atoms_key:
+                print elem
+                dihedral_atom_ids.extend(single_text_key_to_atom_ids(elem))
+            test_factor = test_factors[target_atom_key]
+            print 'test factor',test_factor
+#            make_dihedral_key()
+            forces = potential._calc_single_force_set(i,test_factor,forces)
+            dihedral_forces = self._extract_dihedral_forces(dihedral_atom_ids,forces)
+            
+            for forces,expected in zip(dihedral_forces,expected_forces[dihedral_angle_key]):
+                self.assertSequenceAlmostEqual(forces, expected, self.DEFAULT_DECIMAL_PLACES)
+            
+            
 #            target_atom_key = data[TARGET_ATOM_INDEX][1:]
 #            distant_atom_key_1 = data[TARGET_ATOM_INDEX][1:]
            
@@ -533,12 +577,12 @@ class TestXcamshift(unittest2.TestCase):
         factors_harmonic = ala_3.ala_3_factors_harmonic
         self._test_distance_forces(factors_harmonic, sidechain_potential,expected_forces)
         
-    def testDihedralPotentialSingleForceHarmonic(self):
+    def testDihedralPotentialSingleForceTanh(self):
         dihedral_potential = Dihedral_potential()
-        expected_forces = None
+        expected_forces = ala_3.ala_3_dihedral_forces_tanh
 #        ala_3.ala_3_dihedral_real_forces_harmonic
-        factors_harmonic = ala_3.ala_3_factors_harmonic
-        self._test_dihedral_forces(factors_harmonic, dihedral_potential,expected_forces)
+        factors_tanh = ala_3.ala_3_factors_tanh
+        self._test_dihedral_forces(factors_tanh, dihedral_potential,expected_forces)
         
     @staticmethod
     def list_test_shifts():
@@ -548,5 +592,5 @@ class TestXcamshift(unittest2.TestCase):
 if __name__ == "__main__":
 #    unittest2.main()
 #    TestXcamshift.list_test_shifts()
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDihedralPotentialSingleForceFactor')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDihedralPotentialSingleForceTanh')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
