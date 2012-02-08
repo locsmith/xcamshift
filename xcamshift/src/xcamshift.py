@@ -884,18 +884,15 @@ class Dihedral_potential(Base_potential):
             
         v1,v2,v3,v4 = positions
         
-        print'v1,v2,v3,v4',v1,v2,v3,v4
         r1 = v1 - v2
         r2 = v3 - v2
         r3 = r2 * -1
         r4 = v4 - v3
         
-        print 'r1,r2,r3,r4',r1,r2,r3,r4
         # compute normal vector to plane containing v1, v2, and v3
         n1 = cross(r1, r2)
         # compute normal vector to plane containing v2, v3, and v4
         n2 = cross(r3, r4)
-        print "n1,n2",n1,n2
                 
         r2_length = Atom_utils._calculate_distance(dihedral_atom_ids[ATOM_ID_2], dihedral_atom_ids[ATOM_ID_3])
         r2_length_2 = r2_length**2.0
@@ -908,14 +905,12 @@ class Dihedral_potential(Base_potential):
 #        // Journal of Computational Chemistry 16, pp. 527-533:
 #        // Force and virial of torsional-angle-dependent potentials.
         factor_1 = dihedral_factor * r2_length;
-        print 'dihderal_factor',dihedral_factor
-        print "calc F1 ", -factor_1 , norm(n1)**2
         F1 = n1 *  (-factor_1 / norm(n1)**2)
         F4 = n2 *  ( factor_1 / norm(n2)**2)
         
         factor_2 = dot(r1, r2) / r2_length_2;
         factor_3 = dot(r3, r4) / r2_length_2;
-        print "factors",dihedral_factor,factor_1,factor_2,factor_3
+
         T1 = F1 * (factor_2-1);
         T2 = F4 * -factor_3
         
@@ -926,9 +921,7 @@ class Dihedral_potential(Base_potential):
 
         F3 = T1 + T2
 
-        print F1,F2,F3,F4
 #        // assign forces
-        
         DIM_3 = 3
         
         X_OFFSET = 0
@@ -942,17 +935,6 @@ class Dihedral_potential(Base_potential):
                 force_component = weight * base_force[offset]
                 forces[atom_id*DIM_3+offset]+= force_component
                 
-#        for i,atom_id in enumerate(dihedral_atom_ids):
-#            print "(",
-#            for offset in OFFSETS_3:
-#                print forces[atom_id*DIM_3+offset],",",
-#            print "),"
-#        print      
-##        f.coor[atom[0]+1] += weight * F1[1]; f.coor[atom[0]+2] += weight * F1[2];
-##        f.coor[atom[1]] += weight * F2[0]; f.coor[atom[1]+1] += weight * F2[1]; f.coor[atom[1]+2] += weight * F2[2];
-##        f.coor[atom[2]] += weight * F3[0]; f.coor[atom[2]+1] += weight * F3[1]; f.coor[atom[2]+2] += weight * F3[2];
-##        f.coor[atom[3]] += weight * F4[0]; f.coor[atom[3]+1] += weight * F4[1]; f.coor[atom[3]+2] += weight * F4[2];
-#        print
         return forces
     
 class Sidechain_potential(Distance_based_potential):

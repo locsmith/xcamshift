@@ -484,77 +484,41 @@ class TestXcamshift(unittest2.TestCase):
     def _extract_dihedral_forces(self, dihedral_atom_ids, forces):
         result = []
         
-        DIM_3 = 3
-        
-        
-        print dihedral_atom_ids
         for atom_id in dihedral_atom_ids:
-            atom_offset = atom_id * DIM_3
-            print atom_offset,atom_offset+DIM_3
-            result.append(forces[atom_offset:atom_offset+DIM_3])
+            result.append(self.get_force_triplet(atom_id,forces))
             
         return result
                 
     
     
     def _test_dihedral_forces(self, test_factors, potential,expected_forces):
-        expected_forces = dict(expected_forces)
-#        dict(expected_forces)
+        expected_forces_dict = dict(expected_forces)
         
         for i, data in enumerate(potential.dump()):
             
             
             forces = self.make_result_array_forces()
-            print 'forces',forces
-            print data[0]
             #TODO imporve names and dihdedral atom lookup
             SELECTION_INDEX = 0
             TARGET_ATOM_INDEX = 0
             dump_selection_data = data[SELECTION_INDEX]
             target_atom_key = dump_selection_data[TARGET_ATOM_INDEX]
             dihedral_atoms_key = self._convert_dump_dihedral_key(dump_selection_data)
-            dihedral_angle_key = target_atom_key,dihedral_atoms_key
+            expected_key = target_atom_key,dihedral_atoms_key
             dihedral_atom_ids =  []
             for elem in dihedral_atoms_key:
-                print elem
                 dihedral_atom_ids.extend(single_text_key_to_atom_ids(elem))
             test_factor = test_factors[target_atom_key]
-            print 'test factor',test_factor
-#            make_dihedral_key()
             forces = potential._calc_single_force_set(i,test_factor,forces)
             dihedral_forces = self._extract_dihedral_forces(dihedral_atom_ids,forces)
             
-            for forces,expected in zip(dihedral_forces,expected_forces[dihedral_angle_key]):
+            for forces,expected in zip(dihedral_forces,expected_forces_dict[expected_key]):
                 self.assertSequenceAlmostEqual(forces, expected, self.DEFAULT_DECIMAL_PLACES)
-            
-            
-#            target_atom_key = data[TARGET_ATOM_INDEX][1:]
-#            distant_atom_key_1 = data[TARGET_ATOM_INDEX][1:]
-           
-#            distant_atom_key_2 = data[indices.distance_atom_index_2][1:]
-#            distant_atom_index_1 = single_text_key_to_atom_ids(distant_atom_key_1)[0]
-#            distant_atom_index_2 = single_text_key_to_atom_ids(distant_atom_key_2)[0]
-#            
-#            expected_key = target_atom_key,distant_atom_key_1,distant_atom_key_2
-#            expected_forces = expected_forces_dict[expected_key]
-#            negative_expected_forces = [elem * -1 for elem in expected_forces]
-#            
-#            test_factor = test_factors[target_atom_key]
-#            
-#            result_array = self.make_result_array_forces()
-#            
-#            forces = distance_potential._calc_single_force_set(i, test_factor, result_array)
-#            
-#            distant_atom_forces_1 = self.get_force_triplet(distant_atom_index_1, forces)
-#            distant_atom_forces_2 = self.get_force_triplet(distant_atom_index_2, forces)
-#            
-#            self.assertSequenceAlmostEqual(distant_atom_forces_1, expected_forces, self.DEFAULT_DECIMAL_PLACES)
-#            self.assertSequenceAlmostEqual(distant_atom_forces_2, negative_expected_forces, self.DEFAULT_DECIMAL_PLACES)
-#
-#            del expected_forces_dict[expected_key]
-#        del expected_forces_dict['name']
-#        self.remove_almost_zero_force_elems(expected_forces_dict)
-#        self.assertEmpty(expected_forces_dict)
+
+            del expected_forces_dict[expected_key]
+        del expected_forces_dict['name']
+        self.remove_almost_zero_force_elems(expected_forces_dict)
+        self.assertEmpty(expected_forces_dict)
         
     #TODO for completeness there ought to be tests that the well forces are zero here
     def testDistancePotentialSingleForceHarmonic(self):
@@ -575,13 +539,14 @@ class TestXcamshift(unittest2.TestCase):
         sidechain_potential = Sidechain_potential()
         expected_forces = ala_3.ala_3_sidechain_real_forces_harmonic
         factors_harmonic = ala_3.ala_3_factors_harmonic
+
         self._test_distance_forces(factors_harmonic, sidechain_potential,expected_forces)
         
     def testDihedralPotentialSingleForceTanh(self):
         dihedral_potential = Dihedral_potential()
         expected_forces = ala_3.ala_3_dihedral_forces_tanh
-#        ala_3.ala_3_dihedral_real_forces_harmonic
         factors_tanh = ala_3.ala_3_factors_tanh
+
         self._test_dihedral_forces(factors_tanh, dihedral_potential,expected_forces)
         
     @staticmethod
