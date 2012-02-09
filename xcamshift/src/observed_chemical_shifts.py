@@ -32,6 +32,13 @@ class Observed_shift_table(object):
     
     def get_atom_indices(self):
         return self._chemical_shifts.keys()
+    
+    def get_indices_for_atom_id(self):
+        result ={}
+        for i, atom_id in enumerate(self._chemical_shifts.keys()):
+            result[atom_id] = i
+        return result
+        
     #TODO add more generic dump capabilities
     def dump_observed_shifts(self):
         results = []

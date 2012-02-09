@@ -9,6 +9,7 @@ from observed_chemical_shifts import Observed_shift_table
 from protocol import initStruct
 from pdbTool import PDBTool
 from test.ala_3 import ala_3_test_shifts_harmonic
+from utils import Atom_utils
 
 
 class TestObservedShiftTable(unittest2.TestCase):
@@ -49,6 +50,20 @@ class TestObservedShiftTable(unittest2.TestCase):
             
             expected = ala_3_test_shifts_harmonic[short_atom_key]
             self.assertAlmostEqual(expected, value)
+            
+    def testIndexToAtomId(self):
+        shift_table = self.create_ala_3_shift_table()
+        atom_id_indices = dict(shift_table.get_indices_for_atom_id())
+        
+        for i,elem in enumerate(shift_table.dump_observed_shifts()):
+            atom_ids = Atom_utils.find_atom_id(*elem[0])
+            self.assertEqual(len(atom_ids), 1)
+            atom_id = atom_ids[0]
+            self.assertEqual(atom_id_indices[atom_id],i)
+            del atom_id_indices[atom_id]
+        self.assertEmpty(atom_id_indices)
+#            short_atom_key = elem[0][1:]
+            
 
 if __name__ == "__main__":
     unittest2.main()

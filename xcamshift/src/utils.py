@@ -30,7 +30,12 @@ class Atom_utils(object):
         residue_atoms = AtomSel(selection)
         return residue_atoms
 
+    @staticmethod
+    def find_atom_id(segment='*', residue_number='#', atom='*'):
+        atoms  = Atom_utils.find_atom(segment,residue_number,atom)
+        return [atom.index() for atom in atoms]
     
+    #TODO what is the difference between this and the called method
     @staticmethod
     def _select_atom_with_translation(segment='*', residue_number='#',atom='*'):
         residue_atoms = Atom_utils.find_atom(segment, residue_number, atom)
