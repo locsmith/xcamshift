@@ -844,7 +844,6 @@ class Dihedral_potential(Base_potential):
         parameter_0, parameter_1, parameter_2, parameter_3, parameter_4 = parameters
         return parameter_0, parameter_3, parameter_1, parameter_4, parameter_2
     
-    # TODO REMOVE!!
     def _get_force_parameters(self,index):
         return self._get_parameters(index)[:-1]
 
