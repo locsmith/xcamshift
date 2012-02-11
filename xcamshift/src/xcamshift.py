@@ -38,8 +38,7 @@ class Base_potential(object):
         self._observed_shifts = Observed_shift_table()
         self._component_list  = Component_list()
         
-#    def _print_atom(self,atom):
-#        return "%i. [%s]:%i[%s]@%s" % (atom.index(),atom.segmentName(), atom.residueNum(),atom.residueName(), atom.atomName())
+
 
     def _check_segment_length(self, segment):
         segment_info = self._segment_manager.get_segment_info(segment)
@@ -222,8 +221,6 @@ class Distance_based_potential(Base_potential):
         OFFSETS_3 = (X_OFFSET,Y_OFFSET,Z_OFFSET)
         
         for offset in OFFSETS_3:
-#            print distance
-#            print forces
             forces[target_offset+offset] -= distance[offset] * force_factor
             forces[distant_offset+offset] += distance[offset] * force_factor
         
@@ -267,11 +264,7 @@ class Distance_potential(Distance_based_potential):
             
             self.offset = offset
             
-#            self.from_atom_name = from_atom.atomName()
-#            self.from_atom_name = self._table.get_translation(self.from_atom_name)
-#            self.from_atom_index = from_atom.index()
             from_residue_number = from_atom.residueNum()
-#            self.from_residue_type = Base_potential._get_residue_type(self.segment, self.from_residue_number)
             
             self.to_atom_name = to_atom_name
             self.to_residue_number = from_residue_number+offset
@@ -329,46 +322,6 @@ class Distance_potential(Distance_based_potential):
     def _get_table(self, from_residue_type):
         return self._table_manager.get_BB_Distance_Table(from_residue_type)
 
-#    def _create_component_list(self,atom_selection):
-#        
-#        result  = []
-#        
-#        atom_selection = AtomSel(atom_selection)
-#        for segment in self._segment_manager.get_segments():
-#            segment_info = self._segment_manager.get_segment_info(segment)
-#            
-#            if segment_info.segment_length < 3:
-#                template = "Warning: segment '%s' only contains < 3 residues (%i) and will be ignored"
-#                message = template % (segment,segment_info.segment_length)
-#                print >> sys.stderr, message
-#                continue
-#            
-#            for from_residue_number in range(segment_info.first_residue+1,segment_info.last_residue):
-#                residue_type = self._get_residue_type(segment, from_residue_number)
-#        
-#                distance_table = self._table_manager.get_BB_Distance_Table(residue_type)
-#                
-#                exponent = distance_table.get_exponent()
-#                from_atoms  =  distance_table.get_from_atoms()
-#                
-#                for offset in distance_table.get_offsets():
-#                    for from_atom in self._select_atom_with_translation(segment, from_residue_number):
-#                        from_atom_name = from_atom.atomName()
-#                        from_atom_index = from_atom.index()
-#                        if from_atom_name in from_atoms:
-#                            for to_atom_name in distance_table.get_to_atoms():
-#                                to_residue_number =  from_residue_number+offset
-#                                to_atoms =  self._select_atom_with_translation(segment,to_residue_number, to_atom_name)
-#                                for to_atom in to_atoms:
-#                                    value = None
-#                                    to_atom_name = to_atom.atomName()
-#                                    to_atom_index =  to_atom.index()
-#                                    value = distance_table.get_distance_coeeficent(from_atom_name,offset,to_atom_name)
-#    #                            value  = distance_table.get_random_coil_shift(residue_type,atom_name)
-#                                
-#                                    if value != None:
-#                                        result.append((from_atom_index,to_atom_index,value,exponent))
-#                return result
             
     def __str__(self):
         print self.get_number_components()
@@ -395,35 +348,6 @@ class Distance_potential(Distance_based_potential):
         return  distance ** exponent * coefficent 
     
 
-#        print target_atom_info, distant_atom_info,distance_atom,distance 
-#        for elem in 
-#        
-#        pass
-
-#        for from_atom_id,to_atom_id,coefficent,exponent in self._components:
-#            
-#            from_atom_pos = Atom_utils._get_atom_pos(from_atom_id)
-#            to_atom_pos = Atom_utils._get_atom_pos(to_atom_id)
-#            
-#            xyz_distance = from_atom_pos - to_atom_pos
-#            distance  = norm(xyz_distance)
-#            
-#            shift = distance ** exponent * coefficent 
-#            result[from_atom_id] += shift
-            
-#        return result
-    
-
-    
-#    def get_shift(self):
-#        pass
-#    def get_energies(self, data):
-#        pass
-#    
-#    def get_derivatives(self,data):
-#        pass
-#
-
     
     def dump(self):
         result  = []
@@ -440,16 +364,6 @@ class Distance_potential(Distance_based_potential):
             result.append(tuple(sub_result))
         return result   
 
-    
-
-        
-#        self.set_shifts(result)
-    
-    
-    
-    
-    
-    
 
 class Extra_potential(Distance_based_potential):
     def __init__(self):
@@ -533,7 +447,7 @@ class Extra_potential(Distance_based_potential):
         result = None
         if from_atom_name in table.get_target_atoms():
             value = context._table.get_extra_shift(from_atom_name,context.key_1,context.key_2)
-#            print self._get_atom_name(atom.index()),value
+
             if value != None:
                 from_atom_index = atom.index()
                 distance_index_1 = context.distance_atom_index_1
@@ -583,13 +497,6 @@ class Extra_potential(Distance_based_potential):
         
         return shift
 
-#    def set_shifts(self,result):
-#        for index in range(len(self._components)):
-#            shift = self._calc_single_shift(index)
-#            from_atom_id = self._components[index][0]
-#            result[from_atom_id] += shift
-#
-#        return result
     
 class RandomCoilShifts(Base_potential):
     
@@ -604,7 +511,6 @@ class RandomCoilShifts(Base_potential):
         return "RC  "
     
     def _translate_atom_name(self, atom_name):
-        #print >> sys.stderr, "WARNING no atom name translations in radom coil shifts yet!"
         return super(RandomCoilShifts, self)._translate_atom_name(atom_name)
     
     def _get_table(self, from_residue_type):
@@ -675,7 +581,8 @@ class Dihedral_potential(Base_potential):
         
     def _get_table(self, residue_type):
         return self._table_manager.get_dihedral_table(residue_type)
-#    
+
+    
     class DihedralContext(object):
 
         def _select_atom_with_translation(self, segment, residue_number_1, atom_name_1):
@@ -869,21 +776,12 @@ class Dihedral_potential(Base_potential):
 
         return shift
     
-#    # TODO move to base_class
-#    def set_shifts(self,result):
-#        for index in range(len(self._components)):
-#            shift = self._calc_single_shift(index)
-#            from_atom_id = self._components[index][0]
-#            result[from_atom_id] += shift
-#
-#        return result
     
 #    TODO make this consistent with the distance forces factor
     def _calc_single_force_factor(self,index):
         
         dihedral_atom_ids= self._get_dihedral_atom_ids(index)
         
-#        coefficient = self._get_coefficient(index)
         
         parameter_0, parameter_3, parameter_1, \
         parameter_4 = self._get_force_parameters(index)
@@ -894,7 +792,6 @@ class Dihedral_potential(Base_potential):
                         parameter_1 * sin(angle + parameter_4)
         return result
 
-#        print 'here',self._components[index][1:5],angle
     
     #TODO is this too close?
     def _calc_single_force_set(self,index,factor,forces):
@@ -1316,10 +1213,5 @@ class Xcamshift():
                     potential._calc_single_factor(target_atom_index,factor,forces)
     
                           
-if __name__ == "__main__":
-    initStruct("test_data/3_ala/3ala.psf")
-    PDBTool("test_data/3_ala/3ala.pdb").read()
-#    RandomCoilShifts()
-    Distance_potential()
     
         
