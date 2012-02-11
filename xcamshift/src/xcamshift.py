@@ -8,6 +8,7 @@ TODO need to translate from_atom names
 
 
 from atomSel import AtomSel, intersection
+from bisect import insort
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from math import cos, tanh, cosh, sin
@@ -79,7 +80,8 @@ class Base_potential(object):
                 for residue_number in range(segment_info.first_residue+1,segment_info.last_residue):
                     residue_atom_selection = Atom_utils._select_atom_with_translation(segment, residue_number)
                     target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
-                    result.extend(self.add_components_for_residue(segment, residue_number, target_atom_selection))
+                    for elem in self.add_components_for_residue(segment, residue_number, target_atom_selection):
+                        insort(result,elem)
                 
         return result
     
@@ -1294,7 +1296,7 @@ class Xcamshift():
                 if target_atom_index in self._shift_table.get_atom_indices():
                     factor = self._calc_single_factor(target_atom_index)
                     potential._calc_single_factor(target_atom_index,factor,forces)
-
+    
                           
 if __name__ == "__main__":
     initStruct("test_data/3_ala/3ala.psf")

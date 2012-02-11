@@ -118,6 +118,19 @@ class TestXcamshift(unittest2.TestCase):
 
         self.assertSequenceAlmostEqual(result, expected,delta=0.001)
         
+    
+    def assertIsSorted(self, test_elems):
+        test_elems_copy = list(test_elems)
+        test_elems_copy.sort()
+        self.assertEqual(test_elems,test_elems_copy)
+    
+    
+    def testIndexComponents(self):
+        distance_potential =  Distance_potential()
+        test_elems = []
+        for elem in distance_potential._distances:
+            test_elems.append(elem[0])
+        self.assertIsSorted(test_elems)
         
     @staticmethod
     def assertElemeInSet( elem, xdist_set):
@@ -531,7 +544,7 @@ class TestXcamshift(unittest2.TestCase):
             print item
         
 if __name__ == "__main__":
-#    unittest2.main()
+    unittest2.main()
 #    TestXcamshift.list_test_shifts()
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDihedralPotentialSingleForceTanh')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDihedralPotentialSingleForceTanh')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
