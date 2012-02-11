@@ -8,6 +8,7 @@ TODO need to translate from_atom names
 
 
 from atomSel import AtomSel, intersection
+from bisect import insort
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from math import cos, tanh, cosh, sin
@@ -21,6 +22,8 @@ from vec3 import norm,cross,dot
 import abc
 import sys
 import vec3
+from component_list import Component_list
+
 
         
 class Base_potential(object):
@@ -33,6 +36,7 @@ class Base_potential(object):
         self._segment_manager = Segment_Manager()
         self._table_manager = Table_manager.get_default_table_manager()
         self._observed_shifts = Observed_shift_table()
+        self._component_list  = Component_list()
         
 #    def _print_atom(self,atom):
 #        return "%i. [%s]:%i[%s]@%s" % (atom.index(),atom.segmentName(), atom.residueNum(),atom.residueName(), atom.atomName())
@@ -79,7 +83,8 @@ class Base_potential(object):
                 for residue_number in range(segment_info.first_residue+1,segment_info.last_residue):
                     residue_atom_selection = Atom_utils._select_atom_with_translation(segment, residue_number)
                     target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
-                    result.extend(self.add_components_for_residue(segment, residue_number, target_atom_selection))
+                    for elem in self.add_components_for_residue(segment, residue_number, target_atom_selection):
+                        insort(result,elem)
                 
         return result
     
@@ -95,9 +100,6 @@ class Base_potential(object):
             contexts.append(context)
         return contexts
 
-    @abc.abstractmethod
-    def set_shifts(self,shift_list):
-        pass
     
     @abc.abstractmethod
     def _get_table(self, from_residue_type):
@@ -114,7 +116,32 @@ class Base_potential(object):
     #TODO should be abc
     def set_observed_shifts(self, shift_table):
         self._observed_shifts = shift_table
-
+    
+    def _get_component_list(self):
+        return self._component_list
+    
+    def get_component(self, index):
+        components = self._get_component_list()
+        component = components.get_component(index)
+        return component
+    
+    def get_all_components(self):
+        components =  self._get_component_list()
+        return components.get_all_components()
+    
+    def get_number_components(self):
+        components = self._get_component_list()
+        
+        return components.get_number_components()
+    
+    def set_shifts(self, result):
+        components =  self._get_component_list()
+        
+        for target_atom_id in components.get_component_atom_ids():
+            index_range = components.get_component_range(target_atom_id)
+            for index in range(*index_range):
+                shift = self._calc_single_shift(index)
+                result[target_atom_id] += shift
 class Distance_based_potential(Base_potential):
     
     class Indices(object):
@@ -138,12 +165,9 @@ class Distance_based_potential(Base_potential):
                                                 distance_atom_index_2=1,coefficent_index=2,
                                                 exponent_index=3)
     
-#    @abc.abstractmethod
-    def _get_data_table(self):
-        pass
     
     def _calc_single_force_factor(self,index,factor):
-        values  = self._get_data_table()[index]
+        values  = self.get_component(index)
         
         indices = self._get_indices()
         
@@ -171,7 +195,7 @@ class Distance_based_potential(Base_potential):
         return force_factor
 
     def _calc_single_force_set(self,index,factor, forces):
-        values  = self._get_data_table()[index]
+        values  = self.get_component(index)
         
         indices = self._get_indices()
         
@@ -218,10 +242,11 @@ class Distance_potential(Distance_based_potential):
         Constructor
         '''
         
-        self._distances = self._create_component_list("(all)")
+        component_list = self._get_component_list()
+        component_list.add_components(self._create_component_list("(all)"))
 
     def _get_data_table(self):
-        return self._distances
+        return self._components
     
     def _get_indices(self):
         return super(Distance_potential, self)._get_indices()
@@ -346,9 +371,9 @@ class Distance_potential(Distance_based_potential):
 #                return result
             
     def __str__(self):
-        print len( self._distances)
+        print self.get_number_components()
         result = []
-        for from_index,to_index,value,exponent in self._distances:
+        for from_index,to_index,value,exponent in self.get_all_components():
             from_atom = self._get_atom_name(from_index)
             to_atom = self._get_atom_name(to_index)
             
@@ -360,7 +385,7 @@ class Distance_potential(Distance_based_potential):
     
 
     def _calc_single_shift(self,i):
-        from_atom_id,to_atom_id,coefficent,exponent = self._distances[i]
+        from_atom_id,to_atom_id,coefficent,exponent = self.get_component(i)
         from_atom_pos = Atom_utils._get_atom_pos(from_atom_id)
         to_atom_pos = Atom_utils._get_atom_pos(to_atom_id)
         
@@ -374,13 +399,8 @@ class Distance_potential(Distance_based_potential):
 #        for elem in 
 #        
 #        pass
-#    #TODO move to Base_potential
-    def set_shifts(self, result):
-        for index in range(len(self._distances)):
-            shift = self._calc_single_shift(index)
-            from_atom_id = self._distances[index][0]
-            result[from_atom_id] += shift
-#        for from_atom_id,to_atom_id,coefficent,exponent in self._distances:
+
+#        for from_atom_id,to_atom_id,coefficent,exponent in self._components:
 #            
 #            from_atom_pos = Atom_utils._get_atom_pos(from_atom_id)
 #            to_atom_pos = Atom_utils._get_atom_pos(to_atom_id)
@@ -391,7 +411,7 @@ class Distance_potential(Distance_based_potential):
 #            shift = distance ** exponent * coefficent 
 #            result[from_atom_id] += shift
             
-        return result
+#        return result
     
 
     
@@ -407,7 +427,7 @@ class Distance_potential(Distance_based_potential):
     
     def dump(self):
         result  = []
-        for from_index,distance_index_1,value,exponent in self._distances:
+        for from_index,distance_index_1,value,exponent in self.get_all_components():
             sub_result  = []
             sub_result.append(Atom_utils._get_atom_info_from_index(from_index))
             
@@ -435,7 +455,8 @@ class Extra_potential(Distance_based_potential):
     def __init__(self):
         Base_potential.__init__(self)
         
-        self._distances =  self._create_component_list(self.ALL)
+        component_list = self._get_component_list()
+        component_list.add_components(self._create_component_list("(all)"))
     
     def get_abbreviated_name(self):
         return "XTRA"
@@ -447,7 +468,7 @@ class Extra_potential(Distance_based_potential):
         return self._table_manager.get_extra_table(residue_type)
     
     def _get_data_table(self):
-        return self._distances
+        return self._components
     
     class ExtraContext(object):
 
@@ -522,9 +543,9 @@ class Extra_potential(Distance_based_potential):
         return result
     
     def __str__(self):
-        print len( self._distances)
+        print len( self._components)
         result = []
-        for from_index,distance_index_1,distance_index_2,value,exponent in self._distances:
+        for from_index,distance_index_1,distance_index_2,value,exponent in self._components:
             from_atom = self._get_atom_name(from_index)
             distance_atom_1 = self._get_atom_name(distance_index_1)
             distance_atom_2 = self._get_atom_name(distance_index_2)
@@ -536,7 +557,7 @@ class Extra_potential(Distance_based_potential):
 
     def dump(self):
         result  = []
-        for from_index,distance_index_1,distance_index_2,value,exponent in self._distances:
+        for from_index,distance_index_1,distance_index_2,value,exponent in self.get_all_components():
             sub_result  = []
             sub_result.append(Atom_utils._get_atom_info_from_index(from_index))
             
@@ -552,7 +573,9 @@ class Extra_potential(Distance_based_potential):
 
 
     def _calc_single_shift(self, index):
-        distance_atom_id_1, distance_atom_id_2, coefficient, exponent = self._distances[index][1:]
+        component = self.get_component(index)
+        
+        distance_atom_id_1, distance_atom_id_2, coefficient, exponent = component[1:]
         
         distance = Atom_utils._calculate_distance(distance_atom_id_1, distance_atom_id_2)
         
@@ -560,13 +583,13 @@ class Extra_potential(Distance_based_potential):
         
         return shift
 
-    def set_shifts(self,result):
-        for index in range(len(self._distances)):
-            shift = self._calc_single_shift(index)
-            from_atom_id = self._distances[index][0]
-            result[from_atom_id] += shift
-
-        return result
+#    def set_shifts(self,result):
+#        for index in range(len(self._components)):
+#            shift = self._calc_single_shift(index)
+#            from_atom_id = self._components[index][0]
+#            result[from_atom_id] += shift
+#
+#        return result
     
 class RandomCoilShifts(Base_potential):
     
@@ -641,7 +664,8 @@ class Dihedral_potential(Base_potential):
     def __init__(self):
         Base_potential.__init__(self)
         
-        self._distances =  self._create_component_list(self.ALL)
+        component_list = self._get_component_list()
+        component_list.add_components(self._create_component_list("(all)"))
 
     def get_abbreviated_name(self):
         return "DHA "
@@ -737,7 +761,7 @@ class Dihedral_potential(Base_potential):
     
     def dump(self):
         result  = []
-        for from_index,atom_1,atom_2, atom_3, atom_4,value,param_0,param_1,param_2,param_3,param_4,exponent in self._distances:
+        for from_index,atom_1,atom_2, atom_3, atom_4,value,param_0,param_1,param_2,param_3,param_4,exponent in self.get_all_components():
             sub_result  = []
             key = []
             sub_result.append(key)
@@ -764,13 +788,13 @@ class Dihedral_potential(Base_potential):
         return tuple(result)
     
     def __str__(self):
-        print len( self._distances)
+        print len( self._components)
         result = []
         for from_index, \
             atom_1,atom_2, atom_3, atom_4,                           \
             value,                                                   \
             param_0,param_1,param_2,param_3,param_4,                 \
-            exponent in self._distances:
+            exponent in self._components:
                                              
             from_atom = self._get_atom_name(from_index)
             distance_atom_1 = self._get_atom_name(atom_1)
@@ -798,21 +822,25 @@ class Dihedral_potential(Base_potential):
     
     
 
+
+
+
     def _get_dihedral_atom_ids(self, index):
-        data = self._distances[index]
-        dihedrals = data[1:5]
+        component = self.get_component(index)
+        
+        dihedrals = component[1:5]
         return dihedrals
 
 
     def _get_coefficient(self, index):
-        data = self._distances[index]
-        coefficient = data[5]
+        component = self.get_component(index)
+        coefficient = component[5]
         return coefficient
 
 
     def _get_parameters(self, index):
-        data = self._distances[index]
-        parameters = data[6:11]
+        component = self.get_component(index)
+        parameters = component[6:11]
         parameter_0, parameter_1, parameter_2, parameter_3, parameter_4 = parameters
         return parameter_0, parameter_3, parameter_1, parameter_4, parameter_2
     
@@ -841,14 +869,14 @@ class Dihedral_potential(Base_potential):
 
         return shift
     
-    # TODO move to base_class
-    def set_shifts(self,result):
-        for index in range(len(self._distances)):
-            shift = self._calc_single_shift(index)
-            from_atom_id = self._distances[index][0]
-            result[from_atom_id] += shift
-
-        return result
+#    # TODO move to base_class
+#    def set_shifts(self,result):
+#        for index in range(len(self._components)):
+#            shift = self._calc_single_shift(index)
+#            from_atom_id = self._components[index][0]
+#            result[from_atom_id] += shift
+#
+#        return result
     
 #    TODO make this consistent with the distance forces factor
     def _calc_single_force_factor(self,index):
@@ -866,7 +894,7 @@ class Dihedral_potential(Base_potential):
                         parameter_1 * sin(angle + parameter_4)
         return result
 
-#        print 'here',self._distances[index][1:5],angle
+#        print 'here',self._components[index][1:5],angle
     
     #TODO is this too close?
     def _calc_single_force_set(self,index,factor,forces):
@@ -942,13 +970,11 @@ class Sidechain_potential(Distance_based_potential):
     def __init__(self):
         Base_potential.__init__(self)
         
-        self._distances =  self._create_component_list(self.ALL)    
+        component_list = self._get_component_list()
+        component_list.add_components(self._create_component_list(self.ALL))
         
     def  _get_table(self, residue_type):
         return self._table_manager.get_sidechain_table(residue_type)
-    
-    def _get_data_table(self):
-        return self._distances
     
     def _get_indices(self):
         return super(Sidechain_potential, self)._get_indices()
@@ -1011,16 +1037,10 @@ class Sidechain_potential(Distance_based_potential):
     def _translate_atom_name(self, atom_name,context):
         return atom_name
     
-    def  set_shifts(self,result):
-        for index in range(len(self._distances)):
-            shift = self._calc_single_shift(index)
-            from_atom_id = self._distances[index][0]
-            result[from_atom_id] += shift
 
-        return result
 
     def _calc_single_shift(self, index):
-        data = self._distances[index]
+        data = self.get_component(index)
         
         target_atom_index,sidechain_atom_index,value,exponent =  data
         
@@ -1031,7 +1051,7 @@ class Sidechain_potential(Distance_based_potential):
     
     def dump(self):
         result  = []
-        for from_index,sidechain_index,value,exponent in self._distances:
+        for from_index,sidechain_index,value,exponent in self.get_all_components():
             sub_result  = []
             
             sub_result.append(Atom_utils._get_atom_info_from_index(from_index))
@@ -1045,7 +1065,7 @@ class Sidechain_potential(Distance_based_potential):
     
     def __str__(self):
         result = []
-        for target_index,sidechain_index,value,exponent in self._distances:
+        for target_index,sidechain_index,value,exponent in self._components:
             target_atom = self._get_atom_name(target_index)
             sidechain_atom = self._get_atom_name(sidechain_index)
             
@@ -1294,7 +1314,7 @@ class Xcamshift():
                 if target_atom_index in self._shift_table.get_atom_indices():
                     factor = self._calc_single_factor(target_atom_index)
                     potential._calc_single_factor(target_atom_index,factor,forces)
-
+    
                           
 if __name__ == "__main__":
     initStruct("test_data/3_ala/3ala.psf")
