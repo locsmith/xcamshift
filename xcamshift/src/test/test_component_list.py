@@ -64,7 +64,6 @@ class Test_component_list(unittest2.TestCase):
         self.assertSequenceEqual(EXPECTED_COMPONENTS_2,result)
         
     def testAddComponent(self):
-        print 'here'
         for component in TEST_DATA_1:
             self._component_list.add_component(component)
         result = self._component_list.get_all_components()
