@@ -177,6 +177,13 @@ class Base_potential(object):
             
     def _have_derivative(self):
         return True
+    
+    def _get_or_make_target_force_triplet(self, forces, target_offset):
+        target_forces = forces[target_offset]
+        if target_forces == None:
+            target_forces = [0.0] * 3
+            forces[target_offset] = target_forces
+        return target_forces
             
 class Distance_based_potential(Base_potential):
     
@@ -230,6 +237,9 @@ class Distance_based_potential(Base_potential):
 
         return force_factor
 
+
+
+
     def _calc_single_force_set(self,index,factor, forces):
         values  = self.get_component(index)
         
@@ -249,17 +259,19 @@ class Distance_based_potential(Base_potential):
         force_factor  = self._calc_single_force_factor(index, factor)
         
         DIM_3 = 3
-        target_offset = target_atom * DIM_3
-        distant_offset = distance_atom * DIM_3
+        target_offset = target_atom
+        distant_offset = distance_atom
         X_OFFSET = 0
         Y_OFFSET = 1
         Z_OFFSET = 2
         
         OFFSETS_3 = (X_OFFSET,Y_OFFSET,Z_OFFSET)
         
+        target_forces = self._get_or_make_target_force_triplet(forces, target_offset)
+        distant_forces  = self._get_or_make_target_force_triplet(forces, distant_offset)
         for offset in OFFSETS_3:
-            forces[target_offset+offset] -= distance[offset] * force_factor
-            forces[distant_offset+offset] += distance[offset] * force_factor
+            target_forces[offset] -= distance[offset] * force_factor
+            distant_forces[offset] += distance[offset] * force_factor
         
         return forces
     
@@ -897,9 +909,10 @@ class Dihedral_potential(Base_potential):
         OFFSETS_3 = (X_OFFSET,Y_OFFSET,Z_OFFSET)
         
         for atom_id,base_force in zip(dihedral_atom_ids,[F1,F2,F3,F4]):
+            force_triplet = self._get_or_make_target_force_triplet(forces, atom_id)
             for offset in OFFSETS_3:
                 force_component = weight * base_force[offset]
-                forces[atom_id*DIM_3+offset]+= force_component
+                force_triplet[offset]+= force_component
                 
         return forces
     

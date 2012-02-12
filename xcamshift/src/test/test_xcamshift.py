@@ -82,8 +82,9 @@ class TestXcamshift(unittest2.TestCase):
 
 
     def make_result_array_forces(self):
+#        TODO: use segment manager
         num_atoms = len(AtomSel('(all)').indices())
-        result = [0.0] * num_atoms * 3
+        result = [None] * num_atoms
         return result
     
     def make_result_array(self):
@@ -382,10 +383,7 @@ class TestXcamshift(unittest2.TestCase):
 
 
     def get_force_triplet(self, target_atom_index, forces):
-        DIM_3 = 3
-        target_atom_start_index = target_atom_index * DIM_3
-        target_atom_end_index = target_atom_index * DIM_3 + DIM_3
-        target_atom_forces = forces[target_atom_start_index:target_atom_end_index]
+        target_atom_forces = forces[target_atom_index]
         return target_atom_forces
 
 
@@ -419,7 +417,7 @@ class TestXcamshift(unittest2.TestCase):
             
             result_array = self.make_result_array_forces()
             
-            forces = distance_potential._calc_single_atom_force_set(i, test_factor, result_array)
+            forces = distance_potential._calc_single_force_set(i, test_factor, result_array)
             
             distant_atom_forces_1 = self.get_force_triplet(distant_atom_index_1, forces)
             distant_atom_forces_2 = self.get_force_triplet(distant_atom_index_2, forces)
@@ -495,7 +493,7 @@ class TestXcamshift(unittest2.TestCase):
             for elem in dihedral_atoms_key:
                 dihedral_atom_ids.extend(single_text_key_to_atom_ids(elem))
             test_factor = test_factors[target_atom_key]
-            forces = potential._calc_single_atom_force_set(i,test_factor,forces)
+            forces = potential._calc_single_force_set(i,test_factor,forces)
             dihedral_forces = self._extract_dihedral_forces(dihedral_atom_ids,forces)
             
             for forces,expected in zip(dihedral_forces,expected_forces_dict[expected_key]):
@@ -568,14 +566,15 @@ class TestXcamshift(unittest2.TestCase):
 
     def _test_force_sets(self, xcamshift, expected_energy, expected_forces):
         expected_forces = dict(expected_forces)
-        derivs = self.make_result_array_forces()
+        number_atoms = Segment_Manager().get_number_atoms()
+        derivs = [None] * number_atoms
         energy = xcamshift.calcEnergyAndDerivs(derivs)
         
-        for atom_id in range(Segment_Manager().get_number_atoms()):
+        for atom_id in range(number_atoms):
             
             atom_key  =  Atom_utils._get_atom_info_from_index(atom_id)
             if atom_key in expected_forces:
-                force_triplet = self.get_force_triplet(atom_id, derivs)
+                force_triplet = derivs[atom_id]
                 expected_force_triplet = expected_forces[atom_key]
                 
                 self.assertSequenceAlmostEqual(force_triplet, expected_force_triplet, self.DEFAULT_DECIMAL_PLACES)
@@ -601,13 +600,14 @@ class TestXcamshift(unittest2.TestCase):
         expected_forces =ala_3.ala_3_total_forces_tanh
         
         self._test_force_sets(xcamshift, expected_energy, expected_forces)
+        
     @staticmethod
     def list_test_shifts():
         for item in ala_3.ala_3_test_shifts_tanh.items():
             print item
         
 if __name__ == "__main__":
-#    unittest2.main()
+    unittest2.main()
 #    TestXcamshift.list_test_shifts()
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetTanh')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetTanh')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
