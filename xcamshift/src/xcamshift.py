@@ -2,7 +2,7 @@
 Created on 27 Dec 2011
 
 @author: garyt
-TODO need to translate from_atom names
+#TODO: need to translate from_atom names
 '''
 
 
@@ -87,6 +87,7 @@ class Base_potential(object):
                 
         return result
     
+    #TODO: make this create component for atom
     @abc.abstractmethod
     def _get_component_for_atom(self, atom, context):
         pass
@@ -112,13 +113,14 @@ class Base_potential(object):
     @abc.abstractmethod
     def get_abbreviated_name(self):
         pass
-    #TODO should be abc
+    #TODO: should be abc
     def set_observed_shifts(self, shift_table):
         self._observed_shifts = shift_table
     
     def _get_component_list(self):
         return self._component_list
     
+    #TODO: make these internal
     def get_component(self, index):
         components = self._get_component_list()
         component = components.get_component(index)
@@ -1055,7 +1057,7 @@ class Xcamshift():
     def set_observed_shifts(self, shift_table):
         self._shift_table  =  shift_table
         
-    #TODO grossly inefficient!
+    # TODO: correct this grossly inefficient!
     def _calc_single_shift(self,atom_index):
         shifts = [0.0] * Segment_Manager().get_number_atoms()
         shifts = self.set_shifts(shifts)
@@ -1067,7 +1069,7 @@ class Xcamshift():
         constants_table = table_manager.get_constants_table(residue_type)
         
         flat_bottom_limit = constants_table.get_flat_bottom_limit(atom_name)
-        #TODO move to class body this is a global scaling for the 
+        #TODO:  move to class body this is a global scaling for the 
         # whole force field
         flat_bottom_constant  = constants_table.get_flat_bottom_constant()
         return flat_bottom_limit * flat_bottom_constant
@@ -1146,7 +1148,7 @@ class Xcamshift():
         
         return constants_table.get_weight(atom_name)
     
-    #TODO maybe call this a scaling??
+    #TODO: maybe call this a scaling??
 
     
     def _get_tanh_amplitude(self, residue_type, atom_name):
@@ -1189,7 +1191,7 @@ class Xcamshift():
                 tanh_amplitude = self._get_tanh_amplitude(residue_type,atom_name)
                 tanh_elongation = self._get_tanh_elongation(residue_type,atom_name)
                 
-                # TODO add factor and lambda to give fact
+                # TODO: add factor and lambda to give fact
                 fact =1.0
                 if adjusted_shift_diff < end_harmonic:
                     factor = 2.0 * weight * adjusted_shift_diff * fact / sqr_scale_harmonic;
