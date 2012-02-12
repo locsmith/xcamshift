@@ -32,6 +32,7 @@ class Component_list():
     def get_all_components(self):
         return tuple(self._components)
     
+#    TODO rename to get_target_atom_ids
     def get_component_atom_ids(self):
         return tuple(self._component_ids)
     
@@ -51,7 +52,7 @@ class Component_list():
     def get_component_range(self, atom_id):
         component_ranges = self._get_component_ranges()
         if not atom_id in component_ranges:
-            self.report_bad_atom_id(atom_id, component_ranges)
+            self.report_bad_atom_id(atom_id)
         start, end = component_ranges[atom_id]
         return start, end
 
@@ -88,4 +89,10 @@ class Component_list():
     
     def get_number_target_atoms(self):
         return len(self._component_ids)
+    
+    def __str__(self):
+        result = []
+        for target_atom_id in self._component_ids:
+            result.append("%i %s" %  (target_atom_id, `self.get_component_range(target_atom_id)`))
+        return ",".join(result)
     
