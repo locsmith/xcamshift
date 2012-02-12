@@ -275,7 +275,6 @@ class TestXcamshift(unittest2.TestCase):
         
         shifts = self.make_result_array()
         shifts = xcamshift_potential.set_shifts(shifts)
-        print shifts
         
         expected  = [0.0] * len(shifts)
         expected[12] = ala_3_total_shifts[2]['N']
