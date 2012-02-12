@@ -168,7 +168,7 @@ class TestXcamshift(unittest2.TestCase):
         for i,extra_elem in enumerate(extra_potential.dump()):
             
             elem_key = extra_elem[:-1]
-            shift = extra_potential._calc_single_shift(i)
+            shift = extra_potential._calc_component_shift(i)
             
             expected_shift = xdists_ala_3[elem_key][2]
             
@@ -228,7 +228,7 @@ class TestXcamshift(unittest2.TestCase):
         for i,dihedral_element in enumerate(dihedral_potential.dump()):
             
             expected  =  dihedrals_ala_3[dihedral_element[0]][3]
-            angle =  dihedral_potential._calc_single_shift(i)
+            angle =  dihedral_potential._calc_component_shift(i)
             
             self.assertAlmostEqual(expected, angle,self.DEFAULT_DECIMAL_PLACES)
 #
@@ -266,7 +266,7 @@ class TestXcamshift(unittest2.TestCase):
 
             key = tuple(elem[:2])
             
-            shift =  sidechain_potential._calc_single_shift(i)
+            shift =  sidechain_potential._calc_component_shift(i)
             expected_shift  = sidechains.sidechains_ala_3[key][2]
             self.assertAlmostEqual(expected_shift, shift, self.DEFAULT_DECIMAL_PLACES)
 
@@ -275,6 +275,7 @@ class TestXcamshift(unittest2.TestCase):
         
         shifts = self.make_result_array()
         shifts = xcamshift_potential.set_shifts(shifts)
+        print shifts
         
         expected  = [0.0] * len(shifts)
         expected[12] = ala_3_total_shifts[2]['N']
@@ -544,7 +545,7 @@ class TestXcamshift(unittest2.TestCase):
             print item
         
 if __name__ == "__main__":
-    unittest2.main()
+#    unittest2.main()
 #    TestXcamshift.list_test_shifts()
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDihedralPotentialSingleForceTanh')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testXcamshift')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')

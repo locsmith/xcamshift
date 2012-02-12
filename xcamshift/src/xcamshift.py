@@ -48,6 +48,7 @@ class Base_potential(object):
             print >> sys.stderr, message
         return segment_info
     
+    #TODO: make private
     def add_components_for_residue(self, segment, target_residue_number, atom_selection):
         result  = []
         
@@ -83,8 +84,8 @@ class Base_potential(object):
                     residue_atom_selection = Atom_utils._select_atom_with_translation(segment, residue_number)
                     target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
                     for elem in self.add_components_for_residue(segment, residue_number, target_atom_selection):
-                        insort(result,elem)
-                
+                        result.append(elem)
+        
         return result
     
     #TODO: make this create component for atom
@@ -135,14 +136,28 @@ class Base_potential(object):
         
         return components.get_number_components()
     
+    def get_target_atom_ids(self):
+        components = self._get_component_list()
+        return  components.get_component_atom_ids()
+        
+    def calc_single_shift(self, target_atom_id):
+        components =  self._get_component_list()
+
+        result = 0.0
+        if target_atom_id in components.get_component_atom_ids():
+            index_range = components.get_component_range(target_atom_id)
+            for index in range(*index_range):
+                result += self._calc_component_shift(index)
+        
+        return result
+    
+    #TODO make this just return a list in component order
     def set_shifts(self, result):
         components =  self._get_component_list()
         
         for target_atom_id in components.get_component_atom_ids():
-            index_range = components.get_component_range(target_atom_id)
-            for index in range(*index_range):
-                shift = self._calc_single_shift(index)
-                result[target_atom_id] += shift
+            result[target_atom_id] +=  self.calc_single_shift(target_atom_id)
+            
 class Distance_based_potential(Base_potential):
     
     class Indices(object):
@@ -339,7 +354,7 @@ class Distance_potential(Distance_based_potential):
 
     
 
-    def _calc_single_shift(self,i):
+    def _calc_component_shift(self,i):
         from_atom_id,to_atom_id,coefficent,exponent = self.get_component(i)
         from_atom_pos = Atom_utils._get_atom_pos(from_atom_id)
         to_atom_pos = Atom_utils._get_atom_pos(to_atom_id)
@@ -488,7 +503,7 @@ class Extra_potential(Distance_based_potential):
 
 
 
-    def _calc_single_shift(self, index):
+    def _calc_component_shift(self, index):
         component = self.get_component(index)
         
         distance_atom_id_1, distance_atom_id_2, coefficient, exponent = component[1:]
@@ -506,8 +521,8 @@ class RandomCoilShifts(Base_potential):
     def __init__(self):
         super(RandomCoilShifts, self).__init__()
 
-        #TODO bad name
-        self._shifts_list = self._create_component_list(self.ALL)
+        component_list = self._get_component_list()
+        component_list.add_components(self._create_component_list("(all)"))
     
     def get_abbreviated_name(self):
         return "RC  "
@@ -552,10 +567,11 @@ class RandomCoilShifts(Base_potential):
             context = RandomCoilShifts.ResidueOffsetContext(atom, offset, table)
             contexts.append(context)
         return contexts
-        
-    def set_shifts(self,shift_list):
-        for atom_index,shift in self._shifts_list:
-            shift_list[atom_index] += shift
+    
+    def _calc_component_shift(self,index):
+        components = self._get_component_list()
+        return components.get_component(index)[1]
+
             
 
     def __str__(self): 
@@ -756,7 +772,7 @@ class Dihedral_potential(Base_potential):
     def _get_force_parameters(self,index):
         return self._get_parameters(index)[:-1]
 
-    def _calc_single_shift(self, index):
+    def _calc_component_shift(self, index):
         
        
         dihedral_atom_ids= self._get_dihedral_atom_ids(index)
@@ -938,7 +954,7 @@ class Sidechain_potential(Distance_based_potential):
     
 
 
-    def _calc_single_shift(self, index):
+    def _calc_component_shift(self, index):
         data = self.get_component(index)
         
         target_atom_index,sidechain_atom_index,value,exponent =  data
@@ -1038,30 +1054,32 @@ class Xcamshift():
             print ' '.join(values)
             
         
-    def set_shifts(self, result):
-        keys = []
-        result_elements = {}
+    def _get_target_atom_ids(self):
+        result  = set()
         for potential in self.potential:
-            num_atoms = len(result)
-            sub_result  = [0.0] * num_atoms
-            potential.set_shifts(sub_result)
-            key = potential.get_abbreviated_name()
-            keys.append(key)
-            result_elements[key] = sub_result
-        
-        
-        result = [sum(elems) for elems in zip(*result_elements.values())]
+            for target_atom_id in potential.get_target_atom_ids():
+                result.add(target_atom_id)
+        result = list(result)
+        result.sort()
+        return result
+    
+    
+    def set_shifts(self, result):
+        target_atom_ids =  self._get_target_atom_ids()
+        for target_atom_id in target_atom_ids:
+            shift = self.calc_single_atom_shift(target_atom_id)
+            result[target_atom_id] = shift
         
         return result
     
     def set_observed_shifts(self, shift_table):
         self._shift_table  =  shift_table
         
-    # TODO: correct this grossly inefficient!
-    def _calc_single_shift(self,atom_index):
-        shifts = [0.0] * Segment_Manager().get_number_atoms()
-        shifts = self.set_shifts(shifts)
-        return shifts[atom_index]
+    def calc_single_atom_shift(self,atom_index):
+        result  = 0.0
+        for potential in self.potential:
+            result += potential.calc_single_shift(atom_index)
+        return result
     
     
     def _get_flat_bottom_shift_limit(self, residue_type, atom_name):
@@ -1110,7 +1128,7 @@ class Xcamshift():
         energy = 0.0
         if target_atom_index in self._shift_table.get_atom_indices():
             
-            theory_shift = self._calc_single_shift(target_atom_index)
+            theory_shift = self.calc_single_atom_shift(target_atom_index)
             observed_shift = self._shift_table.get_chemical_shift(target_atom_index)
             
             shift_diff = observed_shift - theory_shift
@@ -1170,7 +1188,7 @@ class Xcamshift():
         factor = 0.0
         if target_atom_index in self._shift_table.get_atom_indices():
             
-            theory_shift = self._calc_single_shift(target_atom_index)
+            theory_shift = self.calc_single_atom_shift(target_atom_index)
             observed_shift = self._shift_table.get_chemical_shift(target_atom_index)
             
             shift_diff = observed_shift - theory_shift
