@@ -19,7 +19,7 @@ from observed_chemical_shifts import Observed_shift_table
 from utils import Atom_utils
 import sys
 
-
+TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
     result = []
     for key in keys:
@@ -537,7 +537,36 @@ class TestXcamshift(unittest2.TestCase):
         factors_tanh = ala_3.ala_3_factors_tanh
 
         self._test_dihedral_forces(factors_tanh, dihedral_potential,expected_forces)
+    
+
+    def _test_total_energy(self, xcamshift, expected_energy):
+        calculated_energy = xcamshift.calcEnergy()
+        self.assertAlmostEqual(calculated_energy, expected_energy, self.DEFAULT_DECIMAL_PLACES)
+
+
+    def _setup_xcamshift_with_shifts_table(self, test_shifts):
+        xcamshift = Xcamshift()
+        observed_shifts = Observed_shift_table(test_shifts)
+        xcamshift.set_observed_shifts(observed_shifts)
+        return xcamshift
+
+    def testCalcTotalEnergyWell(self):
+        xcamshift = self._setup_xcamshift_with_shifts_table(ala_3.ala_3_test_shifts_well)
+        expected_energy = ala_3.ala_3_energies_well[TOTAL_ENERGY]
         
+        self._test_total_energy(xcamshift, expected_energy)
+        
+    def testCalcTotalEnergyHarmonic(self):
+        xcamshift = self._setup_xcamshift_with_shifts_table(ala_3.ala_3_test_shifts_harmonic)
+        expected_energy = ala_3.ala_3_energies_harmonic[TOTAL_ENERGY]
+        
+        self._test_total_energy(xcamshift, expected_energy)
+
+    def testCalcTotalEnergyTanh(self):
+        xcamshift = self._setup_xcamshift_with_shifts_table(ala_3.ala_3_test_shifts_tanh)
+        expected_energy = ala_3.ala_3_energies_tanh[TOTAL_ENERGY]
+        
+        self._test_total_energy(xcamshift, expected_energy)
     @staticmethod
     def list_test_shifts():
         for item in ala_3.ala_3_test_shifts_tanh.items():
@@ -546,5 +575,5 @@ class TestXcamshift(unittest2.TestCase):
 if __name__ == "__main__":
 #    unittest2.main()
 #    TestXcamshift.list_test_shifts()
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testXcamshift')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcTotalEnergyWell')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')

@@ -1232,6 +1232,21 @@ class Xcamshift():
                     factor = self._calc_single_factor(target_atom_index)
                     potential._calc_single_factor(target_atom_index,factor,forces)
     
-                          
+    def calcEnergy(self):
+        
+        target_atom_ids = set(self._get_target_atom_ids())
+        observed_shift_atom_ids = self._shift_table.get_atom_indices()
+        
+        active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
+        active_target_atom_ids = list(active_target_atom_ids)
+        
+        energy = 0.0
+        for target_atom_id in active_target_atom_ids:
+            energy+= self._calc_single_energy(target_atom_id)
+        
+        return energy
     
+    
+#    def calcEnergyAndDerivs(self,derivs):
+#        pass
         
