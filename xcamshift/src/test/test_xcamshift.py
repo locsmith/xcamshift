@@ -297,7 +297,7 @@ class TestXcamshift(unittest2.TestCase):
         for atom_index in shift_table.get_atom_indices():
             key = Atom_utils._get_atom_info_from_index(atom_index)[1:]
             expected_energy = expected_energys[key]
-            energy = xcamshift._calc_single_energy(atom_index)
+            energy = xcamshift._calc_single_atom_energy(atom_index)
             self.assertAlmostEqual(energy, expected_energy, self.DEFAULT_DECIMAL_PLACES)
         
 
@@ -419,7 +419,7 @@ class TestXcamshift(unittest2.TestCase):
             
             result_array = self.make_result_array_forces()
             
-            forces = distance_potential._calc_single_force_set(i, test_factor, result_array)
+            forces = distance_potential._calc_single_atom_force_set(i, test_factor, result_array)
             
             distant_atom_forces_1 = self.get_force_triplet(distant_atom_index_1, forces)
             distant_atom_forces_2 = self.get_force_triplet(distant_atom_index_2, forces)
@@ -495,7 +495,7 @@ class TestXcamshift(unittest2.TestCase):
             for elem in dihedral_atoms_key:
                 dihedral_atom_ids.extend(single_text_key_to_atom_ids(elem))
             test_factor = test_factors[target_atom_key]
-            forces = potential._calc_single_force_set(i,test_factor,forces)
+            forces = potential._calc_single_atom_force_set(i,test_factor,forces)
             dihedral_forces = self._extract_dihedral_forces(dihedral_atom_ids,forces)
             
             for forces,expected in zip(dihedral_forces,expected_forces_dict[expected_key]):
@@ -564,6 +564,43 @@ class TestXcamshift(unittest2.TestCase):
         expected_energy = ala_3.ala_3_energies_tanh[TOTAL_ENERGY]
         
         self._test_total_energy(xcamshift, expected_energy)
+    
+
+    def _test_force_sets(self, xcamshift, expected_energy, expected_forces):
+        expected_forces = dict(expected_forces)
+        derivs = self.make_result_array_forces()
+        energy = xcamshift.calcEnergyAndDerivs(derivs)
+        
+        for atom_id in range(Segment_Manager().get_number_atoms()):
+            
+            atom_key  =  Atom_utils._get_atom_info_from_index(atom_id)
+            if atom_key in expected_forces:
+                force_triplet = self.get_force_triplet(atom_id, derivs)
+                expected_force_triplet = expected_forces[atom_key]
+                
+                self.assertSequenceAlmostEqual(force_triplet, expected_force_triplet, self.DEFAULT_DECIMAL_PLACES)
+                del expected_forces[atom_key]
+                
+        self.remove_almost_zero_force_elems(expected_forces, self.DEFAULT_DECIMAL_PLACES)
+        self.assertEmpty(expected_forces)
+                
+        self.assertAlmostEqual(energy, expected_energy, self.DEFAULT_DECIMAL_PLACES)
+        
+    
+    def testCalcForceSetWell(self):
+        xcamshift = self._setup_xcamshift_with_shifts_table(ala_3.ala_3_test_shifts_well)
+        expected_energy = 0.0
+        expected_forces = {}
+        
+        self._test_force_sets(xcamshift, expected_energy, expected_forces)
+
+    
+    def testCalcForceSetTanh(self):
+        xcamshift = self._setup_xcamshift_with_shifts_table(ala_3.ala_3_test_shifts_tanh)
+        expected_energy = ala_3.ala_3_energies_tanh[TOTAL_ENERGY]
+        expected_forces =ala_3.ala_3_total_forces_tanh
+        
+        self._test_force_sets(xcamshift, expected_energy, expected_forces)
     @staticmethod
     def list_test_shifts():
         for item in ala_3.ala_3_test_shifts_tanh.items():
@@ -572,5 +609,5 @@ class TestXcamshift(unittest2.TestCase):
 if __name__ == "__main__":
 #    unittest2.main()
 #    TestXcamshift.list_test_shifts()
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcTotalEnergyWell')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetTanh')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')

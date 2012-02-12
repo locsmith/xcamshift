@@ -140,7 +140,7 @@ class Base_potential(object):
         components = self._get_component_list()
         return  components.get_component_atom_ids()
         
-    def calc_single_shift(self, target_atom_id):
+    def calc_single_atom_shift(self, target_atom_id):
         components =  self._get_component_list()
 
         result = 0.0
@@ -151,12 +151,32 @@ class Base_potential(object):
         
         return result
     
-    #TODO make this just return a list in component order
+    def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
+        if self._have_derivative():
+            components =  self._get_component_list()
+        
+        
+            if target_atom_id in components.get_component_atom_ids():
+                index_range = components.get_component_range(target_atom_id)
+                for index in range(*index_range):
+                    forces = self._calc_single_force_set(index,force_factor,forces)
+            return forces
+        
+#    def calc_single_force_set(self,target_atom_index,factor,forces):
+#        for potential in self.potential:
+#            potential.calc_single_force_set(target_atom_index,forces)
+#        return forces
+    
+    #TODO: make this just return a list in component order
+    #TODO: remove
     def set_shifts(self, result):
         components =  self._get_component_list()
         
         for target_atom_id in components.get_component_atom_ids():
-            result[target_atom_id] +=  self.calc_single_shift(target_atom_id)
+            result[target_atom_id] +=  self.calc_single_atom_shift(target_atom_id)
+            
+    def _have_derivative(self):
+        return True
             
 class Distance_based_potential(Base_potential):
     
@@ -527,6 +547,9 @@ class RandomCoilShifts(Base_potential):
     def get_abbreviated_name(self):
         return "RC  "
     
+    def _have_derivative(self):
+        False
+         
     def _translate_atom_name(self, atom_name):
         return super(RandomCoilShifts, self)._translate_atom_name(atom_name)
     
@@ -811,15 +834,15 @@ class Dihedral_potential(Base_potential):
         return result
 
     
-    #TODO is this too close?
+    #TODO: is this too close?
     def _calc_single_force_set(self,index,factor,forces):
         dihedral_factor = self._calc_single_force_factor(index)
         dihedral_atom_ids= self._get_dihedral_atom_ids(index)
         
-        ATOM_ID_1 = 0
+#        ATOM_ID_1 = 0
         ATOM_ID_2 = 1
         ATOM_ID_3 = 2
-        ATOM_ID_4 = 3
+#        ATOM_ID_4 = 3
         
         positions = []
         for atom_id in dihedral_atom_ids:
@@ -1078,8 +1101,9 @@ class Xcamshift():
     def calc_single_atom_shift(self,atom_index):
         result  = 0.0
         for potential in self.potential:
-            result += potential.calc_single_shift(atom_index)
+            result += potential.calc_single_atom_shift(atom_index)
         return result
+    
     
     
     def _get_flat_bottom_shift_limit(self, residue_type, atom_name):
@@ -1123,7 +1147,7 @@ class Xcamshift():
         return constants_table.get_tanh_y_offset(atom_name)
     
     
-    def _calc_single_energy(self, target_atom_index):
+    def _calc_single_atom_energy(self, target_atom_index):
         
         energy = 0.0
         if target_atom_index in self._shift_table.get_atom_indices():
@@ -1159,6 +1183,14 @@ class Xcamshift():
                 energy += energy_component
         return energy
     
+    def _calc_single_atom_force_set(self,target_atom_id,forces):
+        
+        self._calc_single_force_factor(target_atom_id, forces)
+        for potential in self.potential:
+            factor  = self._calc_single_factor(target_atom_id)
+            potential.calc_single_atom_force_set(target_atom_id,factor,forces)
+        
+        return forces
 
     def _get_weight(self, residue_type, atom_name):
         table_manager = Table_manager.get_default_table_manager()
@@ -1183,18 +1215,18 @@ class Xcamshift():
         return constants_table.get_tanh_elongation(atom_name)
     
     
-    def _calc_single_factor(self, target_atom_index):
+    def _calc_single_factor(self, target_atom_id):
         
         factor = 0.0
-        if target_atom_index in self._shift_table.get_atom_indices():
+        if target_atom_id in self._shift_table.get_atom_indices():
             
-            theory_shift = self.calc_single_atom_shift(target_atom_index)
-            observed_shift = self._shift_table.get_chemical_shift(target_atom_index)
+            theory_shift = self.calc_single_atom_shift(target_atom_id)
+            observed_shift = self._shift_table.get_chemical_shift(target_atom_id)
             
             shift_diff = observed_shift - theory_shift
             
-            residue_type = Atom_utils._get_residue_type_from_atom_id(target_atom_index)
-            atom_name = Atom_utils._get_atom_name_from_index(target_atom_index)
+            residue_type = Atom_utils._get_residue_type_from_atom_id(target_atom_id)
+            atom_name = Atom_utils._get_atom_name_from_index(target_atom_id)
             
             flat_bottom_shift_limit = self._get_flat_bottom_shift_limit(residue_type, atom_name)
             
@@ -1218,35 +1250,46 @@ class Xcamshift():
                 
         else:
             msg = "requested factor for target [%s] which is not in shift table"
-            target_atom_info = Atom_utils._get_atom_info_from_index(target_atom_index)
+            target_atom_info = Atom_utils._get_atom_info_from_index(target_atom_id)
             raise Exception(msg % target_atom_info)
         return factor
 
     def _calc_single_force_factor(self,target_atom_index,forces):
+        factor = 1.0
         for potential in self.potential:
-            if isinstance(potential, Distance_potential):
-                print >> sys.stderr, "warning forces only set for distance potential!"
+            if potential._have_derivative():
                 potential.set_observed_shifts(self._shift_table)
                 
                 if target_atom_index in self._shift_table.get_atom_indices():
                     factor = self._calc_single_factor(target_atom_index)
-                    potential._calc_single_factor(target_atom_index,factor,forces)
+#                    potential._calc_single_factor(target_atom_index,factor,forces)
+        return factor
     
-    def calcEnergy(self):
-        
+
+    def _get_active_target_atom_ids(self):
         target_atom_ids = set(self._get_target_atom_ids())
         observed_shift_atom_ids = self._shift_table.get_atom_indices()
-        
         active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
         active_target_atom_ids = list(active_target_atom_ids)
+        return active_target_atom_ids
+
+    def calcEnergy(self):
+        
+        active_target_atom_ids = self._get_active_target_atom_ids()
         
         energy = 0.0
         for target_atom_id in active_target_atom_ids:
-            energy+= self._calc_single_energy(target_atom_id)
+            energy+= self._calc_single_atom_energy(target_atom_id)
         
         return energy
     
     
-#    def calcEnergyAndDerivs(self,derivs):
-#        pass
+    def calcEnergyAndDerivs(self,derivs):
+        energy = self.calcEnergy()
+        active_target_atom_ids = self._get_active_target_atom_ids()
+        
+        for target_atom_id in active_target_atom_ids:
+            self._calc_single_atom_force_set(target_atom_id, derivs)
+        
+        return energy
         
