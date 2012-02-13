@@ -14,6 +14,7 @@ from dihedral_table import Dihedral_table, Dihedral_parameter_table,\
 from utils import tupleit
 from sidechain_table import Sidechain_table
 from constants_table import Constants_table
+from ring_table import Ring_table
 
 
 class Table_manager(object):
@@ -47,7 +48,8 @@ class Table_manager(object):
     DIHEDRAL_PARS="dihedral_pars"
     SIDECHAIN="sidechain"
     CONSTANTS="constants"
-
+    RING="ring"
+    
     def __init__(self):
         '''
         Constructor
@@ -167,4 +169,7 @@ class Table_manager(object):
     
     def get_constants_table(self,residue_type):
         return Constants_table(self.__get_table(self.CONSTANTS,residue_type))
+    
+    def get_ring_table(self,residue_type):
+        return Ring_table(self.__get_table(self.RING,residue_type))
             

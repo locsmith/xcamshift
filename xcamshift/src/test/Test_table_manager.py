@@ -167,7 +167,24 @@ class Test_table_manager(unittest2.TestCase):
         self.assertAlmostEqual(20.000000,table.get_end_harmonic("CA"))
         self.assertAlmostEqual(2.360000,table.get_scale_harmonic("CA"))
         self.assertAlmostEqual(1.0, table.get_weight("CA"))
+        
+    def testGetRingTable(self):
+        table = self.table_manager.get_ring_table('ALA')
+        
+        result = table.get_ring_coefficient("CA", "PHE", "6")
+        self.assertAlmostEqual(0.010721410838165022,result)
+        
+        EXPECTED_RING_RESIDUES = ("HIS","PHE","TRP","TYR")
+        result = table.get_residue_types()
+        result.sort()
+        self.assertSequenceEqual(result,EXPECTED_RING_RESIDUES)
+        
+        EXPECTED_RING_TYPES = (("HIS",("5",)),("PHE",("6",)),("TRP",("5","6")),("TYR",("6",)))
+        for residue_type,expected_ring_types in EXPECTED_RING_TYPES:
+            ring_types = table.get_ring_types(residue_type)
+            ring_types.sort()
             
+            self.assertSequenceEqual(ring_types, expected_ring_types)
 
 if __name__ == "__main__":
     unittest2.main()
