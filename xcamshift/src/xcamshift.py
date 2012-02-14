@@ -56,25 +56,25 @@ class Base_potential(object):
                 if context.complete:
                     value = self._get_component_for_atom(atom, context)
                     if value != None:
-                        result.setdefault('ATOM',[]).append(value)
+                        result.add_component(value)
     
     
     def _create_components_for_residue(self, segment, target_residue_number, atom_selection):
-        result  = {}
+        
+        
+        component_list = self._get_component_list()
         
         from_residue_type = Atom_utils._get_residue_type(segment, target_residue_number)
         random_coil_table = self._get_table(from_residue_type)
         selected_atoms = intersection(Atom_utils._select_atom_with_translation(segment, target_residue_number), atom_selection)
         
         
-        self.create_atom_components(result, random_coil_table, selected_atoms)
+        self.create_atom_components(component_list, random_coil_table, selected_atoms)
         
-        
-        return result
     
     def _create_component_list(self,global_atom_selection):
         
-        result  = []
+        
         
         
         global_atom_selection = AtomSel(global_atom_selection)
@@ -85,11 +85,10 @@ class Base_potential(object):
                 for residue_number in range(segment_info.first_residue+1,segment_info.last_residue):
                     residue_atom_selection = Atom_utils._select_atom_with_translation(segment, residue_number)
                     target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
-                    elems =  self._create_components_for_residue(segment, residue_number, target_atom_selection)
-                    for elem in elems['ATOM']:
-                        result.append(elem)
+                    self._create_components_for_residue(segment, residue_number, target_atom_selection)
+                    
         
-        return result
+        return []
     
     #TODO: make this create component for atom
     @abc.abstractmethod
