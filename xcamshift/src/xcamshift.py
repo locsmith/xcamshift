@@ -53,12 +53,12 @@ class Base_potential(object):
         result  = []
         
         from_residue_type = Atom_utils._get_residue_type(segment, target_residue_number)
-        random_coil_table = self._get_table(from_residue_type)
+        table = self._get_table(from_residue_type)
         selected_atoms = intersection(Atom_utils._select_atom_with_translation(segment, target_residue_number), atom_selection)
         
         for atom in selected_atoms:
             
-            contexts = self._build_contexts(atom, random_coil_table)
+            contexts = self._build_contexts(atom, table)
             
             for context in contexts:
                 if context.complete:
@@ -184,7 +184,7 @@ class Base_potential(object):
             target_forces = [0.0] * 3
             forces[target_offset] = target_forces
         return target_forces
-            
+
 class Distance_based_potential(Base_potential):
     
     class Indices(object):
@@ -1025,13 +1025,46 @@ class Sidechain_potential(Distance_based_potential):
             result.append( template % values)
         return '\n'.join(result)
     
+class Ring_Potential(Base_potential):
+    def __init__(self):
+        Base_potential.__init__(self)
+        
+        component_list = self._get_component_list()
+        component_list.add_components(self._create_component_list("(all)"))
+    
+    def get_abbreviated_name(self):
+        return 'RING'
+    
+    
+    def _get_table(self, from_residue_type):
+        return self._table_manager.get_ring_table(from_residue_type)
+    
+    def _translate_atom_name(self, atom_name):
+        return atom_name
+    
+    class Simple_context(object):
+        def __init__(self,atom,table):
+            self.target_atom_id = atom.index()
+    
+    def _build_contexts(self, atom, table):
+        contexts = []
+        
+        for atom in table.get_target_atoms():
+            context = Ring_Potential.Simple_context(atom,table)
+            contexts.append(context)
+        return context
+        
+    def _get_component_for_atom(self, atom, context):
+        return []
+    
 class Xcamshift():
     def __init__(self):
         self.potential = [RandomCoilShifts(),
                           Distance_potential(),
                           Extra_potential(),
                           Dihedral_potential(),
-                          Sidechain_potential()]
+                          Sidechain_potential(),
+                          Ring_Potential()]
         self._shift_table = Observed_shift_table()
                 
     def print_shifts(self):
