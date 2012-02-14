@@ -1,4 +1,5 @@
 # ring current coefficients for camshift 1.35.0
+# NOTE / TODO: coeeficients for 5 and 6 member rings may currently be swapped for TRP
 ---
 
 target_atoms :  ["HA", "CA", "HN", "N", "C", "CB"]
