@@ -48,8 +48,7 @@ class Base_potential(object):
             print >> sys.stderr, message
         return segment_info
     
-    #TODO: make private
-    def add_components_for_residue(self, segment, target_residue_number, atom_selection):
+    def _add_components_for_residue(self, segment, target_residue_number, atom_selection):
         result  = []
         
         from_residue_type = Atom_utils._get_residue_type(segment, target_residue_number)
@@ -83,7 +82,7 @@ class Base_potential(object):
                 for residue_number in range(segment_info.first_residue+1,segment_info.last_residue):
                     residue_atom_selection = Atom_utils._select_atom_with_translation(segment, residue_number)
                     target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
-                    for elem in self.add_components_for_residue(segment, residue_number, target_atom_selection):
+                    for elem in self._add_components_for_residue(segment, residue_number, target_atom_selection):
                         result.append(elem)
         
         return result
