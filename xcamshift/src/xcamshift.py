@@ -215,6 +215,50 @@ class Distance_component_factory(Component_factory):
     
     def get_table_name(self):
         return 'ATOM'
+
+class Random_coil_context :
+    def __init__(self,atom,offset,table):
+        
+        self._table = table
+        
+        segment = atom.segmentName()
+        
+        self.offset = offset
+        
+        from_residue_number = atom.residueNum()
+        
+        self.to_residue_number = from_residue_number + offset
+        self.to_residue_type = Atom_utils._get_residue_type(segment, from_residue_number + offset)
+        
+        self.complete = True
+
+class Random_coil_component_factory(Component_factory):
+    
+    #TODO: push to base
+    #TODO should random coil have a translation table
+    def _translate_atom_name(self, atom_name,context):
+        return atom_name
+
+    def _get_component_for_atom(self, atom, context):
+        result = None
+        atom_name = atom.atomName()
+        atom_name = self._translate_atom_name(atom_name,context)
+        if atom_name in context._table.get_atoms():
+            value = context._table.get_random_coil_shift(context.offset, context.to_residue_type, atom_name)
+            if value != None:
+                result = atom.index(), value
+        return result
+    
+
+    def _build_contexts(self, atom, table):
+        contexts = []
+        for offset in table.get_offsets():
+            context = Random_coil_context(atom, offset, table)
+            contexts.append(context)
+        return contexts
+
+    def get_table_name(self):
+        return 'ATOM'
     
 class Base_potential(object):
     
@@ -675,6 +719,8 @@ class RandomCoilShifts(Base_potential):
 
     def __init__(self):
         super(RandomCoilShifts, self).__init__()
+        
+        self._add_component_factory(Random_coil_component_factory())
 
     
     def get_abbreviated_name(self):
@@ -683,46 +729,46 @@ class RandomCoilShifts(Base_potential):
     def _have_derivative(self):
         False
          
-    def _translate_atom_name(self, atom_name):
-        return super(RandomCoilShifts, self)._translate_atom_name(atom_name)
     
     def _get_table(self, from_residue_type):
         return self._table_manager.get_random_coil_table(from_residue_type)
 
-
-    def _get_component_for_atom(self, atom, context):
-        result = None
-        atom_name = atom.atomName()
-        atom_name = self._translate_atom_name(atom_name)
-        if atom_name in context._table.get_atoms():
-            value = context._table.get_random_coil_shift(context.offset, context.to_residue_type, atom_name)
-            if value != None:
-                result = atom.index(), value
-        return result
-    
-    class ResidueOffsetContext :
-        def __init__(self,atom,offset,table):
-            
-            self._table = table
-            
-            segment = atom.segmentName()
-            
-            self.offset = offset
-            
-            from_residue_number = atom.residueNum()
-            
-            self.to_residue_number = from_residue_number + offset
-            self.to_residue_type = Atom_utils._get_residue_type(segment, from_residue_number + offset)
-            
-            self.complete = True
-
-
-    def _build_contexts(self, atom, table):
-        contexts = []
-        for offset in table.get_offsets():
-            context = RandomCoilShifts.ResidueOffsetContext(atom, offset, table)
-            contexts.append(context)
-        return contexts
+#    def _translate_atom_name(self, atom_name):
+#        return super(RandomCoilShifts, self)._translate_atom_name(atom_name)
+#
+#    def _get_component_for_atom(self, atom, context):
+#        result = None
+#        atom_name = atom.atomName()
+#        atom_name = self._translate_atom_name(atom_name)
+#        if atom_name in context._table.get_atoms():
+#            value = context._table.get_random_coil_shift(context.offset, context.to_residue_type, atom_name)
+#            if value != None:
+#                result = atom.index(), value
+#        return result
+#    
+#    class ResidueOffsetContext :
+#        def __init__(self,atom,offset,table):
+#            
+#            self._table = table
+#            
+#            segment = atom.segmentName()
+#            
+#            self.offset = offset
+#            
+#            from_residue_number = atom.residueNum()
+#            
+#            self.to_residue_number = from_residue_number + offset
+#            self.to_residue_type = Atom_utils._get_residue_type(segment, from_residue_number + offset)
+#            
+#            self.complete = True
+#
+#
+#    def _build_contexts(self, atom, table):
+#        contexts = []
+#        for offset in table.get_offsets():
+#            context = RandomCoilShifts.ResidueOffsetContext(atom, offset, table)
+#            contexts.append(context)
+#        return contexts
     
     def _calc_component_shift(self,index):
         components = self._get_component_list()
