@@ -479,6 +479,9 @@ class Base_potential(object):
         
         return components._get_number_components()
     
+    def _get_component_table_names(self):
+        return self._component_list_data.keys()
+    
     def get_target_atom_ids(self):
         components = self._get_component_list()
         return  components.get_component_atom_ids()
