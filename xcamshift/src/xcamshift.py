@@ -141,6 +141,80 @@ class Dihedral_component_factory(Component_factory):
     def _translate_atom_name(self, atom_name,context):
         return context._table.get_translation(atom_name)
 
+class DistanceContext:
+
+    
+    
+    def __init__(self, from_atom, offset, to_atom_name ,table):
+        
+        self.complete = False
+        self._table = table
+        
+        self.segment = from_atom.segmentName()
+        
+        self.offset = offset
+        
+        from_residue_number = from_atom.residueNum()
+        
+        self.to_atom_name = to_atom_name
+        self.to_residue_number = from_residue_number+offset
+        to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, self.to_atom_name)
+        
+        if len(to_atom) == 0:
+            self.to_atom_name =  self._table.get_translation(self.to_atom_name)
+            to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, self.to_atom_name)
+            
+        num_to_atom = len(to_atom)
+        if num_to_atom > 1:
+            self._get_atom_names(to_atom)
+            raise Exception("unexpected number of to atoms selected (> 1) %d" % num_to_atom)
+            
+        if len(to_atom) == 1:
+            self.to_residue_type = Atom_utils._get_residue_type(self.segment, self.to_residue_number)
+            self.to_atom_index = to_atom[0].index()
+            self.complete = True
+
+class Distance_component_factory(Component_factory):
+    def __init__(self):
+        pass
+    
+    def _build_contexts(self, atom, table):
+        contexts = []
+        for offset in table.get_offsets():
+            for to_atom_name in table.get_to_atoms():
+                context = DistanceContext(atom,offset,to_atom_name,table)
+                if context.complete:
+                    contexts.append(context)
+        return contexts
+    
+    def _get_component_for_atom(self, atom, context):
+        table = context._table
+        
+        from_atom_name = atom.atomName()
+        from_atom_name = self._translate_atom_name(from_atom_name, context)
+        offset = context.offset
+        to_atom_name = context.to_atom_name
+        to_atom_name = self._translate_atom_name(to_atom_name,context)
+        
+        
+        result = None
+        if from_atom_name in table.get_from_atoms():
+            if to_atom_name in table.get_to_atoms():
+                value = context._table.get_distance_coeeficent(from_atom_name,offset,to_atom_name)
+                if value != None:
+                    from_atom_index = atom.index()
+                    to_atom_index = context.to_atom_index
+                    if from_atom_index != to_atom_index:
+                        exponent = context._table.get_exponent()
+                        result = (from_atom_index,to_atom_index,value,exponent)
+        return result
+
+    
+    def _translate_atom_name(self, atom_name, context):
+        return context._table.get_translation(atom_name)
+    
+    def get_table_name(self):
+        return 'ATOM'
     
 class Base_potential(object):
     
@@ -317,6 +391,7 @@ class Distance_based_potential(Base_potential):
             self.exponent_index = exponent_index
             self.coefficient_index = coefficent_index
             
+            
         def __str__(self):
             result = 'indices target= %i distance atom index 1 = %i index 2 = %i coefficent = %i exponent = %i'
             msg = result % (self.target_atom_index, self.distance_atom_index_1,
@@ -408,6 +483,8 @@ class Distance_potential(Distance_based_potential):
         '''
         Constructor
         '''
+        
+        self._add_component_factory(Distance_component_factory())
 
 
     
@@ -417,73 +494,6 @@ class Distance_potential(Distance_based_potential):
     def get_abbreviated_name(self):
         return "BB  "
     
-    class ResidueAtomOffsetContext:
-
-        
-        
-        def __init__(self, from_atom, offset, to_atom_name ,table):
-            
-            self.complete = False
-            self._table = table
-            
-            self.segment = from_atom.segmentName()
-            
-            self.offset = offset
-            
-            from_residue_number = from_atom.residueNum()
-            
-            self.to_atom_name = to_atom_name
-            self.to_residue_number = from_residue_number+offset
-            to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, self.to_atom_name)
-            
-            if len(to_atom) == 0:
-                self.to_atom_name =  self._table.get_translation(self.to_atom_name)
-                to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, self.to_atom_name)
-                
-            num_to_atom = len(to_atom)
-            if num_to_atom > 1:
-                self._get_atom_names(to_atom)
-                raise Exception("unexpected number of to atoms selected (> 1) %d" % num_to_atom)
-                
-            if len(to_atom) == 1:
-                self.to_residue_type = Atom_utils._get_residue_type(self.segment, self.to_residue_number)
-                self.to_atom_index = to_atom[0].index()
-                self.complete = True
-            
-            
-    def _translate_atom_name(self, atom_name, context):
-        return context._table.get_translation(atom_name)
-    
-    def _build_contexts(self, atom, table):
-        contexts = []
-        for offset in table.get_offsets():
-            for to_atom_name in table.get_to_atoms():
-                context = Distance_potential.ResidueAtomOffsetContext(atom,offset,to_atom_name,table)
-                if context.complete:
-                    contexts.append(context)
-        return contexts
-                
-    def _get_component_for_atom(self, atom, context):
-        table = context._table
-        
-        from_atom_name = atom.atomName()
-        from_atom_name = self._translate_atom_name(from_atom_name, context)
-        offset = context.offset
-        to_atom_name = context.to_atom_name
-        to_atom_name = self._translate_atom_name(to_atom_name,context)
-        
-        
-        result = None
-        if from_atom_name in table.get_from_atoms():
-            if to_atom_name in table.get_to_atoms():
-                value = context._table.get_distance_coeeficent(from_atom_name,offset,to_atom_name)
-                if value != None:
-                    from_atom_index = atom.index()
-                    to_atom_index = context.to_atom_index
-                    if from_atom_index != to_atom_index:
-                        exponent = context._table.get_exponent()
-                        result = (from_atom_index,to_atom_index,value,exponent)
-        return result
 
     def _get_table(self, from_residue_type):
         return self._table_manager.get_BB_Distance_Table(from_residue_type)
