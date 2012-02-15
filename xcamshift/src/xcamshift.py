@@ -59,10 +59,8 @@ class Base_potential(object):
                         result.add_component(value)
     
     
-    def _create_components_for_residue(self, segment, target_residue_number, atom_selection):
+    def _create_components_for_residue(self, component_list, segment, target_residue_number, atom_selection):
         
-        
-        component_list = self._get_component_list()
         
         from_residue_type = Atom_utils._get_residue_type(segment, target_residue_number)
         random_coil_table = self._get_table(from_residue_type)
@@ -72,7 +70,7 @@ class Base_potential(object):
         self.create_atom_components(component_list, random_coil_table, selected_atoms)
         
     
-    def _create_component_list(self,global_atom_selection):
+    def _create_component_list(self,component_list,global_atom_selection):
         
         
         
@@ -85,7 +83,7 @@ class Base_potential(object):
                 for residue_number in range(segment_info.first_residue+1,segment_info.last_residue):
                     residue_atom_selection = Atom_utils._select_atom_with_translation(segment, residue_number)
                     target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
-                    self._create_components_for_residue(segment, residue_number, target_atom_selection)
+                    self._create_components_for_residue(component_list, segment, residue_number, target_atom_selection)
                     
         
         return []
@@ -121,6 +119,8 @@ class Base_potential(object):
         self._observed_shifts = shift_table
     
     def _get_component_list(self):
+        if self._component_list.get_number_components() == 0:
+            self._create_component_list(self._component_list,"(all)")
         return self._component_list
     
     #TODO: make these internal
@@ -289,9 +289,7 @@ class Distance_potential(Distance_based_potential):
         '''
         Constructor
         '''
-        
-        component_list = self._get_component_list()
-        component_list.add_components(self._create_component_list("(all)"))
+
 
     
     def _get_indices(self):
@@ -418,8 +416,6 @@ class Extra_potential(Distance_based_potential):
     def __init__(self):
         Base_potential.__init__(self)
         
-        component_list = self._get_component_list()
-        component_list.add_components(self._create_component_list("(all)"))
     
     def get_abbreviated_name(self):
         return "XTRA"
@@ -551,8 +547,6 @@ class RandomCoilShifts(Base_potential):
     def __init__(self):
         super(RandomCoilShifts, self).__init__()
 
-        component_list = self._get_component_list()
-        component_list.add_components(self._create_component_list("(all)"))
     
     def get_abbreviated_name(self):
         return "RC  "
@@ -620,9 +614,6 @@ class Dihedral_potential(Base_potential):
 
     def __init__(self):
         Base_potential.__init__(self)
-        
-        component_list = self._get_component_list()
-        component_list.add_components(self._create_component_list("(all)"))
 
     def get_abbreviated_name(self):
         return "DHA "
@@ -919,8 +910,6 @@ class Sidechain_potential(Distance_based_potential):
     def __init__(self):
         Base_potential.__init__(self)
         
-        component_list = self._get_component_list()
-        component_list.add_components(self._create_component_list(self.ALL))
         
     def  _get_table(self, residue_type):
         return self._table_manager.get_sidechain_table(residue_type)
