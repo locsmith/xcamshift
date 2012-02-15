@@ -456,7 +456,8 @@ class Base_potential(object):
 
     def set_observed_shifts(self, shift_table):
         self._observed_shifts = shift_table
-    
+        
+#    TODO put 'ATOM' in a constant and rename to BB_ATOM?
     def _get_component_list(self,name='ATOM'):
         if not name in self._component_list_data:
             self._component_list_data[name] = Component_list()
