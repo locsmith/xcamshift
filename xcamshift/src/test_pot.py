@@ -49,4 +49,5 @@ class BondPot(PyPot):
         print self.a2.index()
         derivs[self.a1.index()] = deriv1
         derivs[self.a2.index()] = [-elem for elem in deriv1]
+        print derivs
         return energy

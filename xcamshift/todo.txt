@@ -1,6 +1,6 @@
 1. add smoothed distance potentials and shifts?? - maybe not needed always false in original camshift, maybe just need to implement beyond harmonic term
-2. non harmonic potential positions
-3. well potential positions
+2. non harmonic potential positions - done
+3. well potential positions -done 
 4. non bonded interactions
 5. aromatic potential and forces
 6. glycine an proline tables
@@ -9,3 +9,7 @@
 9. rename factors scalings??
 10. add parameter class to hand down  parameters from xcamshift to
 11. add factor and lambda to give fact in xcamshift._calc_single_factor
+12. check ala tanh  forces and energy components (effectively already checked by 
+check other forces and the factors in the tanh regime) 
+13. add derivatives for torsion angles - done
+14 add code to read chemical shifts
