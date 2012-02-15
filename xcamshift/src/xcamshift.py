@@ -474,7 +474,7 @@ class Base_potential(object):
             self._build_component_list(self._component_list_data[name],"(all)")
         return self._component_list_data[name]
     
-    #TODO: make these internal
+    # TODO: make these internal
     def get_component(self, index):
         components = self._get_component_list()
         component = components.get_component(index)
@@ -608,13 +608,14 @@ class Distance_based_potential(Base_potential):
         
         force_factor  = self._calc_single_force_factor(index, factor)
         
-        DIM_3 = 3
+
         target_offset = target_atom
         distant_offset = distance_atom
         X_OFFSET = 0
         Y_OFFSET = 1
         Z_OFFSET = 2
         
+#       TODO: move to atom utils 
         OFFSETS_3 = (X_OFFSET,Y_OFFSET,Z_OFFSET)
         
         target_forces = self._get_or_make_target_force_triplet(forces, target_offset)
@@ -998,8 +999,6 @@ class Dihedral_potential(Base_potential):
         F3 = T1 + T2
 
 #        // assign forces
-        DIM_3 = 3
-        
         X_OFFSET = 0
         Y_OFFSET = 1
         Z_OFFSET = 2
