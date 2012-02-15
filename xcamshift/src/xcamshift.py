@@ -417,20 +417,19 @@ class Base_potential(object):
         return segment_info
     
     
-    def _create_components_for_residue(self, component_list, segment, target_residue_number, atom_selection):
-        
+    def _create_components_for_residue(self, segment, target_residue_number, atom_selection):
         
         from_residue_type = Atom_utils._get_residue_type(segment, target_residue_number)
         random_coil_table = self._get_table(from_residue_type)
         selected_atoms = intersection(Atom_utils._select_atom_with_translation(segment, target_residue_number), atom_selection)
         
-        if 'ATOM' in self._component_factories:
-            self._component_factories['ATOM'].create_atom_components(component_list, random_coil_table, selected_atoms)
-        else:
-            self.create_atom_components(component_list, random_coil_table, selected_atoms)
+        for component_name_table_name,component_factory in self._component_factories.items():
+            component_list =  self._get_component_list(component_name_table_name)
+            component_factory.create_atom_components(component_list, random_coil_table, selected_atoms)
+
         
     
-    def _build_component_list(self,component_list,global_atom_selection):
+    def _build_component_list(self,global_atom_selection):
         
         global_atom_selection = AtomSel(global_atom_selection)
         for segment in self._segment_manager.get_segments():
@@ -440,7 +439,7 @@ class Base_potential(object):
                 for residue_number in range(segment_info.first_residue+1,segment_info.last_residue):
                     residue_atom_selection = Atom_utils._select_atom_with_translation(segment, residue_number)
                     target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
-                    self._create_components_for_residue(component_list, segment, residue_number, target_atom_selection)
+                    self._create_components_for_residue(segment, residue_number, target_atom_selection)
                     
         
     def _add_component_factory(self, component_factory):
@@ -471,7 +470,7 @@ class Base_potential(object):
     def _get_component_list(self,name='ATOM'):
         if not name in self._component_list_data:
             self._component_list_data[name] = Component_list()
-            self._build_component_list(self._component_list_data[name],"(all)")
+            self._build_component_list("(all)")
         return self._component_list_data[name]
     
     # TODO: make these internal
