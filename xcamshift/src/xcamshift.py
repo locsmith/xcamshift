@@ -25,7 +25,24 @@ import vec3
 from component_list import Component_list
 
 
-        
+class Component_factory(object):
+    def create_atom_components(self, component_list, table, selected_atoms):
+        for atom in selected_atoms:
+            contexts = self._build_contexts(atom, table)
+            for context in contexts:
+                if context.complete:
+                    value = self._get_component_for_atom(atom, context)
+                    if value != None:
+                        component_list.add_component(value)
+                        
+    def _build_contexts(self,atom, table):
+        pass
+    
+    def _get_component_for_atom(self,atom, context):
+        pass
+    
+    def get_name(self):
+        pass
 class Base_potential(object):
     
     __metaclass__ = abc.ABCMeta
@@ -37,6 +54,7 @@ class Base_potential(object):
         self._table_manager = Table_manager.get_default_table_manager()
         self._observed_shifts = Observed_shift_table()
         self._component_list_data  = {}
+        self._component_factories = {}
         
 
 
@@ -49,14 +67,14 @@ class Base_potential(object):
         return segment_info
     
 
-    def create_atom_components(self, result, random_coil_table, selected_atoms):
+    def create_atom_components(self, component_list, random_coil_table, selected_atoms):
         for atom in selected_atoms:
             contexts = self._build_contexts(atom, random_coil_table)
             for context in contexts:
                 if context.complete:
                     value = self._get_component_for_atom(atom, context)
                     if value != None:
-                        result.add_component(value)
+                        component_list.add_component(value)
     
     
     def _create_components_for_residue(self, component_list, segment, target_residue_number, atom_selection):
@@ -66,14 +84,12 @@ class Base_potential(object):
         random_coil_table = self._get_table(from_residue_type)
         selected_atoms = intersection(Atom_utils._select_atom_with_translation(segment, target_residue_number), atom_selection)
         
-        
+        if 'ATOM' in self._component_factories:
+            self._component_factories['ATOM'].create_atom_components(component_list, random_coil_table, selected_atoms)
         self.create_atom_components(component_list, random_coil_table, selected_atoms)
         
     
     def _build_component_list(self,component_list,global_atom_selection):
-        
-        
-        
         
         global_atom_selection = AtomSel(global_atom_selection)
         for segment in self._segment_manager.get_segments():
@@ -86,7 +102,7 @@ class Base_potential(object):
                     self._create_components_for_residue(component_list, segment, residue_number, target_atom_selection)
                     
         
-        return []
+       
     
     #TODO: make this create component for atom
     @abc.abstractmethod
