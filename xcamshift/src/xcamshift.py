@@ -293,8 +293,6 @@ class Distance_potential(Distance_based_potential):
         component_list = self._get_component_list()
         component_list.add_components(self._create_component_list("(all)"))
 
-    def _get_data_table(self):
-        return self._components
     
     def _get_indices(self):
         return super(Distance_potential, self)._get_indices()
@@ -432,8 +430,6 @@ class Extra_potential(Distance_based_potential):
     def _get_table(self, residue_type):
         return self._table_manager.get_extra_table(residue_type)
     
-    def _get_data_table(self):
-        return self._components
     
     class ExtraContext(object):
 
