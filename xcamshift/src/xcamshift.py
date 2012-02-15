@@ -8,24 +8,22 @@ Created on 27 Dec 2011
 
 
 from atomSel import AtomSel, intersection
-from bisect import insort
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from math import cos, tanh, cosh, sin
 from observed_chemical_shifts import Observed_shift_table
-from pdbTool import PDBTool
-from protocol import initStruct
 from segment_manager import Segment_Manager
 from table_manager import Table_manager
 from utils import tupleit, Atom_utils
 from vec3 import norm,cross,dot
 import abc
 import sys
-import vec3
 from component_list import Component_list
 
 
 class Component_factory(object):
+    __metaclass__ = abc.ABCMeta
+    
     def create_atom_components(self, component_list, table, selected_atoms):
         for atom in selected_atoms:
             contexts = self._build_contexts(atom, table)
