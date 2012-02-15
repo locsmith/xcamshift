@@ -446,19 +446,9 @@ class Base_potential(object):
         self._component_factories[component_factory.get_table_name()] =  component_factory
     
     
-#    @abc.abstractmethod
-    def _build_contexts(self, atom, table):
-        contexts = []
-        for offset in table.get_offsets():
-            context = RandomCoilShifts.ResidueOffsetContext(atom, offset, table)
-            contexts.append(context)
-        return contexts
-
-    
     @abc.abstractmethod
     def _get_table(self, from_residue_type):
         pass
-
         
     @abc.abstractmethod
     def get_abbreviated_name(self):
