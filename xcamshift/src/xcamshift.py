@@ -467,17 +467,17 @@ class Base_potential(object):
     # TODO: make these internal
     def _get_component(self, index, name='ATOM'):
         components = self._get_component_list(name)
-        component = components._get_component(index)
+        component = components.get_component(index)
         return component
     
     def _get_all_components(self,name='ATOM'):
         components =  self._get_component_list(name)
-        return components._get_all_components()
+        return components.get_all_components()
     
     def _get_number_components(self,name='ATOM'):
         components = self._get_component_list(name)
         
-        return components._get_number_components()
+        return components.get_number_components()
     
     def _get_component_table_names(self):
         return self._component_list_data.keys()
@@ -777,7 +777,7 @@ class RandomCoilShifts(Base_potential):
     
     def _calc_component_shift(self,index):
         components = self._get_component_list()
-        return components._get_component(index)[1]
+        return components.get_component(index)[1]
 
 
     def __str__(self): 

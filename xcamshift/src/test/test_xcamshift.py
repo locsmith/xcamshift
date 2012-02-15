@@ -129,7 +129,7 @@ class TestXcamshift(unittest2.TestCase):
     def testIndexComponents(self):
         distance_potential =  Distance_potential()
         test_elems = []
-        for elem in distance_potential.get_all_components():
+        for elem in distance_potential._get_all_components():
             test_elems.append(elem[0])
         self.assertIsSorted(test_elems)
         
