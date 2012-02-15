@@ -70,7 +70,7 @@ class Base_potential(object):
         self.create_atom_components(component_list, random_coil_table, selected_atoms)
         
     
-    def _create_component_list(self,component_list,global_atom_selection):
+    def _build_component_list(self,component_list,global_atom_selection):
         
         
         
@@ -120,7 +120,7 @@ class Base_potential(object):
     
     def _get_component_list(self):
         if self._component_list.get_number_components() == 0:
-            self._create_component_list(self._component_list,"(all)")
+            self._build_component_list(self._component_list,"(all)")
         return self._component_list
     
     #TODO: make these internal
