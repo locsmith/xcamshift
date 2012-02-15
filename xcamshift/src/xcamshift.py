@@ -36,7 +36,7 @@ class Base_potential(object):
         self._segment_manager = Segment_Manager()
         self._table_manager = Table_manager.get_default_table_manager()
         self._observed_shifts = Observed_shift_table()
-        self._component_list  = Component_list()
+        self._component_list  = None
         
 
 
@@ -118,8 +118,9 @@ class Base_potential(object):
     def set_observed_shifts(self, shift_table):
         self._observed_shifts = shift_table
     
-    def _get_component_list(self):
-        if self._component_list.get_number_components() == 0:
+    def _get_component_list(self,name='ATOM'):
+        if self._component_list == None:
+            self._component_list = Component_list()
             self._build_component_list(self._component_list,"(all)")
         return self._component_list
     
