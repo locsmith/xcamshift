@@ -44,11 +44,54 @@ class Component_factory(object):
         pass
     
     @abc.abstractmethod
+    def  _translate_atom_name(self, atom_name,context):
+        pass
+    
+    @abc.abstractmethod
     def get_table_name(self):
         pass
 
+class DihedralContext(object):
+    
+        def _select_atom_with_translation(self, segment, residue_number_1, atom_name_1):
+            target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
+            if len(target_atom_1) == 0:
+                atom_name_1 = self._table.get_translation(atom_name_1)
+                target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
+            num_to_atom = len(target_atom_1)
+            if num_to_atom > 1:
+                self._get_atom_names(target_atom_1)
+                raise Exception("unexpected number of to atoms selected (> 1) %d" % num_to_atom)
+            return target_atom_1
+    
+    
+        def get_atom_info(self, segment, from_atom, key_1):
+            residue_number_1 = from_atom.residueNum() + key_1.offset
+            atom_name_1 = key_1.atom
+            target_atom_1 = self._select_atom_with_translation(segment, residue_number_1, atom_name_1)
+            return target_atom_1
+    
+        def __init__(self, from_atom, dihedral_key ,table):
+            
+            self._table = table
+            
+            segment = from_atom.segmentName()
+            
+            target_atoms = []
+            for key in dihedral_key.get_keys():
+                target_atoms.append(self.get_atom_info(segment, from_atom, key))
+            
+            self.complete=True
+            for target_atom in target_atoms:
+                if len(target_atom) !=  1:
+                    self.complete =  False
+                    
+            if self.complete:
+                self.dihedral_indices = [target_atom[0].index()  for target_atom in target_atoms]
+                self.dihedral_key = dihedral_key
 
-class Dihedral_component_factor(Component_factory):
+
+class Dihedral_component_factory(Component_factory):
 
     def get_table_name(self):
         return 'ATOM'
@@ -58,7 +101,7 @@ class Dihedral_component_factor(Component_factory):
         
         for key in table.get_dihedral_keys():
             dihedral_key = Dihedral_key(*key)
-            context = Dihedral_potential.DihedralContext(atom,dihedral_key,table)
+            context = DihedralContext(atom,dihedral_key,table)
             
             if context.complete:
                 contexts.append(context)
@@ -94,6 +137,9 @@ class Dihedral_component_factor(Component_factory):
                 result = tuple(result)
                 
         return result
+    
+    def _translate_atom_name(self, atom_name,context):
+        return context._table.get_translation(atom_name)
 
     
 class Base_potential(object):
@@ -139,7 +185,8 @@ class Base_potential(object):
         
         if 'ATOM' in self._component_factories:
             self._component_factories['ATOM'].create_atom_components(component_list, random_coil_table, selected_atoms)
-        self.create_atom_components(component_list, random_coil_table, selected_atoms)
+        else:
+            self.create_atom_components(component_list, random_coil_table, selected_atoms)
         
     
     def _build_component_list(self,component_list,global_atom_selection):
@@ -155,14 +202,16 @@ class Base_potential(object):
                     self._create_components_for_residue(component_list, segment, residue_number, target_atom_selection)
                     
         
-       
+    def _add_component_factory(self, component_factory):
+        self._component_factories[component_factory.get_table_name()] =  component_factory
+    
     
     #TODO: make this create component for atom
-    @abc.abstractmethod
+#    @abc.abstractmethod
     def _get_component_for_atom(self, atom, context):
         pass
     
-    @abc.abstractmethod
+#    @abc.abstractmethod
     def _build_contexts(self, atom, table):
         contexts = []
         for offset in table.get_offsets():
@@ -176,7 +225,7 @@ class Base_potential(object):
         pass
 
 
-    @abc.abstractmethod
+#    @abc.abstractmethod
     def _translate_atom_name(self,atom_name):
         return atom_name
         
@@ -682,103 +731,25 @@ class RandomCoilShifts(Base_potential):
 
 class Dihedral_potential(Base_potential):
 
+    
     def __init__(self):
         Base_potential.__init__(self)
+        self._add_component_factory(Dihedral_component_factory())
     
-    class DihedralContext(object):
-    
-        def _select_atom_with_translation(self, segment, residue_number_1, atom_name_1):
-            target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
-            if len(target_atom_1) == 0:
-                atom_name_1 = self._table.get_translation(atom_name_1)
-                target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
-            num_to_atom = len(target_atom_1)
-            if num_to_atom > 1:
-                self._get_atom_names(target_atom_1)
-                raise Exception("unexpected number of to atoms selected (> 1) %d" % num_to_atom)
-            return target_atom_1
-    
-    
-        def get_atom_info(self, segment, from_atom, key_1):
-            residue_number_1 = from_atom.residueNum() + key_1.offset
-            atom_name_1 = key_1.atom
-            target_atom_1 = self._select_atom_with_translation(segment, residue_number_1, atom_name_1)
-            return target_atom_1
-    
-        def __init__(self, from_atom, dihedral_key ,table):
-            
-            self._table = table
-            
-            segment = from_atom.segmentName()
-            
-            target_atoms = []
-            for key in dihedral_key.get_keys():
-                target_atoms.append(self.get_atom_info(segment, from_atom, key))
-            
-            self.complete=True
-            for target_atom in target_atoms:
-                if len(target_atom) !=  1:
-                    self.complete =  False
-                    
-            if self.complete:
-                self.dihedral_indices = [target_atom[0].index()  for target_atom in target_atoms]
-                self.dihedral_key = dihedral_key
 
 
     def get_abbreviated_name(self):
         return "DHA "
-    
-    def _translate_atom_name(self, atom_name,context):
-        return context._table.get_translation(atom_name)
-        
+
     def _get_table(self, residue_type):
         return self._table_manager.get_dihedral_table(residue_type)
 
     
                 
         
-    def _build_contexts(self, atom, table):
-        contexts = []
-        
-        for key in table.get_dihedral_keys():
-            dihedral_key = Dihedral_key(*key)
-            context = Dihedral_potential.DihedralContext(atom,dihedral_key,table)
-            
-            if context.complete:
-                contexts.append(context)
-                
-        return contexts
 
 
-    def  _get_component_for_atom(self, atom, context):
-        table = context._table
-        
-        from_atom_name = atom.atomName()
-        from_atom_name = self._translate_atom_name(from_atom_name, context)
-        
-        result = None
-        if from_atom_name in table.get_target_atoms():
-            
-            dihedral_key = context.dihedral_key
-            value = context._table.get_dihedral_shift(from_atom_name,dihedral_key)
-            if value != None:
-                from_atom_index = atom.index()
-                
-                dihedral_indices = context.dihedral_indices
 
-                result = [from_atom_index]
-                result.extend(dihedral_indices)
-                result.append(value)
-                
-                for parameter_id in context._table.get_parameters():
-                    parameter = context._table.get_parameter(from_atom_name,dihedral_key,parameter_id)
-                    result.append(parameter)
-                
-                
-                result.append(context._table.get_exponent())
-                result = tuple(result)
-                
-        return result
     
     def dump(self):
         result  = []
