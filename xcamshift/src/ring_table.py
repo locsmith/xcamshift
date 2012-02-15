@@ -9,8 +9,6 @@ class Ring_table(object):
 
 
     TARGET_ATOMS = "target_atoms"
-#    EXPONENT = "exponent"
-#    SIDECHAIN_ATOMS = "sidechain_atoms"
     RINGS = 'rings'
     DATA = 'data'
     
@@ -49,7 +47,7 @@ class Ring_table(object):
             message = template % (ring_type, ', '.join(ring_types),residue_type)
             raise KeyError(message)
         
-        
+#        TODO: much in here adn elsewhere can be pushed to a super class
     def _check_target_atom(self, atom_name):
         atoms = self.get_target_atoms()
         if atom_name not in atoms:
