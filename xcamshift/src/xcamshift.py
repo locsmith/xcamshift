@@ -45,11 +45,11 @@ class Component_factory(object):
     
     @abc.abstractmethod
     def  _translate_atom_name(self, atom_name,context):
-        pass
+        return atom_name
     
     @abc.abstractmethod
     def get_table_name(self):
-        pass
+        return 'ATOM'
 
 class DihedralContext(object):
     
@@ -418,16 +418,6 @@ class Base_potential(object):
             print >> sys.stderr, message
         return segment_info
     
-
-    def create_atom_components(self, component_list, random_coil_table, selected_atoms):
-        for atom in selected_atoms:
-            contexts = self._build_contexts(atom, random_coil_table)
-            for context in contexts:
-                if context.complete:
-                    value = self._get_component_for_atom(atom, context)
-                    if value != None:
-                        component_list.add_component(value)
-    
     
     def _create_components_for_residue(self, component_list, segment, target_residue_number, atom_selection):
         
@@ -459,11 +449,6 @@ class Base_potential(object):
         self._component_factories[component_factory.get_table_name()] =  component_factory
     
     
-    #TODO: make this create component for atom
-#    @abc.abstractmethod
-    def _get_component_for_atom(self, atom, context):
-        pass
-    
 #    @abc.abstractmethod
     def _build_contexts(self, atom, table):
         contexts = []
@@ -477,15 +462,11 @@ class Base_potential(object):
     def _get_table(self, from_residue_type):
         pass
 
-
-#    @abc.abstractmethod
-    def _translate_atom_name(self,atom_name):
-        return atom_name
         
     @abc.abstractmethod
     def get_abbreviated_name(self):
         pass
-    #TODO: should be abc
+
     def set_observed_shifts(self, shift_table):
         self._observed_shifts = shift_table
     
@@ -536,10 +517,6 @@ class Base_potential(object):
                     forces = self._calc_single_force_set(index,force_factor,forces)
             return forces
         
-#    def calc_single_force_set(self,target_atom_index,factor,forces):
-#        for potential in self.potential:
-#            potential.calc_single_force_set(target_atom_index,forces)
-#        return forces
     
     #TODO: make this just return a list in component order
     #TODO: remove
@@ -743,37 +720,6 @@ class Extra_potential(Distance_based_potential):
         return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=1,
                                                 distance_atom_index_2=2,coefficent_index=3,
                                                 exponent_index=4)    
-#    def _build_contexts(self, atom, table):
-#        contexts = []
-#        for offset_1 in table.get_offsets(table.ATOM_1):
-#            for offset_2 in table.get_offsets(table.ATOM_2):
-#                for distance_atom_1 in table.get_distance_atoms(table.ATOM_1):
-#                    for distance_atom_2 in table.get_distance_atoms(table.ATOM_2):
-#                        key_1 = Atom_key(offset_1,distance_atom_1)
-#                        key_2 = Atom_key(offset_2,distance_atom_2)
-#                        context = Extra_potential.ExtraContext(atom,key_1,key_2,table)
-#                        if context.complete:
-#                            contexts.append(context)
-#        return contexts
-#    
-#    def  _get_component_for_atom(self, atom, context):
-#        table = context._table
-#
-#        
-#        from_atom_name = atom.atomName()
-#        from_atom_name = self._translate_atom_name(from_atom_name, context)
-#        
-#        result = None
-#        if from_atom_name in table.get_target_atoms():
-#            value = context._table.get_extra_shift(from_atom_name,context.key_1,context.key_2)
-#
-#            if value != None:
-#                from_atom_index = atom.index()
-#                distance_index_1 = context.distance_atom_index_1
-#                distance_index_2 = context.distance_atom_index_2
-#                exponent = context._table.get_exponent()
-#                result = (from_atom_index,distance_index_1,distance_index_2,value,exponent)
-#        return result
     
     def __str__(self):
         print len( self._components)
@@ -1089,10 +1035,6 @@ class Sidechain_potential(Distance_based_potential):
     
     def  get_abbreviated_name(self):
         return "SDCH"
-    
-
-    def _translate_atom_name(self, atom_name,context):
-        return atom_name
     
 
 
