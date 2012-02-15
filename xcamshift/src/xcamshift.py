@@ -337,6 +337,64 @@ class Extra_component_factory(Component_factory):
     def get_table_name(self):
         return 'ATOM'
     
+class Sidechain_context():
+    
+    
+    
+    def __init__(self, from_atom, residue_type, sidechain_atom, table):
+        
+        self._table = table
+        
+        segment = from_atom.segmentName()
+        sidechain_residue_number = from_atom.residueNum()
+        sidechain_atom = Atom_utils._select_atom_with_translation(segment, sidechain_residue_number, sidechain_atom)
+        
+        
+        self.sidechain_atom_index = sidechain_atom[0].index()
+        
+        self.residue_type = residue_type
+        self.sidechain_atom_name = sidechain_atom[0].atomName()
+        
+        self.complete = True
+
+class Sidechain_component_factory(Component_factory):
+
+    def _translate_atom_name(self, atom_name, context):
+        return atom_name
+    
+    def _build_contexts(self,atom, table):
+        contexts = []
+        residue_type =  atom.residueName()
+        if residue_type in table.get_residue_types():
+            for sidechain_atom in table.get_sidechain_atoms(residue_type):
+                context = Sidechain_context(atom, residue_type, sidechain_atom,table)
+                contexts.append(context)
+        return contexts
+    
+    def  _get_component_for_atom(self, target_atom, context):
+        table = context._table
+        table = table
+
+        
+        target_atom_name = target_atom.atomName()
+        target_atom_name = self._translate_atom_name(target_atom_name, context)
+        
+        result = None
+        if target_atom_name in table.get_target_atoms():
+            sidechain_atom_name = context.sidechain_atom_name
+            residue_type = context.residue_type
+            value = table.get_sidechain_coefficient(residue_type,target_atom_name,sidechain_atom_name)
+
+            if value != None:
+                target_atom_index = target_atom.index()
+                sidechain_atom_index= context.sidechain_atom_index
+                exponent = table.get_exponent()
+                result = (target_atom_index,sidechain_atom_index,value,exponent)
+        return result
+    
+    def get_table_name(self):
+        return 'ATOM'
+    
 class Base_potential(object):
     
     __metaclass__ = abc.ABCMeta
@@ -1017,6 +1075,8 @@ class Sidechain_potential(Distance_based_potential):
     def __init__(self):
         Base_potential.__init__(self)
         
+        self._add_component_factory(Sidechain_component_factory())
+        
         
     def  _get_table(self, residue_type):
         return self._table_manager.get_sidechain_table(residue_type)
@@ -1024,60 +1084,12 @@ class Sidechain_potential(Distance_based_potential):
     def _get_indices(self):
         return super(Sidechain_potential, self)._get_indices()
     
-    def _build_contexts(self,atom, table):
-        contexts = []
-        residue_type =  atom.residueName()
-        if residue_type in table.get_residue_types():
-            for sidechain_atom in table.get_sidechain_atoms(residue_type):
-                context = Sidechain_potential.Sidechain_context(atom, residue_type, sidechain_atom,table)
-                contexts.append(context)
-        return contexts
-    
-    class Sidechain_context():
-        
-        
-        
-        def __init__(self, from_atom, residue_type, sidechain_atom, table):
-            
-            self._table = table
-            
-            segment = from_atom.segmentName()
-            sidechain_residue_number = from_atom.residueNum()
-            sidechain_atom = Atom_utils._select_atom_with_translation(segment, sidechain_residue_number, sidechain_atom)
-            
-            
-            self.sidechain_atom_index = sidechain_atom[0].index()
-            
-            self.residue_type = residue_type
-            self.sidechain_atom_name = sidechain_atom[0].atomName()
-            
-            self.complete = True
         
 
     
     def  get_abbreviated_name(self):
         return "SDCH"
     
-    def  _get_component_for_atom(self, target_atom, context):
-        table = context._table
-        table = table
-
-        
-        target_atom_name = target_atom.atomName()
-        target_atom_name = self._translate_atom_name(target_atom_name, context)
-        
-        result = None
-        if target_atom_name in table.get_target_atoms():
-            sidechain_atom_name = context.sidechain_atom_name
-            residue_type = context.residue_type
-            value = table.get_sidechain_coefficient(residue_type,target_atom_name,sidechain_atom_name)
-
-            if value != None:
-                target_atom_index = target_atom.index()
-                sidechain_atom_index= context.sidechain_atom_index
-                exponent = table.get_exponent()
-                result = (target_atom_index,sidechain_atom_index,value,exponent)
-        return result
 
     def _translate_atom_name(self, atom_name,context):
         return atom_name
