@@ -93,7 +93,8 @@ class Dihedral_component_factory(Component_factory):
 
     def get_table_name(self):
         return 'ATOM'
-    
+
+#TODO: make this more generic and move to super class
     def _build_contexts(self, atom, table):
         contexts = []
         
@@ -1064,12 +1065,65 @@ class Sidechain_potential(Distance_based_potential):
             values = target_atom, sidechain_atom, value, exponent
             result.append( template % values)
         return '\n'.join(result)
+
+# BB-ID -> BB-TYPE [iterate this second for find all aromatic shifts for an atom]
+# BB-TYPE ->  AROMATIC-ID [aromatic ring number] COEFF
+# AROMATIC-ID -> ATOMS [iterate this first to build ring normals and centres
+
+# 
+class Ring_backbone_context(object):
+    def __init__(self, atom, table):
+        self.complete =  False
+        self.target_atom_id  =  atom.index()
+        
+        atom_name  =  Atom_utils._get_atom_name_from_index(self.target_atom_id)
+# TODO: I need to think about atom name translations
+#        atom_name = table.translate_atom_name(atom_name)
+        self.atom_name_index  = table.get_target_atoms().index(atom_name)
+        if self.atom_name_index >= 0:
+            self.complete = True
+        
+        
+class Ring_backbone_component_factory (Component_factory):
     
+    def get_table_name(self):
+        Component_factory.get_table_name(self)
+        
+# TODO: impelement
+    def _translate_atom_name(self, atom_name, context):
+        return atom_name
+
+    def _get_component_for_atom(self, atom, context):
+        if context.complete:
+            return context.target_atom_id, context.atom_name_index
+    
+    def _build_contexts(self, atom, table):
+        contexts = []
+        
+        #TODO: should translate atom name here
+        atom_name =  atom.atomName()
+        if atom_name in table.get_target_atoms():
+            context = Ring_backbone_context(atom,table)
+            if context.complete:
+                contexts.append(context)
+        return contexts
+
+#class Ring_sidechain_component_factory(Component_factory):
+#    
+#    def get_table_name(self):
+#        return 'RING'
+#    
+## TODO: impelement    
+#    def _translate_atom_name(self, atom_name, context):
+#        return atom_name
+
 class Ring_Potential(Base_potential):
     def __init__(self):
         Base_potential.__init__(self)
         
-    
+        self._add_component_factory(Ring_backbone_component_factory())
+#        self._add_component_factory(Ring_sidechain_component_factory())
+        
     def get_abbreviated_name(self):
         return 'RING'
     
@@ -1077,20 +1131,20 @@ class Ring_Potential(Base_potential):
     def _get_table(self, from_residue_type):
         return self._table_manager.get_ring_table(from_residue_type)
     
-    def _translate_atom_name(self, atom_name):
-        return atom_name
-    
-    class Simple_context(object):
-        def __init__(self,atom,table):
-            self.target_atom_id = atom.index()
-    
-    def _build_contexts(self, atom, table):
-        contexts = []
-        
-        for atom in table.get_target_atoms():
-            context = Ring_Potential.Simple_context(atom,table)
-            contexts.append(context)
-        return context
+#    def _translate_atom_name(self, atom_name):
+#        return atom_name
+#    
+#    class Simple_context(object):
+#        def __init__(self,atom,table):
+#            self.target_atom_id = atom.index()
+#    
+#    def _build_contexts(self, atom, table):
+#        contexts = []
+#        
+#        for atom in table.get_target_atoms():
+#            context = Ring_Potential.Simple_context(atom,table)
+#            contexts.append(context)
+#        return context
         
     def _get_component_for_atom(self, atom, context):
         return []
