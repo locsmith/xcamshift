@@ -24,6 +24,11 @@ from component_list import Component_list
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
     
+    def is_residue_acceptable(self, segment, residue_number, segment_manager):
+        segment_info = segment_manager.get_segment_info(segment)
+        
+        return residue_number > segment_info.first_residue and residue_number < segment_info.last_residue
+    
     def create_atom_components(self, component_list, table, selected_atoms):
         for atom in selected_atoms:
             contexts = self._build_contexts(atom, table)
@@ -425,8 +430,9 @@ class Base_potential(object):
         selected_atoms = intersection(Atom_utils._select_atom_with_translation(segment, target_residue_number), atom_selection)
         
         for component_name_table_name,component_factory in self._component_factories.items():
-            component_list =  self._get_component_list(component_name_table_name)
-            component_factory.create_atom_components(component_list, table, selected_atoms)
+            if component_factory.is_residue_acceptable(segment,target_residue_number,self._segment_manager):
+                component_list =  self._get_component_list(component_name_table_name)
+                component_factory.create_atom_components(component_list, table, selected_atoms)
 
 
         
@@ -439,7 +445,7 @@ class Base_potential(object):
             
             if self._check_segment_length(segment):
                 segment_info = self._segment_manager.get_segment_info(segment)
-                for residue_number in range(segment_info.first_residue+1,segment_info.last_residue):
+                for residue_number in range(segment_info.first_residue,segment_info.last_residue+1):
                     residue_atom_selection = Atom_utils._select_atom_with_translation(segment, residue_number)
                     target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
                     self._create_components_for_residue(segment, residue_number, target_atom_selection)
