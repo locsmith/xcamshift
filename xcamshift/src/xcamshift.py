@@ -23,12 +23,24 @@ from component_list import Component_list
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
+# TODO: is this needed
+#    SEGMENT =  'SEGMENT'
+#    RESIDUE = 'RESIDUE'
+#    ATOM = 'ATOM'
+#    
+#    _targets = (ATOM,)
     
     def is_residue_acceptable(self, segment, residue_number, segment_manager):
         segment_info = segment_manager.get_segment_info(segment)
         
         return residue_number > segment_info.first_residue and residue_number < segment_info.last_residue
     
+    def is_target_required(self, target):
+        return target in self._get_targets()
+    
+    def create_components(self, component_list, table, segment,target_residue_number,selected_atoms):
+        self.create_atom_components(component_list, table, selected_atoms)
+        
     def create_atom_components(self, component_list, table, selected_atoms):
         for atom in selected_atoms:
             contexts = self._build_contexts(atom, table)
@@ -37,6 +49,17 @@ class Component_factory(object):
                     value = self._get_component_for_atom(atom, context)
                     if value != None:
                         component_list.add_component(value)
+                        
+#    def create_residue_components(self,component_list,table, segment, residue):
+#        contexts =  self.build_contexts((segment,residue),table)
+#        for context in contexts:
+#            if context.complete:
+#                value = self._get_component_for_residue((segment,residue), context)
+#                if value != None:
+#                    component_list.add_component(value)
+#                        
+    def _get_targets(self):
+        return (self.ATOM,)
                         
     @abc.abstractmethod
     def _build_contexts(self,atom, table):
@@ -432,7 +455,11 @@ class Base_potential(object):
         for component_name_table_name,component_factory in self._component_factories.items():
             if component_factory.is_residue_acceptable(segment,target_residue_number,self._segment_manager):
                 component_list =  self._get_component_list(component_name_table_name)
-                component_factory.create_atom_components(component_list, table, selected_atoms)
+                component_factory.create_components(component_list, table, segment,target_residue_number,selected_atoms)
+#                if component_factory.is_target_required(Component_factory.ATOM):
+#                    component_factory.create_atom_components(component_list, table, selected_atoms)
+#                if component_factory.is_target_required(Component_factory.RESIDUE):
+#                    component_factory.create_residue_components(component_list, table, segment,target_residue_number)                    
 
 
         
