@@ -40,6 +40,9 @@ class Residue_component_factory(Component_factory):
     def is_residue_acceptable(self, segment, residue_number, segment_manager):
         return True
     
+    def create_components(self, component_list, table, segment,target_residue_number,selected_atoms):
+        self.create_residue_components(component_list, table, segment, target_residue_number)
+    
     @abc.abstractmethod
     def create_residue_components(self,component_list,table, segment, residue):
         pass
@@ -1143,21 +1146,20 @@ class Ring_backbone_component_factory (Atom_component_factory):
                 contexts.append(context)
         return contexts
 
-#class Ring_sidechain_component_factory(Atom_component_factory):
-#    
-#    def get_table_name(self):
-#        return 'RING'
-#    
-## TODO: impelement    
-#    def _translate_atom_name(self, atom_name, context):
-#        return atom_name
+class Ring_sidechain_component_factory(Residue_component_factory):
+    
+    def get_table_name(self):
+        return 'RING'
+
+    def create_residue_components(self, component_list, table, segment, residue):
+        return []
 
 class Ring_Potential(Base_potential):
     def __init__(self):
         Base_potential.__init__(self)
         
         self._add_component_factory(Ring_backbone_component_factory())
-#        self._add_component_factory(Ring_sidechain_component_factory())
+        self._add_component_factory(Ring_sidechain_component_factory())
         
     def get_abbreviated_name(self):
         return 'RING'
