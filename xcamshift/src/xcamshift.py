@@ -31,20 +31,17 @@ class Component_factory(object):
     def create_components(self, component_list, table, segment,target_residue_number,selected_atoms):
         pass
         
-                        
-#    def create_residue_components(self,component_list,table, segment, residue):
-#        contexts =  self.build_contexts((segment,residue),table)
-#        for context in contexts:
-#            if context.complete:
-#                value = self._get_component_for_residue((segment,residue), context)
-#                if value != None:
-#                    component_list.add_component(value)
-#                        
-                        
-
-    
     @abc.abstractmethod
     def get_table_name(self):
+        pass
+
+class Residue_component_factory(Component_factory):
+    
+    def is_residue_acceptable(self, segment, residue_number, segment_manager):
+        return True
+    
+    @abc.abstractmethod
+    def create_residue_components(self,component_list,table, segment, residue):
         pass
     
 class Atom_component_factory(Component_factory):
