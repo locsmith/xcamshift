@@ -20,35 +20,17 @@ import abc
 import sys
 from component_list import Component_list
 
-
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
-# TODO: is this needed
-#    SEGMENT =  'SEGMENT'
-#    RESIDUE = 'RESIDUE'
-#    ATOM = 'ATOM'
-#    
-#    _targets = (ATOM,)
     
+    @abc.abstractmethod
     def is_residue_acceptable(self, segment, residue_number, segment_manager):
-        segment_info = segment_manager.get_segment_info(segment)
-        
-        return residue_number > segment_info.first_residue and residue_number < segment_info.last_residue
+        pass
     
-    def is_target_required(self, target):
-        return target in self._get_targets()
-    
+    @abc.abstractmethod
     def create_components(self, component_list, table, segment,target_residue_number,selected_atoms):
-        self.create_atom_components(component_list, table, selected_atoms)
+        pass
         
-    def create_atom_components(self, component_list, table, selected_atoms):
-        for atom in selected_atoms:
-            contexts = self._build_contexts(atom, table)
-            for context in contexts:
-                if context.complete:
-                    value = self._get_component_for_atom(atom, context)
-                    if value != None:
-                        component_list.add_component(value)
                         
 #    def create_residue_components(self,component_list,table, segment, residue):
 #        contexts =  self.build_contexts((segment,residue),table)
@@ -58,9 +40,24 @@ class Component_factory(object):
 #                if value != None:
 #                    component_list.add_component(value)
 #                        
-    def _get_targets(self):
-        return (self.ATOM,)
                         
+
+    
+    @abc.abstractmethod
+    def get_table_name(self):
+        pass
+    
+class Atom_component_factory(Component_factory):
+    __metaclass__ = abc.ABCMeta
+    
+    def is_residue_acceptable(self, segment, residue_number, segment_manager):
+        segment_info = segment_manager.get_segment_info(segment)
+        
+        return residue_number > segment_info.first_residue and residue_number < segment_info.last_residue
+
+    def create_components(self, component_list, table, segment,target_residue_number,selected_atoms):
+        self.create_atom_components(component_list, table, selected_atoms)
+    
     @abc.abstractmethod
     def _build_contexts(self,atom, table):
         pass
@@ -73,7 +70,15 @@ class Component_factory(object):
     def  _translate_atom_name(self, atom_name,context):
         return atom_name
     
-    @abc.abstractmethod
+    def create_atom_components(self, component_list, table, selected_atoms):
+        for atom in selected_atoms:
+            contexts = self._build_contexts(atom, table)
+            for context in contexts:
+                if context.complete:
+                    value = self._get_component_for_atom(atom, context)
+                    if value != None:
+                        component_list.add_component(value)
+
     def get_table_name(self):
         return 'ATOM'
 
@@ -117,7 +122,7 @@ class DihedralContext(object):
                 self.dihedral_key = dihedral_key
 
 
-class Dihedral_component_factory(Component_factory):
+class Dihedral_component_factory(Atom_component_factory):
 
     def get_table_name(self):
         return 'ATOM'
@@ -201,7 +206,7 @@ class DistanceContext:
             self.to_atom_index = to_atom[0].index()
             self.complete = True
 
-class Distance_component_factory(Component_factory):
+class Distance_component_factory(Atom_component_factory):
     def __init__(self):
         pass
     
@@ -259,7 +264,7 @@ class Random_coil_context :
         
         self.complete = True
 
-class Random_coil_component_factory(Component_factory):
+class Random_coil_component_factory(Atom_component_factory):
     
     #TODO: push to base
     #TODO should random coil have a translation table
@@ -324,7 +329,7 @@ class ExtraContext(object):
             self.complete = True
 
 
-class Extra_component_factory(Component_factory):
+class Extra_component_factory(Atom_component_factory):
     
     def _build_contexts(self, atom, table):
         contexts = []
@@ -384,7 +389,7 @@ class Sidechain_context():
         
         self.complete = True
 
-class Sidechain_component_factory(Component_factory):
+class Sidechain_component_factory(Atom_component_factory):
 
     def _translate_atom_name(self, atom_name, context):
         return atom_name
@@ -456,9 +461,9 @@ class Base_potential(object):
             if component_factory.is_residue_acceptable(segment,target_residue_number,self._segment_manager):
                 component_list =  self._get_component_list(component_name_table_name)
                 component_factory.create_components(component_list, table, segment,target_residue_number,selected_atoms)
-#                if component_factory.is_target_required(Component_factory.ATOM):
+#                if component_factory.is_target_required(Atom_component_factory.ATOM):
 #                    component_factory.create_atom_components(component_list, table, selected_atoms)
-#                if component_factory.is_target_required(Component_factory.RESIDUE):
+#                if component_factory.is_target_required(Atom_component_factory.RESIDUE):
 #                    component_factory.create_residue_components(component_list, table, segment,target_residue_number)                    
 
 
@@ -1117,10 +1122,10 @@ class Ring_backbone_context(object):
             self.complete = True
         
         
-class Ring_backbone_component_factory (Component_factory):
+class Ring_backbone_component_factory (Atom_component_factory):
     
     def get_table_name(self):
-        Component_factory.get_table_name(self)
+        Atom_component_factory.get_table_name(self)
         
 # TODO: impelement
     def _translate_atom_name(self, atom_name, context):
@@ -1141,7 +1146,7 @@ class Ring_backbone_component_factory (Component_factory):
                 contexts.append(context)
         return contexts
 
-#class Ring_sidechain_component_factory(Component_factory):
+#class Ring_sidechain_component_factory(Atom_component_factory):
 #    
 #    def get_table_name(self):
 #        return 'RING'
