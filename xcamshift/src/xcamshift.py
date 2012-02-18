@@ -1104,15 +1104,23 @@ class Sidechain_potential(Distance_based_potential):
             result.append( template % values)
         return '\n'.join(result)
 
-class Ring_backbone_context(object):
+
+class Backbone_atom_indexer:
+    
+    def _get_atom_index(self,atom_name,table):
+        return table.get_target_atoms().index(atom_name)
+
+class Ring_backbone_context(object,Backbone_atom_indexer):
+    
     def __init__(self, atom, table):
         self.complete =  False
+        
         self.target_atom_id  =  atom.index()
         
-        atom_name  =  Atom_utils._get_atom_name_from_index(self.target_atom_id)
 # TODO: I need to think about atom name translations
 #        atom_name = table.translate_atom_name(atom_name)
-        self.atom_name_index  = table.get_target_atoms().index(atom_name)
+        atom_name  =  Atom_utils._get_atom_name_from_index(self.target_atom_id)
+        self.atom_name_index =self._get_atom_index(atom_name, table)
         if self.atom_name_index >= 0:
             self.complete = True
         
@@ -1142,28 +1150,118 @@ class Ring_backbone_component_factory (Atom_component_factory):
         return contexts
 
 class Ring_sidechain_component_factory(Residue_component_factory):
-    
+#    TODO: make ring index a service not a mixin same with atom ids
     def __init__(self):
         self.ring_index_count = 0
         self.ring_index = {}
+        self.ring_id_ring_type_map = {}
+    
+    def _get_ring_type_from_id(self, ring_id):
+        return self.ring_id_ring_type_map[ring_id]
+    
+    def _get_or_make_ring_ids(self, segment,residue_number,table):
+        residue_key = segment,residue_number
+        
+        residue_type = Atom_utils._get_residue_type(segment, residue_number)
+        
+        ring_ids = []
+        if residue_type in table.get_residue_types():
+            for ring_type in table.get_ring_types(residue_type):
+                residue_key = segment, residue_number, ring_type
+                
+                if residue_key in self.ring_index:
+                    ring_id = self.ring_index[residue_key]
+                else:
+                    ring_id = self.ring_index_count
+                    self.ring_index[residue_key] = self.ring_index_count
+                    self.ring_index_count += 1
+                ring_ids.append(ring_id)
+                self.ring_id_ring_type_map[ring_id] = ring_type
+        return ring_ids
+
+    def create_residue_components(self, component_list, table, segment, residue_number):
+        residue_type = Atom_utils._get_residue_type(segment,residue_number)
+        
+        if  residue_type in table.get_residue_types():
+            
+            ring_ids = self._get_or_make_ring_ids(segment,residue_number,table)
+            for ring_id in ring_ids:
+                self.create_ring_components(component_list, table, segment, residue_number, ring_id)
+            
+    @abc.abstractmethod
+    def create_ring_components(self, component_list,table, segment, residue, ring_id):
+        pass
+    
+class Ring_sidechain_atom_factory(Ring_sidechain_component_factory):
+    
+    def __init__(self):
+        super(Ring_sidechain_atom_factory, self).__init__()
         
         
     def get_table_name(self):
         return 'RING'
 
+#    def _get_ring_ids(self, segment, residue_number, table):
+#        ring_types = []
+#        residue_type = Atom_utils._get_residue_type(segment, residue_number)
+#        if residue_type in table.get_residue_types():
+#            for ring_type in table.get_ring_types(residue_type):
+#                residue_key = segment, residue_number, ring_type
+#                if residue_key in self.ring_index:
+#                    ring_id = self.ring_index[residue_key]
+#                    ring_info = ring_id, ring_type
+#                    ring_types.append(ring_info)
+#                else:
+#                    ring_id = self.ring_index_count
+#                    ring_info = ring_id, ring_type
+#                    ring_types.append(ring_info)
+#                    self.ring_index[residue_key] = self.ring_index_count
+#                    self.ring_index_count += 1
+#        return ring_types
+    
+    
+    #TODO: hang everything off ring_id?
+    def create_ring_components(self, component_list,table, segment, residue_number, ring_id):
+        residue_atoms =  Atom_utils.find_atom(segment, residue_number)
+        residue_type = Atom_utils._get_residue_type(segment, residue_number)
+        
+        
+        
+        atom_name_id_map = dict([(atom.atomName(),atom.index()) for atom in residue_atoms])
+        
+        self._get_ring_type_from_id(ring_id)
+        ring_atoms = []
+        ring_type = self._get_ring_type_from_id(ring_id)
+        for atom_name in table.get_ring_atoms(residue_type,ring_type):
+            ring_atoms.append(atom_name_id_map[atom_name]) 
+        sub_result  = ring_id,tuple(ring_atoms)
+        component_list.add_component(sub_result)
+                    
+            
+
+# BB-ID -> BB-TYPE [iterate this second for find all aromatic shifts for an atom]
+# BB-TYPE ->  AROMATIC-ID [aromatic ring number] COEFF
+# AROMATIC-ID -> ATOMS [iterate this first to build ring normals and centres
+
+
+class Ring_coefficient_component_factory(Residue_component_factory):
+    def __init__(self):
+        super(Ring_coefficient_component_factory, self).__init__()
+        
+        
+    def get_table_name(self):
+        return 'COEF'
+
+
+
     def create_residue_components(self, component_list, table, segment, residue_number):
         residue_atoms = Atom_utils.find_atom(segment, residue_number)
         residue_type = residue_atoms[0].residueName()
         
-        if len(residue_atoms) > 0 and residue_type in table.get_residue_types():
-            residue_key = segment, residue_number
+        if  residue_type in table.get_residue_types():
+            residue_key = segment,residue_number
             
-            if residue_key in self.ring_index:
-                ring_id = self.ring_index[residue_key]
-            else:
-                ring_id = self.ring_index_count
-                self.ring_index[residue_key] = self.ring_index_count
-                self.ring_index_count += 1
+            ring_id = self._get_or_make_ring_index(residue_type, residue_key)
             
             atom_name_id_map = dict([(atom.atomName(),atom.index()) for atom in residue_atoms])
             
@@ -1173,19 +1271,16 @@ class Ring_sidechain_component_factory(Residue_component_factory):
                     ring_atoms.append(atom_name_id_map[atom_name]) 
                 sub_result  = ring_id,tuple(ring_atoms)
                 component_list.add_component(sub_result)
-                    
-            
 
-# BB-ID -> BB-TYPE [iterate this second for find all aromatic shifts for an atom]
-# BB-TYPE ->  AROMATIC-ID [aromatic ring number] COEFF
-# AROMATIC-ID -> ATOMS [iterate this first to build ring normals and centres
 
 class Ring_Potential(Base_potential):
     def __init__(self):
         Base_potential.__init__(self)
         
         self._add_component_factory(Ring_backbone_component_factory())
-        self._add_component_factory(Ring_sidechain_component_factory())
+#        self._add_component_factory(Ring_coefficient_component_factory())
+        self._add_component_factory(Ring_sidechain_atom_factory())
+        
         
     def get_abbreviated_name(self):
         return 'RING'
