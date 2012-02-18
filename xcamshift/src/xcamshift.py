@@ -451,16 +451,15 @@ class Base_potential(object):
         return segment_info
     
     
-    def _create_components_for_residue(self, segment, target_residue_number, atom_selection):
-        
+    def _create_components_for_residue(self, name, segment, target_residue_number, atom_selection):
         from_residue_type = Atom_utils._get_residue_type(segment, target_residue_number)
         table = self._get_table(from_residue_type)
         selected_atoms = intersection(Atom_utils._select_atom_with_translation(segment, target_residue_number), atom_selection)
         
-        for component_name_table_name,component_factory in self._component_factories.items():
-            if component_factory.is_residue_acceptable(segment,target_residue_number,self._segment_manager):
-                component_list =  self._get_component_list(component_name_table_name)
-                component_factory.create_components(component_list, table, segment,target_residue_number,selected_atoms)
+        component_factory = self._component_factories[name]
+        if component_factory.is_residue_acceptable(segment,target_residue_number,self._segment_manager):
+            component_list =  self._component_list_data[name]
+            component_factory.create_components(component_list, table, segment,target_residue_number,selected_atoms)
 #                if component_factory.is_target_required(Atom_component_factory.ATOM):
 #                    component_factory.create_atom_components(component_list, table, selected_atoms)
 #                if component_factory.is_target_required(Atom_component_factory.RESIDUE):
@@ -470,7 +469,7 @@ class Base_potential(object):
         
 
     
-    def _build_component_list(self,global_atom_selection):
+    def _build_component_list(self,name,global_atom_selection):
         
         global_atom_selection = AtomSel(global_atom_selection)
         for segment in self._segment_manager.get_segments():
@@ -480,7 +479,7 @@ class Base_potential(object):
                 for residue_number in range(segment_info.first_residue,segment_info.last_residue+1):
                     residue_atom_selection = Atom_utils._select_atom_with_translation(segment, residue_number)
                     target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
-                    self._create_components_for_residue(segment, residue_number, target_atom_selection)
+                    self._create_components_for_residue(name,segment, residue_number, target_atom_selection)
                     
         
     def _add_component_factory(self, component_factory):
@@ -502,7 +501,7 @@ class Base_potential(object):
     def _get_component_list(self,name='ATOM'):
         if not name in self._component_list_data:
             self._component_list_data[name] = Component_list()
-            self._build_component_list("(all)")
+            self._build_component_list(name,"(all)")
         return self._component_list_data[name]
     
     # TODO: make these internal
@@ -822,6 +821,7 @@ class RandomCoilShifts(Base_potential):
 
 
     def __str__(self): 
+        #TODO: fails if there are no shifts added
         result = []
         for atom_index,shift in self._shifts_list:
             template = "%s %7.3f"
@@ -1104,11 +1104,6 @@ class Sidechain_potential(Distance_based_potential):
             result.append( template % values)
         return '\n'.join(result)
 
-# BB-ID -> BB-TYPE [iterate this second for find all aromatic shifts for an atom]
-# BB-TYPE ->  AROMATIC-ID [aromatic ring number] COEFF
-# AROMATIC-ID -> ATOMS [iterate this first to build ring normals and centres
-
-# 
 class Ring_backbone_context(object):
     def __init__(self, atom, table):
         self.complete =  False
@@ -1125,7 +1120,7 @@ class Ring_backbone_context(object):
 class Ring_backbone_component_factory (Atom_component_factory):
     
     def get_table_name(self):
-        Atom_component_factory.get_table_name(self)
+        return Atom_component_factory.get_table_name(self)
         
 # TODO: impelement
     def _translate_atom_name(self, atom_name, context):
@@ -1148,11 +1143,42 @@ class Ring_backbone_component_factory (Atom_component_factory):
 
 class Ring_sidechain_component_factory(Residue_component_factory):
     
+    def __init__(self):
+        self.ring_index_count = 0
+        self.ring_index = {}
+        
+        
     def get_table_name(self):
         return 'RING'
 
-    def create_residue_components(self, component_list, table, segment, residue):
-        return []
+    def create_residue_components(self, component_list, table, segment, residue_number):
+        residue_atoms = Atom_utils.find_atom(segment, residue_number)
+        residue_type = residue_atoms[0].residueName()
+        
+        if len(residue_atoms) > 0 and residue_type in table.get_residue_types():
+            residue_key = segment, residue_number
+            
+            if residue_key in self.ring_index:
+                ring_id = self.ring_index[residue_key]
+            else:
+                ring_id = self.ring_index_count
+                self.ring_index[residue_key] = self.ring_index_count
+                self.ring_index_count += 1
+            
+            atom_name_id_map = dict([(atom.atomName(),atom.index()) for atom in residue_atoms])
+            
+            for ring_type in table.get_ring_types(residue_type):
+                ring_atoms = []
+                for atom_name in table.get_ring_atoms(residue_type,ring_type):
+                    ring_atoms.append(atom_name_id_map[atom_name]) 
+                sub_result  = ring_id,tuple(ring_atoms)
+                component_list.add_component(sub_result)
+                    
+            
+
+# BB-ID -> BB-TYPE [iterate this second for find all aromatic shifts for an atom]
+# BB-TYPE ->  AROMATIC-ID [aromatic ring number] COEFF
+# AROMATIC-ID -> ATOMS [iterate this first to build ring normals and centres
 
 class Ring_Potential(Base_potential):
     def __init__(self):
@@ -1167,6 +1193,9 @@ class Ring_Potential(Base_potential):
     
     def _get_table(self, from_residue_type):
         return self._table_manager.get_ring_table(from_residue_type)
+    
+    def _calc_component_shift(self,index):
+        return 0
     
 #    def _translate_atom_name(self, atom_name):
 #        return atom_name
