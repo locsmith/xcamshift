@@ -27,10 +27,11 @@ class Ring_table(object):
         
         return self._table[self.DATA][residue_type][ring_type].keys()
     
-    def get_ring_atoms(self,residue_type):
+    def get_ring_atoms(self,residue_type,ring_type):
         self._check_residue_type(residue_type)
+        self._check_ring_type(residue_type, ring_type)
         
-        return self._table[self.DATA][residue_type].keys()
+        return self._table[self.RINGS][residue_type][ring_type].keys()
     
     def get_ring_types(self,residue_type):
         self._check_residue_type(residue_type)
