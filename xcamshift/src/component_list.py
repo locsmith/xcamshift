@@ -90,9 +90,19 @@ class Component_list():
     def get_number_target_atoms(self):
         return len(self._component_ids)
     
-    def __str__(self):
-        result = []
-        for target_atom_id in self._component_ids:
-            result.append("%i %s" %  (target_atom_id, `self.get_component_range(target_atom_id)`))
-        return ",".join(result)
+    def __iter__(self):
+        return self.next()
+    
+    def next(self):
+        for component in self._components:
+            yield component
+    
+    def __getitem__(self,index):
+        return self._components[index]
+#TODO: not a useful string
+#    def __str__(self):
+#        result = []
+#        for target_atom_id in self._component_ids:
+#            result.append("%i %s" %  (target_atom_id, `self.get_component_range(target_atom_id)`))
+#        return ",".join(result)
     
