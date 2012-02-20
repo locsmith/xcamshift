@@ -93,6 +93,12 @@ class Test_component_list(unittest2.TestCase):
         
         with self.assertRaises(IndexError):
             self._component_list[len(TEST_DATA_1)]
+            
+    def testLen(self):
+        
+        self.assertEqual(len(self._component_list),0)
+        self._component_list.add_components(TEST_DATA_1)
+        self.assertEqual(len(self._component_list),len(TEST_DATA_1))
 
 #        TODO add missing tests
 if __name__ == "__main__":
