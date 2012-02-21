@@ -6,9 +6,7 @@ Created on 31 Dec 2011
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
-from xcamshift import RandomCoilShifts, Distance_potential,  Extra_potential,\
-    Dihedral_potential, Base_potential, Sidechain_potential, Xcamshift,\
-    Ring_Potential
+from xcamshift import Ring_Potential
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
@@ -153,11 +151,11 @@ class TestXcamshift(unittest2.TestCase):
         self.assertEmpty(all_component_names_index)
 
 
-    def assertListVec3AlmostEqual(self, ring_centres, expected):
+    def assertListVec3AlmostEqual(self, ring_centres, expected, places = DEFAULT_DECIMAL_PLACES):
         self.assertEqual(len(ring_centres), 1)
         for result, expected in zip(ring_centres, expected):
             for item1, item2 in zip(result, expected):
-                self.assertAlmostEqual(item1, item2, self.DEFAULT_DECIMAL_PLACES)
+                self.assertAlmostEqual(item1, item2, places)
 
     def test_ring_calculate_centre(self):
         ring_potential = Ring_Potential()
@@ -167,6 +165,27 @@ class TestXcamshift(unittest2.TestCase):
         
         self.assertListVec3AlmostEqual(ring_centres, expected)
 
+    def test_ring_calculate_normals(self):
+        ring_potential = Ring_Potential()
+        
+        ring_normals = ring_potential._calculate_ring_normals()
+        expected = [Vec3(*AFA.expected_ring_normals),]
+        
+        #TODO: check difference why only 3 places consistent, different atom selections for normals?
+        self.assertListVec3AlmostEqual(ring_normals, expected, self.DEFAULT_DECIMAL_PLACES-2)
+    
+    def test_calc_component_shift(self):
+        ring_potential = Ring_Potential()
+        
+        for i in range(len(ring_potential._get_component_list('ATOM'))):
+            component_shift = ring_potential._calc_component_shift(i)
+            #TODO: this looks inside the object too much
+            atom_id = ring_potential._get_component_list('ATOM')[i][0]
+            atom_key = Atom_utils._get_atom_info_from_index(atom_id)
+            exptected_shift = AFA.expected_ring_shifts[atom_key]
+            #TODO: is the difference in error down to coordinates?
+            self.assertAlmostEqual(component_shift, exptected_shift, self.DEFAULT_DECIMAL_PLACES-2)
+        
 #    def testXcamshift_shifts_ala3(self):
 #        xcamshift_potential =  Xcamshift()
 #        
