@@ -1267,18 +1267,27 @@ class Ring_Potential(Base_potential):
     def _get_table(self, from_residue_type):
         return self._table_manager.get_ring_table(from_residue_type)
     
-    def _calc_component_shift(self,index):
-        return 0
+
     
 
-    def _calculate_one_ring_centre(self, ring_component):
-        RING_ATOM_IDS = 1
+    RING_ATOM_IDS = 1
+
+    def _average_vec3(self, positions):
         result = Vec3(0.0,0.0,0.0)
-        atom_ids = ring_component[RING_ATOM_IDS]
-        num_atom_ids = len (atom_ids)
+        for position in positions:
+            result += position
+        
+        result /= len(positions)
+        return result
+
+    def _calculate_one_ring_centre(self, ring_component):
+        
+        atom_ids = ring_component[self.RING_ATOM_IDS]
+        positions = []
         for atom_id in atom_ids:
-            result +=  Atom_utils._get_atom_by_index(atom_id).pos()
-        result /= num_atom_ids
+            positions.append(Atom_utils._get_atom_pos(atom_id))
+            
+        result = self._average_vec3(positions)
         
         return result
             
@@ -1294,6 +1303,193 @@ class Ring_Potential(Base_potential):
             
         return result
     
+
+
+    def _check_ring_size_ok(self, atom_ids):
+        num_atom_ids = len(atom_ids)
+        if num_atom_ids < 5 or num_atom_ids > 6:
+            template = "ring normals function is only implemented for 5 or six member rings i got %d atoms"
+            msg = template % num_atom_ids
+            raise Exception(msg)
+
+    def _calculate_one_ring_normal(self, ring_component,normalise=True):
+        atom_ids = ring_component[self.RING_ATOM_IDS]
+        self._check_ring_size_ok(atom_ids)
+        
+        atom_triplets = atom_ids[:3],atom_ids[-3:]
+        
+        normals  = []
+        for atom_triplet in atom_triplets:
+            atom_vectors = []
+            for atom_id in atom_triplet:
+                atom_vectors.append(Atom_utils._get_atom_pos(atom_id))
+            vec_1 = atom_vectors[1] -atom_vectors[0]
+            vec_2 =  atom_vectors[2] - atom_vectors[1]
+                
+            normals.append(cross(vec_1,vec_2))
+        
+        result = self._average_vec3(normals)
+        if normalise:
+            result_norm  = norm(result)
+            result /= result_norm
+        return result
+    
+    
+    def _calculate_ring_normals(self):
+        ring_components = self._get_component_list('RING')
+        
+        result= []
+        
+        for ring_component in ring_components:
+            result.append(self._calculate_one_ring_normal(ring_component))
+            
+        return result
+    
+    
+    def _get_ring_centre(self, ring_id):
+        ring_component = self._get_component_list('RING').get_component(ring_id)
+        return self._calculate_one_ring_centre(ring_component)
+    
+    def _get_ring_normal(self, ring_id, normalise=True):
+        ring_component = self._get_component_list('RING').get_component(ring_id)
+        return self._calculate_one_ring_normal(ring_component,normalise)
+    
+    def _calc_component_shift(self,target_atom_id):
+        target_atom_id, atom_type_id = self._get_component_list('ATOM')[target_atom_id]
+        
+        target_atom_pos = Atom_utils._get_atom_pos(target_atom_id)
+        
+        contrib = 0.0
+        
+        coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
+        for atom_type_id,ring_id,coefficient in coef_components:
+            ring_centre = self._get_ring_centre(ring_id)
+            ring_normal = self._get_ring_normal(ring_id)
+            
+            #correct name?
+            direction_vector = target_atom_pos - ring_centre
+            
+            distance =  norm(direction_vector)
+            
+            unit_direction_vector = direction_vector/distance
+            distance3 = distance**3
+            
+            angle = dot(unit_direction_vector,ring_normal)
+            
+            contrib  += (1.0 - 3.0 * angle**2 ) / distance3
+            
+        result = contrib * coefficient
+        
+        return result
+    
+#    def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
+#        target_atom_id, atom_type_id = self._get_component_list('ATOM')[target_atom_id]
+#        
+#        target_atom_pos = Atom_utils._get_atom_pos(target_atom_id)
+#        
+#        contrib = 0.0
+#        
+#        coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
+#        
+#        for atom_type_id,ring_id,coefficient in coef_components:
+#            ring_centre = self._get_ring_centre(ring_id)
+#            ring_normal = self._get_ring_normal(ring_id)
+#        
+#        
+#            # distance vector between atom of interest and ring center
+#            d  = target_atom_pos - ring_centre
+#        {coor.coor[pos1]-ri.position[0], coor.coor[pos1+1]-ri.position[1], coor.coor[pos1+2]-ri.position[2]};
+#        // normal vector to ring plane
+#        float_type n [3] = {ri.normVect[0], ri.normVect[1], ri.normVect[2]};
+#        // squared distance of atom of interest from ring center
+#        float_type dL2 = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
+#        if (dL2 < 0.5) cout << "CAMSHIFT WARNING: Distance between atom and center of ring alarmingly small at " << sqrt(dL2) << " Angstrom!" << endl;
+#        // calculate terms resulting from differentiating energy function with respect to query and ring atom coordinates
+#        float_type dL4 = dL2 * dL2;
+#        float_type dL = sqrt(dL2);
+#        float_type v = dL2 * dL;
+#        float_type nL = ri.lengthNV;
+#        float_type nL2 = ri.lengthN2;
+#        float_type dLnL = dL * nL;
+#        float_type dL3nL3 = v * nL2 * nL;
+#    
+#        float_type dn = d[0] * n[0] + d[1] * n[1] + d[2] * n[2];
+#        float_type dn2 = dn * dn;
+#    
+#        float_type factor = -6 * dn / (dL4 * nL2);
+#        float_type gradUQx = factor * (dL2 * n[0] - dn * d[0]);
+#        float_type gradUQy = factor * (dL2 * n[1] - dn * d[1]);
+#        float_type gradUQz = factor * (dL2 * n[2] - dn * d[2]);
+#        float_type u = 1 - 3 * dn2 / (dL2 * nL2);
+#    
+#        factor = 3 * dL;
+#        float_type gradVQx = factor * d[0];
+#        float_type gradVQy = factor * d[1];
+#        float_type gradVQz = factor * d[2];
+#        float_type v2 = v * v;
+#    
+#        // update forces on query atom
+#        f.coor[pos1  ] += -fact * (gradUQx * v - u * gradVQx) / v2;
+#        f.coor[pos1+1] += -fact * (gradUQy * v - u * gradVQy) / v2;
+#        f.coor[pos1+2] += -fact * (gradUQz * v - u * gradVQz) / v2;
+#    
+#        float_type nSum [3] = {ri.n1[0] + ri.n2[0], ri.n1[1] + ri.n2[1], ri.n1[2] + ri.n2[2]};
+#        float_type g [3], ab [3], c [3];
+#        int limit = ri.numAtoms - 3; // 2 for a 5-membered ring, 3 for a 6-membered ring
+#            // update forces on ring atoms
+#        for atom_type_id,ring_id,coefficient in coef_components:
+#        for (int i = 0; i < ri.numAtoms; i++)
+#          {
+#            if (i < limit) // atoms 0,1 (5 member) or 0,1,2 (6 member)
+#              {
+#            g[0] = coor.coor[aPos[(i+1)%3]  ] - coor.coor[aPos[(i+2)%3]  ];
+#            g[1] = coor.coor[aPos[(i+1)%3]+1] - coor.coor[aPos[(i+2)%3]+1];
+#            g[2] = coor.coor[aPos[(i+1)%3]+2] - coor.coor[aPos[(i+2)%3]+2];
+#              }
+#            else if (i >= ri.numAtoms - limit) // atoms 3,4 (5 member) or 3,4,5 (6 member)
+#              {
+#            int offset = ri.numAtoms - 3; // 2 for a 5-membered ring, 3 for a 6-membered ring
+#            g[0] = coor.coor[aPos[((i + 1 - offset) % 3) + offset]  ] - coor.coor[aPos[((i + 2 - offset) % 3) + offset]  ];
+#            g[1] = coor.coor[aPos[((i + 1 - offset) % 3) + offset]+1] - coor.coor[aPos[((i + 2 - offset) % 3) + offset]+1];
+#            g[2] = coor.coor[aPos[((i + 1 - offset) % 3) + offset]+2] - coor.coor[aPos[((i + 2 - offset) % 3) + offset]+2];
+#              }
+#            else // atom 2 (5-membered rings)
+#              {
+#            g[0] = coor.coor[aPos[0]  ] - coor.coor[aPos[1]  ] + coor.coor[aPos[3]  ] - coor.coor[aPos[4]  ];
+#            g[1] = coor.coor[aPos[0]+1] - coor.coor[aPos[1]+1] + coor.coor[aPos[3]+1] - coor.coor[aPos[4]+1];
+#            g[2] = coor.coor[aPos[0]+2] - coor.coor[aPos[1]+2] + coor.coor[aPos[3]+2] - coor.coor[aPos[4]+2];
+#              }
+#            ab[0] = d[1] * g[2] - d[2] * g[1];
+#            ab[1] = d[2] * g[0] - d[0] * g[2];
+#            ab[2] = d[0] * g[1] - d[1] * g[0];
+#            c[0] = nSum[1] * g[2] - nSum[2] * g[1];
+#            c[1] = nSum[2] * g[0] - nSum[0] * g[2];
+#            c[2] = nSum[0] * g[1] - nSum[1] * g[0];
+#    
+#            factor = -6 * dn / dL3nL3;
+#            float_type factor2 = 0.25 * dL / nL;
+#            float_type OneOverN = 1 / ((float_type) ri.numAtoms);
+#            float_type factor3 = nL / dL * OneOverN;
+#            float_type gradUx = factor * ((0.5 * ab[0] - n[0] * OneOverN) * dLnL - dn * (factor2 * c[0] - factor3 * d[0]));
+#            float_type gradUy = factor * ((0.5 * ab[1] - n[1] * OneOverN) * dLnL - dn * (factor2 * c[1] - factor3 * d[1]));
+#            float_type gradUz = factor * ((0.5 * ab[2] - n[2] * OneOverN) * dLnL - dn * (factor2 * c[2] - factor3 * d[2]));
+#    
+#            factor = -3 * dL * OneOverN;
+#            float_type gradVx = factor * d[0];
+#            float_type gradVy = factor * d[1];
+#            float_type gradVz = factor * d[2];
+#    
+#            f.coor[aPos[i]  ] += -fact * (gradUx * v - u * gradVx) / v2;
+#            f.coor[aPos[i]+1] += -fact * (gradUy * v - u * gradVy) / v2;
+#            f.coor[aPos[i]+2] += -fact * (gradUz * v - u * gradVz) / v2;
+#            print >> sys.stderr, ring_centre,ring_normal
+#        atom_type_id,ring_id,coefficient = 
+#        
+#        
+##         BB-TYPE ->  AROMATIC-ID [aromatic ring number] COEFF
+##         AROMATIC-ID -> ATOMS
+#        print >> sys.stderr, 'here',coefficient,atom_ids
+#        
 #    def _translate_atom_name(self, atom_name):
 #        return atom_name
 #    

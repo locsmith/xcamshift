@@ -48,7 +48,7 @@ class Component_list():
         
         raise Exception(message)
 
-
+    #TODO: make private
     def get_component_range(self, atom_id):
         component_ranges = self._get_component_ranges()
         if not atom_id in component_ranges:
@@ -56,7 +56,7 @@ class Component_list():
         start, end = component_ranges[atom_id]
         return start, end
 
-    def get_components_for__atom_id(self,atom_id):
+    def get_components_for_atom_id(self,atom_id):
         start, end = self.get_component_range(atom_id)
         return self._components[start:end]
     
