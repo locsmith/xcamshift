@@ -172,7 +172,7 @@ class Test_table_manager(unittest2.TestCase):
         table = self.table_manager.get_ring_table('ALA')
         
         result = table.get_ring_coefficient("CA", "PHE", "6")
-        self.assertAlmostEqual(0.010721410838165022,result)
+        self.assertAlmostEqual(0.010721410838165022*1000,result)
         
         EXPECTED_RING_RESIDUES = ("HIS","PHE","TRP","TYR")
         result = table.get_residue_types()

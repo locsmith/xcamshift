@@ -79,5 +79,5 @@ class Ring_table(object):
         self._check_residue_type(residue_type)
         self._check_ring_type(residue_type, ring_type)
         
-        return self._table[self.DATA][residue_type,ring_type][target_atom]
+        return self._table[self.DATA][residue_type,ring_type][target_atom]*1000
     
