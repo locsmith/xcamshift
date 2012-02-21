@@ -3,7 +3,6 @@
 ---
 
 target_atoms :  ["HA", "CA", "HN", "N", "C", "CB"]
-
 rings : {
      PHE : { "6":  {"CG","CD1","CD2","CE1","CE2","CZ"}},
      TYR : { "6" : {"CG","CD1","CD2","CE1","CE2","CZ"}},
@@ -12,7 +11,7 @@ rings : {
      HIS : { "5" : {"CG","CD2","CE1","ND1","NE2"}}
 
 }
-
+# these values  are mutiplied by 1000 before they are used
 data: {
 
   [PHE,"6"] : { CA : 0.010721410838165022,  CB : 0.02288918665808281,  C : 0.037947505973585656, HA : 0.019710618649339977, HN : 0.024812566431083566, N : -0.01218926690115714  },
