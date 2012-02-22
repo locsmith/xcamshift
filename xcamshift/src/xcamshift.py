@@ -1324,7 +1324,7 @@ class Ring_Potential(Base_potential):
             atom_vectors = []
             for atom_id in atom_triplet:
                 atom_vectors.append(Atom_utils._get_atom_pos(atom_id))
-            vec_1 = atom_vectors[1] -atom_vectors[0]
+            vec_1 = atom_vectors[0] -atom_vectors[1]
             vec_2 =  atom_vectors[2] - atom_vectors[1]
                 
             normals.append(cross(vec_1,vec_2))
