@@ -82,7 +82,7 @@ class TestXcamshift(unittest2.TestCase):
         initStruct("test_data/ala_phe_ala/AFA.psf")
         PDBTool("test_data/ala_phe_ala/AFA.pdb").read()
 
-
+#TODO: shoulf be private
     def make_result_array_forces(self):
 #        TODO: use segment manager
         num_atoms = len(AtomSel('(all)').indices())
@@ -185,6 +185,21 @@ class TestXcamshift(unittest2.TestCase):
             exptected_shift = AFA.expected_ring_shifts[atom_key]
             #TODO: is the difference in error down to coordinates?
             self.assertAlmostEqual(component_shift, exptected_shift, self.DEFAULT_DECIMAL_PLACES-2)
+            
+    def test_calc_component_forces(self):
+        ring_potential = Ring_Potential()
+        
+        for atom_component in ring_potential._get_component_list('ATOM'):
+            target_atom_id = atom_component[0]
+            force_factor_key = Atom_utils._get_atom_info_from_index(target_atom_id)
+            force_factor = AFA.force_factors_harmonic[force_factor_key]
+            
+            forces = self.make_result_array_forces()
+            ring_potential.calc_single_atom_force_set(target_atom_id, force_factor, forces)
+            
+            target_atom_forces = forces[target_atom_id]
+            expected_forces = AFA.target_forces_harmonic[force_factor_key]
+            self.assertSequenceAlmostEqual(target_atom_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES)
         
 #    def testXcamshift_shifts_ala3(self):
 #        xcamshift_potential =  Xcamshift()

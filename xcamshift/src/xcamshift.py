@@ -1312,6 +1312,7 @@ class Ring_Potential(Base_potential):
             msg = template % num_atom_ids
             raise Exception(msg)
 
+    #TODO could try newells method http://www.opengl.org/wiki/Calculating_a_Surface_Normal
     def _calculate_one_ring_normal(self, ring_component,normalise=True):
         atom_ids = ring_component[self.RING_ATOM_IDS]
         self._check_ring_size_ok(atom_ids)
@@ -1382,60 +1383,82 @@ class Ring_Potential(Base_potential):
         
         return result
     
-#    def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
-#        target_atom_id, atom_type_id = self._get_component_list('ATOM')[target_atom_id]
-#        
-#        target_atom_pos = Atom_utils._get_atom_pos(target_atom_id)
-#        
-#        contrib = 0.0
-#        
-#        coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
-#        
-#        for atom_type_id,ring_id,coefficient in coef_components:
-#            ring_centre = self._get_ring_centre(ring_id)
-#            ring_normal = self._get_ring_normal(ring_id)
-#        
-#        
-#            # distance vector between atom of interest and ring center
-#            d  = target_atom_pos - ring_centre
-#        {coor.coor[pos1]-ri.position[0], coor.coor[pos1+1]-ri.position[1], coor.coor[pos1+2]-ri.position[2]};
-#        // normal vector to ring plane
-#        float_type n [3] = {ri.normVect[0], ri.normVect[1], ri.normVect[2]};
-#        // squared distance of atom of interest from ring center
-#        float_type dL2 = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
-#        if (dL2 < 0.5) cout << "CAMSHIFT WARNING: Distance between atom and center of ring alarmingly small at " << sqrt(dL2) << " Angstrom!" << endl;
-#        // calculate terms resulting from differentiating energy function with respect to query and ring atom coordinates
-#        float_type dL4 = dL2 * dL2;
-#        float_type dL = sqrt(dL2);
-#        float_type v = dL2 * dL;
-#        float_type nL = ri.lengthNV;
-#        float_type nL2 = ri.lengthN2;
-#        float_type dLnL = dL * nL;
-#        float_type dL3nL3 = v * nL2 * nL;
-#    
-#        float_type dn = d[0] * n[0] + d[1] * n[1] + d[2] * n[2];
-#        float_type dn2 = dn * dn;
-#    
-#        float_type factor = -6 * dn / (dL4 * nL2);
-#        float_type gradUQx = factor * (dL2 * n[0] - dn * d[0]);
-#        float_type gradUQy = factor * (dL2 * n[1] - dn * d[1]);
-#        float_type gradUQz = factor * (dL2 * n[2] - dn * d[2]);
-#        float_type u = 1 - 3 * dn2 / (dL2 * nL2);
-#    
-#        factor = 3 * dL;
-#        float_type gradVQx = factor * d[0];
-#        float_type gradVQy = factor * d[1];
-#        float_type gradVQz = factor * d[2];
-#        float_type v2 = v * v;
-#    
-#        // update forces on query atom
-#        f.coor[pos1  ] += -fact * (gradUQx * v - u * gradVQx) / v2;
-#        f.coor[pos1+1] += -fact * (gradUQy * v - u * gradVQy) / v2;
-#        f.coor[pos1+2] += -fact * (gradUQz * v - u * gradVQz) / v2;
-#    
-#        float_type nSum [3] = {ri.n1[0] + ri.n2[0], ri.n1[1] + ri.n2[1], ri.n1[2] + ri.n2[2]};
-#        float_type g [3], ab [3], c [3];
-#        int limit = ri.numAtoms - 3; // 2 for a 5-membered ring, 3 for a 6-membered ring
+    #To close currently this is a direct port
+    def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
+        target_atom_id, atom_type_id = self._get_component_list('ATOM').get_components_for_atom_id(target_atom_id)[0]
+        
+        target_atom_pos = Atom_utils._get_atom_pos(target_atom_id)
+        
+        coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
+        
+        for atom_type_id,ring_id,coefficient in coef_components:
+            ring_centre = self._get_ring_centre(ring_id)
+            #n
+            print "WARNING arbitary inversion of ring normal!"
+            ring_normal = -1.0 * self._get_ring_normal(ring_id)
+        
+        
+            # distance vector between atom of interest and ring center
+            d  = target_atom_pos - ring_centre
+       
+            dL = norm(d)
+
+            # squared distance of atom of interest from ring center
+            dL2 =dot(d,d)
+#            if (dL2 < 0.5) cout << "CAMSHIFT WARNING: Distance between atom and center of ring alarmingly small at " << sqrt(dL2) << " Angstrom!" << endl;
+            # calculate terms resulting from differentiating energy function with respect to query and ring atom coordinates
+            
+            dL4 = dL**4;
+            # this is d
+#            float_type dL = sqrt(dL2)
+            #v
+            dL3 = dL**3
+            
+            nL = norm(ring_normal)
+            nL2 = nL**2
+            dLnL = dL * nL
+            dL3nL3 = dL3 * nL2 * nL
+        
+            dn = dot(d,ring_normal)
+            dn2 = dn**2
+        
+            factor = -6.0 * dn / (dL4 * nL2)
+#            print >> sys.stderr, dn ,dL4 , nL2
+            gradUQx = factor * (dL2 * ring_normal[0] - dn * d[0])
+            gradUQy = factor * (dL2 * ring_normal[1] - dn * d[1])
+            gradUQz = factor * (dL2 * ring_normal[2] - dn * d[2])
+#            print factor , dL2 , ring_normal[0] , dn , d[0]
+            gradUQ = gradUQx,gradUQy,gradUQz
+            u = 1.0 - 3.0 * dn2 / (dL2 * nL2)
+        
+            factor = 3 * dL
+            gradVQx = factor * d[0]
+            gradVQy = factor * d[1]
+            gradVQz = factor * d[2]
+            gradVQ = gradVQx,gradVQy,gradVQz
+            dL6 = dL3**2
+        
+#            print gradUQx,gradVQy,
+            X=0
+            Y=1
+            Z=2
+            
+            coords = X,Y,Z
+            
+            target_force_triplet = self._get_or_make_target_force_triplet(forces, target_atom_id)
+            
+            # update forces on query atom
+            for coord in coords:
+                #               f.coor[pos1  ] += -fact * (gradUQx * v - u * gradVQx) / v2;
+                target_force_triplet[coord] += -force_factor * (gradUQ[coord] * dL3 - u * gradVQ[coord]) / dL6
+#                if coord ==  0:
+#                    print force_factor ,  gradUQ[coord] , dL3 , u , gradVQ[coord] , dL6,target_force_triplet[coord]
+
+            print target_atom_id,Atom_utils._get_atom_info_from_index(target_atom_id),target_force_triplet
+        
+#            float_type nSum [3] = {ri.n1[0] + ri.n2[0], ri.n1[1] + ri.n2[1], ri.n1[2] + ri.n2[2]}`
+#            float_type g [3], ab [3], c [3]
+#            int limit = ri.numAtoms - 3 // 2 for a 5-membered ring, 3 for a 6-membered ring
 #            // update forces on ring atoms
 #        for atom_type_id,ring_id,coefficient in coef_components:
 #        for (int i = 0; i < ri.numAtoms; i++)
