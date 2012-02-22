@@ -8,12 +8,12 @@ target_atoms :  ["HA", "CA", "HN", "N", "C", "CB"]
 # the order should be going from the ring join point going round the ring 
 # favouring lower numbered atoms first??
 rings : {
-     PHE : { "6":  {"CG","CD1","CE1","CZ","CE2","CD2"}},
-     TYR : { "6" : {"CG","CD1","CE1","CZ","CE2","CD2"}},
+     PHE : { "6":  ["CG","CD1","CE1","CZ","CE2","CD2"]},
+     TYR : { "6" : ["CG","CD1","CE1","CZ","CE2","CD2"]},
      #NOTE: not corrected for ring order from here on in
-     TRP : { "6" : {"CD","CE1","CE2","CZ1","CZ2","CH"},
-             "5" : {"CG","CD1","CD2","CE1","CE2"}},
-     HIS : { "5" : {"CG","CD2","CE1","ND1","NE2"}}
+     TRP : { "6" : ["CD","CE1","CE2","CZ1","CZ2","CH"],
+             "5" : ["CG","CD1","CD2","CE1","CE2"]},
+     HIS : { "5" : ["CG","CD2","CE1","ND1","NE2"]}
 
 }
 # these values  are mutiplied by 1000 before they are used by the ring table class (this matches camshifts impementation)
