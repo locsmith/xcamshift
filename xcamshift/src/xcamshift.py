@@ -1526,88 +1526,91 @@ class Ring_Potential(Base_potential):
         
         return sub_terms, axis, AXES
 
+
+    def _calculate_ring_forces(self, atom_type_id, ring_id, force_factor, force_terms, forces):
+        coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
+        nSum = force_terms.ring_normal * 2.0 #            float_type g [3], ab [3], c [3]
+        ring_atoms = self._get_ring_atom_ids(ring_id)
+        ring_atom_positions = self._get_ring_atom_positions(ring_id)
+    #// 2 for a 5-membered ring, 3 for a 6-membered ring
+        num_ring_atoms = len(ring_atoms)
+        limit = num_ring_atoms - 3
+    #            // update forces on ring atoms
+    #        for i,atom_id in enumerate(ring_atoms):
+    #            print i,Atom_utils._get_atom_name(atom_id)
+    #        print
+        for atom_type_id, ring_id, coefficient in coef_components:
+            g = [0.0] * 3
+            for ring_atom_index in range(num_ring_atoms):
+                if ring_atom_index < limit:
+                    for axis in AXES:
+                        index_1 = (ring_atom_index + 1) % 3
+                        index_2 = (ring_atom_index + 2) % 3
+                        g[axis] = ring_atom_positions[index_1][axis] - ring_atom_positions[index_2][axis] # atoms 3,4 (5 member) or 3,4,5 (6 member)
+                
+                elif ring_atom_index >= num_ring_atoms - limit:
+                    offset = num_ring_atoms - 3 #2 for a 5-membered ring, 3 for a 6-membered ring
+                    for axis in AXES:
+                        index_1 = (ring_atom_index + 1 - offset) % 3 + offset
+                        index_2 = (ring_atom_index + 2 - offset) % 3 + offset
+                        g[axis] = ring_atom_positions[index_1][axis] - ring_atom_positions[index_2][axis]
+                else:
+                    
+                    for axis in AXES:
+                        g[axis] = ring_atom_positions[0] - ring_atom_positions[1] + ring_atom_positions[3] - ring_atom_positions[4]
+            
+            # 0 1 2 2 1   (0+1) %3 (0+2) %3
+            # 1 2 0 0 2
+            # 2 0 1 10
+                    #atom 2 (5-membered rings)
+            indices_1 = [0] * 3
+            indices_2 = [0] * 3
+            for axis in AXES:
+                indices_1[axis] = (axis + 1) % 3
+                indices_2[axis] = (axis + 2) % 3
+            
+            ab = [0.0] * 3
+            for index_1, index_2 in zip(indices_1, indices_2):
+                ab[axis] = force_terms.d[index_1] * g[index_2] - force_terms.d[index_2] * g[index_1]
+            
+            c = [0.0] * 3
+            for index_1, index_2 in zip(indices_1, indices_2):
+                c[axis] = nSum[index_1] * g[index_2] * nSum[index_2] * g[index_1]
+            
+            factor = -6.0 * force_terms.dn / force_terms.dL3nL3
+            factor2 = 0.25 * force_terms.dL / force_terms.nL
+            one_over_num_ring_atoms = 1.0 / float(num_ring_atoms)
+            factor3 = force_terms.nL / force_terms.dL * one_over_num_ring_atoms
+            gradU = [0.0] * 3
+            for axis in AXES:
+                gradU[axis] = factor * ((0.5 * ab[axis] - force_terms.ring_normal[axis] * one_over_num_ring_atoms) * force_terms.dLnL - force_terms.dn * (factor2 * c[axis] - factor3 * force_terms.d[axis]))
+            
+            gradV = [0.0] * 3
+            factor = -3 * force_terms.dL * one_over_num_ring_atoms
+            for axis in AXES:
+                gradV[axis] = factor * force_terms.d[axis]
+            
+            ring_target_force_triplet = self._get_or_make_target_force_triplet(forces, ring_atom_index)
+            for axis in AXES:
+                ring_target_force_triplet[axis] += -force_factor * (gradU[axis] * force_terms.dL3 - force_terms.u * gradV[axis]) / force_terms.dL6
+
     def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
         target_atom_id, atom_type_id = self._get_component_list('ATOM').get_components_for_atom_id(target_atom_id)[0]
-        
-        
         coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
+        
+        
         self._get_component_list('RING')
         
         for atom_type_id,ring_id,coefficient  in coef_components:
 #            ring_centre = self._get_ring_centre(ring_id)
 #            ring_normal = self._get_ring_normal(ring_id)
             
-            sub_terms = self.Force_sub_terms(target_atom_id, ring_id, self._component_list_data)
+            force_terms = self.Force_sub_terms(target_atom_id, ring_id, self._component_list_data)
             
-            self._calc_target_atom_forces(target_atom_id, ring_id, force_factor,sub_terms, forces)
+            self._calc_target_atom_forces(target_atom_id, ring_id, force_factor, force_terms, forces)
 
 #            #TODO: this is not how camshit does it, it uses the sum of the two ring normals
-#            nSum = sub_terms.ring_normal * 2.0
-#    #            float_type g [3], ab [3], c [3]
-#    
-#            ring_atoms = self._get_ring_atom_ids(ring_id)
-#            ring_atom_positions = self._get_ring_atom_positions(ring_id)
-#            #// 2 for a 5-membered ring, 3 for a 6-membered ring
-#            num_ring_atoms = len(ring_atoms)
-#            limit = num_ring_atoms - 3 
-#    #            // update forces on ring atoms
-#    #        for i,atom_id in enumerate(ring_atoms):
-#    #            print i,Atom_utils._get_atom_name(atom_id)
-#    #        print
-#            for atom_type_id,ring_id,coefficient in coef_components:
-#                g = [0.0] * 3
-#                for ring_atom_index in range(num_ring_atoms):
-#                    if ring_atom_index < limit:
-#                        for axis in AXES:
-#                            index_1 = (ring_atom_index + 1) % 3
-#                            index_2 = (ring_atom_index + 2) % 3
-#                            g[axis] = ring_atom_positions[index_1][axis] - ring_atom_positions[index_2][axis]
-#                    # atoms 3,4 (5 member) or 3,4,5 (6 member)
-#                    else:
-#                        if ring_atom_index >=  num_ring_atoms - limit:
-#                            offset = num_ring_atoms - 3  #2 for a 5-membered ring, 3 for a 6-membered ring
-#                            for axis in AXES:
-#                                index_1  = (ring_atom_index + 1 - offset) % 3 + offset
-#                                index_2 =  (ring_atom_index + 2 - offset) % 3 + offset
-#                                g[axis] = ring_atom_positions[index_1][axis] - ring_atom_positions[index_2][axis]
-#                        else:  #atom 2 (5-membered rings)
-#                            for axis in AXES:
-#                                g[axis] = ring_atom_positions[0] - ring_atom_positions[1] + ring_atom_positions[3] - ring_atom_positions[4]
-#                                
-#                # 0 1 2 2 1   (0+1) %3 (0+2) %3
-#                # 1 2 0 0 2
-#                # 2 0 1 10
-#                indices_1 = [0] *3
-#                indices_2 = [0] *3
-#                for axis in AXES:
-#                    indices_1[axis] = (axis+1) % 3
-#                    indices_2[axis] = (axis+2) % 3
-#                
-#                ab = [0.0] * 3
-#                for index_1, index_2 in zip(indices_1,indices_2):
-#                    ab[axis] = sub_terms.d[index_1] * g[index_2] - sub_terms.d[index_2] * g[index_1]
-#                    
-#                c = [0.0] * 3
-#                for index_1, index_2 in zip(indices_1,indices_2):
-#                    c[axis] =  nSum[index_1] *  g[index_2] * nSum[index_2] * g[index_1]
-#    
-#                factor = -6.0 * sub_terms.dn / sub_terms.dL3nL3
-#                factor2 = 0.25 * sub_terms.dL / sub_terms.nL;
-#                one_over_num_ring_atoms = 1.0 / float(num_ring_atoms)
-#                factor3 = sub_terms.nL / sub_terms.dL * one_over_num_ring_atoms
-#                gradU = [0.0] * 3
-#                for axis in AXES:
-#                    gradU[axis] = factor * ((0.5 * ab[axis] - sub_terms.ring_normal[axis] * one_over_num_ring_atoms) * sub_terms.dLnL - sub_terms.dn * (factor2 * c[axis] - factor3 * sub_terms.d[axis]))
-#        
-#                gradV = [0.0]*3
-#                factor = -3 * sub_terms.dL * one_over_num_ring_atoms;
-#                for axis in AXES:
-#                    gradV[axis] = factor * sub_terms.d[axis];
-#                
-#                ring_target_force_triplet = self._get_or_make_target_force_triplet(forces, ring_atom_index)
-#                for axis in AXES:
-#                    ring_target_force_triplet[axis] += -force_factor * (gradU[axis] * sub_terms.dL3 - sub_terms.u * gradV[axis]) / sub_terms.dL6
-
+            self._calculate_ring_forces(atom_type_id, ring_id, force_factor, force_terms, forces)
 ##         BB-TYPE ->  AROMATIC-ID [aromatic ring number] COEFF
 ##         AROMATIC-ID -> ATOMS
 #        print >> sys.stderr, 'here',coefficient,atom_ids
