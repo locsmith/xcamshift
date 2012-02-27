@@ -8,6 +8,11 @@ from atom import Atom
 from vec3 import  norm
 from atomSel import AtomSel
 
+X = 0
+Y = 1
+Z = 2
+AXES = X,Y,Z
+
 def tupleit(t):
     return tuple(map(tupleit, t)) if isinstance(t, (list, tuple)) else t
 
