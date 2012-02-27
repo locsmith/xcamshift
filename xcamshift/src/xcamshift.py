@@ -1526,7 +1526,8 @@ class Ring_Potential(Base_potential):
         
         return sub_terms, axis, AXES
 
-
+    #TODO: calculation of GradU and gradV are not consistent with force_terms for target atom correct
+    #TODO: reduce number of parameters to method
     def _calculate_ring_forces(self, atom_type_id, ring_id, force_factor, force_terms, forces):
         coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
         nSum = force_terms.ring_normal * 2.0 #            float_type g [3], ab [3], c [3]
@@ -1598,12 +1599,10 @@ class Ring_Potential(Base_potential):
         target_atom_id, atom_type_id = self._get_component_list('ATOM').get_components_for_atom_id(target_atom_id)[0]
         coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
         
-        
+        #TODO: this prompts the component list for ring to be created but shouldn't be needed
         self._get_component_list('RING')
         
         for atom_type_id,ring_id,coefficient  in coef_components:
-#            ring_centre = self._get_ring_centre(ring_id)
-#            ring_normal = self._get_ring_normal(ring_id)
             
             force_terms = self.Force_sub_terms(target_atom_id, ring_id, self._component_list_data)
             
