@@ -14,7 +14,7 @@ from math import cos, tanh, cosh, sin
 from observed_chemical_shifts import Observed_shift_table
 from segment_manager import Segment_Manager
 from table_manager import Table_manager
-from utils import tupleit, Atom_utils
+from utils import tupleit, Atom_utils, AXES
 from vec3 import norm,cross,dot
 import abc
 import sys
@@ -1383,132 +1383,231 @@ class Ring_Potential(Base_potential):
         
         return result
     
-    #To close currently this is a direct port
+
+    #TODO: use this more places
+    def _get_ring_atom_ids(self, ring_id):
+        ring_component = self._get_component_list('RING').get_component(ring_id)
+        return ring_component[self.RING_ATOM_IDS]
+       
+    
+    
+    def _get_ring_atom_positions(self, ring_id):
+        ring_atom_ids =  self._get_ring_atom_ids(ring_id)
+        
+        result  = []
+        for ring_atom_id in ring_atom_ids:
+            result.append(Atom_utils._get_atom_pos(ring_atom_id))
+        return result
+    
+    
+    class Force_sub_terms(object):
+
+        RING_ATOM_IDS = 1
+        
+        # THESE ARE DUPLICATES
+        def _check_ring_size_ok(self, atom_ids):
+            num_atom_ids = len(atom_ids)
+            if num_atom_ids < 5 or num_atom_ids > 6:
+                template = "ring normals function is only implemented for 5 or six member rings i got %d atoms"
+                msg = template % num_atom_ids
+                raise Exception(msg)
+            
+        def _average_vec3(self, positions):
+            result = Vec3(0.0,0.0,0.0)
+            for position in positions:
+                result += position
+        
+            result /= len(positions)
+        
+            return result   
+            
+        def _calculate_one_ring_normal(self, ring_component,normalise=True):
+            atom_ids = ring_component[self.RING_ATOM_IDS]
+            self._check_ring_size_ok(atom_ids)
+            
+            atom_triplets = atom_ids[:3],atom_ids[-3:]
+            
+            normals  = []
+            for atom_triplet in atom_triplets:
+                atom_vectors = []
+                for atom_id in atom_triplet:
+                    atom_vectors.append(Atom_utils._get_atom_pos(atom_id))
+                vec_1 = atom_vectors[0] -atom_vectors[1]
+                vec_2 =  atom_vectors[2] - atom_vectors[1]
+                    
+                normals.append(cross(vec_1,vec_2))
+            
+            result = self._average_vec3(normals)
+            if normalise:
+                result_norm  = norm(result)
+                result /= result_norm
+            return result
+                 
+        def _calculate_one_ring_centre(self, ring_component):
+        
+            atom_ids = ring_component[self.RING_ATOM_IDS]
+            positions = []
+            for atom_id in atom_ids:
+                positions.append(Atom_utils._get_atom_pos(atom_id))
+                
+            result = self._average_vec3(positions)
+            return result
+        
+        def _get_ring_centre(self, ring_id):
+            ring_component = self._get_component_list('RING').get_component(ring_id)
+            return self._calculate_one_ring_centre(ring_component)
+    
+
+        def _get_component_list(self, name):
+            return self._component_list_dict[name]
+        
+        
+        def _get_ring_normal(self, ring_id, normalise=True):
+            ring_component = self._get_component_list('RING').get_component(ring_id)
+            return self._calculate_one_ring_normal(ring_component,normalise)
+        
+        def __init__(self, target_atom_id, ring_id,component_list_dict):
+            
+            self._component_list_dict = component_list_dict
+            target_atom_pos = Atom_utils._get_atom_pos(target_atom_id)
+            
+            self.ring_centre = self._get_ring_centre(ring_id)
+            self.ring_normal = self._get_ring_normal(ring_id, False)
+            
+            # distance vector between atom of interest and ring center
+            self.d = target_atom_pos - self.ring_centre
+            self.dL = norm(self.d)
+            
+            # squared distance of atom of interest from ring center
+            dL2 = dot(self.d, self.d) #            if (dL2 < 0.5) cout << "CAMSHIFT WARNING: Distance between atom and center of ring alarmingly small at " << sqrt(dL2) << " Angstrom!" << endl;
+            
+            # calculate terms resulting from differentiating energy function with respect to query and ring atom coordinates
+            self.dL4 = self.dL ** 4
+            self.dL3 = self.dL ** 3
+            self.dL6 = self.dL3 ** 2
+            
+            self.nL = norm(self.ring_normal)
+            nL2 = self.nL ** 2
+            self.dLnL = self.dL * self.nL
+            self.dL3nL3 = self.dL3 * nL2 * self.nL
+            
+            self.dn = dot(self.d, self.ring_normal)
+            dn2 = self.dn ** 2
+            
+            self.u = 1.0 - 3.0 * dn2 / (dL2 * nL2)
+            
+            factor = -6.0 * self.dn / (self.dL4 * nL2)
+            self.gradUQ = [0.0] *3
+            for axis in AXES:
+                self.gradUQ[axis] = factor * (dL2 * self.ring_normal[axis] - self.dn * self.d[axis])
+                
+            
+            factor = 3 *self.dL
+            self.gradVQ =  [0.0] * 3
+            for axis in AXES:
+                self.gradVQ[axis]= factor * self.d[axis]
+            
+#            return  dL3, u, dL6, ring_normal,  atom_type_id, coefficient, d, factor, dn, dL3nL3, dL, nL, dLnL
+
+    #To close? currently this is a direct port
+
+    def _calc_target_atom_forces(self, target_atom_id, ring_id, force_factor, sub_terms, forces):
+        
+        X = 0
+        Y = 1
+        Z = 2
+        AXES = X, Y, Z
+        target_force_triplet = self._get_or_make_target_force_triplet(forces, target_atom_id)
+    # update forces on query atom
+        for axis in AXES:
+            #               f.coor[pos1  ] += -fact * (gradUQx * v - u * gradVQx) / v2;
+            #print "terms",-force_factor, sub_terms.gradUQ[0], sub_terms.dL3, sub_terms.u, sub_terms.gradVQ[axis], sub_terms.dL6
+            target_force_triplet[axis] += -force_factor * (sub_terms.gradUQ[axis] * sub_terms.dL3 - sub_terms.u * sub_terms.gradVQ[axis]) / sub_terms.dL6
+        
+        return sub_terms, axis, AXES
+
     def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
         target_atom_id, atom_type_id = self._get_component_list('ATOM').get_components_for_atom_id(target_atom_id)[0]
         
-        target_atom_pos = Atom_utils._get_atom_pos(target_atom_id)
         
         coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
+        self._get_component_list('RING')
         
-        for atom_type_id,ring_id,coefficient in coef_components:
-            ring_centre = self._get_ring_centre(ring_id)
-            #n
-            print "WARNING arbitary inversion of ring normal!"
-            ring_normal = -1.0 * self._get_ring_normal(ring_id)
-        
-        
-            # distance vector between atom of interest and ring center
-            d  = target_atom_pos - ring_centre
-       
-            dL = norm(d)
+        for atom_type_id,ring_id,coefficient  in coef_components:
+#            ring_centre = self._get_ring_centre(ring_id)
+#            ring_normal = self._get_ring_normal(ring_id)
+            
+            sub_terms = self.Force_sub_terms(target_atom_id, ring_id, self._component_list_data)
+            
+            self._calc_target_atom_forces(target_atom_id, ring_id, force_factor,sub_terms, forces)
 
-            # squared distance of atom of interest from ring center
-            dL2 =dot(d,d)
-#            if (dL2 < 0.5) cout << "CAMSHIFT WARNING: Distance between atom and center of ring alarmingly small at " << sqrt(dL2) << " Angstrom!" << endl;
-            # calculate terms resulting from differentiating energy function with respect to query and ring atom coordinates
-            
-            dL4 = dL**4;
-            # this is d
-#            float_type dL = sqrt(dL2)
-            #v
-            dL3 = dL**3
-            
-            nL = norm(ring_normal)
-            nL2 = nL**2
-            dLnL = dL * nL
-            dL3nL3 = dL3 * nL2 * nL
-        
-            dn = dot(d,ring_normal)
-            dn2 = dn**2
-        
-            factor = -6.0 * dn / (dL4 * nL2)
-#            print >> sys.stderr, dn ,dL4 , nL2
-            gradUQx = factor * (dL2 * ring_normal[0] - dn * d[0])
-            gradUQy = factor * (dL2 * ring_normal[1] - dn * d[1])
-            gradUQz = factor * (dL2 * ring_normal[2] - dn * d[2])
-#            print factor , dL2 , ring_normal[0] , dn , d[0]
-            gradUQ = gradUQx,gradUQy,gradUQz
-            u = 1.0 - 3.0 * dn2 / (dL2 * nL2)
-        
-            factor = 3 * dL
-            gradVQx = factor * d[0]
-            gradVQy = factor * d[1]
-            gradVQz = factor * d[2]
-            gradVQ = gradVQx,gradVQy,gradVQz
-            dL6 = dL3**2
-        
-#            print gradUQx,gradVQy,
-            X=0
-            Y=1
-            Z=2
-            
-            coords = X,Y,Z
-            
-            target_force_triplet = self._get_or_make_target_force_triplet(forces, target_atom_id)
-            
-            # update forces on query atom
-            for coord in coords:
-                #               f.coor[pos1  ] += -fact * (gradUQx * v - u * gradVQx) / v2;
-                target_force_triplet[coord] += -force_factor * (gradUQ[coord] * dL3 - u * gradVQ[coord]) / dL6
-#                if coord ==  0:
-#                    print force_factor ,  gradUQ[coord] , dL3 , u , gradVQ[coord] , dL6,target_force_triplet[coord]
+#            #TODO: this is not how camshit does it, it uses the sum of the two ring normals
+#            nSum = sub_terms.ring_normal * 2.0
+#    #            float_type g [3], ab [3], c [3]
+#    
+#            ring_atoms = self._get_ring_atom_ids(ring_id)
+#            ring_atom_positions = self._get_ring_atom_positions(ring_id)
+#            #// 2 for a 5-membered ring, 3 for a 6-membered ring
+#            num_ring_atoms = len(ring_atoms)
+#            limit = num_ring_atoms - 3 
+#    #            // update forces on ring atoms
+#    #        for i,atom_id in enumerate(ring_atoms):
+#    #            print i,Atom_utils._get_atom_name(atom_id)
+#    #        print
+#            for atom_type_id,ring_id,coefficient in coef_components:
+#                g = [0.0] * 3
+#                for ring_atom_index in range(num_ring_atoms):
+#                    if ring_atom_index < limit:
+#                        for axis in AXES:
+#                            index_1 = (ring_atom_index + 1) % 3
+#                            index_2 = (ring_atom_index + 2) % 3
+#                            g[axis] = ring_atom_positions[index_1][axis] - ring_atom_positions[index_2][axis]
+#                    # atoms 3,4 (5 member) or 3,4,5 (6 member)
+#                    else:
+#                        if ring_atom_index >=  num_ring_atoms - limit:
+#                            offset = num_ring_atoms - 3  #2 for a 5-membered ring, 3 for a 6-membered ring
+#                            for axis in AXES:
+#                                index_1  = (ring_atom_index + 1 - offset) % 3 + offset
+#                                index_2 =  (ring_atom_index + 2 - offset) % 3 + offset
+#                                g[axis] = ring_atom_positions[index_1][axis] - ring_atom_positions[index_2][axis]
+#                        else:  #atom 2 (5-membered rings)
+#                            for axis in AXES:
+#                                g[axis] = ring_atom_positions[0] - ring_atom_positions[1] + ring_atom_positions[3] - ring_atom_positions[4]
+#                                
+#                # 0 1 2 2 1   (0+1) %3 (0+2) %3
+#                # 1 2 0 0 2
+#                # 2 0 1 10
+#                indices_1 = [0] *3
+#                indices_2 = [0] *3
+#                for axis in AXES:
+#                    indices_1[axis] = (axis+1) % 3
+#                    indices_2[axis] = (axis+2) % 3
+#                
+#                ab = [0.0] * 3
+#                for index_1, index_2 in zip(indices_1,indices_2):
+#                    ab[axis] = sub_terms.d[index_1] * g[index_2] - sub_terms.d[index_2] * g[index_1]
+#                    
+#                c = [0.0] * 3
+#                for index_1, index_2 in zip(indices_1,indices_2):
+#                    c[axis] =  nSum[index_1] *  g[index_2] * nSum[index_2] * g[index_1]
+#    
+#                factor = -6.0 * sub_terms.dn / sub_terms.dL3nL3
+#                factor2 = 0.25 * sub_terms.dL / sub_terms.nL;
+#                one_over_num_ring_atoms = 1.0 / float(num_ring_atoms)
+#                factor3 = sub_terms.nL / sub_terms.dL * one_over_num_ring_atoms
+#                gradU = [0.0] * 3
+#                for axis in AXES:
+#                    gradU[axis] = factor * ((0.5 * ab[axis] - sub_terms.ring_normal[axis] * one_over_num_ring_atoms) * sub_terms.dLnL - sub_terms.dn * (factor2 * c[axis] - factor3 * sub_terms.d[axis]))
+#        
+#                gradV = [0.0]*3
+#                factor = -3 * sub_terms.dL * one_over_num_ring_atoms;
+#                for axis in AXES:
+#                    gradV[axis] = factor * sub_terms.d[axis];
+#                
+#                ring_target_force_triplet = self._get_or_make_target_force_triplet(forces, ring_atom_index)
+#                for axis in AXES:
+#                    ring_target_force_triplet[axis] += -force_factor * (gradU[axis] * sub_terms.dL3 - sub_terms.u * gradV[axis]) / sub_terms.dL6
 
-            print target_atom_id,Atom_utils._get_atom_info_from_index(target_atom_id),target_force_triplet
-        
-#            float_type nSum [3] = {ri.n1[0] + ri.n2[0], ri.n1[1] + ri.n2[1], ri.n1[2] + ri.n2[2]}`
-#            float_type g [3], ab [3], c [3]
-#            int limit = ri.numAtoms - 3 // 2 for a 5-membered ring, 3 for a 6-membered ring
-#            // update forces on ring atoms
-#        for atom_type_id,ring_id,coefficient in coef_components:
-#        for (int i = 0; i < ri.numAtoms; i++)
-#          {
-#            if (i < limit) // atoms 0,1 (5 member) or 0,1,2 (6 member)
-#              {
-#            g[0] = coor.coor[aPos[(i+1)%3]  ] - coor.coor[aPos[(i+2)%3]  ];
-#            g[1] = coor.coor[aPos[(i+1)%3]+1] - coor.coor[aPos[(i+2)%3]+1];
-#            g[2] = coor.coor[aPos[(i+1)%3]+2] - coor.coor[aPos[(i+2)%3]+2];
-#              }
-#            else if (i >= ri.numAtoms - limit) // atoms 3,4 (5 member) or 3,4,5 (6 member)
-#              {
-#            int offset = ri.numAtoms - 3; // 2 for a 5-membered ring, 3 for a 6-membered ring
-#            g[0] = coor.coor[aPos[((i + 1 - offset) % 3) + offset]  ] - coor.coor[aPos[((i + 2 - offset) % 3) + offset]  ];
-#            g[1] = coor.coor[aPos[((i + 1 - offset) % 3) + offset]+1] - coor.coor[aPos[((i + 2 - offset) % 3) + offset]+1];
-#            g[2] = coor.coor[aPos[((i + 1 - offset) % 3) + offset]+2] - coor.coor[aPos[((i + 2 - offset) % 3) + offset]+2];
-#              }
-#            else // atom 2 (5-membered rings)
-#              {
-#            g[0] = coor.coor[aPos[0]  ] - coor.coor[aPos[1]  ] + coor.coor[aPos[3]  ] - coor.coor[aPos[4]  ];
-#            g[1] = coor.coor[aPos[0]+1] - coor.coor[aPos[1]+1] + coor.coor[aPos[3]+1] - coor.coor[aPos[4]+1];
-#            g[2] = coor.coor[aPos[0]+2] - coor.coor[aPos[1]+2] + coor.coor[aPos[3]+2] - coor.coor[aPos[4]+2];
-#              }
-#            ab[0] = d[1] * g[2] - d[2] * g[1];
-#            ab[1] = d[2] * g[0] - d[0] * g[2];
-#            ab[2] = d[0] * g[1] - d[1] * g[0];
-#            c[0] = nSum[1] * g[2] - nSum[2] * g[1];
-#            c[1] = nSum[2] * g[0] - nSum[0] * g[2];
-#            c[2] = nSum[0] * g[1] - nSum[1] * g[0];
-#    
-#            factor = -6 * dn / dL3nL3;
-#            float_type factor2 = 0.25 * dL / nL;
-#            float_type OneOverN = 1 / ((float_type) ri.numAtoms);
-#            float_type factor3 = nL / dL * OneOverN;
-#            float_type gradUx = factor * ((0.5 * ab[0] - n[0] * OneOverN) * dLnL - dn * (factor2 * c[0] - factor3 * d[0]));
-#            float_type gradUy = factor * ((0.5 * ab[1] - n[1] * OneOverN) * dLnL - dn * (factor2 * c[1] - factor3 * d[1]));
-#            float_type gradUz = factor * ((0.5 * ab[2] - n[2] * OneOverN) * dLnL - dn * (factor2 * c[2] - factor3 * d[2]));
-#    
-#            factor = -3 * dL * OneOverN;
-#            float_type gradVx = factor * d[0];
-#            float_type gradVy = factor * d[1];
-#            float_type gradVz = factor * d[2];
-#    
-#            f.coor[aPos[i]  ] += -fact * (gradUx * v - u * gradVx) / v2;
-#            f.coor[aPos[i]+1] += -fact * (gradUy * v - u * gradVy) / v2;
-#            f.coor[aPos[i]+2] += -fact * (gradUz * v - u * gradVz) / v2;
-#            print >> sys.stderr, ring_centre,ring_normal
-#        atom_type_id,ring_id,coefficient = 
-#        
-#        
 ##         BB-TYPE ->  AROMATIC-ID [aromatic ring number] COEFF
 ##         AROMATIC-ID -> ATOMS
 #        print >> sys.stderr, 'here',coefficient,atom_ids
@@ -1813,3 +1912,4 @@ class Xcamshift():
         
         return energy
         
+
