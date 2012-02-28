@@ -440,6 +440,7 @@ class Base_potential(object):
         self._observed_shifts = Observed_shift_table()
         self._component_list_data  = {}
         self._component_factories = {}
+        self._cache_list_data = {}
         
 
     def get_component_table_names(self):
@@ -504,6 +505,14 @@ class Base_potential(object):
     def set_observed_shifts(self, shift_table):
         self._observed_shifts = shift_table
         
+    def _get_cache_list(self,name):
+        if not name in self._cache_list_data:
+            self._cache_list_data[name] = Component_list()
+        return self._cache_list_data[name]
+    
+    def clear_caches(self):
+        self._cache_list_data = {}
+
 #    TODO put 'ATOM' in a constant and rename to BB_ATOM?
     def _get_component_list(self,name='ATOM'):
         if not name in self._component_list_data:
@@ -1250,7 +1259,7 @@ class Ring_coefficient_component_factory(Ring_sidechain_component_factory,Backbo
                 coef = table.get_ring_coefficient(target_atom_name,residue_type,ring_type)
                 coef_component = atom_id,ring_id,coef
                 component_list.add_component(coef_component)
-        
+    
 class Ring_Potential(Base_potential):
     def __init__(self):
         Base_potential.__init__(self)
@@ -1401,78 +1410,31 @@ class Ring_Potential(Base_potential):
     
     
     class Force_sub_terms(object):
-
-        RING_ATOM_IDS = 1
-        
-        # THESE ARE DUPLICATES
-        def _check_ring_size_ok(self, atom_ids):
-            num_atom_ids = len(atom_ids)
-            if num_atom_ids < 5 or num_atom_ids > 6:
-                template = "ring normals function is only implemented for 5 or six member rings i got %d atoms"
-                msg = template % num_atom_ids
-                raise Exception(msg)
-            
-        def _average_vec3(self, positions):
-            result = Vec3(0.0,0.0,0.0)
-            for position in positions:
-                result += position
-        
-            result /= len(positions)
-        
-            return result   
-            
-        def _calculate_one_ring_normal(self, ring_component,normalise=True):
-            atom_ids = ring_component[self.RING_ATOM_IDS]
-            self._check_ring_size_ok(atom_ids)
-            
-            atom_triplets = atom_ids[:3],atom_ids[-3:]
-            
-            normals  = []
-            for atom_triplet in atom_triplets:
-                atom_vectors = []
-                for atom_id in atom_triplet:
-                    atom_vectors.append(Atom_utils._get_atom_pos(atom_id))
-                vec_1 = atom_vectors[0] -atom_vectors[1]
-                vec_2 =  atom_vectors[2] - atom_vectors[1]
-                    
-                normals.append(cross(vec_1,vec_2))
-            
-            result = self._average_vec3(normals)
-            if normalise:
-                result_norm  = norm(result)
-                result /= result_norm
-            return result
-                 
-        def _calculate_one_ring_centre(self, ring_component):
-        
-            atom_ids = ring_component[self.RING_ATOM_IDS]
-            positions = []
-            for atom_id in atom_ids:
-                positions.append(Atom_utils._get_atom_pos(atom_id))
-                
-            result = self._average_vec3(positions)
-            return result
         
         def _get_ring_centre(self, ring_id):
-            ring_component = self._get_component_list('RING').get_component(ring_id)
-            return self._calculate_one_ring_centre(ring_component)
+            ring_id,ring_centre = self._get_cache_list('CENT').get_component(ring_id)
+            return ring_centre
+        
+        def _get_ring_normal(self, ring_id):
+            ring_id,ring_normal = self._get_cache_list('NORM').get_component(ring_id)
+            return ring_normal
     
-
+#TODO: remove doubling of lists
         def _get_component_list(self, name):
             return self._component_list_dict[name]
         
         
-        def _get_ring_normal(self, ring_id, normalise=True):
-            ring_component = self._get_component_list('RING').get_component(ring_id)
-            return self._calculate_one_ring_normal(ring_component,normalise)
+        def _get_cache_list(self, name):
+            return self._cache_list_data[name]
         
-        def __init__(self, target_atom_id, ring_id,component_list_dict):
+        def __init__(self, target_atom_id, ring_id,component_list_dict, cache_list_data):
             
             self._component_list_dict = component_list_dict
+            self._cache_list_data =  cache_list_data
             target_atom_pos = Atom_utils._get_atom_pos(target_atom_id)
             
             self.ring_centre = self._get_ring_centre(ring_id)
-            self.ring_normal = self._get_ring_normal(ring_id, False)
+            self.ring_normal = self._get_ring_normal(ring_id)
             
             # distance vector between atom of interest and ring center
             self.d = target_atom_pos - self.ring_centre
@@ -1595,16 +1557,42 @@ class Ring_Potential(Base_potential):
             for axis in AXES:
                 ring_target_force_triplet[axis] += -force_factor * (gradU[axis] * force_terms.dL3 - force_terms.u * gradV[axis]) / force_terms.dL6
 
+    
+    def _build_ring_data_cache(self):
+        #TODO: remove double normal calculation
+        normalised_normals =  self._get_cache_list('NNRM')
+        normals = self._get_cache_list('NORM')
+        centres =  self._get_cache_list('CENT')
+        
+        for ring_component in self._get_component_list('RING'):
+            ring_id =  ring_component[0]
+            
+            normal = self._calculate_one_ring_normal(ring_component,False)
+            normal_component = ring_id,normal
+            normals.add_component(normal_component)
+            
+            normalised_normal = self._calculate_one_ring_normal(ring_component,True)
+            normalised_normal_component = ring_id,normalised_normal
+            normalised_normals.add_component(normalised_normal_component)
+            
+            centre = self._calculate_one_ring_centre(ring_component)
+            centre_component = ring_id,centre
+            centres.add_component(centre_component)
+    
+    
     def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
         target_atom_id, atom_type_id = self._get_component_list('ATOM').get_components_for_atom_id(target_atom_id)[0]
         coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
         
         #TODO: this prompts the component list for ring to be created but shouldn't be needed
+        # we need to populate the lists automatilly and make it part of the lists implementation
         self._get_component_list('RING')
+        
+        self._build_ring_data_cache()
         
         for atom_type_id,ring_id,coefficient  in coef_components:
             
-            force_terms = self.Force_sub_terms(target_atom_id, ring_id, self._component_list_data)
+            force_terms = self.Force_sub_terms(target_atom_id, ring_id, self._component_list_data, self._cache_list_data)
             
             self._calc_target_atom_forces(target_atom_id, ring_id, force_factor, force_terms, forces)
 
