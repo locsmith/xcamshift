@@ -12,7 +12,7 @@ afa_total_shifts = {
 
 expected_ring_centre = (0.3425, 3.63183, -2.0035)
 
-expected_ring_normals = (-0.806881,0.49694,0.319365)
+expected_ring_normals = (-1.37097,0.844347,0.54263)
 
 expected_ring_shifts = {
     ('',2,"CA") :  0.137933,
