@@ -189,74 +189,38 @@ class TestXcamshift(unittest2.TestCase):
             #TODO: is the difference in error down to coordinates?
             self.assertAlmostEqual(component_shift, expected_shift, places=self.DEFAULT_DECIMAL_PLACES)
             
-#    def test_calc_component_forces(self):
-#        ring_potential = Ring_Potential()
-#        
-#        for target_atom_id,atom_type_id in ring_potential._get_component_list('ATOM'):
-#            for ring_id,ring_atom_ids in ring_potential._get_component_list('RING'):
-#                
-#                target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
-#                force_factor_key = target_atom_key
-#                force_factor = AFA.force_factors_harmonic[force_factor_key]
-#                
-#                #TODO: these should not be needed
-#                ring_potential._get_component_list('RING')
-#                ring_potential._build_ring_data_cache()
-#                
-#                forces = self.make_result_array_forces()
-#                force_terms = ring_potential._build_force_terms(target_atom_id, ring_id)
-#    #            ring_potential.calc_single_atom_force_set(target_atom_id, force_factor, forces)
-#                ring_potential._calc_target_atom_forces(target_atom_id, ring_id, force_factor, force_terms, forces)
-#                
-#                target_atom_forces = forces[target_atom_id]
-#                expected_forces = AFA.target_forces_harmonic[force_factor_key]
-#                self.assertSequenceAlmostEqual(target_atom_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES)
-#                
-#                forces = self.make_result_array_forces()
-#                ring_potential._calculate_ring_forces(atom_type_id, ring_id, force_factor, force_terms, forces)
-#                
-#                for ring_atom_id in ring_atom_ids:
-##                    print target_atom_id,ring_atom_id
-#                    ring_atom_key  = Atom_utils._get_atom_info_from_index(ring_atom_id)
-#                    ring_force_key =target_atom_key,ring_atom_key
-#                    print ring_force_key
-#                    expected_ring_forces = AFA.ring_forces_harmonic[ring_force_key]
-#                    ring_atom_forces = forces[ring_atom_id]
-#                    self.assertSequenceAlmostEqual(ring_atom_forces, expected_ring_forces, self.DEFAULT_DECIMAL_PLACES)
-#            
-##        for atom_component in ring_potential._get_component_list('ATOM'):
-##            target_atom_id = atom_component[0]
-##            force_factor_key = Atom_utils._get_atom_info_from_index(target_atom_id)
-##            force_factor = AFA.force_factors_harmonic[force_factor_key]
-##            
-##            forces = self.make_result_array_forces()
-##            ring_potential.calc_single_atom_force_set(target_atom_id, force_factor, forces)
-##            
-##            target_atom_forces = forces[target_atom_id]
-##            expected_forces = AFA.target_forces_harmonic[force_factor_key]
-##            self.assertSequenceAlmostEqual(target_atom_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES)
-#        
-##    def testXcamshift_shifts_ala3(self):
-##        xcamshift_potential =  Xcamshift()
-##        
-##        shifts = self.make_result_array()
-##        shifts = xcamshift_potential.set_shifts(shifts)
-##        print 'start'
-##        for potential in xcamshift_potential.potential:
-##            for component_factory in potential._component_factories.values():
-##                component_list_name = component_factory.get_table_name()
-##                print 'name',component_list_name,':',potential._get_component_list(component_list_name).get_all_components()
-##                    
-###        expected  = [0.0] * len(shifts)
-###        expected[12] = ala_3_total_shifts[2]['N']
-###        expected[13] = ala_3_total_shifts[2]['HN']
-###        expected[14] = ala_3_total_shifts[2]['CA']
-###        expected[15] = ala_3_total_shifts[2]['HA']
-###        expected[16] = ala_3_total_shifts[2]['CB']
-###        expected[20] = ala_3_total_shifts[2]['C']
-##        
-###        self.assertSequenceAlmostEqual(expected, shifts, delta=0.0001)
-##        
+    def test_calc_component_forces(self):
+        ring_potential = Ring_Potential()
+        
+        for target_atom_id,atom_type_id in ring_potential._get_component_list('ATOM'):
+            for ring_id,ring_atom_ids in ring_potential._get_component_list('RING'):
+                
+                target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
+                force_factor_key = target_atom_key
+                force_factor = AFA.force_factors_harmonic[force_factor_key]
+                
+                #TODO: these should not be needed
+                ring_potential._get_component_list('RING')
+                ring_potential._build_ring_data_cache()
+                
+                forces = self.make_result_array_forces()
+                force_terms = ring_potential._build_force_terms(target_atom_id, ring_id)
+                ring_potential._calc_target_atom_forces(target_atom_id, ring_id, force_factor, force_terms, forces)
+                
+                target_atom_forces = forces[target_atom_id]
+                expected_forces = AFA.target_forces_harmonic[force_factor_key]
+                self.assertSequenceAlmostEqual(target_atom_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES)
+                
+                forces = self.make_result_array_forces()
+                ring_potential._calculate_ring_forces(atom_type_id, ring_id, force_factor, force_terms, forces)
+                
+                for ring_atom_id in ring_atom_ids:
+                    ring_atom_key  = Atom_utils._get_atom_info_from_index(ring_atom_id)
+                    ring_force_key =target_atom_key,ring_atom_key
+                    expected_ring_forces = AFA.ring_forces_harmonic[ring_force_key]
+                    ring_atom_forces = forces[ring_atom_id]
+                    self.assertSequenceAlmostEqual(ring_atom_forces, expected_ring_forces, self.DEFAULT_DECIMAL_PLACES)
+            
 if __name__ == "__main__":
     unittest2.main()
 #    TestXcamshift.list_test_shifts()
