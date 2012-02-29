@@ -1394,15 +1394,18 @@ class Ring_Potential(Base_potential):
             ring_centre = self._get_ring_centre(ring_id)
             ring_normal = self._get_ring_normal(ring_id)
             
+            #TODO add this to a cache the same way that camshift does
+            length_normal = norm(ring_normal)
+            
             #correct name?
             direction_vector = target_atom_pos - ring_centre
             
             distance =  norm(direction_vector)
             
-            unit_direction_vector = direction_vector/distance
+            
             distance3 = distance**3
             
-            angle = dot(unit_direction_vector,ring_normal)
+            angle = dot(direction_vector,ring_normal) /  (distance * length_normal)
             
             contrib  += (1.0 - 3.0 * angle**2 ) / distance3
             
@@ -1518,10 +1521,7 @@ class Ring_Potential(Base_potential):
     #// 2 for a 5-membered ring, 3 for a 6-membered ring
         num_ring_atoms = len(ring_atoms)
         limit = num_ring_atoms - 3
-    #            // update forces on ring atoms
-    #        for i,atom_id in enumerate(ring_atoms):
-    #            print i,Atom_utils._get_atom_name(atom_id)
-    #        print
+
         for atom_type_id, ring_id, coefficient in coef_components:
             g = [0.0] * 3
             for ring_atom_index in range(num_ring_atoms):
@@ -1543,12 +1543,11 @@ class Ring_Potential(Base_potential):
                         
                         for axis in AXES:
                             g[axis] = ring_atom_positions[0] - ring_atom_positions[1] + ring_atom_positions[3] - ring_atom_positions[4]
-#                print g
             
                 # 0 1 2 2 1   (0+1) %3 (0+2) %3
                 # 1 2 0 0 2
                 # 2 0 1 10
-                        #atom 2 (5-membered rings)
+                #atom 2 (5-membered rings)
                 indices_1 = [0] * 3
                 indices_2 = [0] * 3
                 for axis in AXES:
@@ -1559,10 +1558,9 @@ class Ring_Potential(Base_potential):
                 for axis,index_1, index_2 in zip(AXES,indices_1, indices_2):
                     ab[axis] = force_terms.d[index_1] * g[index_2] - force_terms.d[index_2] * g[index_1]
 
-                
                 c = [0.0] * 3
                 for axis, index_1, index_2 in zip(AXES,indices_1, indices_2):
-                    c[axis] = nSum[index_1] * g[index_2] * nSum[index_2] * g[index_1]
+                    c[axis] = nSum[index_1] * g[index_2] - nSum[index_2] * g[index_1]
                 
                 factor = -6.0 * force_terms.dn / force_terms.dL3nL3
                 factor2 = 0.25 * force_terms.dL / force_terms.nL
@@ -1570,11 +1568,9 @@ class Ring_Potential(Base_potential):
                 factor3 = force_terms.nL / force_terms.dL * one_over_num_ring_atoms
                 
                 gradU = [0.0] * 3
-                print force_terms.ring_normal,force_terms.ring_normal_normal
                 for axis in AXES:
-                    gradU[axis] = factor * ((0.5 * ab[axis] - force_terms.ring_normal_normal[axis] * one_over_num_ring_atoms) * force_terms.dLnL - force_terms.dn * (factor2 * c[axis] - factor3 * force_terms.d[axis]))
+                    gradU[axis] = factor * ((0.5 * ab[axis] - force_terms.ring_normal[axis] * one_over_num_ring_atoms) * force_terms.dLnL - force_terms.dn * (factor2 * c[axis] - factor3 * force_terms.d[axis]))
                     
-                print gradU[0], factor,  ab[0], force_terms.ring_normal[0] , one_over_num_ring_atoms ,  force_terms.dLnL , force_terms.dn  ,  factor2 , c[0]  , factor3 , force_terms.d[0]
                 gradV = [0.0] * 3
                 factor = -3 * force_terms.dL * one_over_num_ring_atoms
                 for axis in AXES:
@@ -1583,7 +1579,6 @@ class Ring_Potential(Base_potential):
                 ring_target_force_triplet = self._get_or_make_target_force_triplet(forces, ring_atom_id)
                 for axis in AXES:
                     ring_target_force_triplet[axis] += -force_factor * (gradU[axis] * force_terms.dL3 - force_terms.u * gradV[axis]) / force_terms.dL6
-#                    print ring_target_force_triplet[axis] , -force_factor , gradU[axis] , force_terms.dL3 , force_terms.u , gradV[axis] , force_terms.dL6
 
     
     def _build_ring_data_cache(self):
@@ -1594,7 +1589,7 @@ class Ring_Potential(Base_potential):
         for ring_component in self._get_component_list('RING'):
             ring_id =  ring_component[0]
             
-            normal = self._calculate_one_ring_normal(ring_component,False)
+            normal = self._calculate_one_ring_normal(ring_component)
             normal_component = ring_id,normal
             normals.add_component(normal_component)
             
