@@ -51,9 +51,9 @@ class Component_list():
     #TODO: make private
     def get_component_range(self, atom_id):
         component_ranges = self._get_component_ranges()
-        if not atom_id in component_ranges:
-            self.report_bad_atom_id(atom_id)
-        start, end = component_ranges[atom_id]
+        start, end = 0,0
+        if atom_id in component_ranges:
+            start, end = component_ranges[atom_id]
         return start, end
 
     def get_components_for_atom_id(self,atom_id):
