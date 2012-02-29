@@ -1140,8 +1140,26 @@ class Ring_backbone_context(object,Backbone_atom_indexer):
         if self.atom_name_index >= 0:
             self.complete = True
         
-        
-class Ring_backbone_component_factory (Atom_component_factory):
+class Ring_factory_base():
+    #TODO: add a general test that the component is active for the structure
+    def _have_rings(self,table):
+        result = False
+        segment_manager =  Segment_Manager()
+        for segment in segment_manager.get_segments():
+            if result == True:
+                break
+            else:
+                segment_info = segment_manager.get_segment_info(segment)
+            
+                for residue_number in range (segment_info.first_residue, segment_info.last_residue+1):
+                    residue_type = Atom_utils._get_residue_type(segment, residue_number)
+                    if residue_type in table.get_residue_types():
+                        result = True
+                        break
+        return result
+    
+class Ring_backbone_component_factory (Atom_component_factory, Ring_factory_base):
+    
     
     def get_table_name(self):
         return Atom_component_factory.get_table_name(self)
@@ -1156,16 +1174,16 @@ class Ring_backbone_component_factory (Atom_component_factory):
     
     def _build_contexts(self, atom, table):
         contexts = []
-        
-        #TODO: should translate atom name here
-        atom_name =  atom.atomName()
-        if atom_name in table.get_target_atoms():
-            context = Ring_backbone_context(atom,table)
-            if context.complete:
-                contexts.append(context)
+        if  self._have_rings(table):
+            #TODO: should translate atom name here
+            atom_name =  atom.atomName()
+            if atom_name in table.get_target_atoms():
+                context = Ring_backbone_context(atom,table)
+                if context.complete:
+                    contexts.append(context)
         return contexts
 
-class Ring_sidechain_component_factory(Residue_component_factory):
+class Ring_sidechain_component_factory(Residue_component_factory,Ring_factory_base):
 #    TODO: make ring index a service not a mixin same with atom ids
     def __init__(self):
         self.ring_index_count = 0
@@ -1196,13 +1214,14 @@ class Ring_sidechain_component_factory(Residue_component_factory):
         return ring_ids
 
     def create_residue_components(self, component_list, table, segment, residue_number):
-        residue_type = Atom_utils._get_residue_type(segment,residue_number)
-        
-        if  residue_type in table.get_residue_types():
+        if  self._have_rings(table):
+            residue_type = Atom_utils._get_residue_type(segment,residue_number)
             
-            ring_ids = self._get_or_make_ring_ids(segment,residue_number,table)
-            for ring_id in ring_ids:
-                self.create_ring_components(component_list, table, segment, residue_number, ring_id)
+            if  residue_type in table.get_residue_types():
+                
+                ring_ids = self._get_or_make_ring_ids(segment,residue_number,table)
+                for ring_id in ring_ids:
+                    self.create_ring_components(component_list, table, segment, residue_number, ring_id)
             
     @abc.abstractmethod
     def create_ring_components(self, component_list,table, segment, residue, ring_id):
@@ -1219,20 +1238,21 @@ class Ring_sidechain_atom_factory(Ring_sidechain_component_factory):
 
     #TODO: hang everything off ring_id?
     def create_ring_components(self, component_list,table, segment, residue_number, ring_id):
-        residue_atoms =  Atom_utils.find_atom(segment, residue_number)
-        residue_type = Atom_utils._get_residue_type(segment, residue_number)
-        
-        
-        
-        atom_name_id_map = dict([(atom.atomName(),atom.index()) for atom in residue_atoms])
-        
-        self._get_ring_type_from_id(ring_id)
-        ring_atoms = []
-        ring_type = self._get_ring_type_from_id(ring_id)
-        for atom_name in table.get_ring_atoms(residue_type,ring_type):
-            ring_atoms.append(atom_name_id_map[atom_name]) 
-        sub_result  = ring_id,tuple(ring_atoms)
-        component_list.add_component(sub_result)
+        if  self._have_rings(table):
+            residue_atoms =  Atom_utils.find_atom(segment, residue_number)
+            residue_type = Atom_utils._get_residue_type(segment, residue_number)
+            
+            
+            
+            atom_name_id_map = dict([(atom.atomName(),atom.index()) for atom in residue_atoms])
+            
+            self._get_ring_type_from_id(ring_id)
+            ring_atoms = []
+            ring_type = self._get_ring_type_from_id(ring_id)
+            for atom_name in table.get_ring_atoms(residue_type,ring_type):
+                ring_atoms.append(atom_name_id_map[atom_name]) 
+            sub_result  = ring_id,tuple(ring_atoms)
+            component_list.add_component(sub_result)
                     
             
 
@@ -1428,7 +1448,7 @@ class Ring_Potential(Base_potential):
             return self._cache_list_data[name]
         
         def __init__(self, target_atom_id, ring_id,component_list_dict, cache_list_data):
-            
+            self.target_atom_id= target_atom_id
             self._component_list_dict = component_list_dict
             self._cache_list_data =  cache_list_data
             target_atom_pos = Atom_utils._get_atom_pos(target_atom_id)
@@ -1581,23 +1601,25 @@ class Ring_Potential(Base_potential):
     
     
     def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
-        target_atom_id, atom_type_id = self._get_component_list('ATOM').get_components_for_atom_id(target_atom_id)[0]
-        coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
-        
-        #TODO: this prompts the component list for ring to be created but shouldn't be needed
-        # we need to populate the lists automatilly and make it part of the lists implementation
-        self._get_component_list('RING')
-        
-        self._build_ring_data_cache()
-        
-        for atom_type_id,ring_id,coefficient  in coef_components:
+        target_atom_components = self._get_component_list('ATOM').get_components_for_atom_id(target_atom_id)
+        if len(target_atom_components) > 0:
+            target_atom_id, atom_type_id = target_atom_components[0]
+            coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
             
-            force_terms = self.Force_sub_terms(target_atom_id, ring_id, self._component_list_data, self._cache_list_data)
+            #TODO: this prompts the component list for ring to be created but shouldn't be needed
+            # we need to populate the lists automatilly and make it part of the lists implementation
+            self._get_component_list('RING')
             
-            self._calc_target_atom_forces(target_atom_id, ring_id, force_factor, force_terms, forces)
-
-#            #TODO: this is not how camshit does it, it uses the sum of the two ring normals
-            self._calculate_ring_forces(atom_type_id, ring_id, force_factor, force_terms, forces)
+            self._build_ring_data_cache()
+            
+            for atom_type_id,ring_id,coefficient  in coef_components:
+                
+                force_terms = self.Force_sub_terms(target_atom_id, ring_id, self._component_list_data, self._cache_list_data)
+                
+                self._calc_target_atom_forces(target_atom_id, ring_id, force_factor, force_terms, forces)
+    
+    #            #TODO: this is not how camshit does it, it uses the sum of the two ring normals
+                self._calculate_ring_forces(atom_type_id, ring_id, force_factor, force_terms, forces)
 ##         BB-TYPE ->  AROMATIC-ID [aromatic ring number] COEFF
 ##         AROMATIC-ID -> ATOMS
 #        print >> sys.stderr, 'here',coefficient,atom_ids
