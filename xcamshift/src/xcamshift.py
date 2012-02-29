@@ -1342,7 +1342,7 @@ class Ring_Potential(Base_potential):
             raise Exception(msg)
 
     #TODO could try newells method http://www.opengl.org/wiki/Calculating_a_Surface_Normal
-    def _calculate_one_ring_normal(self, ring_component,normalise=True):
+    def _calculate_one_ring_normal(self, ring_component):
         atom_ids = ring_component[self.RING_ATOM_IDS]
         self._check_ring_size_ok(atom_ids)
         
@@ -1359,9 +1359,7 @@ class Ring_Potential(Base_potential):
             normals.append(cross(vec_1,vec_2))
         
         result = self._average_vec3(normals)
-        if normalise:
-            result_norm  = norm(result)
-            result /= result_norm
+       
         return result
     
     
