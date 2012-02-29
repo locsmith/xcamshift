@@ -27,7 +27,7 @@ class Segment_Manager():
         def __str__(self):
             template =  ''' 
                             first residue: %i
-                            last ressidue  %i
+                            last residue  %i
                             
                             first atom index: %i
                             last atom index: %i'''
