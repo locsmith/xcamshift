@@ -175,20 +175,20 @@ class TestXcamshift(unittest2.TestCase):
         expected = [Vec3(*AFA.expected_ring_normals),]
         
         #TODO: check difference why only 3 places consistent, different atom selections for normals?
-        self.assertListVec3AlmostEqual(ring_normals, expected, self.DEFAULT_DECIMAL_PLACES-2)
+        self.assertListVec3AlmostEqual(ring_normals, expected, self.DEFAULT_DECIMAL_PLACES)
     
-#    def test_calc_component_shift(self):
-#        ring_potential = Ring_Potential()
-#        
-#        for i in range(len(ring_potential._get_component_list('ATOM'))):
-#            component_shift = ring_potential._calc_component_shift(i)
-#            #TODO: this looks inside the object too much
-#            atom_id = ring_potential._get_component_list('ATOM')[i][0]
-#            atom_key = Atom_utils._get_atom_info_from_index(atom_id)
-#            exptected_shift = AFA.expected_ring_shifts[atom_key]
-#            #TODO: is the difference in error down to coordinates?
-#            self.assertAlmostEqual(component_shift, exptected_shift, self.DEFAULT_DECIMAL_PLACES-2)
-#            
+    def test_calc_component_shift(self):
+        ring_potential = Ring_Potential()
+        
+        for i in range(len(ring_potential._get_component_list('ATOM'))):
+            component_shift = ring_potential._calc_component_shift(i)
+            #TODO: this looks inside the object too much
+            atom_id = ring_potential._get_component_list('ATOM')[i][0]
+            atom_key = Atom_utils._get_atom_info_from_index(atom_id)
+            expected_shift = AFA.expected_ring_shifts[atom_key]
+            #TODO: is the difference in error down to coordinates?
+            self.assertAlmostEqual(component_shift, expected_shift, places=self.DEFAULT_DECIMAL_PLACES)
+            
 #    def test_calc_component_forces(self):
 #        ring_potential = Ring_Potential()
 #        
