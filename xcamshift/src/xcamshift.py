@@ -1378,9 +1378,9 @@ class Ring_Potential(Base_potential):
         ring_component = self._get_component_list('RING').get_component(ring_id)
         return self._calculate_one_ring_centre(ring_component)
     
-    def _get_ring_normal(self, ring_id, normalise=True):
+    def _get_ring_normal(self, ring_id):
         ring_component = self._get_component_list('RING').get_component(ring_id)
-        return self._calculate_one_ring_normal(ring_component,normalise)
+        return self._calculate_one_ring_normal(ring_component)
     
     def _calc_component_shift(self,target_atom_id):
         target_atom_id, atom_type_id = self._get_component_list('ATOM')[target_atom_id]
@@ -1437,9 +1437,6 @@ class Ring_Potential(Base_potential):
             ring_id,ring_normal = self._get_cache_list('NORM').get_component(ring_id)
             return ring_normal
         
-        def _get_ring_normal_normal(self, ring_id):
-            ring_id,ring_normal_normal = self._get_cache_list('NNRM').get_component(ring_id)
-            return ring_normal_normal
         
     
 #TODO: remove doubling of lists
@@ -1458,7 +1455,6 @@ class Ring_Potential(Base_potential):
             
             self.ring_centre = self._get_ring_centre(ring_id)
             self.ring_normal = self._get_ring_normal(ring_id)
-            self.ring_normal_normal =  self._get_ring_normal_normal(ring_id)
             
             # distance vector between atom of interest and ring center
             self.d = target_atom_pos - self.ring_centre
@@ -1592,7 +1588,6 @@ class Ring_Potential(Base_potential):
     
     def _build_ring_data_cache(self):
         #TODO: remove double normal calculation
-        normalised_normals =  self._get_cache_list('NNRM')
         normals = self._get_cache_list('NORM')
         centres =  self._get_cache_list('CENT')
         
@@ -1603,9 +1598,6 @@ class Ring_Potential(Base_potential):
             normal_component = ring_id,normal
             normals.add_component(normal_component)
             
-            normalised_normal = self._calculate_one_ring_normal(ring_component,True)
-            normalised_normal_component = ring_id,normalised_normal
-            normalised_normals.add_component(normalised_normal_component)
             
             centre = self._calculate_one_ring_centre(ring_component)
             centre_component = ring_id,centre
