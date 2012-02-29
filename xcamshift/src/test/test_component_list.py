@@ -43,14 +43,14 @@ class Test_component_list(unittest2.TestCase):
         
         self._component_list.add_components(TEST_DATA_1)
         for atom_id,expected in zip (EXPECTED_COMPONENTS_1,EXPECTED_1):
-            result = self._component_list.get_components_for__atom_id(atom_id)
+            result = self._component_list.get_components_for_atom_id(atom_id)
             self.assertSequenceEqual(result, expected)
     
     def testExpectedRaangesAfterAdd(self):
         self._component_list.add_components(TEST_DATA_1)
         self._component_list.add_components(TEST_DATA_2)
         for atom_id,expected in zip (EXPECTED_COMPONENTS_2,EXPECTED_2):
-            result = self._component_list.get_components_for__atom_id(atom_id)
+            result = self._component_list.get_components_for_atom_id(atom_id)
             self.assertSequenceEqual(result, expected)
             
     def testComponentIds(self):
