@@ -40,7 +40,7 @@ def almostEqual(first, second, places = 7):
     return result
 
 #class testSegmentManager(object):
-class TestXcamshift(unittest2.TestCase):
+class TestXcamshiftAFA(unittest2.TestCase):
 
     # TODO add extra places
     DEFAULT_DECIMAL_PLACES = 5
