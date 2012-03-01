@@ -15,9 +15,12 @@ from utils import tupleit
 from sidechain_table import Sidechain_table
 from constants_table import Constants_table
 from ring_table import Ring_table
+from non_bonded_table import Non_bonded_table
 
 
 class Table_manager(object):
+
+    NON_BONDED = "nb"
     
 
         
@@ -172,4 +175,7 @@ class Table_manager(object):
     
     def get_ring_table(self,residue_type):
         return Ring_table(self.__get_table(self.RING,residue_type))
+    
+    def get_non_bonded_table(self,residue_type):
+        return Non_bonded_table(self.__get_table(self.NON_BONDED,residue_type))
             

@@ -185,6 +185,37 @@ class Test_table_manager(unittest2.TestCase):
             ring_types.sort()
             
             self.assertSequenceEqual(ring_types, expected_ring_types)
+    
+    def testGetNonBondedTable(self):
+        table = self.table_manager.get_non_bonded_table('ALA')
+        
+        result = table.get_non_bonded_coefficient("CA", "sphere_1", "S", "SP3")
+        
+        self.assertAlmostEqual(result, -101.81223165473585)
+        
+        EXPECTED_SPHERE_TYPES =  ('sphere_1','sphere_2')
+        spheres =   table.get_spheres()
+        self.assertSequenceEqual(EXPECTED_SPHERE_TYPES, spheres)
+        
+        EXPECTED_COEFFICIENT_KEYS = [('C', 'SP3'),('H', 'SP3'), ('N', 'SP3'), 
+                                     ('O', 'SP3'), ('S', 'SP3'),('C', 'SP2'),
+                                     ('N', 'SP2'),('O', 'SP2')]
+        EXPECTED_COEFFICIENT_KEYS.sort()
+        EXPECTED_COEFFICIENT_KEYS =  tuple(EXPECTED_COEFFICIENT_KEYS)
+        
+        coefficient_keys = table.get_coefficent_keys('sphere_1')
+        self.assertSequenceEqual(EXPECTED_COEFFICIENT_KEYS,coefficient_keys)
+        
+        coefficient_keys = table.get_coefficent_keys('sphere_2')
+        self.assertSequenceEqual(EXPECTED_COEFFICIENT_KEYS,coefficient_keys)
+        
+        exponent = table.get_exponent('sphere_1')
+        self.assertAlmostEqual(exponent, 1.0)
+        
+        exponent = table.get_exponent('sphere_2')
+        self.assertAlmostEqual(exponent, -3.0)
+        
+        exponent_sphere_1 = table.get_exponent('sphere_1')
 
 if __name__ == "__main__":
     unittest2.main()
