@@ -1623,30 +1623,16 @@ class Ring_Potential(Base_potential):
                 
                 self._calc_target_atom_forces(target_atom_id, ring_id, force_factor, force_terms, forces)
     
-    #            #TODO: this is not how camshit does it, it uses the sum of the two ring normals
+    #            #TODO: this is not how camshift does it, it uses the sum of the two ring normals
                 self._calculate_ring_forces(atom_type_id, ring_id, force_factor, force_terms, forces)
-##         BB-TYPE ->  AROMATIC-ID [aromatic ring number] COEFF
-##         AROMATIC-ID -> ATOMS
-#        print >> sys.stderr, 'here',coefficient,atom_ids
-#        
-#    def _translate_atom_name(self, atom_name):
-#        return atom_name
-#    
-#    class Simple_context(object):
-#        def __init__(self,atom,table):
-#            self.target_atom_id = atom.index()
-#    
-#    def _build_contexts(self, atom, table):
-#        contexts = []
-#        
-#        for atom in table.get_target_atoms():
-#            context = Ring_Potential.Simple_context(atom,table)
-#            contexts.append(context)
-#        return context
+
         
     def _get_component_for_atom(self, atom, context):
         return []
-    
+
+class Non_bonded_potential(Base_potential):
+    pass
+
 class Xcamshift():
     def __init__(self):
         self.potential = [RandomCoilShifts(),
