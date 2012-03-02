@@ -93,3 +93,9 @@ class Atom_utils(object):
         atom = Atom(currentSimulation(), atom_id)
         atom_pos = atom.pos()
         return atom_pos
+
+    @staticmethod
+    def _get_chem_type(atom):
+        return atom.chemType()
+    
+    

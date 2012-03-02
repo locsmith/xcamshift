@@ -5,7 +5,9 @@ Created on 19 Jan 2012
 '''
 
 
+
 class Non_bonded_table(object):
+
 
 
     TARGET_ATOMS = "target_atoms"
@@ -13,6 +15,7 @@ class Non_bonded_table(object):
     SPHERE_2 = 'sphere_2'
     EXPONENT = 'exponent'
     DATA = 'data'
+    CHEM_TYPE_TRANSLATIONS = 'chem_type_translations'
     
     def __init__(self, table):
         self._table = table
@@ -35,7 +38,8 @@ class Non_bonded_table(object):
         spheres = self._table[self.DATA].keys()
         spheres.sort()
         return tuple(spheres)
-    
+
+
     def _check_sphere(self,sphere):
         spheres = self.get_spheres()
         if sphere not in spheres:
@@ -45,19 +49,35 @@ class Non_bonded_table(object):
     
     def _check_coefficient_key(self,sphere,coefficent_key):
         self._check_sphere(sphere)
-        coefficent_keys = self.get_coefficent_keys(sphere)
+        coefficent_keys = self.get_remote_atom_types(sphere)
         if coefficent_key not in coefficent_keys:
             template = "coefficient key %s is not in non bonded table coefficient keys (%s)"
             coefficent_keys_string = [`coefficent_key` for coefficent_key in coefficent_keys]
             message = template % (coefficent_key, ', '.join(coefficent_keys_string))
             raise KeyError(message)
     
-    def get_coefficent_keys(self, sphere):
+    def get_remote_atom_types(self, sphere):
         self._check_sphere(sphere)
         coefficent_keys = self._table[self.DATA][sphere].keys()
         coefficent_keys.remove('exponent')
         coefficent_keys.sort()
         return tuple(coefficent_keys) 
+    
+    def get_chem_types(self):
+        return self._table[self.CHEM_TYPE_TRANSLATIONS].keys()
+    
+    def _check_chem_type(self,chem_type):
+        chem_types = self.get_chem_types()
+        if chem_type not in chem_types:
+            template = "chemical type %s is not in non bonded table chemical type translations (%s)"
+            chem_types_strings = [`chem_type` for chem_type in chem_types]
+            message = template % (chem_types_strings, ', '.join(chem_types_strings))
+            raise KeyError(message)
+        
+    def get_chem_type_translation(self, chem_type):
+        self._check_chem_type(chem_type)
+        
+        return self._table[self.CHEM_TYPE_TRANSLATIONS][chem_type]
     
     def get_non_bonded_coefficient(self,target_atom,sphere,remote_atom_type,hybridisation):
         self._check_target_atom(target_atom)

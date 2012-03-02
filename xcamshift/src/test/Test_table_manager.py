@@ -203,10 +203,10 @@ class Test_table_manager(unittest2.TestCase):
         EXPECTED_COEFFICIENT_KEYS.sort()
         EXPECTED_COEFFICIENT_KEYS =  tuple(EXPECTED_COEFFICIENT_KEYS)
         
-        coefficient_keys = table.get_coefficent_keys('sphere_1')
+        coefficient_keys = table.get_remote_atom_types('sphere_1')
         self.assertSequenceEqual(EXPECTED_COEFFICIENT_KEYS,coefficient_keys)
         
-        coefficient_keys = table.get_coefficent_keys('sphere_2')
+        coefficient_keys = table.get_remote_atom_types('sphere_2')
         self.assertSequenceEqual(EXPECTED_COEFFICIENT_KEYS,coefficient_keys)
         
         exponent = table.get_exponent('sphere_1')
@@ -215,7 +215,19 @@ class Test_table_manager(unittest2.TestCase):
         exponent = table.get_exponent('sphere_2')
         self.assertAlmostEqual(exponent, -3.0)
         
-        exponent_sphere_1 = table.get_exponent('sphere_1')
+        chem_types = table.get_chem_types()
+        chem_types.sort()
+        expected_chem_types = ('C',  'CA', 'CB', 'CC', 'CN', 'CP', 'CR', 'CT',
+                               'CV', 'CW', 'CX', 'N',  'NA', 'NB', 'NC2','NH1',
+                               'NH2','NH3','O',  'OC', 'OH', 'S')
+        self.assertSequenceEqual(chem_types, expected_chem_types)
+        
+        translation = table.get_chem_type_translation("CA")
+        self.assertEqual(translation, ['C','SP2'])
+        
+        translation = table.get_chem_type_translation("NH1")
+        self.assertEqual(translation, ['N','SP3'])
+
 
 if __name__ == "__main__":
     unittest2.main()

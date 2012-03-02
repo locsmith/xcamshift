@@ -3,6 +3,71 @@
 
 target_atoms :  ["HA", "CA", "HN", "N", "C", "CB"]
 
+# chem type translations
+#
+# SP2 
+#
+#  TRP CG CX, CD1 CW, CD2 CB, CE2 CN, CE3 CA, CZ2  CA, CZ3 CA, CH2 CA
+#  ASP CG C, OD1 OC, OD2 OC
+#  GLU CD C, OE1 OC, OE2 OC
+#  ARG CZ C
+#  HIS CG CC, ND1 NA, CD2 CV, CE1 CR, NE2 NB
+#  PHE CG CA, CD1 CA, CD2 CA, CE1 CA, CE2 CA, CZ CA
+#  TYR CG CA, CD1 CA, CD2 CA, CE1 CA, CE2 CA, CZ C
+#  ASN CG C, OD1 O
+#  GLN CD C, OE1 O
+#
+# SP3
+#
+#  ALA  NH1 CT 
+#  ARG  NH1 CT NC2
+#  ASN  NH1 CT NH2
+#  ASP  NH1 CT 
+#  CYS  NH1 CT S
+#  GLN  NH1 CT NH2
+#  GLU  NH1 CT 
+#  GLY  NH1 CT 
+#  HIS  NH1 CT 
+#  ILE  NH1 CT 
+#  LEU  NH1 CT 
+#  LYS  NH1 CT NH3
+#  MET  NH1 CT S 
+#  PHE  NH1 CT 
+#  PRO  N   CT CP
+#  SER  NH1 CT OH
+#  THR  NH1 CT OH 
+#  TRP  NH1 CT NA 
+#  TYR  NH1 CT OH 
+#  VAL  NH1 CT
+# 
+# sp3 backbone chemical types: NH1 N CT
+# sp3 side chain chemical types: NC2 NH2 S NH3 CP NA OH 
+#
+
+chem_type_translations : {
+    O   :  [C, SP2],  C   :  [C, SP2],
+    
+    CA  :  [C, SP2], CB  :  [C, SP2], CC  :  [C, SP2], CN  :  [C, SP2],
+    CR  :  [C, SP2], CV  :  [C, SP2], CW  :  [C, SP2], CX  :  [C, SP2],
+    
+    NA  :  [N, SP2], NB  :  [N, SP2],
+    
+    OC  :  [O, SP2],
+    
+    CT  :  [C, SP3],
+    
+    NH1 :  [N, SP3], N   :  [N, SP3],
+    
+    CP   : [C, SP3],
+    
+    NA   : [N, SP3], NC2  : [N, SP3], NH2  : [N, SP3], NH3  : [N, SP3],
+
+    OH   : [O, SP3],
+
+    S    : [S, SP3]
+    
+}
+
 data: {
     sphere_1 : {
       exponent  :  1.0,
