@@ -197,7 +197,7 @@ class Test_table_manager(unittest2.TestCase):
         spheres =   table.get_spheres()
         self.assertSequenceEqual(EXPECTED_SPHERE_TYPES, spheres)
         
-        EXPECTED_COEFFICIENT_KEYS = [('C', 'SP3'),('H', 'SP3'), ('N', 'SP3'), 
+        EXPECTED_COEFFICIENT_KEYS = [('C', 'SP3'),('H', 'None'), ('N', 'SP3'), 
                                      ('O', 'SP3'), ('S', 'SP3'),('C', 'SP2'),
                                      ('N', 'SP2'),('O', 'SP2')]
         EXPECTED_COEFFICIENT_KEYS.sort()
@@ -217,9 +217,10 @@ class Test_table_manager(unittest2.TestCase):
         
         chem_types = table.get_chem_types()
         chem_types.sort()
-        expected_chem_types = ('C',  'CA', 'CB', 'CC', 'CN', 'CP', 'CR', 'CT',
+        expected_chem_types =  ['C',  'CA', 'CB', 'CC', 'CN', 'CP', 'CR', 'CT',
                                'CV', 'CW', 'CX', 'N',  'NA', 'NB', 'NC2','NH1',
-                               'NH2','NH3','O',  'OC', 'OH', 'S')
+                               'NH2','NH3','O',  'OC', 'OH', 'S','HA','HC']
+        expected_chem_types.sort()
         self.assertSequenceEqual(chem_types, expected_chem_types)
         
         translation = table.get_chem_type_translation("CA")
