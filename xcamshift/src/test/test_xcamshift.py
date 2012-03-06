@@ -7,7 +7,8 @@ from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
 from xcamshift import RandomCoilShifts, Distance_potential,  Extra_potential,\
-    Dihedral_potential, Base_potential, Sidechain_potential, Xcamshift
+    Dihedral_potential, Base_potential, Sidechain_potential, Xcamshift,\
+    Non_bonded_potential
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
@@ -18,6 +19,7 @@ from test import sidechains, ala_3
 from observed_chemical_shifts import Observed_shift_table
 from utils import Atom_utils
 import sys
+from table_manager import Table_manager
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -600,14 +602,83 @@ class TestXcamshift(unittest2.TestCase):
         expected_forces =ala_3.ala_3_total_forces_tanh
         
         self._test_force_sets(xcamshift, expected_energy, expected_forces)
+    
+
+    def _split_tuple_pair_to_column_sets(self, expected_non_bonded):
+        non_bonded_1 = set()
+        non_bonded_2 = set()
+        for non_bonded_elem_1, non_bonded_elem_2 in expected_non_bonded:
+            non_bonded_1.add(non_bonded_elem_1)
+            non_bonded_2.add(non_bonded_elem_2)
+        
+        return non_bonded_1, non_bonded_2
+
+    def testNonBondedComponents(self):
+        non_bonded_potential = Non_bonded_potential()
+        
+        non_bonded_table = Table_manager().get_non_bonded_table("ALA")
+        target_atom_types = list(non_bonded_table.get_target_atoms())
+        
+#        spheres = non_bonded_table.get_spheres()
+        
+        for component in non_bonded_potential._get_all_components('ATOM'):
+            atom_info = Atom_utils._get_atom_info_from_index(component[0])
+            atom_name  =  atom_info[2]
+            
+            self.assertIn(atom_name, target_atom_types)
+            
+            del target_atom_types[target_atom_types.index(atom_name)]
+            
+        self.assertEmpty(target_atom_types)
+        
+        remote_component_spheres_and_exponents = {}
+        for component in non_bonded_potential._get_all_components('NBRM'):
+            atom_info = Atom_utils._get_atom_info_from_index(component[0])
+            
+            remote_component_spheres_and_exponents.setdefault(atom_info,[]).append(component[1:3])
+            
+        
+        for sphere_exponent in remote_component_spheres_and_exponents.values():
+            sphere_exponent.sort()
+            self.assertSequenceEqual(sphere_exponent, [(0,1.0),(1,-3.0)])
+            
+            
+        
+        non_bonded_1, non_bonded_2 = self._split_tuple_pair_to_column_sets(ala_3.ala3_putative_non_bonded_pairs)
+
+        test_non_bonded_set_1 = set()
+        for component in non_bonded_potential._get_all_components('ATOM'):
+            atom_info = Atom_utils._get_atom_info_from_index(component[0])
+            self.assertElemeInSet(atom_info, non_bonded_1)
+            test_non_bonded_set_1.add(atom_info)
+        self.assertSequenceEqual(test_non_bonded_set_1, non_bonded_1)
+        
+        test_non_bonded_set_2 = set()
+        for component in non_bonded_potential._get_all_components('NBRM'):
+            atom_info = Atom_utils._get_atom_info_from_index(component[0])
+            self.assertElemeInSet(atom_info, non_bonded_2)
+            test_non_bonded_set_2.add(atom_info)
+#        self.assertSequenceEqual(test_non_bonded_set_2, non_bonded_2)
+
+#        n_spheres = len(non_bonded_table.get_spheres())
+#        for remote_component_name_count in remote_component_name_counts.values():
+#            self.assertEqual(remote_component_name_count,n_spheres)
+#    def testDistances(self):
+#        sel = AtomSel("((residue 2 and name CA) around 5.2)")
+#        for atom in sel:
+#            print Atom_utils._get_atom_name(atom.index()), atom.index()
+            
+            
         
     @staticmethod
     def list_test_shifts():
         for item in ala_3.ala_3_test_shifts_tanh.items():
             print item
-        
+    
+    
 if __name__ == "__main__":
-    unittest2.main()
+#    unittest2.main()
 #    TestXcamshift.list_test_shifts()
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetTanh')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testNonBondedComponents')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistances')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')

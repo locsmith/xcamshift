@@ -14,7 +14,7 @@ from math import cos, tanh, cosh, sin
 from observed_chemical_shifts import Observed_shift_table
 from segment_manager import Segment_Manager
 from table_manager import Table_manager
-from utils import tupleit, Atom_utils, AXES
+from utils import tupleit, Atom_utils, AXES, Z
 from vec3 import norm,cross,dot
 import abc
 import sys
@@ -1142,7 +1142,13 @@ class Ring_backbone_context(object,Backbone_atom_indexer):
         
 class Ring_factory_base():
     #TODO: add a general test that the component is active for the structure
-    def _have_rings(self,table):
+
+    def _residue_is_ok(self, segment, residue_number, table):
+        residue_type = Atom_utils._get_residue_type(segment, residue_number)
+        residue_ok = residue_type in table.get_residue_types()
+        return residue_ok
+
+    def _have_targets(self,table):
         result = False
         segment_manager =  Segment_Manager()
         for segment in segment_manager.get_segments():
@@ -1152,8 +1158,7 @@ class Ring_factory_base():
                 segment_info = segment_manager.get_segment_info(segment)
             
                 for residue_number in range (segment_info.first_residue, segment_info.last_residue+1):
-                    residue_type = Atom_utils._get_residue_type(segment, residue_number)
-                    if residue_type in table.get_residue_types():
+                    if self._residue_is_ok(segment, residue_number, table):
                         result = True
                         break
         return result
@@ -1174,9 +1179,10 @@ class Ring_backbone_component_factory (Atom_component_factory, Ring_factory_base
     
     def _build_contexts(self, atom, table):
         contexts = []
-        if  self._have_rings(table):
+        if  self._have_targets(table):
             #TODO: should translate atom name here
             atom_name =  atom.atomName()
+            #print atom_name, atom_name in table.get_target_atoms(), table.get_target_atoms()
             if atom_name in table.get_target_atoms():
                 context = Ring_backbone_context(atom,table)
                 if context.complete:
@@ -1214,7 +1220,7 @@ class Ring_sidechain_component_factory(Residue_component_factory,Ring_factory_ba
         return ring_ids
 
     def create_residue_components(self, component_list, table, segment, residue_number):
-        if  self._have_rings(table):
+        if  self._have_targets(table):
             residue_type = Atom_utils._get_residue_type(segment,residue_number)
             
             if  residue_type in table.get_residue_types():
@@ -1238,7 +1244,7 @@ class Ring_sidechain_atom_factory(Ring_sidechain_component_factory):
 
     #TODO: hang everything off ring_id?
     def create_ring_components(self, component_list,table, segment, residue_number, ring_id):
-        if  self._have_rings(table):
+        if  self._have_targets(table):
             residue_atoms =  Atom_utils.find_atom(segment, residue_number)
             residue_type = Atom_utils._get_residue_type(segment, residue_number)
             
@@ -1282,7 +1288,7 @@ class Ring_coefficient_component_factory(Ring_sidechain_component_factory,Backbo
     
 class Ring_Potential(Base_potential):
     def __init__(self):
-        Base_potential.__init__(self)
+        super(Ring_Potential, self).__init__()
         
         self._add_component_factory(Ring_backbone_component_factory())
         self._add_component_factory(Ring_coefficient_component_factory())
@@ -1627,11 +1633,237 @@ class Ring_Potential(Base_potential):
                 self._calculate_ring_forces(atom_type_id, ring_id, force_factor, force_terms, forces)
 
         
-    def _get_component_for_atom(self, atom, context):
-        return []
+#    def _get_component_for_atom(self, atom, context):
+#        return []
 
+#class Non_bonded_atom_context():
+#    def __init__(self,atom_id,target_atom_name,table):
+#        atom_name = Atom_utils._get_atom_name_from_index(atom_id)
+#        
+#        if atom_name in table.get_target_atoms():
+#            self.complete = True
+#            
+#            self.atom_type_id  = self._get_atom_id(self,atom_name,table)
+#            self.atom_id = atom_id
+#                
+#class Non_bonded_backbone_component_factory(Atom_component_factory, Backbone_atom_indexer):
+#    
+#    def get_table_name(self):
+#        return 'ATOM'
+#    
+#    def _build_contexts(self, atom, table):
+#        contexts = []
+#        
+#        for target_atom in table.get_target_atoms():
+#            
+#            context = Non_bonded_atom_context(atom,target_atom,table)
+#            
+#            if context.complete:
+#                contexts.append(context)
+#                
+#        return contexts
+#
+#    def _get_component_for_atom(self, atom, context):
+#        table = context._table
+#        
+#        from_atom_name = atom.atomName()
+#        from_atom_name = self._translate_atom_name(from_atom_name, context)
+#        
+#        result = None
+#        if from_atom_name in table.get_target_atoms():
+#            
+#            dihedral_key = context.dihedral_key
+#            value = context._table.get_dihedral_shift(from_atom_name,dihedral_key)
+#            if value != None:
+#                from_atom_index = atom.index()
+#                
+#                dihedral_indices = context.dihedral_indices
+#
+#                result = [from_atom_index]
+#                result.extend(dihedral_indices)
+#                result.append(value)
+#                
+#                for parameter_id in context._table.get_parameters():
+#                    parameter = context._table.get_parameter(from_atom_name,dihedral_key,parameter_id)
+#                    result.append(parameter)
+#                
+#                
+#                result.append(context._table.get_exponent())
+#                result = tuple(result)
+#                
+#        return result
+#    
+#    def _translate_atom_name(self, atom_name,context):
+#        return context._table.get_translation(atom_name)
+
+# TODO: it should be the default that all residues are accepted
+class Non_bonded_backbone_component_factory(Ring_backbone_component_factory):
+    def _residue_is_ok(self, segment, residue_number, table):
+        return True
+
+class Non_bonded_remote_component_factory(Atom_component_factory):
+
+    def is_residue_acceptable(self, segment, residue_number, segment_manager):
+        return True
+
+    class Remote_non_bonded_context(Backbone_atom_indexer):
+        def _get_target_atom_id_coefficient_map(self, chem_type, sphere, table):
+            
+            non_bonded_type = table.get_chem_type_translation(chem_type)
+            target_atom_coefficents = {}
+            for atom_name in table.get_target_atoms():
+                atom_index = self._get_atom_id(atom_name, table)
+#                print non_bonded_type
+                coefficient = table.get_non_bonded_coefficient(atom_name, sphere, *non_bonded_type)
+                target_atom_coefficents[atom_index] = coefficient
+                
+            max_key = max(target_atom_coefficents.keys())
+            
+            result = [0.0]* (max_key+1)
+            
+            target_atom_ids = target_atom_coefficents.keys()
+            target_atom_ids.sort()
+            for target_atom_id in target_atom_ids:
+                result[target_atom_id] = target_atom_coefficents[target_atom_id]
+            return result
+
+        def _get_sphere_id(self,sphere,table):
+            sphere_id = table.get_spheres().index(sphere)
+            
+            return sphere_id
+        
+        def __init__(self, atom, sphere, table):
+            self.exponent  =  table.get_exponent(sphere)
+            
+            chem_type = Atom_utils._get_chem_type(atom)
+            self.target_atom_coefficents = self._get_target_atom_id_coefficient_map(chem_type, sphere, table)
+            
+            
+#            HEADER_SIZE = 3  # remote_atom_id  exponent
+#            OFFSET_1 = 1
+            
+#            REMOTE_ATOM_ID = 0
+#            SPHERE_ID = 1
+#            EXPONENT = 2
+            
+#            component = [None] * (max_key+HEADER_SIZE+OFFSET_1)
+#            component[REMOTE_ATOM_ID] = atom_id.index()
+            self.sphere_id = self._get_sphere_id(sphere,table)
+            
+            self.complete = True
+#            component[SPHERE_ID] = 
+#            component[EXPONENT] = exponent
+            
+#            results.append(component)
+                
+    def _build_contexts(self, atom, table):
+        results = []
+        chem_type = Atom_utils._get_chem_type(atom)
+#        print atom.residueNum(),atom.atomName(),chem_type,table.is_non_bonded_chem_type(chem_type)
+        for sphere in table.get_spheres():
+            if table.is_non_bonded_chem_type(chem_type):
+                results.append(self.Remote_non_bonded_context(atom,sphere,table))
+                
+#                remote_atom_types = table.get_remote_atom_types(sphere)
+        return results
+    
+    def _get_component_for_atom(self, atom, context):
+        result = [atom.index(), context.sphere_id, context.exponent]
+        result.extend(context.target_atom_coefficents)
+        return tuple(result)
+    
+    def _translate_atom_name(self, atom_name, context):
+        return atom_name
+    
+    def get_table_name(self):
+        return 'NBRM'
+    
+    
+class Non_bonded_list(object):
+    def __init__(self,cutoff_distance= 5.0,jitter=0.2,update_frequency=5):
+        self._cutoff_distance = cutoff_distance
+        self._jitter = jitter
+        self._update_frequency =update_frequency
+        
+        self._box_update_count = -1
+        self._non_bonded = []
+        
+    def _get_cutoff_distance_2(self):
+        return (self._cutoff_distance+self._jitter)**2
+    
+
+    def _filter_by_residue(self, seg_1, residue_1, seg_2, residue_2):
+        result = False
+        
+        if seg_1 == seg_2:
+            distance =abs(seg_1-seg_2)
+            if distance < 2:
+                result =True
+        return result
+    
+    
+    def get_boxes(self,component_list_1, component_list_2):
+        if self._box_update_count >= self._update_frequency:
+            self._box_update_count = -1
+            self._build_boxes(component_list_1, component_list_2)
+            
+        return self._non_bonded
+        
+    def _build_boxes(self, component_list_1,component_list_2):
+        
+        cutoff_distance_2 =  self._get_cutoff_distance_2()
+        
+        self._non_bonded = [] * len(component_list_1)
+        
+        for atom_offset_1, component_1 in enumerate(component_list_1):
+            for atom_offset_2, component_2 in enumerate(component_list_2):
+                if atom_offset_2 % 2 > 0:
+                    continue
+                
+                atom_id_1 = component_1[0]
+                atom_id_2 = component_2[0] 
+        
+                pos_1 = Atom_utils._get_atom_pos(atom_id_1)
+                pos_2= Atom_utils._get_atom_pos(atom_id_2)
+                
+                seg_1,residue_1 = Atom_utils._get_atom_info_from_index(atom_id_1)[:2]
+                seg_2,residue_2 = Atom_utils._get_atom_info_from_index(atom_id_2)[:2]
+                
+#                if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
+#                    continue
+                
+                if not self._filter_by_residue(seg_1,residue_1,seg_2,residue_2):
+                    cumulative_distance_2 = 0.0
+                    for axis in AXES:
+                        
+                        cumulative_distance_2  += (pos_1[axis] - pos_2[axis])**2
+                        if cumulative_distance_2 >=cutoff_distance_2:
+                            break
+                        elif axis == Z:
+                            self._non_bonded[atom_offset_1] = (atom_id_2)
+        
+# target_atom_id, target_atom_type_id
+# remote_atom_id  remote_atom_type_id 
+# remote_atom_type_id exponent coefficient_by target_atom_id
 class Non_bonded_potential(Base_potential):
-    pass
+
+    def __init__(self):
+        super(Non_bonded_potential, self).__init__()
+        
+        self._add_component_factory(Non_bonded_backbone_component_factory())
+        self._add_component_factory(Non_bonded_remote_component_factory())
+    
+    def _get_table(self, from_residue_type):
+        return Table_manager.get_default_table_manager().get_non_bonded_table(from_residue_type)
+        
+    def get_abbreviated_name(self):
+        return "NBND"
+    
+    def _calc_component_shift(self,index):
+        return 0.0
+    
+    def _calc_single_force_set(self,index,factor, forces):
+        return forces
 
 class Xcamshift():
     def __init__(self):
@@ -1640,7 +1872,8 @@ class Xcamshift():
                           Extra_potential(),
                           Dihedral_potential(),
                           Sidechain_potential(),
-                          Ring_Potential()]
+                          Ring_Potential(),
+                          Non_bonded_potential()]
         self._shift_table = Observed_shift_table()
                 
     def print_shifts(self):
