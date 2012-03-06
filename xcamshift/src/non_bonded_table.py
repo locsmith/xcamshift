@@ -25,7 +25,7 @@ class Non_bonded_table(object):
         return self._table[self.DATA][sphere][self.EXPONENT]
     
     def get_target_atoms(self):
-        return self._table[self.TARGET_ATOMS]    
+        return tuple(self._table[self.TARGET_ATOMS])    
 
     def _check_target_atom(self, atom_name):
         atoms = self.get_target_atoms()
@@ -52,7 +52,7 @@ class Non_bonded_table(object):
         coefficent_keys = self.get_remote_atom_types(sphere)
         if coefficent_key not in coefficent_keys:
             template = "coefficient key %s is not in non bonded table coefficient keys (%s)"
-            coefficent_keys_string = [`coefficent_key` for coefficent_key in coefficent_keys]
+            coefficent_keys_string = [`known_coefficent_key` for known_coefficent_key in coefficent_keys]
             message = template % (coefficent_key, ', '.join(coefficent_keys_string))
             raise KeyError(message)
     
@@ -66,12 +66,18 @@ class Non_bonded_table(object):
     def get_chem_types(self):
         return self._table[self.CHEM_TYPE_TRANSLATIONS].keys()
     
+    def is_non_bonded_chem_type(self,chem_type):
+        result = False
+        if chem_type in self.get_chem_types():
+            result = True
+        return result
+    
     def _check_chem_type(self,chem_type):
         chem_types = self.get_chem_types()
         if chem_type not in chem_types:
             template = "chemical type %s is not in non bonded table chemical type translations (%s)"
-            chem_types_strings = [`chem_type` for chem_type in chem_types]
-            message = template % (chem_types_strings, ', '.join(chem_types_strings))
+            chem_types_strings = [known_chem_type for known_chem_type in chem_types]
+            message = template % (chem_type, ', '.join(chem_types_strings))
             raise KeyError(message)
         
     def get_chem_type_translation(self, chem_type):
