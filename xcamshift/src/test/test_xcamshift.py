@@ -44,6 +44,10 @@ def almostEqual(first, second, places = 7):
 #class testSegmentManager(object):
 class TestXcamshift(unittest2.TestCase):
 
+    def assertLengthIs(self, components_0, length):
+        return self.assertEqual(len(components_0), length)
+
+
     # TODO add extra places
     DEFAULT_DECIMAL_PLACES = 5
     
@@ -658,6 +662,15 @@ class TestXcamshift(unittest2.TestCase):
             atom_info = Atom_utils._get_atom_info_from_index(component[0])
             self.assertElemeInSet(atom_info, non_bonded_2)
             test_non_bonded_set_2.add(atom_info)
+        
+        components_0 = non_bonded_potential._get_components_for_id('NBRM',0)
+        self.assertLengthIs(components_0,2)
+        self.assertEqual(components_0[0][:3], (0,0,1.0))
+        self.assertEqual(components_0[1][:3], (0,1,-3.0))
+        
+        expected_coefficients = (31.32384112711744, -12.5982466223797, -14.86605302072972, -1.6214566324137984, 2.505391454472044,  -88.71419716149445)
+        self.assertSequenceAlmostEqual(components_0[0][3:], expected_coefficients, self.DEFAULT_DECIMAL_PLACES)
+    
 #        self.assertSequenceEqual(test_non_bonded_set_2, non_bonded_2)
 
 #        n_spheres = len(non_bonded_table.get_spheres())
@@ -677,8 +690,8 @@ class TestXcamshift(unittest2.TestCase):
     
     
 if __name__ == "__main__":
-    unittest2.main()
+#    unittest2.main()
 #    TestXcamshift.list_test_shifts()
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testNonBondedComponents')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testNonBondedComponents')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistances')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
