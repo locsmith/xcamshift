@@ -474,7 +474,7 @@ class Base_potential(object):
 #                    component_factory.create_residue_components(component_list, table, segment,target_residue_number)                    
 
 
-        
+    
 
     
     def _build_component_list(self,name,global_atom_selection):
@@ -489,7 +489,7 @@ class Base_potential(object):
                     target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
                     self._create_components_for_residue(name,segment, residue_number, target_atom_selection)
                     
-        
+    
     def _add_component_factory(self, component_factory):
         self._component_factories[component_factory.get_table_name()] =  component_factory
     
@@ -525,6 +525,9 @@ class Base_potential(object):
         components = self._get_component_list(name)
         component = components.get_component(index)
         return component
+    
+    def _get_components_for_id(self,list_name,lookup):
+        return self._get_component_list(list_name).get_components_for_atom_id(lookup)
     
     def _get_all_components(self,name='ATOM'):
         components =  self._get_component_list(name)
@@ -1785,7 +1788,7 @@ class Non_bonded_list(object):
         self._jitter = jitter
         self._update_frequency =update_frequency
         
-        self._box_update_count = -1
+        self._box_update_count = update_frequency
         self._non_bonded = []
         
     def _get_cutoff_distance_2(self):
@@ -1803,6 +1806,7 @@ class Non_bonded_list(object):
     
     
     def get_boxes(self,component_list_1, component_list_2):
+        print self._box_update_count, self._update_frequency,self._box_update_count >= self._update_frequency
         if self._box_update_count >= self._update_frequency:
             self._box_update_count = -1
             self._build_boxes(component_list_1, component_list_2)
@@ -1858,6 +1862,9 @@ class Non_bonded_potential(Base_potential):
         
     def get_abbreviated_name(self):
         return "NBND"
+    
+    def _get_non_bonded_list(self):
+        pass
     
     def _calc_component_shift(self,index):
         return 0.0
