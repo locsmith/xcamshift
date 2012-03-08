@@ -45,12 +45,12 @@ target_atoms :  ["C", "CA", "CB", "HA", "HN", "N"]
 #
 
 chem_type_translations: {
-    HA  :  [H,None], HC  :  [H, None],
+    HA  :  [H,None], HC  :  [H, None],   H  :  [H,None],
     
     O   :  [C, SP2], C   :  [C, SP2],
     
-    CA  :  [C, SP2], CB  :  [C, SP2], CC  :  [C, SP2], CN  :  [C, SP2],
-    CR  :  [C, SP2], CV  :  [C, SP2], CW  :  [C, SP2], CX  :  [C, SP2],
+    CA  :  [C, SP2], CB  :  [C, SP2],   CC  :  [C, SP2], CN  :  [C, SP2],
+    CR  :  [C, SP2], CV  :  [C, SP2],   CW  :  [C, SP2], CX  :  [C, SP2],
     
     NA  :  [N, SP2], NB  :  [N, SP2],
     
