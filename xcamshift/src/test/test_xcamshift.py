@@ -8,7 +8,7 @@ from pdbTool import PDBTool
 import unittest2
 from xcamshift import RandomCoilShifts, Distance_potential,  Extra_potential,\
     Dihedral_potential, Base_potential, Sidechain_potential, Xcamshift,\
-    Non_bonded_potential
+    Non_bonded_potential, Non_bonded_list
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
@@ -649,7 +649,7 @@ class TestXcamshift(unittest2.TestCase):
             
         
         non_bonded_1, non_bonded_2 = self._split_tuple_pair_to_column_sets(ala_3.ala3_putative_non_bonded_pairs)
-
+        self.maxDiff = None
         test_non_bonded_set_1 = set()
         for component in non_bonded_potential._get_all_components('ATOM'):
             atom_info = Atom_utils._get_atom_info_from_index(component[0])
@@ -662,6 +662,7 @@ class TestXcamshift(unittest2.TestCase):
             atom_info = Atom_utils._get_atom_info_from_index(component[0])
             self.assertElemeInSet(atom_info, non_bonded_2)
             test_non_bonded_set_2.add(atom_info)
+        self.assertSequenceEqual(test_non_bonded_set_2, non_bonded_2)
         
         components_0 = non_bonded_potential._get_components_for_id('NBRM',0)
         self.assertLengthIs(components_0,2)
@@ -671,15 +672,35 @@ class TestXcamshift(unittest2.TestCase):
         expected_coefficients = (31.32384112711744, -12.5982466223797, -14.86605302072972, -1.6214566324137984, 2.505391454472044,  -88.71419716149445)
         self.assertSequenceAlmostEqual(components_0[0][3:], expected_coefficients, self.DEFAULT_DECIMAL_PLACES)
     
-#        self.assertSequenceEqual(test_non_bonded_set_2, non_bonded_2)
-
-#        n_spheres = len(non_bonded_table.get_spheres())
-#        for remote_component_name_count in remote_component_name_counts.values():
-#            self.assertEqual(remote_component_name_count,n_spheres)
-#    def testDistances(self):
+    def testDistances(self):
+        non_bonded_list = Non_bonded_list(min_residue_separation=1)
 #        sel = AtomSel("((residue 2 and name CA) around 5.2)")
-#        for atom in sel:
-#            print Atom_utils._get_atom_name(atom.index()), atom.index()
+#        
+#        atom_indices = [atom.index() for atom in sel]
+#        atom_indices.sort()
+        
+        expected_box_atoms = set(ala_3.ala3_expected_non_bonded_pairs)
+        non_bonded_potential = Non_bonded_potential()
+        target_atoms = non_bonded_potential._get_all_components('ATOM')
+        remote_atoms  = non_bonded_potential._get_all_components('NBRM')
+        
+        boxes = non_bonded_list.get_boxes(target_atoms, remote_atoms)
+        for target_atom_component, box in zip(target_atoms,boxes):
+            target_atom_id = target_atom_component[0]
+            target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
+            for box_atom_id in box:
+                box_atom_key = Atom_utils._get_atom_info_from_index(box_atom_id)
+                atom_key = target_atom_key,box_atom_key
+                
+#                print atom_key, Atom_utils._calculate_distance(target_atom_id, box_atom_id), atom_key
+                
+                self.assertElemeInSet(atom_key, expected_box_atoms)
+                expected_box_atoms.remove(atom_key)
+                
+        self.assertEmpty(expected_box_atoms)
+            
+        
+#        print target_atoms
             
             
         
@@ -690,8 +711,8 @@ class TestXcamshift(unittest2.TestCase):
     
     
 if __name__ == "__main__":
-#    unittest2.main()
+    unittest2.main()
 #    TestXcamshift.list_test_shifts()
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testNonBondedComponents')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testNonBondedComponents')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistances')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
