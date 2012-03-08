@@ -620,7 +620,7 @@ class Distance_based_potential(Base_potential):
         distance_atom_index_2 = indices.distance_atom_index_2
         target_atom = values[distance_atom_index_1]
         distance_atom = values[distance_atom_index_2]
-        return  target_atom, distance_atom
+        return target_atom, distance_atom
 
 
     def _get_coefficient_and_exponent(self, index):
@@ -704,6 +704,7 @@ class Distance_based_potential(Base_potential):
         distance = Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
 
         return distance ** exponent * coefficient
+    
 class Distance_potential(Distance_based_potential):
     '''
     classdocs
@@ -746,15 +747,7 @@ class Distance_potential(Distance_based_potential):
 
     
 
-#    def _calc_component_shift(self,i):
-#        from_atom_id,to_atom_id,coefficent,exponent = self._get_component(i)
-#        from_atom_pos = Atom_utils._get_atom_pos(from_atom_id)
-#        to_atom_pos = Atom_utils._get_atom_pos(to_atom_id)
-#        
-#        xyz_distance = from_atom_pos - to_atom_pos
-#        distance  = norm(xyz_distance)
-#        
-#        return  distance ** exponent * coefficent 
+
     
 
     
@@ -828,16 +821,6 @@ class Extra_potential(Distance_based_potential):
 
 
 
-#    def _calc_component_shift(self, index):
-#        component = self._get_component(index)
-#        
-#        distance_atom_id_1, distance_atom_id_2, coefficient, exponent = component[1:]
-#        
-#        distance = Atom_utils._calculate_distance(distance_atom_id_1, distance_atom_id_2)
-#        
-#        shift = distance ** exponent * coefficient
-#        
-#        return shift
 
     
 class RandomCoilShifts(Base_potential):
@@ -1114,15 +1097,6 @@ class Sidechain_potential(Distance_based_potential):
     
 
 
-#    def _calc_component_shift(self, index):
-#        data = self._get_component(index)
-#        
-#        target_atom_index,sidechain_atom_index,value,exponent =  data
-#        
-#        
-#        distance = Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
-#
-#        return distance ** exponent * value
     
     def dump(self):
         result  = []
