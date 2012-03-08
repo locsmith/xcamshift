@@ -611,21 +611,36 @@ class Distance_based_potential(Base_potential):
                                                 exponent_index=3)
     
     
-    def _calc_single_force_factor(self,index,factor):
+
+    def _get_target_and_distant_atom_ids(self, index):
         values  = self._get_component(index)
         
         indices = self._get_indices()
-        
         distance_atom_index_1 = indices.distance_atom_index_1
-        distance_atom_index_2 =indices.distance_atom_index_2
-        coefficient_index = indices.coefficient_index
-        exponent_index  = indices.exponent_index
-        
-        
-        target_atom=values[distance_atom_index_1]
+        distance_atom_index_2 = indices.distance_atom_index_2
+        target_atom = values[distance_atom_index_1]
         distance_atom = values[distance_atom_index_2]
-        coefficient  =  values[coefficient_index]
-        exponent =  values[exponent_index]
+        return target_atom, distance_atom
+
+
+    def _get_coefficient_and_exponent(self, index):
+        values = self._get_component(index)
+        
+        indices = self._get_indices()
+        
+        coefficient_index = indices.coefficient_index
+        exponent_index = indices.exponent_index
+        
+        coefficient = values[coefficient_index]
+        exponent = values[exponent_index]
+        
+        return coefficient, exponent
+
+    def _calc_single_force_factor(self,index,factor):
+        
+        target_atom, distance_atom = self._get_target_and_distant_atom_ids(index)
+        
+        coefficient, exponent = self._get_coefficient_and_exponent(index)
         
         target_pos = Atom_utils._get_atom_by_index(target_atom).pos()
         distant_pos =  Atom_utils._get_atom_by_index(distance_atom).pos()
@@ -643,18 +658,19 @@ class Distance_based_potential(Base_potential):
 
 
     def _calc_single_force_set(self,index,factor, forces):
-        values  = self._get_component(index)
-        
-        indices = self._get_indices()
-        
-        distance_atom_index_1 = indices.distance_atom_index_1
-        distance_atom_index_2 =indices.distance_atom_index_2
-        
-        target_atom=values[distance_atom_index_1]
-        distance_atom = values[distance_atom_index_2]
+#        values  = self._get_component(index)
+#        
+#        indices = self._get_indices()
+#        
+#        distance_atom_index_1 = indices.distance_atom_index_1
+#        distance_atom_index_2 =indices.distance_atom_index_2
+#        
+#        target_atom=values[distance_atom_index_1]
+#        distance_atom = values[distance_atom_index_2]
+        target_atom,distant_atom =  self._get_target_and_distant_atom_ids(index)
         
         target_pos = Atom_utils._get_atom_by_index(target_atom).pos()
-        distant_pos =  Atom_utils._get_atom_by_index(distance_atom).pos()
+        distant_pos =  Atom_utils._get_atom_by_index(distant_atom).pos()
         
         distance  = target_pos - distant_pos
         
@@ -662,7 +678,7 @@ class Distance_based_potential(Base_potential):
         
 
         target_offset = target_atom
-        distant_offset = distance_atom
+        distant_offset = distant_atom
         X_OFFSET = 0
         Y_OFFSET = 1
         Z_OFFSET = 2
@@ -677,6 +693,7 @@ class Distance_based_potential(Base_potential):
             distant_forces[offset] += distance[offset] * force_factor
         
         return forces
+    
     
 class Distance_potential(Distance_based_potential):
     '''
@@ -1783,13 +1800,15 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
     
     
 class Non_bonded_list(object):
-    def __init__(self,cutoff_distance= 5.0,jitter=0.2,update_frequency=5):
+    def __init__(self,cutoff_distance= 5.0,jitter=0.2,update_frequency=5, min_residue_separation = 2):
         self._cutoff_distance = cutoff_distance
         self._jitter = jitter
         self._update_frequency =update_frequency
         
         self._box_update_count = update_frequency
         self._non_bonded = []
+
+        self._min_residue_seperation = min_residue_separation
         
     def _get_cutoff_distance_2(self):
         return (self._cutoff_distance+self._jitter)**2
@@ -1799,14 +1818,14 @@ class Non_bonded_list(object):
         result = False
         
         if seg_1 == seg_2:
-            distance =abs(seg_1-seg_2)
-            if distance < 2:
+            distance =abs(residue_1-residue_2)
+            if distance < self._min_residue_seperation:
                 result =True
         return result
     
     
     def get_boxes(self,component_list_1, component_list_2):
-        print self._box_update_count, self._update_frequency,self._box_update_count >= self._update_frequency
+#        print self._box_update_count, self._update_frequency,self._box_update_count >= self._update_frequency
         if self._box_update_count >= self._update_frequency:
             self._box_update_count = -1
             self._build_boxes(component_list_1, component_list_2)
@@ -1815,18 +1834,20 @@ class Non_bonded_list(object):
         
     def _build_boxes(self, component_list_1,component_list_2):
         
+        
         cutoff_distance_2 =  self._get_cutoff_distance_2()
         
-        self._non_bonded = [] * len(component_list_1)
-        
+        self._non_bonded = [[] for i in range(len(component_list_1))]
         for atom_offset_1, component_1 in enumerate(component_list_1):
             for atom_offset_2, component_2 in enumerate(component_list_2):
+                
+                # TODO: allows for spheres need a tidier solution
                 if atom_offset_2 % 2 > 0:
                     continue
                 
                 atom_id_1 = component_1[0]
                 atom_id_2 = component_2[0] 
-        
+                
                 pos_1 = Atom_utils._get_atom_pos(atom_id_1)
                 pos_2= Atom_utils._get_atom_pos(atom_id_2)
                 
@@ -1835,7 +1856,6 @@ class Non_bonded_list(object):
                 
 #                if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
 #                    continue
-                
                 if not self._filter_by_residue(seg_1,residue_1,seg_2,residue_2):
                     cumulative_distance_2 = 0.0
                     for axis in AXES:
@@ -1843,8 +1863,9 @@ class Non_bonded_list(object):
                         cumulative_distance_2  += (pos_1[axis] - pos_2[axis])**2
                         if cumulative_distance_2 >=cutoff_distance_2:
                             break
-                        elif axis == Z:
-                            self._non_bonded[atom_offset_1] = (atom_id_2)
+                        if axis == Z:
+                            self._non_bonded[atom_offset_1].append(atom_id_2)
+#                            print atom_offset_1, atom_offset_2, self._non_bonded
         
 # target_atom_id, target_atom_type_id
 # remote_atom_id  remote_atom_type_id 
