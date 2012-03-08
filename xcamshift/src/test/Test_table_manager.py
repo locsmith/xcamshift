@@ -219,7 +219,7 @@ class Test_table_manager(unittest2.TestCase):
         chem_types.sort()
         expected_chem_types =  ['C',  'CA', 'CB', 'CC', 'CN', 'CP', 'CR', 'CT',
                                 'CV', 'CW', 'CX', 'N',  'NA', 'NB', 'NC2','NH1',
-                                'NH2','NH3','O',  'OC', 'OH', 'S','HA','HC']
+                                'NH2','NH3','O',  'OC', 'OH', 'S','HA','HC','H']
         expected_chem_types.sort()
         self.assertSequenceEqual(chem_types, expected_chem_types)
         
