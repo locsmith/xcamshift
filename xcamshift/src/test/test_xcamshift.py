@@ -685,17 +685,15 @@ class TestXcamshift(unittest2.TestCase):
         remote_atoms  = non_bonded_potential._get_all_components('NBRM')
         
         boxes = non_bonded_list.get_boxes(target_atoms, remote_atoms)
-        for target_atom_component, box in zip(target_atoms,boxes):
-            target_atom_id = target_atom_component[0]
+        for box_component in boxes:
+            target_atom_id, distant_atom_id,coefficient,exponent  = box_component
+            
             target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
-            for box_atom_id in box:
-                box_atom_key = Atom_utils._get_atom_info_from_index(box_atom_id)
-                atom_key = target_atom_key,box_atom_key
+            box_atom_key = Atom_utils._get_atom_info_from_index(distant_atom_id)
+            atom_key = target_atom_key,box_atom_key
                 
-#                print atom_key, Atom_utils._calculate_distance(target_atom_id, box_atom_id), atom_key
-                
-                self.assertElemeInSet(atom_key, expected_box_atoms)
-                expected_box_atoms.remove(atom_key)
+            self.assertElemeInSet(atom_key, expected_box_atoms)
+            expected_box_atoms.remove(atom_key)
                 
         self.assertEmpty(expected_box_atoms)
             
@@ -711,8 +709,8 @@ class TestXcamshift(unittest2.TestCase):
     
     
 if __name__ == "__main__":
-    unittest2.main()
+#    unittest2.main()
 #    TestXcamshift.list_test_shifts()
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testNonBondedComponents')
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistances')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistances')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')

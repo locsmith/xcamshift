@@ -1836,25 +1836,40 @@ class Non_bonded_list(object):
         
     #                            break
         return is_non_bonded
-
-    def _build_boxes(self, component_list_1,component_list_2):
+    
+    class NonBoolean:
+        def __nonzero__(self):
+            raise Exception("internal error this object should never be used in a boolean comparison!!")
+    
+    def _build_boxes(self, component_list_1, component_list_2):
         
         
         
-        self._non_bonded = [[] for i in range(len(component_list_1))]
-        for atom_offset_1, component_1 in enumerate(component_list_1):
+        self._non_bonded = []
+        
+        is_non_bonded = Non_bonded_list.NonBoolean()
+        for component_1 in component_list_1:
             for component_2 in component_list_2:
                 
                 # TODO: allows for spheres need a tidier solution
-                if component_2[1] > 0:
-                    continue
+                atom_id_1, atom_1_coefficent_offset = component_1
+                atom_id_2, sphere, exponent = component_2[:3]
+                coefficients = component_2[3:]
                 
-                atom_id_1 = component_1[0]
-                atom_id_2 = component_2[0] 
+                if component_2[1] == 0:
                 
-                print atom_offset_1
-                if self._is_non_bonded(atom_id_1, atom_id_2):
-                    self._non_bonded[atom_offset_1].append(atom_id_2)
+#                    atom_id_1 = component_1[0]
+#                    atom_id_2 = component_2[0] 
+                
+                    is_non_bonded = self._is_non_bonded(atom_id_1, atom_id_2)
+                    
+                if is_non_bonded and sphere == 0:
+#                    print component_1
+#                    print component_2
+                    
+                    result_component = atom_id_1,atom_id_2,coefficients[atom_1_coefficent_offset],exponent 
+#                    print result_component
+                    self._non_bonded.append(result_component)
 #                            print atom_offset_1, atom_offset_2, self._non_bonded
         
 # target_atom_id, target_atom_type_id
