@@ -1815,45 +1815,52 @@ class Non_bonded_list(object):
             
         return self._non_bonded
         
+
+    def _is_non_bonded(self, atom_id_1, atom_id_2):
+        cutoff_distance_2 = self._get_cutoff_distance_2()
+        pos_1 = Atom_utils._get_atom_pos(atom_id_1)
+        pos_2 = Atom_utils._get_atom_pos(atom_id_2)
+        seg_1, residue_1 = Atom_utils._get_atom_info_from_index(atom_id_1)[:2]
+        seg_2, residue_2 = Atom_utils._get_atom_info_from_index(atom_id_2)[:2]
+    #                if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
+    #                    continue
+        is_non_bonded = True
+        if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
+            is_non_bonded = False
+        else:
+            cumulative_distance_2 = 0.0
+            for axis in AXES:
+                cumulative_distance_2 += (pos_1[axis] - pos_2[axis]) ** 2
+                if cumulative_distance_2 >= cutoff_distance_2:
+                    is_non_bonded = False
+        
+    #                            break
+        return is_non_bonded
+
     def _build_boxes(self, component_list_1,component_list_2):
         
         
-        cutoff_distance_2 =  self._get_cutoff_distance_2()
         
         self._non_bonded = [[] for i in range(len(component_list_1))]
         for atom_offset_1, component_1 in enumerate(component_list_1):
-            for atom_offset_2, component_2 in enumerate(component_list_2):
+            for component_2 in component_list_2:
                 
                 # TODO: allows for spheres need a tidier solution
-                if atom_offset_2 % 2 > 0:
+                if component_2[1] > 0:
                     continue
                 
                 atom_id_1 = component_1[0]
                 atom_id_2 = component_2[0] 
                 
-                pos_1 = Atom_utils._get_atom_pos(atom_id_1)
-                pos_2= Atom_utils._get_atom_pos(atom_id_2)
-                
-                seg_1,residue_1 = Atom_utils._get_atom_info_from_index(atom_id_1)[:2]
-                seg_2,residue_2 = Atom_utils._get_atom_info_from_index(atom_id_2)[:2]
-                
-#                if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
-#                    continue
-                if not self._filter_by_residue(seg_1,residue_1,seg_2,residue_2):
-                    cumulative_distance_2 = 0.0
-                    for axis in AXES:
-                        
-                        cumulative_distance_2  += (pos_1[axis] - pos_2[axis])**2
-                        if cumulative_distance_2 >=cutoff_distance_2:
-                            break
-                        if axis == Z:
-                            self._non_bonded[atom_offset_1].append(atom_id_2)
+                print atom_offset_1
+                if self._is_non_bonded(atom_id_1, atom_id_2):
+                    self._non_bonded[atom_offset_1].append(atom_id_2)
 #                            print atom_offset_1, atom_offset_2, self._non_bonded
         
 # target_atom_id, target_atom_type_id
 # remote_atom_id  remote_atom_type_id 
 # remote_atom_type_id exponent coefficient_by target_atom_id
-class Non_bonded_potential(Base_potential):
+class Non_bonded_potential(Distance_based_potential):
 
     def __init__(self):
         super(Non_bonded_potential, self).__init__()
@@ -1866,6 +1873,9 @@ class Non_bonded_potential(Base_potential):
         
     def get_abbreviated_name(self):
         return "NBND"
+    
+    def _get_indices(self):
+        pass
     
     def _get_non_bonded_list(self):
         pass
