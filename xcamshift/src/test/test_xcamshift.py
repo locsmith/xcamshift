@@ -20,6 +20,7 @@ from observed_chemical_shifts import Observed_shift_table
 from utils import Atom_utils
 import sys
 from table_manager import Table_manager
+from component_list import Component_list
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -679,12 +680,15 @@ class TestXcamshift(unittest2.TestCase):
 #        atom_indices = [atom.index() for atom in sel]
 #        atom_indices.sort()
         
-        expected_box_atoms = set(ala_3.ala3_expected_non_bonded_pairs)
+        expected_box_atoms_1 = set(ala_3.ala3_expected_non_bonded_pairs)
+        expected_box_atoms_3 = set(ala_3.ala3_expected_non_bonded_pairs)
         non_bonded_potential = Non_bonded_potential()
         target_atoms = non_bonded_potential._get_all_components('ATOM')
         remote_atoms  = non_bonded_potential._get_all_components('NBRM')
         
-        boxes = non_bonded_list.get_boxes(target_atoms, remote_atoms)
+        component_list =  Component_list()
+        
+        boxes = non_bonded_list.get_boxes(target_atoms, remote_atoms,component_list)
         for box_component in boxes:
             target_atom_id, distant_atom_id,coefficient,exponent  = box_component
             
@@ -692,11 +696,16 @@ class TestXcamshift(unittest2.TestCase):
             box_atom_key = Atom_utils._get_atom_info_from_index(distant_atom_id)
             atom_key = target_atom_key,box_atom_key
                 
-            self.assertElemeInSet(atom_key, expected_box_atoms)
-            expected_box_atoms.remove(atom_key)
+            if exponent == 1.0:
+                self.assertElemeInSet(atom_key, expected_box_atoms_1)
+                expected_box_atoms_1.remove(atom_key)
+            elif exponent == -3.0:
+                self.assertElemeInSet(atom_key, expected_box_atoms_3)
+                expected_box_atoms_3.remove(atom_key)
                 
-        self.assertEmpty(expected_box_atoms)
-            
+                
+        self.assertEmpty(expected_box_atoms_1)
+        self.assertEmpty(expected_box_atoms_3)    
         
 #        print target_atoms
             
