@@ -1886,10 +1886,10 @@ class Non_bonded_potential(Distance_based_potential):
         return "NBND"
     
     def _get_indices(self):
-        pass
+        return Distance_based_potential.Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
     
     def _get_non_bonded_list(self):
-        pass
+        self._get_cache_list('NBLT')
     
     def _calc_component_shift(self,index):
         return 0.0
