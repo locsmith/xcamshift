@@ -1790,6 +1790,8 @@ class Non_bonded_list(object):
         
         self._box_update_count = update_frequency
         self._non_bonded = []
+        self._non_bonded_calculation_count = 0
+        self._non_bonded_call_count = 0
 
         self._min_residue_seperation = min_residue_separation
         
@@ -1806,10 +1808,16 @@ class Non_bonded_list(object):
                 result =True
         return result
     
-    
+    def update(self):
+        self.box_update_count +=1
+        
     def get_boxes(self,component_list_1, component_list_2,target_component_list):
 #        print self._box_update_count, self._update_frequency,self._box_update_count >= self._update_frequency
+        self._non_bonded_call_count += 1
+        
         if self._box_update_count >= self._update_frequency:
+            self._box_update_count = -1
+            self._non_bonded_calculation_count += 1
             self._build_boxes(component_list_1, component_list_2, target_component_list)
             
         return target_component_list
