@@ -513,14 +513,21 @@ class Base_potential(object):
         self._cache_list_data = {}
 
 #    TODO put 'ATOM' in a constant and rename to BB_ATOM?
-    def _get_component_list(self,name='ATOM'):
+    def _get_component_list(self,name=None):
+        if name == None:
+            name  = self._get_target_atom_list_name()
         if not name in self._component_list_data:
             self._component_list_data[name] = Component_list()
             self._build_component_list(name,"(all)")
         return self._component_list_data[name]
     
+    def _get_target_atom_list_name(self):
+        return 'ATOM'
+    
     # TODO: make these internal
-    def _get_component(self, index, name='ATOM'):
+    def _get_component(self, index, name=None):
+
+        
         components = self._get_component_list(name)
         component = components.get_component(index)
         return component
@@ -609,7 +616,7 @@ class Distance_based_potential(Base_potential):
                                                 distance_atom_index_2=1,coefficent_index=2,
                                                 exponent_index=3)
     
-    @abc.abstractmethod
+#    @abc.abstractmethod
     def _get_distance_list_name(self):
         return 'ATOM'
 
@@ -1813,7 +1820,7 @@ class Non_bonded_list(object):
         return result
     
     def update(self):
-        self.box_update_count +=1
+        self._box_update_count +=1
         
     def get_boxes(self,component_list_1, component_list_2,target_component_list):
 #        print self._box_update_count, self._update_frequency,self._box_update_count >= self._update_frequency
@@ -1871,7 +1878,22 @@ class Non_bonded_list(object):
                 if is_non_bonded:
                     result_component = atom_id_1,atom_id_2,coefficients[atom_1_coefficent_offset],exponent 
                     target_component_list.add_component(result_component)
+
+
+class Null_component_factory(object):
+   
+    def __init__(self,name):
+        self._name = name
+    
+    def is_residue_acceptable(self, segment, residue_number, segment_manager):
+        False
+    
+    def create_components(self, component_list, table, segment,target_residue_number,selected_atoms):
+        return []
         
+    def get_table_name(self):
+        return self._name
+
 # target_atom_id, target_atom_type_id
 # remote_atom_id  remote_atom_type_id 
 # remote_atom_type_id exponent coefficient_by target_atom_id
@@ -1882,6 +1904,7 @@ class Non_bonded_potential(Distance_based_potential):
         
         self._add_component_factory(Non_bonded_backbone_component_factory())
         self._add_component_factory(Non_bonded_remote_component_factory())
+        self._add_component_factory(Null_component_factory('NBLT'))
         
         self._non_bonded_list = Non_bonded_list()
     
@@ -1894,6 +1917,9 @@ class Non_bonded_potential(Distance_based_potential):
     def _get_indices(self):
         return Distance_based_potential.Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
     
+    def _get_target_atom_list_name(self):
+        return 'NBLT'
+    
     def _get_distance_list_name(self):
         return 'NBLT'
 
@@ -1905,18 +1931,32 @@ class Non_bonded_potential(Distance_based_potential):
         self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list)
         
         return non_bonded_list
-        
+     
     
+
+    def update_non_bonded_list(self):
+        self._get_non_bonded_list()
+        self._non_bonded_list.update()
+        
+
+    def calc_single_atom_shift(self, target_atom_id):
+        self.update_non_bonded_list()
+        return Distance_based_potential.calc_single_atom_shift(self, target_atom_id)
+    
+    def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
+        return Distance_based_potential.calc_single_atom_force_set(self, target_atom_id, force_factor, forces)
 
 class Xcamshift():
     def __init__(self):
-        self.potential = [RandomCoilShifts(),
+        self.potential = [
+                          RandomCoilShifts(),
                           Distance_potential(),
                           Extra_potential(),
                           Dihedral_potential(),
                           Sidechain_potential(),
                           Ring_Potential(),
-                          Non_bonded_potential()]
+                          Non_bonded_potential()
+                          ]
         self._shift_table = Observed_shift_table()
                 
     def print_shifts(self):
