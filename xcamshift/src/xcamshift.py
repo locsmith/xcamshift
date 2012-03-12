@@ -8,6 +8,7 @@ Created on 27 Dec 2011
 
 
 from atomSel import AtomSel, intersection
+from component_list import Component_list
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from math import cos, tanh, cosh, sin
@@ -15,11 +16,9 @@ from observed_chemical_shifts import Observed_shift_table
 from segment_manager import Segment_Manager
 from table_manager import Table_manager
 from utils import tupleit, Atom_utils, AXES, Z
-from vec3 import norm,cross,dot
+from vec3 import Vec3, norm, cross, dot
 import abc
 import sys
-from component_list import Component_list
-from vec3 import Vec3
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -604,16 +603,19 @@ class Distance_based_potential(Base_potential):
                             self.distance_atom_index_2, self.coefficient_index, self.exponent_index)
             return msg                 
             
-#    @abc.abstractmethod
+    @abc.abstractmethod
     def _get_indices(self):
         return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=0,
                                                 distance_atom_index_2=1,coefficent_index=2,
                                                 exponent_index=3)
     
-    
+    @abc.abstractmethod
+    def _get_distance_list_name(self):
+        return 'ATOM'
 
     def _get_target_and_distant_atom_ids(self, index):
-        values  = self._get_component(index)
+        list_name = self._get_distance_list_name()
+        values  = self._get_component(index,list_name)
         
         indices = self._get_indices()
         distance_atom_index_1 = indices.distance_atom_index_1
@@ -624,7 +626,9 @@ class Distance_based_potential(Base_potential):
 
 
     def _get_coefficient_and_exponent(self, index):
-        values = self._get_component(index)
+        list_name  = self._get_distance_list_name()
+        
+        values = self._get_component(index,list_name)
         
         indices = self._get_indices()
         
@@ -1878,6 +1882,8 @@ class Non_bonded_potential(Distance_based_potential):
         
         self._add_component_factory(Non_bonded_backbone_component_factory())
         self._add_component_factory(Non_bonded_remote_component_factory())
+        
+        self._non_bonded_list = Non_bonded_list()
     
     def _get_table(self, from_residue_type):
         return Table_manager.get_default_table_manager().get_non_bonded_table(from_residue_type)
@@ -1888,14 +1894,19 @@ class Non_bonded_potential(Distance_based_potential):
     def _get_indices(self):
         return Distance_based_potential.Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
     
+    def _get_distance_list_name(self):
+        return 'NBLT'
+
     def _get_non_bonded_list(self):
-        self._get_cache_list('NBLT')
+        non_bonded_list = self._get_cache_list('NBLT')
+        
+        target_atom_list = self._get_component_list('ATOM')
+        remote_atom_list =  self._get_cache_list(self._get_cache_list('NBLT'))
+        self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list)
+        
+        return non_bonded_list
+        
     
-    def _calc_component_shift(self,index):
-        return 0.0
-    
-    def _calc_single_force_set(self,index,factor, forces):
-        return forces
 
 class Xcamshift():
     def __init__(self):
