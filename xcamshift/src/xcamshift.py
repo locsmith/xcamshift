@@ -1924,10 +1924,10 @@ class Non_bonded_potential(Distance_based_potential):
         return 'NBLT'
 
     def _get_non_bonded_list(self):
-        non_bonded_list = self._get_cache_list('NBLT')
+        non_bonded_list = self._get_component_list('NBLT')
         
         target_atom_list = self._get_component_list('ATOM')
-        remote_atom_list =  self._get_cache_list(self._get_cache_list('NBLT'))
+        remote_atom_list = self._get_component_list('NBRM')
         self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list)
         
         return non_bonded_list
