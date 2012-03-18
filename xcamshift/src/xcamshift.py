@@ -535,7 +535,7 @@ class Base_potential(object):
     def _get_components_for_id(self,list_name,lookup):
         return self._get_component_list(list_name).get_components_for_atom_id(lookup)
     
-    def _get_all_components(self,name='ATOM'):
+    def _get_all_components(self,name=None):
         components =  self._get_component_list(name)
         return components.get_all_components()
     
@@ -1945,6 +1945,15 @@ class Non_bonded_potential(Distance_based_potential):
     
     def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
         return Distance_based_potential.calc_single_atom_force_set(self, target_atom_id, force_factor, forces)
+    
+    def _calc_component_shift(self, index):
+        target_atom_index,distant_atom_index = self._get_target_and_distant_atom_ids(index)
+        
+        result  = 0.0
+        distance  = Atom_utils._calculate_distance(target_atom_index, distant_atom_index)
+        if distance < 5.0:
+            result = super(Non_bonded_potential, self)._calc_component_shift(index)
+        return result
 
 class Xcamshift():
     def __init__(self):
