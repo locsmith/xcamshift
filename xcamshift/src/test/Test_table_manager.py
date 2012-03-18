@@ -189,7 +189,7 @@ class Test_table_manager(unittest2.TestCase):
     def testGetNonBondedTable(self):
         table = self.table_manager.get_non_bonded_table('ALA')
         
-        result = table.get_non_bonded_coefficient("CA", "sphere_1", "S", "SP3")
+        result = table.get_non_bonded_coefficient("CA", "sphere_2", "S", "SP3")
         
         self.assertAlmostEqual(result, -101.81223165473585)
         
