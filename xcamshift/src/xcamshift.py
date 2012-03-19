@@ -594,6 +594,11 @@ class Base_potential(object):
 
 class Distance_based_potential(Base_potential):
     
+    def __init__(self):
+        super(Distance_based_potential, self).__init__()
+        self._smoothed = False
+        self._cutoff = 5.0
+        
     class Indices(object):
         def __init__(self, target_atom_index,distance_atom_index_1,
                      distance_atom_index_2, coefficent_index, exponent_index):
@@ -713,8 +718,17 @@ class Distance_based_potential(Base_potential):
         
         
         distance = Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
-
-        return distance ** exponent * coefficient
+        
+        smoothing_factor  = 1.0
+        if self._smoothed:
+            ratio = distance / self._cutoff;
+            for i in range(2):
+                ratio *= ratio
+            smoothing_factor = 1.0 - ratio;
+            
+            
+            
+        return smoothing_factor *  distance ** exponent * coefficient
     
 class Distance_potential(Distance_based_potential):
     '''
@@ -780,7 +794,7 @@ class Distance_potential(Distance_based_potential):
 
 class Extra_potential(Distance_based_potential):
     def __init__(self):
-        Base_potential.__init__(self)
+        super(Extra_potential, self).__init__()
         
         self._add_component_factory(Extra_component_factory())
         
@@ -1089,8 +1103,7 @@ class Dihedral_potential(Base_potential):
 class Sidechain_potential(Distance_based_potential):
     
     def __init__(self):
-        Base_potential.__init__(self)
-        
+        super(Sidechain_potential, self).__init__()
         self._add_component_factory(Sidechain_component_factory())
         
         
