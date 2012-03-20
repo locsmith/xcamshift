@@ -571,7 +571,7 @@ class Base_potential(object):
                 index_range = components.get_component_range(target_atom_id)
                 for index in range(*index_range):
                     forces = self._calc_single_force_set(index,force_factor,forces)
-            return forces
+        return forces
         
     
     #TODO: make this just return a list in component order
