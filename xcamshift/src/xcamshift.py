@@ -594,9 +594,9 @@ class Base_potential(object):
 
 class Distance_based_potential(Base_potential):
     
-    def __init__(self):
+    def __init__(self,  smoothed = False):
         super(Distance_based_potential, self).__init__()
-        self._smoothed = False
+        self._smoothed = smoothed
         self._cutoff = 5.0
         
     class Indices(object):
@@ -722,11 +722,12 @@ class Distance_based_potential(Base_potential):
         smoothing_factor  = 1.0
         if self._smoothed:
             ratio = distance / self._cutoff;
-            for i in range(2):
-                ratio *= ratio
-            smoothing_factor = 1.0 - ratio;
-            
-            
+#            ratio2 = ratio**4
+#            for i in range(2):
+#                ratio *= ratio
+#            print ratio2,ratio
+            smoothing_factor = 1.0 - ratio**8;
+
             
         return smoothing_factor *  distance ** exponent * coefficient
     
@@ -1912,8 +1913,8 @@ class Null_component_factory(object):
 # remote_atom_type_id exponent coefficient_by target_atom_id
 class Non_bonded_potential(Distance_based_potential):
 
-    def __init__(self):
-        super(Non_bonded_potential, self).__init__()
+    def __init__(self,smoothed=True):
+        super(Non_bonded_potential, self).__init__(smoothed=smoothed)
         
         self._add_component_factory(Non_bonded_backbone_component_factory())
         self._add_component_factory(Non_bonded_remote_component_factory())
