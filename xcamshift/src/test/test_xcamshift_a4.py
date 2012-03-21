@@ -357,41 +357,40 @@ class TestXcamshiftA4(unittest2.TestCase):
 #            force_factor =  ala_4.ala4_force_factors_non_bonded[target_atom_key]
 #            shift = non_bonded_potential.calc_single_atom_shift(target_atom_id)
 #            print 'shift',(target_atom_key,remote_atom_key), target_atom_key,shift
-    def testNonBondedForces(self):
+
+    def _test_non_bonded_force_factors(self, non_bonded_potential, non_bonded_force_factors, active_shifts, factors):
+        
+        for i, component in enumerate(non_bonded_potential._get_all_components()):
+            target_atom_id, remote_atom_id, coefficient, exponent = component
+            target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
+            remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
+            
+            if active_shifts[target_atom_key] == 0:
+                continue
+    #
+            distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
+    #            print target_atom_id,remote_atom_id,distance,target_atom_key, remote_atom_key
+            if distance  >= 5.0:
+                continue
+            
+            expected_key = target_atom_key, remote_atom_key, int(exponent)
+            factor = factors[target_atom_key]
+    #            print expected_key,factor
+            force_factor = non_bonded_potential._calc_single_force_factor(i, factor)
+            self.assertAlmostEqual(force_factor, non_bonded_force_factors[expected_key])
+            del non_bonded_force_factors[expected_key]
+        self.assertEmpty(non_bonded_force_factors)
+
+    def testNonBondedForcesNotSmoothed(self):
         non_bonded_potential = Non_bonded_potential()
         non_bonded_potential.set_observed_shifts(ala_4.ala_4_expected_shifts)
         non_bonded_potential.update_non_bonded_list()
         
         non_bonded_force_factors = dict(ala_4.ala_4_force_factors_not_smoothed)
         
-#        for (target_atom_key,remote_atom_key),forces in non_bonded_forces.items():
-#            
-#            non_bonded_potential.calc_single_atom_force_set(target_atom_id, factor, forces)
-#            print forces
-            
-    
-        for i,component  in enumerate(non_bonded_potential._get_all_components()):
-            target_atom_id, remote_atom_id, coefficient,exponent = component
-            
-            target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
-            remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
-            
-            if ala_4.active_shifts[target_atom_key] == 0:
-                continue
-             
-            
-            distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
-#            print target_atom_id,remote_atom_id,distance,target_atom_key, remote_atom_key
-            if distance  >= 5.0:
-                continue
-            
-            expected_key = target_atom_key,remote_atom_key,int(exponent)
-            factor =  ala_4.ala4_factors_non_bonded[target_atom_key]
-
-#            print expected_key,factor
-            force_factor = non_bonded_potential._calc_single_force_factor(i, factor)
-            
-            self.assertAlmostEqual(force_factor, non_bonded_force_factors[expected_key])
+        self._test_non_bonded_force_factors(non_bonded_potential, non_bonded_force_factors, 
+                                            ala_4.active_shifts, ala_4.ala4_factors_non_bonded)
+        
 #            forces = self.make_result_array_forces()
 #            non_bonded_potential._calc_single_force_set(i, factor, forces)
 #                
