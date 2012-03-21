@@ -301,7 +301,6 @@ class TestXcamshiftA4(unittest2.TestCase):
             for component in non_bonded_potential._get_all_components():
                 target_atom_id,remote_atom_id,coefficient,exponent = component
                 
-                print target_atom_id,remote_atom_id
                 
                 target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
                 remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
