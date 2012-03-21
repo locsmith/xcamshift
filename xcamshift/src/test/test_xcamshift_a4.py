@@ -382,11 +382,21 @@ class TestXcamshiftA4(unittest2.TestCase):
         self.assertEmpty(non_bonded_force_factors)
 
     def testNonBondedForcesNotSmoothed(self):
-        non_bonded_potential = Non_bonded_potential()
+        non_bonded_potential = Non_bonded_potential(smoothed=False)
         non_bonded_potential.set_observed_shifts(ala_4.ala_4_expected_shifts)
         non_bonded_potential.update_non_bonded_list()
         
         non_bonded_force_factors = dict(ala_4.ala_4_force_factors_not_smoothed)
+        
+        self._test_non_bonded_force_factors(non_bonded_potential, non_bonded_force_factors, 
+                                            ala_4.active_shifts, ala_4.ala4_factors_non_bonded)
+        
+    def testNonBondedForcesSmoothed(self):
+        non_bonded_potential = Non_bonded_potential(smoothed=True)
+        non_bonded_potential.set_observed_shifts(ala_4.ala_4_expected_shifts)
+        non_bonded_potential.update_non_bonded_list()
+        
+        non_bonded_force_factors = dict(ala_4.ala_4_force_factors_smoothed)
         
         self._test_non_bonded_force_factors(non_bonded_potential, non_bonded_force_factors, 
                                             ala_4.active_shifts, ala_4.ala4_factors_non_bonded)

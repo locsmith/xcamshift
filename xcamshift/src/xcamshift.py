@@ -661,12 +661,21 @@ class Distance_based_potential(Base_potential):
         target_pos = Atom_utils._get_atom_by_index(target_atom).pos()
         distant_pos =  Atom_utils._get_atom_by_index(distance_atom).pos()
         
-        distance  = target_pos - distant_pos
-        distance_2 = sum([elem**2 for elem in distance])
+        distances  = target_pos - distant_pos
+        distance_2 = sum([elem**2 for elem in distances])
 
         factor= factor * coefficient
-        modified_exponent = (exponent - 2.0) / 2.0
-        force_factor = factor *  exponent * distance_2**modified_exponent
+        
+        if self._smoothed:
+            ratio = distance_2 / self._cutoff**2
+            ratio =  ratio**4
+            pre_exponent = exponent - (exponent + 8.0) * ratio
+        else:
+            pre_exponent = exponent
+            
+        reduced_exponent = (exponent - 2.0) / 2.0
+        
+        force_factor = factor *  pre_exponent * distance_2 ** reduced_exponent
 
         return force_factor
 
