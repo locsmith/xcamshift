@@ -140,6 +140,18 @@ class TestXcamshiftA4(unittest2.TestCase):
             if self.check_almost_equal(ZEROS_3, value):
                 del expected_forces_dict[key]
 
+    def remove_almost_zero_force_elems_from_list(self, forces, delta = 1e-7):
+        ZEROS_3 = 0.0, 0.0, 0.0
+        
+        to_delete = []
+        for i,value in enumerate(forces):
+            if value == None or not self.check_almost_equal(ZEROS_3, value):
+                to_delete.append(i)
+        to_delete.reverse()
+        
+        for i in to_delete:
+            del forces[i]
+        return forces
 
     # TODO this is a shim and will disapear once we unify keys formats
     def _convert_dump_dihedral_key(self, dump_selection_data):
@@ -422,8 +434,23 @@ class TestXcamshiftA4(unittest2.TestCase):
             forces = self.make_result_array_forces()
             forces = non_bonded_potential._calc_single_force_set(i, factor,forces)
             
-            expected_triplet = forces[target_atom_id]
-            self.assertSequenceAlmostEqual(expected_triplet, non_bonded_forces[expected_key])
+            target_force_triplet = forces[target_atom_id]
+            remote_force_triplet  = forces[remote_atom_id]
+            
+            expected_target_forces = non_bonded_forces[expected_key]
+            expected_remote_forces  = [-elem for elem in expected_target_forces]
+            
+            self.assertSequenceAlmostEqual(target_force_triplet, expected_target_forces)
+            self.assertSequenceAlmostEqual(remote_force_triplet, expected_remote_forces)
+            
+            atom_ids =  [target_atom_id,remote_atom_id]
+            atom_ids.sort(reverse=True)
+            for atom_id in atom_ids:
+                del forces[atom_id]
+            forces = self.remove_almost_zero_force_elems_from_list(forces)
+            
+            self.assertEmpty(forces)
+            
             del non_bonded_forces[expected_key]
         self.assertEmpty(non_bonded_forces)
 
