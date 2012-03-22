@@ -133,7 +133,7 @@ class TestXcamshiftA4(unittest2.TestCase):
         target_atom_forces = forces[target_atom_index]
         return target_atom_forces
 
-
+#TODO: replace use of delta with decimals or sgignificant figures (better)
     def remove_almost_zero_force_elems(self, expected_forces_dict, delta = 1e-7):
         ZEROS_3 = 0.0, 0.0, 0.0
         for key, value in expected_forces_dict.items():
