@@ -1994,7 +1994,23 @@ class Xcamshift():
                           Non_bonded_potential()
                           ]
         self._shift_table = Observed_shift_table()
-                
+    
+    def get_sub_potential_names(self):
+        return [potential.get_abbreviated_name() for potential in self.potential]
+    
+    def get_named_sub_potential(self,name):
+        result =  None
+        for potential in self.potential:
+            if potential.get_abbreviated_name() ==  name:
+                result = potential
+                break
+        if potential ==  None:
+            template = "cannot find potential with the name %s in %s"
+            all_potential_names  =  ",".join(self.get_sub_potential_names())
+            msg = template % (name,all_potential_names)
+            raise Exception(msg)
+        return result
+#    
     def print_shifts(self):
         result  = [0] * Segment_Manager().get_number_atoms()
         
