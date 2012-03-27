@@ -1850,6 +1850,7 @@ class Non_bonded_list(object):
         self._non_bonded_call_count += 1
         
         if self._box_update_count >= self._update_frequency:
+            target_component_list.clear()
             self._box_update_count = -1
             self._non_bonded_calculation_count += 1
             self._build_boxes(component_list_1, component_list_2, target_component_list)
@@ -1955,7 +1956,9 @@ class Non_bonded_potential(Distance_based_potential):
         
         return non_bonded_list
      
-    
+    def get_target_atom_ids(self):
+        self.update_non_bonded_list()
+        return super(Non_bonded_potential, self).get_target_atom_ids()
 
     def update_non_bonded_list(self):
         self._get_non_bonded_list()
@@ -1967,6 +1970,7 @@ class Non_bonded_potential(Distance_based_potential):
         return Distance_based_potential.calc_single_atom_shift(self, target_atom_id)
     
     def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
+        self.update_non_bonded_list()
         return Distance_based_potential.calc_single_atom_force_set(self, target_atom_id, force_factor, forces)
     
     def _calc_component_shift(self, index):
