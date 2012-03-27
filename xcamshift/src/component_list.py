@@ -102,6 +102,9 @@ class Component_list():
     
     def __getitem__(self,index):
         return self._components[index]
+    
+    def clear(self):
+        self._components =[]
 #TODO: not a useful string
 #    def __str__(self):
 #        result = []
