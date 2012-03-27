@@ -8,7 +8,7 @@ from pdbTool import PDBTool
 import unittest2
 #from xcamshift import RandomCoilShifts, Distance_potential,  Extra_potential,\
 #    Dihedral_potential, Base_potential, Sidechain_potential, Xcamshift,\
-from xcamshift import    Non_bonded_potential, Non_bonded_list
+from xcamshift import    Non_bonded_potential, Non_bonded_list, Xcamshift
 from atomSel import AtomSel
 #from test.xdists import xdists_ala_3
 #from test.dihedrals import dihedrals_ala_3
@@ -475,9 +475,44 @@ class TestXcamshiftA4(unittest2.TestCase):
 #                    expected_ring_forces = AFA.ring_forces_harmonic[ring_force_key]
 #                    ring_atom_forces = forces[ring_atom_id]
 #                    self.assertSequenceAlmostEqual(ring_atom_forces, expected_ring_forces, self.DEFAULT_DECIMAL_PLACES)
+
+    def  test_overall_shifts_a4(self):
+        xcamshift_potential =  Xcamshift()
+        
+        shifts = self.make_result_array()
+        shifts = xcamshift_potential.set_shifts(shifts)
+        
+        expected  = [0.0] * len(shifts)
+        
+        for target_atom_key in ala_4.ala_4_expected_shifts:
+            target_atom_id  = Atom_utils.find_atom_id(*target_atom_key)[0]
+            expected[target_atom_id] = ala_4.ala_4_expected_shifts[target_atom_key]
+            
+        self.assertSequenceAlmostEqual(expected, shifts,self.DEFAULT_DECIMAL_PLACES)
+        
+
+    def testComponentShiftsA4(self):
+        xcamshift_potential =  Xcamshift()
+        
+        expected_shift_components = dict(ala_4.ala_4_expected_shift_components)
+        for sub_potential_name in xcamshift_potential.get_sub_potential_names():
+            sub_potential = xcamshift_potential.get_named_sub_potential(sub_potential_name)
+            
+            for target_atom_id in sub_potential.get_target_atom_ids():
+                expected_key = Atom_utils._get_atom_info_from_index(target_atom_id),sub_potential_name
+                single_atom_shift = sub_potential.calc_single_atom_shift(target_atom_id)
+
+                #TODO: remove limitation to 4decimal points due to poor float reading in almost
+                self.assertAlmostEqual(expected_shift_components[expected_key],single_atom_shift,self.DEFAULT_DECIMAL_PLACES-1, `expected_key`)
+                
+                del expected_shift_components[expected_key]
+        self.remove_zero_valued_keys(expected_shift_components)
+        self.assertEmpty(expected_shift_components)
+                
+    
 if __name__ == "__main__":
     unittest2.main()
 #    TestXcamshift.list_test_shifts()
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testNonBondedComponents')
+#    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testComponentShiftsA4')
 #    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testNonBondedForces')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
