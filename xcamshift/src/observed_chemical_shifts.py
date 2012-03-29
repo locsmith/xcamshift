@@ -56,7 +56,8 @@ class Observed_shift_table(object):
         return tupleit(results)
     
     def __str__(self): 
-        result  = []
+        
+        result  = ["shift table", "-----------",""]
         for (segid,resid,atom_name),shift in self.dump_observed_shifts():
             result.append("[%4s]:%i@%s  %7.4f" % (segid,resid,atom_name,shift))
         return "\n".join(result)
