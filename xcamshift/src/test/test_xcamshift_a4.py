@@ -22,6 +22,7 @@ import sys
 from table_manager import Table_manager
 from component_list import Component_list
 from test import ala_4
+from segment_manager import Segment_Manager
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -46,6 +47,12 @@ def almostEqual(first, second, places = 7):
 #class testSegmentManager(object):
 class TestXcamshiftA4(unittest2.TestCase):
 
+    def _setup_xcamshift_with_shifts_table(self, test_shifts):
+        xcamshift = Xcamshift()
+        observed_shifts = Observed_shift_table(test_shifts)
+        xcamshift.set_observed_shifts(observed_shifts)
+        return xcamshift
+    
     def assertLengthIs(self, components_0, length):
         return self.assertEqual(len(components_0), length)
 
@@ -508,6 +515,38 @@ class TestXcamshiftA4(unittest2.TestCase):
                 del expected_shift_components[expected_key]
         self.remove_zero_valued_keys(expected_shift_components)
         self.assertEmpty(expected_shift_components)
+        
+    def _test_force_sets(self, xcamshift, expected_energy, expected_forces):
+        expected_forces = dict(expected_forces)
+        number_atoms = Segment_Manager().get_number_atoms()
+        derivs = [None] * number_atoms
+        energy = xcamshift.calcEnergyAndDerivs(derivs)
+        
+        for atom_id in range(number_atoms):
+            
+            atom_key  =  Atom_utils._get_atom_info_from_index(atom_id)
+            if atom_key in expected_forces:
+                force_triplet = derivs[atom_id]
+                if force_triplet == None:
+                    force_triplet = (0.0,0.0,0.0)
+                expected_force_triplet = expected_forces[atom_key]
+                
+                self.assertSequenceAlmostEqual(force_triplet, expected_force_triplet, self.DEFAULT_DECIMAL_PLACES)
+                del expected_forces[atom_key]
+                
+        self.remove_almost_zero_force_elems(expected_forces, self.DEFAULT_DECIMAL_PLACES)
+        self.assertEmpty(expected_forces)
+        
+        #TODO: improve accuracy of test energy
+        self.assertAlmostEqual(energy, expected_energy, self.DEFAULT_DECIMAL_PLACES-1)
+        
+    
+    def testCalcForceSetHarmonic(self):
+        xcamshift = self._setup_xcamshift_with_shifts_table(ala_4.ala_4_test_shifts_harmonic)
+        expected_energy = ala_4.ala_4_energies_harmonic[TOTAL_ENERGY]
+        expected_forces =ala_4.ala_4_total_forces_harmonic
+        
+        self._test_force_sets(xcamshift, expected_energy, expected_forces)
                 
     
 if __name__ == "__main__":
