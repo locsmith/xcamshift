@@ -16,15 +16,21 @@ class Observed_shift_table(object):
     def process_observed_shifts(self,shift_data):
         result  = {}
         for key in shift_data:
-            search_key = key
             if len(key) == 2:
-                search_key = list(key)
-                search_key.insert(0,"*")
-                search_key =  tuple(search_key)
+                search_key = '*',key[0],key[1]
+            else:
+                search_key = tuple(key)
+            if len(search_key) ==  3:
                 #TODO move Base_potential components to utilities
                 atoms = Atom_utils.find_atom(*search_key)
                 for atom in atoms:
                     result[atom.index()] = shift_data[key]
+            else:
+                template = """key with unexpected length should be either 'segid,residue_no,atom_name' 
+                              or 'residue_no,atom_name' but i got '%s'"""
+                msg = template % `key`
+                raise Exception(msg)
+                    
         return result
     
     def get_chemical_shift(self,atom_index):
