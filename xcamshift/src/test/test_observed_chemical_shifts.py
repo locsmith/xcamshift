@@ -52,6 +52,8 @@ class TestObservedShiftTable(unittest2.TestCase):
         
         self._test_shift_keys(test_keys,expected_keys)
 
+#TODO add test for keys which are the wrong length
+
     def testObservedShiftTableKeysLong(self):
         test_shifts = ala_3.ala_3_test_shifts_harmonic
         shift_table = Observed_shift_table(test_shifts)
