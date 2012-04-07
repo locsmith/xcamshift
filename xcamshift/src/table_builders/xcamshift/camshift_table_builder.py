@@ -8,7 +8,10 @@ import sys
 import os
 import glob
 import re
-from table_builders.xcamshift.Backbone_distance_extractor import BB_table_extractor
+from table_builders.xcamshift.Backbone_distance_extractor import BB_table_extractor,\
+    BB
+from table_builders.xcamshift.Extra_distance_extractor import XTRA,\
+    XTRA_table_extractor
 
 def get_atom_type_for_filename(file_path):
     file_name = os.path.split(file_path)[1]
@@ -115,10 +118,15 @@ if __name__ == '__main__':
     reader = Camshift_table_reader(table_dir)
     reader.read()
     
-    for file_type in reader.get_file_types():
-        file_type_name  = _get_file_type_name(file_type)
-        
-        print "\n--- %s ---\n" % file_type_name
-
-        extractor = BB_table_extractor(reader.data)
-        print extractor.extract(file_type)
+    file_types = reader.get_file_types()
+    
+    table_types = BB, XTRA
+    extractors = BB_table_extractor(reader.data), XTRA_table_extractor(reader.data)
+    for extractor, table_type in zip(extractors,table_types):
+        for file_type in file_types:
+            file_type_name  = _get_file_type_name(file_type)
+            
+            print "\n--- %s %s ---\n" % (table_type, file_type_name)
+    
+#            extractor = BB_table_extractor(reader.data)
+            print extractor.extract(file_type)
