@@ -4,24 +4,22 @@ Created on 6 Apr 2012
 @author: garyt
 '''
 import re
-from table_builders.common_constants import HA,CA,H,N,C,CB
+from table_builders.common_constants import HA,CA,H,N,C,O
+from table_builders.common_constants import h_keys
+
 import yaml
 from collection_backport import OrderedDict
-from abc import abstractmethod
 
-from table_builders.formatters import convert_H_to_HN,fixup_decimal_spacing, \
-     fixup_key_spacing, fixup_null_values, replace_plus_with_space
-from table_builders.xcamshift.yaml_patches import apply_patch_float_format_with_nulls,\
-     apply_ordered_dict_patch
+from table_builders.formatters import fixup_convert_H_to_HN,fixup_decimal_spacing, \
+     fixup_key_spacing, fixup_null_values, fixup_replace_plus_with_space
+from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls
+
 from table_builders.table_extractor import Table_extractor
 
 
 
 BB = 'COBB2'
 
-O = 'O'
-
-h_keys = (HA,CA,H,N,C,CB)
 missing_v_keys = (H, -1),(O, 1)
 bb_v_keys = ((N,-1),
           (H, -1),
@@ -111,7 +109,7 @@ class BB_table_extractor(Table_extractor):
             line = fixup_key_spacing(line)
             line = fixup_decimal_spacing(line)
             line = re.sub("^(\s+[0-9])","\n\g<0>",line)
-            line = replace_plus_with_space(line)
-            line = convert_H_to_HN(line)
+            line = fixup_replace_plus_with_space(line)
+            line = fixup_convert_H_to_HN(line)
             result.append(line)
         return result
