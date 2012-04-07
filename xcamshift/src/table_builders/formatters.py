@@ -32,11 +32,35 @@ def fixup_decimal_spacing(line):
     return line
 
 
-def convert_H_to_HN(line):
+def fixup_convert_H_to_HN(line):
     line = re.sub("H ", "HN", line)
     return line
 
 
-def replace_plus_with_space(line):
+def fixup_replace_plus_with_space(line):
     line = re.sub("\+", " ", line)
     return line
+
+def fixup_complex_key_question_mark(line):
+    return line.replace("? [", "[")
+
+def fixup_tuple_key_spacing_callback(m):
+    values  =  m.group(1).split(',')
+    value_1 =  ("%s," % values[0]).ljust(3)
+    value_2 = ("%s" % values[1]).rjust(3)
+
+    return '[%s%s]' % (value_1,value_2)
+
+def fixup_tuple_key_spacing(line):
+    return re.sub("\[(.*)\]", fixup_tuple_key_spacing_callback, line)
+
+
+def fixup_put_lonely_keys_on_new_line(line):
+    return re.sub("^(\s+\[.*\]:)$", "\n\g<1>", line)
+
+def global_fixup_colons_on_same_line_as_tuple_key(lines):
+    return re.sub("\]\n(\s*):", "]:\n\g<1> ", lines)
+
+
+def global_fixup_data_dicts_on_same_line_as_key(lines):
+    return re.sub("\]:\n\s+{", "] : {", lines)

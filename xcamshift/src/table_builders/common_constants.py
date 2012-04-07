@@ -12,3 +12,7 @@ CA = 'CA'
 CB = 'CB'
 HA = 'HA'
 C = 'C'
+
+h_keys = (HA,CA,H,N,C,CB)
+
+O = 'O'
