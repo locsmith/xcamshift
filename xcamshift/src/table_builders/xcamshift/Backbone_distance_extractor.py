@@ -11,7 +11,9 @@ import yaml
 from collection_backport import OrderedDict
 
 from table_builders.formatters import fixup_convert_H_to_HN,fixup_decimal_spacing, \
-     fixup_key_spacing, fixup_null_values, fixup_replace_plus_with_space
+     fixup_data_key_spacing, fixup_null_values, fixup_replace_plus_with_space,\
+    fixup_put_lonely_keys_on_new_line, fixup_line_data_key_spacing,\
+    fixup_lonely_key_spacing
 from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls
 
 from table_builders.table_extractor import Table_extractor
@@ -102,14 +104,18 @@ class BB_table_extractor(Table_extractor):
         return  yaml.dump(serialized_data,default_flow_style=None,width=1000,indent=6)
    
 
+            
     def format_lines(self,lines):
         result = []
         for line in lines.split('\n'):
             line = fixup_null_values(line)
-            line = fixup_key_spacing(line)
+            line = fixup_data_key_spacing(line)
+            line = fixup_line_data_key_spacing(line)
             line = fixup_decimal_spacing(line)
             line = re.sub("^(\s+[0-9])","\n\g<0>",line)
             line = fixup_replace_plus_with_space(line)
             line = fixup_convert_H_to_HN(line)
+            line = fixup_lonely_key_spacing(line)
+            line = fixup_put_lonely_keys_on_new_line(line)
             result.append(line)
         return result
