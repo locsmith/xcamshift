@@ -10,6 +10,7 @@ N = 'N'
 H = 'H'
 CA = 'CA'
 CB = 'CB'
+CG = 'CG'
 HA = 'HA'
 C = 'C'
 
