@@ -5,7 +5,9 @@ Created on 7 Apr 2012
 '''
 import re
 
+from functools import partial
 
+#TODO: extract common code
 
 
 def fixup_null_values(line):
@@ -13,13 +15,35 @@ def fixup_null_values(line):
     line = line.replace('~}', " ,%9s}" % "")
     return line
 
-def fixup_key_spacing_callback(m):
+def fixup_key_spacing_callback(m,spacing=4):
     value  =  m.group(1)[:-1]
     length = len(value)
-    return value + ((4 - length) * " ") + ": "
+    return value + ((spacing - length) * " ") + ": "
 
-def fixup_key_spacing(line):
-    line = re.sub("([^{][A-Z]+:)", fixup_key_spacing_callback, line)
+KEY_AND_VALUE_REGEX = "^([ ]+)([A-Z0-9][A-Z0-9 :]+){([ \-+A-Z0-9:,\.]+)}$"
+
+def fixup_data_key_spacing(line,spacing = 4):
+    matches = re.match(KEY_AND_VALUE_REGEX, line)
+    if matches:
+        pre_space = matches.group(1)
+        key = matches.group(2)
+        values = matches.group(3)
+        partial_fixup = partial(fixup_key_spacing_callback, spacing=spacing)
+        values = re.sub("([A-Z0-9]+:)", partial_fixup, values)
+        line  = "%s%s{%s}" % (pre_space,key,values)
+    return line
+
+def fixup_line_data_key_spacing(line,spacing = 6):
+    matches = re.match(KEY_AND_VALUE_REGEX, line)
+    if matches:
+        pre_space = matches.group(1)
+        key = matches.group(2)
+        values = matches.group(3)
+        
+        key_length = len(key)-1
+        if (key_length) + 1 < spacing:
+            key = key.ljust(spacing)
+        line  = "%s%s{%s}" % (pre_space,key,values)
     return line
 
 def fixup_decimal_spacing_callback(m):
@@ -54,9 +78,8 @@ def fixup_tuple_key_spacing_callback(m):
 def fixup_tuple_key_spacing(line):
     return re.sub("\[(.*)\]", fixup_tuple_key_spacing_callback, line)
 
-
 def fixup_put_lonely_keys_on_new_line(line):
-    return re.sub("^(\s+\[.*\]:)$", "\n\g<1>", line)
+    return re.sub("^(\s+[A-Z0-9\-\[][A-Z-0-9, \]]+:)$", "\n\g<1>", line)
 
 def global_fixup_colons_on_same_line_as_tuple_key(lines):
     return re.sub("\]\n(\s*):", "]:\n\g<1> ", lines)
@@ -64,3 +87,13 @@ def global_fixup_colons_on_same_line_as_tuple_key(lines):
 
 def global_fixup_data_dicts_on_same_line_as_key(lines):
     return re.sub("\]:\n\s+{", "] : {", lines)
+
+def fixup_lonely_key_spacing(line, length=2):
+    match = re.match("(\s+)([0-9\-A-Z]+):$",line)
+    
+    if match != None:
+        line_spacing =  match.group(1)
+        key = match.group(2)
+        key = key.rjust(length)
+        line  = "%s%s:"  % (line_spacing,key)
+    return line
