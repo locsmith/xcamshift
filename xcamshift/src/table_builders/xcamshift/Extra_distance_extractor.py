@@ -8,8 +8,7 @@ from table_builders.common_constants import HA,CA,H,N,C,CB,O, h_keys
 from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls, \
      apply_tuple_patch
 from collection_backport import OrderedDict
-import re
-from table_builders.formatters import fixup_key_spacing, fixup_null_values,\
+from table_builders.formatters import fixup_null_values,\
     fixup_decimal_spacing, fixup_convert_H_to_HN, fixup_replace_plus_with_space,\
     fixup_tuple_key_spacing, fixup_put_lonely_keys_on_new_line,\
     fixup_complex_key_question_mark,\
