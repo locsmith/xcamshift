@@ -70,18 +70,19 @@ def fixup_complex_key_question_mark(line):
     return line
 #line.replace("? [", "[")
 
-def fixup_tuple_key_spacing_callback(m):
+def fixup_tuple_key_spacing_callback(m,left_spacing=3,right_spacing=3):
     values  =  m.group(1).split(',')
-    value_1 =  ("%s," % values[0]).ljust(3)
-    value_2 = ("%s" % values[1]).rjust(3)
+    value_1 =  ("%s," % values[0]).ljust(left_spacing)
+    value_2 = ("%s" % values[1]).rjust(right_spacing)
 
     return '[%s%s]' % (value_1,value_2)
 
-def fixup_tuple_key_spacing(line):
-    return re.sub("\[([A-Z0-9\-\,\s]+)\]", fixup_tuple_key_spacing_callback, line)
+def fixup_tuple_key_spacing(line,left_spacing=3,right_spacing=3):
+    callback = partial(fixup_tuple_key_spacing_callback, left_spacing = left_spacing, right_spacing= right_spacing)
+    return re.sub("\[([A-Z0-9\-\,\s]+)\]", callback, line)
 
 def fixup_put_lonely_keys_on_new_line(line):
-    return re.sub("^(\s+[A-Z0-9\-\[][A-Z-0-9, \]]+:)$", "\n\g<1>", line)
+    return re.sub("^(\s+[A-Za-z0-9\-\[][A-Za-z-0-9_, \]]+:)$", "\n\g<1>", line)
 
 def global_fixup_colons_on_same_line_as_tuple_key(lines):
     return re.sub("\]\n(\s*):", "]:\n\g<1> ", lines)
