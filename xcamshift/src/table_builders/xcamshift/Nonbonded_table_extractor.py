@@ -15,7 +15,6 @@ from table_builders.formatters import fixup_null_values,\
     global_fixup_colons_on_same_line_as_tuple_key,\
     global_fixup_data_dicts_on_same_line_as_key
 from table_builders.table_extractor import Table_extractor
-from yaml.dumper import Dumper
 import re
 from table_builders.yaml_patches import apply_no_aliases_patch
 
