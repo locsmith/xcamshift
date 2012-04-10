@@ -10,7 +10,7 @@ target_atoms :  ["HA", "CA", "HN", "N", "C", "CB"]
 rings : {
      PHE : { "6":  ["CG","CD1","CE1","CZ","CE2","CD2"]},
      TYR : { "6" : ["CG","CD1","CE1","CZ","CE2","CD2"]},
-     #NOTE: not corrected for ring order from here on in
+     #TODO: not corrected for ring order from here on in
      TRP : { "6" : ["CD","CE1","CE2","CZ1","CZ2","CH"],
              "5" : ["CG","CD1","CD2","CE1","CE2"]},
      HIS : { "5" : ["CG","CD2","CE1","ND1","NE2"]}
