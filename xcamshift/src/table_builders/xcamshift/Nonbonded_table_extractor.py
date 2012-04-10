@@ -61,8 +61,6 @@ SPHERE_ID_2 = 'sphere_2'
 SPHERE_1_EXPONENT = -3.0
 SPHERE_2_EXPONENT =  1.0
         
-def ignore_aliases(self,_data):
-    return True
 
 class Nonbonded_table_extractor(Table_extractor):
     
@@ -122,6 +120,7 @@ class Nonbonded_table_extractor(Table_extractor):
     
 
     def _get_data(self, file_type=''):
+        raise Exception("here")
         return super(Nonbonded_table_extractor, self)._get_data(self, file_type=file_type)
 
     def fixup_CA_values(self,line):
