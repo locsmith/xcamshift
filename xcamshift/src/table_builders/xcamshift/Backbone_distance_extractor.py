@@ -4,7 +4,7 @@ Created on 6 Apr 2012
 @author: garyt
 '''
 import re
-from table_builders.common_constants import HA,CA,H,N,C,O
+from table_builders.common_constants import HA,CA,H,N,C,O, DATA
 from table_builders.common_constants import h_keys
 
 import yaml
@@ -58,8 +58,6 @@ class BB_table_extractor(Table_extractor):
         apply_patch_float_format_with_nulls()
         apply_ordered_dict_patch()
     
-    def _get_data(self,file_type=''):
-        return super(BB_table_extractor, self)._get_data(file_type)
         
     def extract(self, file_type  = ''):
         
@@ -88,21 +86,17 @@ class BB_table_extractor(Table_extractor):
         data = self.add_missing_keys_to_copy_of_data(data) 
                 
         out_data = OrderedDict()
-        out_data['data'] = OrderedDict()
+        out_data[DATA] = OrderedDict()
                     
         for i,v_key in enumerate(bb_v_keys):
     
     
-            out_line = out_data['data'].setdefault(v_key[1],OrderedDict()).setdefault(v_key[0],OrderedDict())
+            out_line = out_data[DATA].setdefault(v_key[1],OrderedDict()).setdefault(v_key[0],OrderedDict())
 
             for h_key in h_keys:
                 out_line[h_key] = data[BB][h_key][i]
         
         return out_data
-    
-    def build_output_lines(self,serialized_data):
-        return  yaml.dump(serialized_data,default_flow_style=None,width=1000,indent=6)
-   
 
             
     def format_lines(self,lines):

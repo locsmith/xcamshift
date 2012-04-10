@@ -4,7 +4,7 @@ Created on 7 Apr 2012
 @author: garyt
 '''
 
-from table_builders.common_constants import H,N,C,O, h_keys
+from table_builders.common_constants import H,N,C,O, h_keys, DATA
 from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls, \
      apply_tuple_patch
 from collection_backport import OrderedDict
@@ -53,7 +53,6 @@ NONBONDED = 'nonbonded'
 SPHERE1 = 'SPHERE1'
 SPHERE2 = 'SPHERE2'
 
-DATA = 'data'
 EXPONENT_ID = 'exponent'
 SPHERE_ID_1 = 'sphere_1'
 SPHERE_ID_2 = 'sphere_2'
@@ -72,21 +71,13 @@ class Nonbonded_table_extractor(Table_extractor):
         apply_ordered_dict_patch()
         apply_no_aliases_patch()
 
-
+    
     def serialize(self,data):
         
         raw_out_data = self._basic_serialise(data)
         
         return self._tidy_key_order(raw_out_data)
         
-
-    def _build_outline(self, data, i,sphere):
-        out_line = OrderedDict()
-        for h_key in h_keys:
-            out_line[h_key] = data[sphere][h_key][i]
-            
-        return out_line
-
     def _basic_serialise(self, data):
         raw_out_data = {}
         raw_out_data[DATA] = {}
@@ -103,6 +94,13 @@ class Nonbonded_table_extractor(Table_extractor):
         return raw_out_data
 
 
+    def _build_outline(self, data, i,sphere):
+        out_line = OrderedDict()
+        for h_key in h_keys:
+            out_line[h_key] = data[sphere][h_key][i]
+            
+        return out_line
+
     def _tidy_key_order(self, raw_out_data):
         out_data = OrderedDict()
         out_data[DATA] = OrderedDict()
@@ -118,10 +116,6 @@ class Nonbonded_table_extractor(Table_extractor):
         return out_data
 
     
-
-    def _get_data(self, file_type=''):
-        raise Exception("here")
-        return super(Nonbonded_table_extractor, self)._get_data(self, file_type=file_type)
 
     def fixup_CA_values(self,line):
         return re.sub("CA:([ \-0-9]{3,3}?)\.","CA: \g<1>.",line)

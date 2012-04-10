@@ -4,7 +4,7 @@ Created on 7 Apr 2012
 @author: garyt
 '''
 
-from table_builders.common_constants import HA,CA,H,N,C,CB,O, CG, h_keys
+from table_builders.common_constants import CA,N,C,CB, CG, h_keys, DATA
 from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls, \
      apply_tuple_patch
 from collection_backport import OrderedDict
@@ -16,8 +16,6 @@ from table_builders.formatters import fixup_null_values,\
     global_fixup_data_dicts_on_same_line_as_key,\
     global_fixup_multi_line_tuple_keys
 from table_builders.table_extractor import Table_extractor
-import re
-
 
 
 
@@ -40,23 +38,17 @@ class DIHEDRALS_table_extractor(Table_extractor):
 
     def serialize(self,data):
         out_data = OrderedDict()
-        out_data['data'] =  OrderedDict()
+        out_data[DATA] =  OrderedDict()
                 
         for i,v_key in enumerate(dihedrals_v_keys):
     
-            out_line = out_data['data'].setdefault(v_key,OrderedDict())
+            out_line = out_data[DATA].setdefault(v_key,OrderedDict())
     
             for h_key in h_keys:
                 out_line[h_key] = data[DIHEDRALS][h_key][i]
 
         return out_data
     
-
-    def _get_data(self, file_type=''):
-        return super(DIHEDRALS_table_extractor, self)._get_data(self, file_type=file_type)
-
-
- 
 
     def format_lines(self,lines):
         result = []

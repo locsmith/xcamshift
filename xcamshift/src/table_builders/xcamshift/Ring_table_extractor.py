@@ -4,7 +4,7 @@ Created on 7 Apr 2012
 @author: garyt
 '''
 
-from table_builders.common_constants import HA,CA,H,N,C,CB,O, h_keys
+from table_builders.common_constants import h_keys, DATA
 from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls, \
      apply_tuple_patch
 from collection_backport import OrderedDict
@@ -42,11 +42,11 @@ class RING_table_extractor(Table_extractor):
 
     def serialize(self,data):
         out_data = OrderedDict()
-        out_data['data'] =  OrderedDict()
+        out_data[DATA] =  OrderedDict()
                 
         for i,v_key in enumerate(xtra_v_keys):
     
-            out_line = out_data['data'].setdefault(v_key,OrderedDict())
+            out_line = out_data[DATA].setdefault(v_key,OrderedDict())
     
             for h_key in h_keys:
                 out_line[h_key] = data[RINGS][h_key][i]

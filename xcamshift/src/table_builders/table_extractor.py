@@ -11,10 +11,6 @@ DEFAULT_INDENT = 6
 class Table_extractor(object):
     
     __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def _get_data(self, file_type = ''):
-        return self._data[file_type]
          
     def extract(self,file_type=''):
         data =  self._data[file_type]

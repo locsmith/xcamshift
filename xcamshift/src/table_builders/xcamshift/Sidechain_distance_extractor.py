@@ -4,17 +4,14 @@ Created on 7 Apr 2012
 @author: garyt
 '''
 
-from table_builders.common_constants import HA,CA,H,N,C,CB,O, h_keys
+from table_builders.common_constants import h_keys, DATA
 from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls, \
      apply_tuple_patch
 from collection_backport import OrderedDict
 from table_builders.formatters import fixup_null_values,\
     fixup_decimal_spacing, fixup_convert_H_to_HN, fixup_replace_plus_with_space,\
-    fixup_tuple_key_spacing, fixup_put_lonely_keys_on_new_line,\
-    fixup_complex_key_question_mark,\
-    global_fixup_colons_on_same_line_as_tuple_key,\
-    global_fixup_data_dicts_on_same_line_as_key, fixup_data_key_spacing,\
-    fixup_line_data_key_spacing
+    fixup_put_lonely_keys_on_new_line, fixup_line_data_key_spacing,\
+    fixup_data_key_spacing
 from table_builders.table_extractor import Table_extractor
 
 
@@ -58,14 +55,14 @@ class SC_table_extractor(Table_extractor):
 
     def serialize(self,data):
         out_data = OrderedDict()
-        out_data['data'] =  OrderedDict()
+        out_data[DATA] =  OrderedDict()
         
         for residue_type in RESIDUE_TYPES:
             residue_data_label = SC + residue_type + "2"
             residue_data = data[residue_data_label]
             
             for i, atom_type in enumerate(RESIDUE_ATOM_TYPES[residue_type]):
-                out_line = out_data['data'].setdefault(residue_type,OrderedDict()).setdefault(atom_type,OrderedDict())
+                out_line = out_data[DATA].setdefault(residue_type,OrderedDict()).setdefault(atom_type,OrderedDict())
                 for h_key in h_keys:
                     value=0.0
                     if i < len(residue_data[h_key]):
@@ -75,9 +72,6 @@ class SC_table_extractor(Table_extractor):
 
         return out_data
     
-
-    def _get_data(self, file_type=''):
-        return super(SC_table_extractor, self)._get_data(file_type)
 
     def format_lines(self,lines):
         result = []

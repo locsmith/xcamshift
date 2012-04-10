@@ -17,3 +17,5 @@ C = 'C'
 h_keys = (HA,CA,H,N,C,CB)
 
 O = 'O'
+
+DATA = 'data'
