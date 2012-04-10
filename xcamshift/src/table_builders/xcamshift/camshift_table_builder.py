@@ -17,6 +17,8 @@ from table_builders.xcamshift.Sidechain_distance_extractor import SC,\
 from table_builders.xcamshift import Sidechain_distance_extractor
 from table_builders.xcamshift.Dihdedral_distance_extractor import DIHEDRALS_table_extractor,\
     DIHEDRALS
+from table_builders.xcamshift.Ring_table_extractor import RING_table_extractor,\
+    RINGS
 
 def get_atom_type_for_filename(file_path):
     file_name = os.path.split(file_path)[1]
@@ -125,9 +127,10 @@ if __name__ == '__main__':
     
     file_types = reader.get_file_types()
     
-    table_types = BB, XTRA, SC, DIHEDRALS
+    table_types = BB, XTRA, SC, DIHEDRALS, RINGS
     extractors = BB_table_extractor(reader.data), XTRA_table_extractor(reader.data), \
-                 SC_table_extractor(reader.data), DIHEDRALS_table_extractor(reader.data)
+                 SC_table_extractor(reader.data), DIHEDRALS_table_extractor(reader.data), \
+                 RING_table_extractor(reader.data) 
     for extractor, table_type in zip(extractors,table_types):
         for file_type in file_types:
             file_type_name  = _get_file_type_name(file_type)
