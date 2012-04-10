@@ -4,7 +4,7 @@ Created on 17 Jan 2012
 @author: garyt
 '''
 import unittest2
-from utils import tupleit
+from python_utils import tupleit
 
 
 class TestObservedShiftTable(unittest2.TestCase):

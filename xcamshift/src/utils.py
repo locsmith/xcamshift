@@ -3,6 +3,7 @@ Created on 17 Jan 2012
 
 @author: garyt
 '''
+try:
 from simulation import currentSimulation
 from atom import Atom
 from vec3 import  norm
@@ -13,8 +14,6 @@ Y = 1
 Z = 2
 AXES = X,Y,Z
 
-def tupleit(t):
-    return tuple(map(tupleit, t)) if isinstance(t, (list, tuple)) else t
 
 class Atom_utils(object):
     @staticmethod

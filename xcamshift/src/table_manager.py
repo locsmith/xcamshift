@@ -5,13 +5,13 @@ Created on 30 Dec 2011
 '''
 import os
 from yaml import load
-from test.distance_table import Distance_table
+from distance_table import Distance_table
 from random_coil_table import Random_coil_table
 import yaml
 import extra_table
 from dihedral_table import Dihedral_table, Dihedral_parameter_table,\
     Composite_dihedral_table
-from utils import tupleit
+from python_utils import tupleit
 from sidechain_table import Sidechain_table
 from constants_table import Constants_table
 from ring_table import Ring_table
@@ -137,7 +137,7 @@ class Table_manager(object):
         
         return result
 
-    def __get_table(self,table_type,residue_type=None):
+    def _get_table(self,table_type,residue_type=None):
 
         result = self.__search_for_table(table_type,residue_type)
         
@@ -148,19 +148,19 @@ class Table_manager(object):
         return result
             
     def get_BB_Distance_Table(self,residue_type):
-        return Distance_table(self.__get_table(self.BACKBONE, residue_type))
+        return Distance_table(self._get_table(self.BACKBONE, residue_type))
     
     def get_random_coil_table(self, residue_type):
-        return Random_coil_table(self.__get_table(self.RANDOM_COIL, residue_type))
+        return Random_coil_table(self._get_table(self.RANDOM_COIL, residue_type))
     
     def get_extra_table(self,residue_type):
-        return extra_table.Extra_table(self.__get_table(self.EXTRA,residue_type))
+        return extra_table.Extra_table(self._get_table(self.EXTRA,residue_type))
     
     def _get_dihedral_table(self,residue_type):
-        return Dihedral_table(self.__get_table(self.DIHEDRAL,residue_type))
+        return Dihedral_table(self._get_table(self.DIHEDRAL,residue_type))
     
     def _get_dihedral_parameter_table(self,residue_type):
-        return Dihedral_parameter_table(self.__get_table(self.DIHEDRAL_PARS,residue_type))
+        return Dihedral_parameter_table(self._get_table(self.DIHEDRAL_PARS,residue_type))
     
     def get_dihedral_table(self,residue_type):
         dihedral_table = self._get_dihedral_table(residue_type)
@@ -168,14 +168,14 @@ class Table_manager(object):
         return Composite_dihedral_table(dihedral_table, dihedral_parameter_table)
     
     def get_sidechain_table(self,residue_type):
-        return Sidechain_table(self.__get_table(self.SIDECHAIN,residue_type))
+        return Sidechain_table(self._get_table(self.SIDECHAIN,residue_type))
     
     def get_constants_table(self,residue_type):
-        return Constants_table(self.__get_table(self.CONSTANTS,residue_type))
+        return Constants_table(self._get_table(self.CONSTANTS,residue_type))
     
     def get_ring_table(self,residue_type):
-        return Ring_table(self.__get_table(self.RING,residue_type))
+        return Ring_table(self._get_table(self.RING,residue_type))
     
     def get_non_bonded_table(self,residue_type):
-        return Non_bonded_table(self.__get_table(self.NON_BONDED,residue_type))
+        return Non_bonded_table(self._get_table(self.NON_BONDED,residue_type))
             

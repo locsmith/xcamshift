@@ -15,7 +15,8 @@ from math import cos, tanh, cosh, sin
 from observed_chemical_shifts import Observed_shift_table
 from segment_manager import Segment_Manager
 from table_manager import Table_manager
-from utils import tupleit, Atom_utils, AXES, Z
+from python_utils import tupleit
+from utils import Atom_utils, AXES, Z
 from vec3 import Vec3, norm, cross, dot
 import abc
 import sys

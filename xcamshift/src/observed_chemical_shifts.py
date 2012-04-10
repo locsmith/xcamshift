@@ -3,7 +3,8 @@ Created on 24 Jan 2012
 
 @author: garyt
 '''
-from utils import tupleit, Atom_utils
+from python_utils import tupleit
+from utils import Atom_utils
 
 class Observed_shift_table(object):
     '''
