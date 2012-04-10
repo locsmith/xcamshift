@@ -17,6 +17,7 @@ from table_builders.formatters import fixup_null_values,\
 from table_builders.table_extractor import Table_extractor
 from yaml.dumper import Dumper
 import re
+from table_builders.yaml_patches import apply_no_aliases_patch
 
 S='S'
 
@@ -52,7 +53,15 @@ nonbonded_v_keys_required_order = (
 NONBONDED = 'nonbonded'
 SPHERE1 = 'SPHERE1'
 SPHERE2 = 'SPHERE2'
+
 DATA = 'data'
+EXPONENT_ID = 'exponent'
+SPHERE_ID_1 = 'sphere_1'
+SPHERE_ID_2 = 'sphere_2'
+
+SPHERE_1_EXPONENT = -3.0
+SPHERE_2_EXPONENT =  1.0
+        
 def ignore_aliases(self,_data):
     return True
 
@@ -64,42 +73,53 @@ class Nonbonded_table_extractor(Table_extractor):
         apply_patch_float_format_with_nulls()
         apply_tuple_patch()
         apply_ordered_dict_patch()
-        Dumper.ignore_aliases = ignore_aliases 
+        apply_no_aliases_patch()
+
 
     def serialize(self,data):
         
-        raw_out_data = {}
-        raw_out_data[DATA] =  {}
-                
-        for i,v_key in enumerate(nonbonded_v_keys):
-    
-            out_line = raw_out_data[DATA].setdefault('sphere_1',OrderedDict()).setdefault(v_key,OrderedDict())
-    
-            for h_key in h_keys:
-                out_line[h_key] = data[SPHERE1][h_key][i]
-
-        for i,v_key in enumerate(nonbonded_v_keys):
-    
-            out_line = raw_out_data[DATA].setdefault('sphere_2',OrderedDict()).setdefault(v_key,OrderedDict())
-    
-            for h_key in h_keys:
-                out_line[h_key] = data[SPHERE2][h_key][i]
-                
+        raw_out_data = self._basic_serialise(data)
         
+        return self._tidy_key_order(raw_out_data)
+        
+
+    def _build_outline(self, data, i,sphere):
+        out_line = OrderedDict()
+        for h_key in h_keys:
+            out_line[h_key] = data[sphere][h_key][i]
+            
+        return out_line
+
+    def _basic_serialise(self, data):
+        raw_out_data = {}
+        raw_out_data[DATA] = {}
+        
+        for i, v_key in enumerate(nonbonded_v_keys):
+            
+            out_line = self._build_outline(data, i, SPHERE1)
+            raw_out_data[DATA].setdefault(SPHERE_ID_1, OrderedDict())[v_key] = out_line
+            
+            out_line = self._build_outline(data, i, SPHERE2)
+            raw_out_data[DATA].setdefault(SPHERE_ID_2, OrderedDict())[v_key] = out_line
+
+        
+        return raw_out_data
+
+
+    def _tidy_key_order(self, raw_out_data):
         out_data = OrderedDict()
         out_data[DATA] = OrderedDict()
-        out_data[DATA]['sphere_1'] = OrderedDict()
-        out_data[DATA]['sphere_2'] = OrderedDict()
+        out_data[DATA][SPHERE_ID_1] = OrderedDict()
+        out_data[DATA][SPHERE_ID_2] = OrderedDict()
         
-        out_data[DATA]['sphere_1']['exponent'] = -3.0
-        out_data[DATA]['sphere_2']['exponent'] = 1.0
-        for i,v_key in enumerate(nonbonded_v_keys_required_order):
-            out_line = out_data[DATA].setdefault('sphere_1',OrderedDict())[v_key] = raw_out_data[DATA]['sphere_1'][v_key]
+        out_data[DATA][SPHERE_ID_1][EXPONENT_ID] = SPHERE_1_EXPONENT
+        out_data[DATA][SPHERE_ID_2][EXPONENT_ID] = SPHERE_2_EXPONENT
+        for v_key in nonbonded_v_keys_required_order:
+            out_data[DATA].setdefault(SPHERE_ID_1, OrderedDict())[v_key] = raw_out_data[DATA][SPHERE_ID_1][v_key]
+            out_data[DATA].setdefault(SPHERE_ID_2, OrderedDict())[v_key] = raw_out_data[DATA][SPHERE_ID_2][v_key]
         
-        for i,v_key in enumerate(nonbonded_v_keys_required_order):
-            out_line = out_data[DATA].setdefault('sphere_2',OrderedDict())[v_key] = raw_out_data[DATA]['sphere_2'][v_key]
-            
         return out_data
+
     
 
     def _get_data(self, file_type=''):
@@ -142,6 +162,7 @@ class Nonbonded_table_extractor(Table_extractor):
             line = self.split_catergories(line)
             line = self.indent_exponent(line)
             line = self.fixup_multiple_zeros(line)
+
             result.append(line)
         return result
     

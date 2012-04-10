@@ -9,6 +9,7 @@ from yaml.representer import Representer
 import collection_backport
 from yaml.constructor import ConstructorError
 import collections
+from yaml.dumper import Dumper
 
 def float_representer(dumper, data):
     if abs(data) < 1e-9:
@@ -88,3 +89,9 @@ def tuple_representer(dumper, data):
 
 def apply_tuple_patch():
     yaml.add_representer(tuple, tuple_representer)
+    
+def ignore_aliases(self,_data):
+    return True
+
+def apply_no_aliases_patch():
+    Dumper.ignore_aliases = ignore_aliases
