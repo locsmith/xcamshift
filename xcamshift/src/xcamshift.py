@@ -20,6 +20,7 @@ from utils import Atom_utils, AXES, Z
 from vec3 import Vec3, norm, cross, dot
 import abc
 import sys
+from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -762,7 +763,7 @@ class Distance_potential(Distance_based_potential):
         return super(Distance_potential, self)._get_indices()
        
     def get_abbreviated_name(self):
-        return "BB  "
+        return BACK_BONE
     
 
     def _get_table(self, from_residue_type):
@@ -811,7 +812,7 @@ class Extra_potential(Distance_based_potential):
         
     
     def get_abbreviated_name(self):
-        return "XTRA"
+        return XTRA
 #
 #    def _translate_atom_name(self, atom_name,context):
 #        return context._table.get_translation(atom_name)
@@ -869,7 +870,7 @@ class RandomCoilShifts(Base_potential):
 
     
     def get_abbreviated_name(self):
-        return "RC  "
+        return RANDOM_COIL
     
     def _have_derivative(self):
         False
@@ -904,7 +905,7 @@ class Dihedral_potential(Base_potential):
 
 
     def get_abbreviated_name(self):
-        return "DHA "
+        return DIHEDRAL
 
     def _get_table(self, residue_type):
         return self._table_manager.get_dihedral_table(residue_type)
@@ -1128,7 +1129,7 @@ class Sidechain_potential(Distance_based_potential):
 
     
     def  get_abbreviated_name(self):
-        return "SDCH"
+        return SIDE_CHAIN
     
 
 
@@ -1300,8 +1301,8 @@ class Ring_sidechain_atom_factory(Ring_sidechain_component_factory):
                     
             
 
-# BB-ID -> BB-TYPE [iterate this second for find all aromatic shifts for an atom]
-# BB-TYPE ->  AROMATIC-ID [aromatic ring number] COEFF
+# BACK_BONE-ID -> BACK_BONE-TYPE [iterate this second for find all aromatic shifts for an atom]
+# BACK_BONE-TYPE ->  AROMATIC-ID [aromatic ring number] COEFF
 # AROMATIC-ID -> ATOMS [iterate this first to build ring normals and centres
 
 
@@ -1334,7 +1335,7 @@ class Ring_Potential(Base_potential):
         
         
     def get_abbreviated_name(self):
-        return 'RING'
+        return RING
     
     
     def _get_table(self, from_residue_type):
@@ -1937,7 +1938,7 @@ class Non_bonded_potential(Distance_based_potential):
         return Table_manager.get_default_table_manager().get_non_bonded_table(from_residue_type)
         
     def get_abbreviated_name(self):
-        return "NBND"
+        return NON_BONDED
     
     def _get_indices(self):
         return Distance_based_potential.Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
