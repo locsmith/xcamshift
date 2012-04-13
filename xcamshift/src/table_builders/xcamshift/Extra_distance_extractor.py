@@ -4,7 +4,7 @@ Created on 7 Apr 2012
 @author: garyt
 '''
 
-from table_builders.common_constants import HA,CA,H,N,C,CB,O, h_keys, DATA
+from common_constants import HA,CA,H,N,C,CB,O, h_keys, DATA, XTRA
 from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls, \
      apply_tuple_patch
 from collection_backport import OrderedDict
@@ -55,7 +55,7 @@ xtra_v_keys = (   (H,0,HA,0),
                   (CA,-1,CA,1)
 )
 
-XTRA = 'XTRADISTS'
+XTRA_DATA = 'XTRADISTS'
 class XTRA_table_extractor(Table_extractor):
     
     def __init__(self,data):
@@ -64,6 +64,10 @@ class XTRA_table_extractor(Table_extractor):
         apply_patch_float_format_with_nulls()
         apply_tuple_patch()
         apply_ordered_dict_patch()
+    
+    @classmethod
+    def get_name(self):
+        return XTRA
 
     def serialize(self,data):
         out_data = OrderedDict()
@@ -74,7 +78,7 @@ class XTRA_table_extractor(Table_extractor):
             out_line = out_data[DATA].setdefault(v_key[0:2],OrderedDict()).setdefault(v_key[2:4],OrderedDict())
     
             for h_key in h_keys:
-                out_line[h_key] = data[XTRA][h_key][i]
+                out_line[h_key] = data[XTRA_DATA][h_key][i]
 
         return out_data
 

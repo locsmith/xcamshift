@@ -4,7 +4,7 @@ Created on 7 Apr 2012
 @author: garyt
 '''
 
-from table_builders.common_constants import H,N,C,O, h_keys, DATA
+from common_constants import H,N,C,O, h_keys, DATA, NON_BONDED
 from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls, \
      apply_tuple_patch
 from collection_backport import OrderedDict
@@ -49,9 +49,9 @@ nonbonded_v_keys_required_order = (
     (O, SP2),                                   
 )
 
-NONBONDED = 'nonbonded'
-SPHERE1 = 'SPHERE1'
-SPHERE2 = 'SPHERE2'
+
+SPHERE_1_DATA = 'SPHERE1'
+SPHERE_2_DATA = 'SPHERE2'
 
 EXPONENT_ID = 'exponent'
 SPHERE_ID_1 = 'sphere_1'
@@ -70,7 +70,10 @@ class Nonbonded_table_extractor(Table_extractor):
         apply_tuple_patch()
         apply_ordered_dict_patch()
         apply_no_aliases_patch()
-
+    
+    @classmethod
+    def get_name(self):
+        return NON_BONDED
     
     def serialize(self,data):
         
@@ -84,10 +87,10 @@ class Nonbonded_table_extractor(Table_extractor):
         
         for i, v_key in enumerate(nonbonded_v_keys):
             
-            out_line = self._build_outline(data, i, SPHERE1)
+            out_line = self._build_outline(data, i, SPHERE_1_DATA)
             raw_out_data[DATA].setdefault(SPHERE_ID_1, OrderedDict())[v_key] = out_line
             
-            out_line = self._build_outline(data, i, SPHERE2)
+            out_line = self._build_outline(data, i, SPHERE_2_DATA)
             raw_out_data[DATA].setdefault(SPHERE_ID_2, OrderedDict())[v_key] = out_line
 
         
@@ -146,14 +149,14 @@ class Nonbonded_table_extractor(Table_extractor):
             line = fixup_complex_key_question_mark(line)
             line = fixup_null_values(line)
             line = fixup_tuple_key_spacing(line,3,5)
-            line = fixup_decimal_spacing(line)
-            line = fixup_replace_plus_with_space(line)
-            line = fixup_convert_H_to_HN(line)
-            line = fixup_put_lonely_keys_on_new_line(line)
-            line = self.fixup_CA_values(line)
-            line = self.split_catergories(line)
+#            line = fixup_decimal_spacing(line)
+#            line = fixup_replace_plus_with_space(line)
+#            line = fixup_convert_H_to_HN(line)
+#            line = fixup_put_lonely_keys_on_new_line(line)
+#            line = self.fixup_CA_values(line)
+#            line = self.split_catergories(line)
             line = self.indent_exponent(line)
-            line = self.fixup_multiple_zeros(line)
+#            line = self.fixup_multiple_zeros(line)
 
             result.append(line)
         return result

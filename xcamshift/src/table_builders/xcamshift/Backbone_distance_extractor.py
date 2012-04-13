@@ -4,23 +4,21 @@ Created on 6 Apr 2012
 @author: garyt
 '''
 import re
-from table_builders.common_constants import HA,CA,H,N,C,O, DATA
-from table_builders.common_constants import h_keys
+from common_constants import HA,CA,H,N,C,O, DATA, BACK_BONE
+from common_constants import h_keys
 
-import yaml
 from collection_backport import OrderedDict
 
 from table_builders.formatters import fixup_convert_H_to_HN,fixup_decimal_spacing, \
      fixup_data_key_spacing, fixup_null_values, fixup_replace_plus_with_space,\
-    fixup_put_lonely_keys_on_new_line, fixup_line_data_key_spacing,\
-    fixup_lonely_key_spacing
+    fixup_put_lonely_keys_on_new_line, fixup_line_data_key_spacing
 from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls
 
 from table_builders.table_extractor import Table_extractor
 
 
 
-BB = 'COBB2'
+BACK_BONE_DATA = 'COBB2'
 
 missing_v_keys = (H, -1),(O, 1)
 bb_v_keys = ((N,-1),
@@ -45,7 +43,6 @@ bb_v_keys = ((N,-1),
           (O,1)
           )
 
-DEFAULT_INDENT = 6
 
 
 class BB_table_extractor(Table_extractor):
@@ -57,6 +54,10 @@ class BB_table_extractor(Table_extractor):
         
         apply_patch_float_format_with_nulls()
         apply_ordered_dict_patch()
+        
+    @classmethod
+    def get_name(self):
+        return BACK_BONE
     
         
     def extract(self, file_type  = ''):
@@ -77,7 +78,7 @@ class BB_table_extractor(Table_extractor):
         for i, v_key in enumerate(bb_v_keys):
             if v_key in missing_v_keys:
                 for h_key in h_keys:
-                    data[BB][h_key].insert(i, 0.0)
+                    data[BACK_BONE_DATA][h_key].insert(i, 0.0)
         
         return data
 
@@ -94,7 +95,7 @@ class BB_table_extractor(Table_extractor):
             out_line = out_data[DATA].setdefault(v_key[1],OrderedDict()).setdefault(v_key[0],OrderedDict())
 
             for h_key in h_keys:
-                out_line[h_key] = data[BB][h_key][i]
+                out_line[h_key] = data[BACK_BONE_DATA][h_key][i]
         
         return out_data
 
@@ -109,7 +110,7 @@ class BB_table_extractor(Table_extractor):
             line = re.sub("^(\s+[0-9])","\n\g<0>",line)
             line = fixup_replace_plus_with_space(line)
             line = fixup_convert_H_to_HN(line)
-            line = fixup_lonely_key_spacing(line)
+#            line = fixup_lonely_key_spacing(line)
             line = fixup_put_lonely_keys_on_new_line(line)
             result.append(line)
         return result

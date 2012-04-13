@@ -4,7 +4,7 @@ Created on 7 Apr 2012
 @author: garyt
 '''
 
-from table_builders.common_constants import CA,N,C,CB, CG, h_keys, DATA
+from common_constants import CA,N,C,CB, CG, h_keys, DATA,  DIHEDRAL
 from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls, \
      apply_tuple_patch
 from collection_backport import OrderedDict
@@ -25,7 +25,13 @@ dihedrals_v_keys = (
     ((N,  0),  (CA, 0), (CB, 0), (CG, 0))  # chi1
 )
 
-DIHEDRALS  = 'DIHEDRALS'
+DIHEDRAL_DATA = 'DIHEDRALS'
+
+
+def fixup_extra_space_in_data_after_colon(line):
+    line = line.replace(":",": ")
+    line = line.replace(": ", ":",1)
+    return line
 
 class DIHEDRALS_table_extractor(Table_extractor):
     
@@ -35,6 +41,10 @@ class DIHEDRALS_table_extractor(Table_extractor):
         apply_patch_float_format_with_nulls()
         apply_tuple_patch()
         apply_ordered_dict_patch()
+        
+    @classmethod
+    def get_name(self):
+        return DIHEDRAL
 
     def serialize(self,data):
         out_data = OrderedDict()
@@ -45,7 +55,7 @@ class DIHEDRALS_table_extractor(Table_extractor):
             out_line = out_data[DATA].setdefault(v_key,OrderedDict())
     
             for h_key in h_keys:
-                out_line[h_key] = data[DIHEDRALS][h_key][i]
+                out_line[h_key] = data[DIHEDRAL_DATA][h_key][i]
 
         return out_data
     
@@ -63,6 +73,7 @@ class DIHEDRALS_table_extractor(Table_extractor):
             line = fixup_replace_plus_with_space(line)
             line = fixup_convert_H_to_HN(line)
             line = fixup_put_lonely_keys_on_new_line(line)
+            line = fixup_extra_space_in_data_after_colon(line)
             result.append(line)
         return result
     

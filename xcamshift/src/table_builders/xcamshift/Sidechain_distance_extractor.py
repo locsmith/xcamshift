@@ -4,7 +4,7 @@ Created on 7 Apr 2012
 @author: garyt
 '''
 
-from table_builders.common_constants import h_keys, DATA
+from common_constants import h_keys, DATA, SIDE_CHAIN
 from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls, \
      apply_tuple_patch
 from collection_backport import OrderedDict
@@ -41,7 +41,7 @@ RESIDUE_ATOM_TYPES = {
     'VAL'   :  ( 'CB', 'CG1', 'CG2', 'HB', 'HG11', 'HG12', 'HG13', 'HG21', 'HG22', 'HG23'),
 }
 
-SC  = 'COSC'
+SIDE_CHAIN_DATA  = 'COSC'
 
 
 class SC_table_extractor(Table_extractor):
@@ -52,13 +52,17 @@ class SC_table_extractor(Table_extractor):
         apply_patch_float_format_with_nulls()
         apply_tuple_patch()
         apply_ordered_dict_patch()
-
+        
+    @classmethod
+    def get_name(self):
+        return SIDE_CHAIN
+        
     def serialize(self,data):
         out_data = OrderedDict()
         out_data[DATA] =  OrderedDict()
         
         for residue_type in RESIDUE_TYPES:
-            residue_data_label = SC + residue_type + "2"
+            residue_data_label = SIDE_CHAIN_DATA + residue_type + "2"
             residue_data = data[residue_data_label]
             
             for i, atom_type in enumerate(RESIDUE_ATOM_TYPES[residue_type]):
