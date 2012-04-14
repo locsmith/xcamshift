@@ -90,3 +90,15 @@ class Dict_walker():
             
         def get_result(self):
             return self._result
+        
+        
+def value_from_key_path(target_dict,key_path):
+    
+    result  =  target_dict
+    for key in key_path:
+        result = result[key]
+
+    return result
+
+
+        
