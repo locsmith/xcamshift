@@ -59,8 +59,15 @@ def fixup_decimal_spacing(line):
 def fixup_convert_H_to_HN(line):
     line = re.sub("H  ", "HN ", line)
     line = re.sub("H:  ", "HN: ", line)
+    line = line.replace('[H, ','[HN,')
     return line
 
+
+def fixup_convert_H_to_HN_not_in_key(line):
+    line = re.sub("H  ", "HN ", line)
+    line = re.sub("H:  ", "HN: ", line)
+    line = line.replace('[H, ','[H,  ')
+    return line
 
 def fixup_replace_plus_with_space(line):
     line = re.sub("\+", " ", line)
@@ -83,7 +90,7 @@ def fixup_tuple_key_spacing(line,left_spacing=3,right_spacing=3):
     return re.sub("\[([A-Z0-9\-\,\s]+)\]", callback, line)
 
 def fixup_put_lonely_keys_on_new_line(line):
-    return re.sub("^(\s+[A-Za-z0-9\-\[][A-Za-z-0-9_, \]]+:)$", "\n\g<1>", line)
+    return re.sub("^(\s+[A-Za-z0-9\-\[][A-Za-z-0-9_, \]]+:\s*)$", "\n\g<1>", line)
 
 def global_fixup_colons_on_same_line_as_tuple_key(lines):
     return re.sub("\]\n(\s*):", "]:\n\g<1> ", lines)
@@ -92,6 +99,9 @@ def global_fixup_colons_on_same_line_as_tuple_key(lines):
 def global_fixup_data_dicts_on_same_line_as_key(lines):
     return re.sub("\]:\n\s+{", "] : {", lines)
 
+def fixup_spaces_after_colons(line):
+        return line.replace(':',':  ')
+    
 #def fixup_lonely_key_spacing(line, length=2):
 #    match = re.match("(\s+)([0-9\-A-Z]+):$",line)
 #    
@@ -103,7 +113,6 @@ def global_fixup_data_dicts_on_same_line_as_key(lines):
 #    return line
 
 def global_fixup_multi_line_tuple_keys(lines):
-    print lines
     lines = re.sub(" - (\[[A-Z\,\s\-0-9]+\])", "\g<1>", lines)
     lines = lines.replace("]\n", "], ")
     lines = lines.replace("] :", "]] :")

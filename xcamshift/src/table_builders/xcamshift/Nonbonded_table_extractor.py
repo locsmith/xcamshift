@@ -9,11 +9,12 @@ from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_wi
      apply_tuple_patch
 from collection_backport import OrderedDict
 from table_builders.formatters import fixup_null_values,\
-    fixup_decimal_spacing, fixup_convert_H_to_HN, fixup_replace_plus_with_space,\
+    fixup_decimal_spacing, fixup_replace_plus_with_space,\
     fixup_tuple_key_spacing, fixup_put_lonely_keys_on_new_line,\
     fixup_complex_key_question_mark,\
     global_fixup_colons_on_same_line_as_tuple_key,\
-    global_fixup_data_dicts_on_same_line_as_key
+    global_fixup_data_dicts_on_same_line_as_key, fixup_spaces_after_colons,\
+    fixup_convert_H_to_HN_not_in_key
 from table_builders.table_extractor import Table_extractor
 import re
 from table_builders.yaml_patches import apply_no_aliases_patch
@@ -26,7 +27,7 @@ nonbonded_v_keys = (
                
     
     (C, SP3),
-    (H,'NONE'),
+    (H,'None'),
     (N, SP3),
     (O, SP3),
     (S, SP3),
@@ -37,7 +38,7 @@ nonbonded_v_keys = (
 )
 
 nonbonded_v_keys_required_order = (
-    (H,'NONE'),
+    (H,'None'),
     
     (C, SP3),
     (N, SP3),
@@ -141,23 +142,33 @@ class Nonbonded_table_extractor(Table_extractor):
     def fixup_multiple_zeros(self, line):
         return re.sub('\.[0]+$','.0',line)   
     
+
+    def add_new_line(self, pattern, line):
+        if re.search(pattern, line):
+            line = "\n" + line
+        return line
+    
+    
     def format_lines(self,lines):
         result = []
         lines = global_fixup_colons_on_same_line_as_tuple_key(lines)
         lines = global_fixup_data_dicts_on_same_line_as_key(lines)
         for line in lines.split('\n'):
+            line = fixup_spaces_after_colons(line)
             line = fixup_complex_key_question_mark(line)
             line = fixup_null_values(line)
             line = fixup_tuple_key_spacing(line,3,5)
-#            line = fixup_decimal_spacing(line)
-#            line = fixup_replace_plus_with_space(line)
-#            line = fixup_convert_H_to_HN(line)
-#            line = fixup_put_lonely_keys_on_new_line(line)
-#            line = self.fixup_CA_values(line)
-#            line = self.split_catergories(line)
+            line = fixup_decimal_spacing(line)
+            line = fixup_replace_plus_with_space(line)
+            line = fixup_convert_H_to_HN_not_in_key(line)
+            line = self.fixup_CA_values(line)
+            line = self.split_catergories(line)
             line = self.indent_exponent(line)
-#            line = self.fixup_multiple_zeros(line)
-
+            line = self.fixup_multiple_zeros(line)
+            line = fixup_put_lonely_keys_on_new_line(line)
+            line = self.add_new_line('^\s+exponent:',line)
+            line = self.add_new_line('^\s+\[H',line)
+            
             result.append(line)
         return result
     

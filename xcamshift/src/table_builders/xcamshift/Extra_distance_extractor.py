@@ -13,7 +13,7 @@ from table_builders.formatters import fixup_null_values,\
     fixup_tuple_key_spacing, fixup_put_lonely_keys_on_new_line,\
     fixup_complex_key_question_mark,\
     global_fixup_colons_on_same_line_as_tuple_key,\
-    global_fixup_data_dicts_on_same_line_as_key
+    global_fixup_data_dicts_on_same_line_as_key, fixup_spaces_after_colons
 from table_builders.table_extractor import Table_extractor
 
 CG = 'CG'
@@ -31,8 +31,8 @@ xtra_v_keys = (   (H,0,HA,0),
                   (O,0,CB,0),
                   
                   (N,1,HA,0),
-                  (N,1,HA,0),
-                  (N,1,HA,0),
+                  (N,1,N,0),
+                  (N,1,CB,0),
                   
                   (O,-1,HA,-1),
                   (O,-1,N,-1),
@@ -83,11 +83,15 @@ class XTRA_table_extractor(Table_extractor):
         return out_data
 
 
+
+    
+    
     def format_lines(self,lines):
         result = []
         lines = global_fixup_colons_on_same_line_as_tuple_key(lines)
         lines = global_fixup_data_dicts_on_same_line_as_key(lines)
         for line in lines.split('\n'):
+            line = fixup_spaces_after_colons(line)
             line = fixup_complex_key_question_mark(line)
             line = fixup_null_values(line)
             line = fixup_tuple_key_spacing(line)

@@ -15,6 +15,7 @@ from table_builders.formatters import fixup_null_values,\
     global_fixup_colons_on_same_line_as_tuple_key,\
     global_fixup_data_dicts_on_same_line_as_key
 from table_builders.table_extractor import Table_extractor
+from table_builders.xcamshift.Dihdedral_distance_extractor import fixup_extra_space_in_data_after_colon
 
 
 TYR='TYR'
@@ -23,11 +24,11 @@ TRP='TRP'
 HIS='HIS'
 
 xtra_v_keys = (  
-    (PHE,6),
-    (TYR,6),
-    (TRP,5),
-    (TRP,6),
-    (HIS,6)
+    (PHE,"6"),
+    (TYR,"6"),
+    (TRP,"5"),
+    (TRP,"6"),
+    (HIS,"6")
 )
 
 RING_DATA = 'RINGS'

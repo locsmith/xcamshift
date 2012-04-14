@@ -31,7 +31,7 @@ DIHEDRAL_DATA = 'DIHEDRALS'
 def fixup_extra_space_in_data_after_colon(line):
     line = line.replace(":",": ")
     line = line.replace(": ", ":",1)
-    return line
+    return line      
 
 class DIHEDRALS_table_extractor(Table_extractor):
     
@@ -66,6 +66,7 @@ class DIHEDRALS_table_extractor(Table_extractor):
         lines = global_fixup_data_dicts_on_same_line_as_key(lines)
         lines = global_fixup_multi_line_tuple_keys(lines)
         for line in lines.split('\n'):
+            line = fixup_extra_space_in_data_after_colon(line)
             line = fixup_complex_key_question_mark(line)
             line = fixup_null_values(line)
             line = fixup_tuple_key_spacing(line)
