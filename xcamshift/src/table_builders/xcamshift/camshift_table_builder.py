@@ -176,6 +176,7 @@ if __name__ == '__main__':
     
     table_types = CAMSHIFT_SUB_POTENTIALS
     
+    #TODO use extract function here
     extractor_classes = _get_extractor_classes()
 
     for extractor_class, table_type in zip(extractor_classes,table_types):
