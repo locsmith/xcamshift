@@ -28,7 +28,7 @@ xtra_v_keys = (
     (TYR,"6"),
     (TRP,"5"),
     (TRP,"6"),
-    (HIS,"6")
+    (HIS,"5")
 )
 
 RING_DATA = 'RINGS'
