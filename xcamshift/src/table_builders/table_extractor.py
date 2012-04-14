@@ -34,3 +34,6 @@ class Table_extractor(object):
     def format_lines(self,lines):
         return lines
     
+    @classmethod
+    def get_name(self):
+        raise Exception("name of extractor must be defined!")

@@ -3,24 +3,21 @@ Created on 30 Mar 2012
 
 @author: garyt
 
+
+
+
 '''
 import sys
 import os
 import glob
 import re
-from table_builders.xcamshift.Backbone_distance_extractor import BB_table_extractor,\
-    BB
-from table_builders.xcamshift.Extra_distance_extractor import XTRA,\
-    XTRA_table_extractor
-from table_builders.xcamshift.Sidechain_distance_extractor import SC,\
-    SC_table_extractor
-from table_builders.xcamshift import Sidechain_distance_extractor
-from table_builders.xcamshift.Dihdedral_distance_extractor import DIHEDRALS_table_extractor,\
-    DIHEDRALS
-from table_builders.xcamshift.Ring_table_extractor import RING_table_extractor,\
-    RINGS
-from table_builders.xcamshift.Nonbonded_table_extractor import Nonbonded_table_extractor,\
-    NONBONDED
+from table_builders.xcamshift.Backbone_distance_extractor import BB_table_extractor
+from table_builders.xcamshift.Extra_distance_extractor import XTRA_table_extractor
+from table_builders.xcamshift.Sidechain_distance_extractor import SC_table_extractor
+from table_builders.xcamshift.Dihdedral_distance_extractor import DIHEDRALS_table_extractor
+from table_builders.xcamshift.Ring_table_extractor import RING_table_extractor
+from table_builders.xcamshift.Nonbonded_table_extractor import Nonbonded_table_extractor
+from common_constants import CAMSHIFT_SUB_POTENTIALS
 
 def get_atom_type_for_filename(file_path):
     file_name = os.path.split(file_path)[1]
@@ -118,22 +115,72 @@ def _get_file_type_name(file_type):
     
     return file_type_name
 
+def _read_data_into_reader(table_dir):
+    reader = Camshift_table_reader(table_dir)
+    reader.read()
+    return reader
+
+def _get_extractor_classes(sub_potential = None):
+    if isinstance(sub_potential, str):
+        sub_potential = [sub_potential]
+    
+    extractor_classes = (
+                  BB_table_extractor, 
+                  XTRA_table_extractor, 
+                  SC_table_extractor, 
+                  DIHEDRALS_table_extractor, 
+                  RING_table_extractor,
+                  Nonbonded_table_extractor
+                  )
+    result  = []
+    
+    for extractor in extractor_classes:
+        if sub_potential == None:
+            result.append(extractor)
+        elif extractor.get_name() in sub_potential:
+            result.append(extractor)
+
+    return result
+
+# TODO integrate with rest of module
+def extract(data_dir, sub_potential = None, residue_types=None):
+    reader = _read_data_into_reader(data_dir)
+    
+    extractor_classes = _get_extractor_classes(sub_potential)
+    
+    if residue_types == None:
+        residue_types = reader.get_file_types()
+    elif isinstance(residue_types, str):
+        residue_types = [residue_types]
+        
+    result  = {}   
+    for extractor_class in extractor_classes:
+        extractor =  extractor_class(reader.data)
+        for residue_type in residue_types:
+            result[sub_potential,residue_type] = extractor.extract(residue_type)
+        
+    return result
+    
+    
+    
+    
 if __name__ == '__main__':
 
     check_args()
     
     table_dir = sys.argv[1]
     
-    reader = Camshift_table_reader(table_dir)
-    reader.read()
+    reader = _read_data_into_reader(table_dir)
     
     file_types = reader.get_file_types()
     
-    table_types = BB, XTRA, SC, DIHEDRALS, RINGS, NONBONDED
-    extractors = BB_table_extractor(reader.data), XTRA_table_extractor(reader.data), \
-                 SC_table_extractor(reader.data), DIHEDRALS_table_extractor(reader.data), \
-                 RING_table_extractor(reader.data), Nonbonded_table_extractor(reader.data)
-    for extractor, table_type in zip(extractors,table_types):
+    table_types = CAMSHIFT_SUB_POTENTIALS
+    
+    extractor_classes = _get_extractor_classes()
+
+    for extractor_class, table_type in zip(extractor_classes,table_types):
+        extractor = extractor_class(reader.data)
+        
         for file_type in file_types:
             file_type_name  = _get_file_type_name(file_type)
             
