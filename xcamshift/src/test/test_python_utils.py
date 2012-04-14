@@ -5,9 +5,10 @@ Created on 17 Jan 2012
 '''
 import unittest2
 from python_utils import tupleit, IsMappingType, Dict_walker,\
-    value_from_key_path
+    value_from_key_path, filter_dict
 from UserDict import UserDict
 from numpy.distutils.misc_util import dict_append
+from copy import deepcopy
 
 TEST_DICT_DATA_1 = {1: {2:{3:4,5:6}},7:8}
         
@@ -50,7 +51,20 @@ class Test_python_utils(unittest2.TestCase):
         with(self.assertRaises(KeyError)):
             self.assertEqual(value_from_key_path(TEST_DICT_DATA_1, (1,2,2)), 4)
         
-    
+    def test_filter_dict(self):
+        test_data  = deepcopy(TEST_DICT_DATA_1)
+        
+        filter_dict(test_data, lambda k,v: k==1)
+        
+        self.assertDictEqual(test_data, {7:8})
+        
+        test_data  = deepcopy(TEST_DICT_DATA_1)
+        
+        filter_dict(test_data, lambda k,v: k==1, invert=True)
+        
+        self.assertDictEqual(test_data,{1: {2: {3: 4, 5: 6}}})
+
+        
         
 
 if __name__ == "__main__":

@@ -101,4 +101,14 @@ def value_from_key_path(target_dict,key_path):
     return result
 
 
+
         
+def filter_dict(target_dict, pred, invert = False):
+    if invert:
+        to_delete = [k for k,v in target_dict.iteritems() if not pred(k,v)]
+    else:
+        to_delete = [k for k,v in target_dict.iteritems() if pred(k,v)]
+    for key in to_delete:
+        del target_dict[key]
+        
+    return target_dict
