@@ -12,6 +12,7 @@ import collections
 from yaml.dumper import Dumper
 from python_utils import tupleit
 
+# TODO hide functions which are not parts of public interfaces and add tests 
 def add_access_to_yaml_list_based_keys():
     return yaml.add_constructor(u'tag:yaml.org,2002:map', _construct_yaml_map)
     
