@@ -24,7 +24,6 @@ from yaml import load
 
 FAILURE = -1
 VERSION  = '1.0.0'
-CAMSHIFT_VERSION = (1,35,0)
 
 def get_atom_type_for_filename(file_path):
     file_name = os.path.split(file_path)[1]
@@ -164,8 +163,8 @@ def extract(data_dir, sub_potential = None, residue_types=None):
     
     
     
-def build_output_name(sub_potential_name, residue_type, CAMSHIFT_VERSION, template='cams_%s_%s_%s.yaml', version_template = '%i_%i_%i'):
-    version_string  = version_template % CAMSHIFT_VERSION
+def build_output_name(sub_potential_name, residue_type, camshift_version, template='cams_%s_%s_%s.yaml', version_template = '%i_%i_%i'):
+    version_string  = version_template % camshift_version
     
     sub_potential_name = sub_potential_name.lower().strip()
     
@@ -237,6 +236,7 @@ def _read_version(table_dir):
     
     return version_info
 
+
 if __name__ == '__main__':
 
     
@@ -253,7 +253,9 @@ if __name__ == '__main__':
     reader = _read_data_into_reader(table_dir)
     
     version_info = _read_version(table_dir)
-    camshift_version = '%i.%i.%i' % tuple(version_info['version'])
+    camshift_version = tuple(version_info['version'])
+    camshift_version_string = '%i.%i.%i' % tuple(camshift_version)
+    camshift_source = version_info['source']
     
     residue_types = reader.get_file_types()
     
@@ -264,7 +266,7 @@ if __name__ == '__main__':
     
     if args.verbose:
         print >> sys.stderr, '  read %i files' % reader.get_number_files()
-        print >> sys.stderr, '  camshift version %s (source: %s)' % (camshift_version,version_info['source'])
+        print >> sys.stderr, '  camshift version %s (source: %s)' % (camshift_version_string,camshift_source)
         print >> sys.stderr, '  residue types are % s' % ','.join(get_human_readable_file_types(residue_types))
         print >> sys.stderr, '  sub potentials are %s' % ', '.join(table_type_names)
         print >> sys.stderr, '  output directory is %s' % args.output
@@ -292,13 +294,13 @@ if __name__ == '__main__':
             
             
             if args.output == STDOUT:
-                title = build_output_name(sub_potential_name, residue_type, CAMSHIFT_VERSION, 
+                title = build_output_name(sub_potential_name, residue_type, camshift_version, 
                                           template='camshift %s - %s - %s', version_template='%s.%s.%s')
                 print '----- %s ------' % title
                 print output_data
                 
             else:
-                output_filename = build_output_name(sub_potential_name, residue_type, CAMSHIFT_VERSION)
+                output_filename = build_output_name(sub_potential_name, residue_type, camshift_version)
                 
                 if args.verbose:
                     print >> sys.stderr, '%i of %i. %s' % (count, files_to_output,  output_filename) 
