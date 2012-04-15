@@ -4,7 +4,16 @@ Created on 6 Apr 2012
 @author: garyt
 '''
 
-FILE_TYPES = ('','gly','pro')
+BASE = ''
+GLY = 'gly'
+PRO = 'pro'
+CAMSHIFT_RESIDUE_TYPES = (BASE, GLY, PRO)
+
+SPHERE_1 = 'sphere_1'
+SPHERE_2 = 'sphere_2'
+
+SP3 = 'SP3'
+SP2 = 'SP2'
 
 N = 'N'
 H = 'H'
@@ -13,6 +22,7 @@ CB = 'CB'
 CG = 'CG'
 HA = 'HA'
 C = 'C'
+HN = 'HN'
 
 h_keys = (HA,CA,H,N,C,CB)
 
