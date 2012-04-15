@@ -104,7 +104,11 @@ class Camshift_table_reader(object):
         return self.file_types
     
     def get_number_files(self):
-        return len(self.data)
+        result = 0
+        for residue_type in self.get_file_types():
+            result += len(self.files_by_type[residue_type])
+            
+        return result
 
 
 def _get_file_type_name(residue_type):
