@@ -241,6 +241,28 @@ def _read_version(table_dir):
     return version_info
 
 
+def _get_template_filename(sub_potential, residue_type,version):
+    if residue_type == '':
+        residue_type = 'base'
+    sub_potential_name = sub_potential.strip().lower()
+    version_string = '%i_%i_%i' % version
+    file_name = 'cams_%s_%s_%s_template.txt' % (version_string, sub_potential_name, residue_type)
+    return file_name
+
+def _read_template(dir_path,sub_potential,residue_type,version):
+    file_name = _get_template_filename(sub_potential, residue_type, version)
+    file_path = os.path.join(dir_path,file_name)
+
+    template = None
+    if os.path.isfile(file_path):
+        with  open(file_path) as template_file_h:
+            template  = template_file_h.readlines()
+            template  = ''.join(template)
+
+    return template
+             
+        
+
 if __name__ == '__main__':
 
     
@@ -296,7 +318,12 @@ if __name__ == '__main__':
             
             output_data = extractor.extract(residue_type)
             
+            template = _read_template(table_dir, sub_potential_name, residue_type, camshift_version)
+            template_filename = _get_template_filename(sub_potential_name, residue_type, camshift_version)
             
+            if template != None:
+                output_data = template % output_data            
+                
             if args.output == STDOUT:
                 title = build_output_name(sub_potential_name, residue_type, camshift_version, 
                                           template='camshift %s - %s - %s', version_template='%s.%s.%s')
@@ -307,7 +334,11 @@ if __name__ == '__main__':
                 output_filename = build_output_name(sub_potential_name, residue_type, camshift_version)
                 
                 if args.verbose:
-                    print >> sys.stderr, '%i of %i. %s' % (count, files_to_output,  output_filename) 
+                    print >> sys.stderr, '%i of %i. %s' % (count, files_to_output,  output_filename), 
+                    if template != None:
+                        print >> sys.stderr, '(with template %s)'  % template_filename
+                    else:
+                        print >> sys.stderr
                     
                 output_path = os.path.join(args.output,output_filename)
                 
