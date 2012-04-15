@@ -16,6 +16,7 @@ from sidechain_table import Sidechain_table
 from constants_table import Constants_table
 from ring_table import Ring_table
 from non_bonded_table import Non_bonded_table
+from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 
 
 class Table_manager(object):
@@ -44,6 +45,7 @@ class Table_manager(object):
     VERSION = '1_35_0'
     DEFAULT_DIRECTORY = 'data'
     
+    #TODO use common constants
     BACKBONE = "bb"
     RANDOM_COIL = "rc"
     EXTRA="extra"
@@ -61,19 +63,8 @@ class Table_manager(object):
         self.search_paths = ['.',self.DEFAULT_DIRECTORY]
         self.tables ={}
         
-        self._add_acess_to_yaml_list_based_keys()
+        add_access_to_yaml_list_based_keys()
                 
-
-    def _add_acess_to_yaml_list_based_keys(self):
-        return yaml.add_constructor(u'tag:yaml.org,2002:map', Table_manager.construct_yaml_map)
-    
-    @staticmethod
-    def construct_yaml_map(loader, node):
-        pairs = [(tupleit(key) if isinstance(key, list) else key, value)
-                 for (key, value) in loader.construct_pairs(node, deep=True)]
-        return dict(pairs)
-        
-
     def __get_table_name(self, table_type, residue_type):
         return self.TEMPLATE_3 % (self.TYPE,self.VERSION,table_type,residue_type)
     

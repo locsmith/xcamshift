@@ -10,6 +10,15 @@ import collection_backport
 from yaml.constructor import ConstructorError
 import collections
 from yaml.dumper import Dumper
+from python_utils import tupleit
+
+def add_access_to_yaml_list_based_keys():
+    return yaml.add_constructor(u'tag:yaml.org,2002:map', _construct_yaml_map)
+    
+def _construct_yaml_map(loader, node):
+    pairs = [(tupleit(key) if isinstance(key, list) else key, value)
+             for (key, value) in loader.construct_pairs(node, deep=True)]
+    return dict(pairs)   
 
 def float_representer(dumper, data):
     if abs(data) < 1e-9:

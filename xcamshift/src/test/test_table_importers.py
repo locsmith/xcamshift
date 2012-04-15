@@ -16,6 +16,7 @@ import common_constants
 from python_utils import IsMappingType, Dict_walker, value_from_key_path,\
     filter_dict
 from numbers import Number
+from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 
 
 
@@ -82,7 +83,7 @@ class Test_table_importers(unittest2.TestCase):
             self.assertDictAlmostEqual(data_entry, expected_table_data['data'])
             
     def test_table_entries(self):
-        table_manager  = Table_manager()
+        add_access_to_yaml_list_based_keys()
         
         # list of top left and botttom right significant entries in the paper for testing
         # ammended to update with the values in the 1.35.0 data files from almost 1.04 (which are not the same as those in camshift 1.35.0?)
