@@ -19,6 +19,7 @@ from table_builders.xcamshift.Ring_table_extractor import RING_table_extractor
 from table_builders.xcamshift.Nonbonded_table_extractor import Nonbonded_table_extractor
 from common_constants import CAMSHIFT_SUB_POTENTIALS
 import argparse
+from yaml import load
 
 
 FAILURE = -1
@@ -204,7 +205,7 @@ def make_output_directory_or_exit(output_dir):
 
 
 
-def write_files(output_data, output_path):
+def write_file(output_data, output_path):
     file_handle = None
     try:
         file_handle = open(output_path, 'w')
@@ -225,6 +226,17 @@ def get_human_readable_file_types(file_types):
 
 
     
+def _read_version(table_dir):
+    try:
+        version_file = os.path.join(table_dir,'version.yaml')
+        version_fp = open(version_file)
+        version_info = load(version_fp)
+        
+    except Exception as detail:
+        raise Exception("couldn't load version file %s" % version_file, detail)
+    
+    return version_info
+
 if __name__ == '__main__':
 
     
@@ -240,6 +252,9 @@ if __name__ == '__main__':
     
     reader = _read_data_into_reader(table_dir)
     
+    version_info = _read_version(table_dir)
+    camshift_version = '%i.%i.%i' % tuple(version_info['version'])
+    
     residue_types = reader.get_file_types()
     
     table_types = CAMSHIFT_SUB_POTENTIALS
@@ -249,7 +264,7 @@ if __name__ == '__main__':
     
     if args.verbose:
         print >> sys.stderr, '  read %i files' % reader.get_number_files()
-        print >> sys.stderr, '  camshift version %i.%i.%i' % CAMSHIFT_VERSION
+        print >> sys.stderr, '  camshift version %s (source: %s)' % (camshift_version,version_info['source'])
         print >> sys.stderr, '  residue types are % s' % ','.join(get_human_readable_file_types(residue_types))
         print >> sys.stderr, '  sub potentials are %s' % ', '.join(table_type_names)
         print >> sys.stderr, '  output directory is %s' % args.output
@@ -280,6 +295,7 @@ if __name__ == '__main__':
                 title = build_output_name(sub_potential_name, residue_type, CAMSHIFT_VERSION, 
                                           template='camshift %s - %s - %s', version_template='%s.%s.%s')
                 print '----- %s ------' % title
+                print output_data
                 
             else:
                 output_filename = build_output_name(sub_potential_name, residue_type, CAMSHIFT_VERSION)
@@ -289,7 +305,7 @@ if __name__ == '__main__':
                     
                 output_path = os.path.join(args.output,output_filename)
                 
-                write_files(output_data, output_path)
+                write_file(output_data, output_path)
                 count += 1
     if args.verbose:
         print >> sys.stderr, ''
