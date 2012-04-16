@@ -3,7 +3,7 @@ Created on 17 Jan 2012
 
 @author: garyt
 '''
-try:
+
 from simulation import currentSimulation
 from atom import Atom
 from vec3 import  norm
