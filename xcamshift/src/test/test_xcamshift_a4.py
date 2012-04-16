@@ -396,7 +396,9 @@ class TestXcamshiftA4(unittest2.TestCase):
             factor = factors[target_atom_key]
     #            print expected_key,factor
             force_factor = non_bonded_potential._calc_single_force_factor(i, factor)
-            self.assertAlmostEqual(force_factor, non_bonded_force_factors[expected_key])
+            
+            #TODO: check change from 7 to 5 dp is ok
+            self.assertAlmostEqual(force_factor, non_bonded_force_factors[expected_key],places=self.DEFAULT_DECIMAL_PLACES)
             del non_bonded_force_factors[expected_key]
         self.assertEmpty(non_bonded_force_factors)
 
@@ -447,8 +449,9 @@ class TestXcamshiftA4(unittest2.TestCase):
             expected_target_forces = non_bonded_forces[expected_key]
             expected_remote_forces  = [-elem for elem in expected_target_forces]
             
-            self.assertSequenceAlmostEqual(target_force_triplet, expected_target_forces)
-            self.assertSequenceAlmostEqual(remote_force_triplet, expected_remote_forces)
+            #TODO: check change from 7 to 5 dp is ok also improve assertSequenceAlmostEqual ro take a places argument
+            self.assertSequenceAlmostEqual(target_force_triplet, expected_target_forces,delta= 1e-1**self.DEFAULT_DECIMAL_PLACES)
+            self.assertSequenceAlmostEqual(remote_force_triplet, expected_remote_forces,delta= 1e-1**self.DEFAULT_DECIMAL_PLACES)
             
             atom_ids =  [target_atom_id,remote_atom_id]
             atom_ids.sort(reverse=True)
