@@ -167,7 +167,7 @@ def extract(data_dir, sub_potential = None, residue_types=None):
     
     
     
-def build_output_name(sub_potential_name, residue_type, camshift_version, template='cams_%s_%s_%s.yaml', version_template = '%i_%i_%i'):
+def _build_output_name(sub_potential_name, residue_type, camshift_version, template='cams_%s_%s_%s.yaml', version_template = '%i_%i_%i'):
     version_string  = version_template % camshift_version
     
     sub_potential_name = sub_potential_name.lower().strip()
@@ -178,7 +178,7 @@ def build_output_name(sub_potential_name, residue_type, camshift_version, templa
 
 
 
-def build_args_parser():
+def _build_args_list():
     message = 'Application to parse camshift data tables to yaml for xcamshift'
     
     parser = argparse.ArgumentParser(description=message,version='1.0')
@@ -186,14 +186,15 @@ def build_args_parser():
     parser.add_argument('directory', action="store")
     parser.add_argument('--verbose', action="store_true", default=False)
     parser.add_argument('-o', '--output', default="-", help="where to put the files either a file system path or - for stdout") 
+    parser.add_argument('-t', '--template', default='../xcamshift_templates', help='directory where template files are kept: %(default)s}')
     
-    return parser.parse_args()
+    return  parser.parse_args()
 
 
 
 
 
-def make_output_directory_or_exit(output_dir):
+def _make_output_directory_or_exit(output_dir):
     if not os.path.isdir(output_dir):
         if os.path.isfile(output_dir):
             print >> sys.stderr, 'output directory (%s) cannot be a file!' % output_dir
@@ -208,17 +209,22 @@ def make_output_directory_or_exit(output_dir):
 
 
 
-def write_file(output_data, output_path):
+def _write_file(output_data, output_path):
     file_handle = None
     try:
         file_handle = open(output_path, 'w')
         print >> file_handle, output_data
         file_handle.close()
     except:
-        file_handle.close()
+        if file_handle != None:
+            file_handle.close()
+        else:
+            print >> sys.stderr, "couldn't write to %s" % output_path
+            print >> sys.stderr, 'exiting...'
+            sys.exit(FAILURE)
 
 
-def get_human_readable_file_types(file_types):
+def _get_human_readable_file_types(file_types):
     result = []
     for file_type in file_types:
         if file_type == '':
@@ -249,9 +255,28 @@ def _get_template_filename(sub_potential, residue_type,version):
     file_name = 'cams_%s_%s_%s_template.txt' % (version_string, sub_potential_name, residue_type)
     return file_name
 
-def _read_template(dir_path,sub_potential,residue_type,version):
+
+
+def _build_dir_path(dir_path, input_path):
+    if os.path.isabs(input_path):
+        dir_path = [input_path]
+    else:
+        dir_path = [dir_path, input_path]
+    return os.path.join(*dir_path)
+
+def _build_filename_path(dir_path, relative_path, file_name):
+    directory_path = _build_dir_path(dir_path, relative_path)
+    
+    template_path = [directory_path, file_name]
+    
+    file_path = os.path.join(*template_path)
+    
+    return file_path
+
+def _read_template(dir_path,sub_potential,residue_type,version, path='../xcamshift_templates'):
     file_name = _get_template_filename(sub_potential, residue_type, version)
-    file_path = os.path.join(dir_path,file_name)
+    
+    file_path = _build_filename_path(dir_path, path, file_name)
 
     template = None
     if os.path.isfile(file_path):
@@ -266,7 +291,7 @@ def _read_template(dir_path,sub_potential,residue_type,version):
 if __name__ == '__main__':
 
     
-    args = build_args_parser()
+    args = _build_args_list()
     
     table_dir = args.directory
     
@@ -293,16 +318,17 @@ if __name__ == '__main__':
     if args.verbose:
         print >> sys.stderr, '  read %i files' % reader.get_number_files()
         print >> sys.stderr, '  camshift version %s (source: %s)' % (camshift_version_string,camshift_source)
-        print >> sys.stderr, '  residue types are % s' % ','.join(get_human_readable_file_types(residue_types))
+        print >> sys.stderr, '  residue types are % s' % ','.join(_get_human_readable_file_types(residue_types))
         print >> sys.stderr, '  sub potentials are %s' % ', '.join(table_type_names)
-        print >> sys.stderr, '  output directory is %s' % args.output
+        print >> sys.stderr, '  output directory is %s' % _build_dir_path(args.directory, args.output)
         print >> sys.stderr, '  there are %i files to produce...' % (files_to_output)
         print >> sys.stderr, ''
     
     
     STDOUT = '-'
     if args.output != STDOUT:
-        make_output_directory_or_exit(args.output)    
+        output_dir = _build_dir_path(args.directory, args.output)
+        _make_output_directory_or_exit(output_dir)    
     
     #TODO use extract function here
     extractor_classes = _get_extractor_classes()
@@ -318,20 +344,20 @@ if __name__ == '__main__':
             
             output_data = extractor.extract(residue_type)
             
-            template = _read_template(table_dir, sub_potential_name, residue_type, camshift_version)
-            template_filename = _get_template_filename(sub_potential_name, residue_type, camshift_version)
+            template = _read_template(table_dir, sub_potential_name, residue_type, camshift_version,path=args.template)
+            template_filename = _get_template_filename(sub_potential_name, residue_type, camshift_version,)
             
             if template != None:
                 output_data = template % output_data            
-                
+
             if args.output == STDOUT:
-                title = build_output_name(sub_potential_name, residue_type, camshift_version, 
+                title = _build_output_name(sub_potential_name, residue_type, camshift_version, 
                                           template='camshift %s - %s - %s', version_template='%s.%s.%s')
                 print '----- %s ------' % title
                 print output_data
                 
             else:
-                output_filename = build_output_name(sub_potential_name, residue_type, camshift_version)
+                output_filename = _build_output_name(sub_potential_name, residue_type, camshift_version)
                 
                 if args.verbose:
                     print >> sys.stderr, '%i of %i. %s' % (count, files_to_output,  output_filename), 
@@ -340,9 +366,9 @@ if __name__ == '__main__':
                     else:
                         print >> sys.stderr
                     
-                output_path = os.path.join(args.output,output_filename)
+                output_path = _build_filename_path(table_dir, args.output, output_filename)
                 
-                write_file(output_data, output_path)
+                _write_file(output_data, output_path)
                 count += 1
     if args.verbose:
         print >> sys.stderr, ''
