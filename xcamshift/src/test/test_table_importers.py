@@ -22,6 +22,7 @@ from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 
 #make this a global default               
 DEFAULT_DECIMAL_PLACES = 5
+CAMSHIFT_DATA_FILES = "data/camshift_1_35_0_almost_1_0_4"
 
 class Test_table_importers(unittest2.TestCase):
 
@@ -63,10 +64,10 @@ class Test_table_importers(unittest2.TestCase):
 
             sub_potential_file_id = sub_potential.lower().strip()
             
-            table_manager  = Table_manager()
+            table_manager  = Table_manager(paths=['src/test/data/handcrafted_xcamshift_data_files'])
             expected_table_data = table_manager._get_table(sub_potential_file_id, 'ALA')
             
-            read_table = extract("data/camshift",sub_potential,'')
+            read_table = extract(CAMSHIFT_DATA_FILES,sub_potential,'')
             
             read_table_data = load(read_table[sub_potential, ''])
             
@@ -168,7 +169,7 @@ class Test_table_importers(unittest2.TestCase):
         }
         for sub_potential in common_constants.CAMSHIFT_SUB_POTENTIALS:
             for residue_type in CAMSHIFT_RESIDUE_TYPES:
-                read_table = extract("data/camshift",sub_potential,residue_type)
+                read_table = extract(CAMSHIFT_DATA_FILES,sub_potential,residue_type)
                 
                 read_table_data = load(read_table[sub_potential, residue_type])
                 

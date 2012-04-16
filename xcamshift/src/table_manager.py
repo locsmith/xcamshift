@@ -55,12 +55,12 @@ class Table_manager(object):
     CONSTANTS="constants"
     RING="ring"
     
-    def __init__(self):
+    def __init__(self,paths=[]):
         '''
         Constructor
         '''
         
-        self.search_paths = ['.',self.DEFAULT_DIRECTORY]
+        self.search_paths = paths + ['.',self.DEFAULT_DIRECTORY]
         self.tables ={}
         
         add_access_to_yaml_list_based_keys()
