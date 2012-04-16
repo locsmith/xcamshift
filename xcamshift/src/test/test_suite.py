@@ -12,6 +12,7 @@ from test.test_component_list import Test_component_list
 from test.test_xcamshift_afa import TestXcamshiftAFA
 from test.test_xcamshift_a4 import TestXcamshiftA4
 from test.test_python_utils import Test_python_utils
+from test.test_table_importers import Test_table_importers
 
 
 def load_tests(loader, tests, pattern):
@@ -24,6 +25,7 @@ def load_tests(loader, tests, pattern):
     suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftAFA))
     suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftA4))
     suite.addTests(tests = loader.loadTestsFromTestCase(Test_python_utils))
+    suite.addTests(tests = loader.loadTestsFromTestCase(Test_table_importers))
     return suite
 
 if __name__=="__main__":
