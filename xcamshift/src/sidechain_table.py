@@ -4,6 +4,7 @@ Created on 19 Jan 2012
 @author: garyt
 '''
 
+DATA = 'data'
 
 class Sidechain_table(object):
 
@@ -11,10 +12,18 @@ class Sidechain_table(object):
     TARGET_ATOMS = "target_atoms"
     EXPONENT = "exponent"
     SIDECHAIN_ATOMS = "sidechain_atoms"
-    DATA = 'data'
     
+
     def __init__(self, table):
         self._table = table
+        self._sidechain_atoms = self._build_sidechain_atoms(table)
+        
+    def _build_sidechain_atoms(self, table):
+        result = {}
+        for residue_key in self._table[DATA]:
+            result[residue_key] = self._table[DATA][residue_key].keys()
+            
+        return result
     
     def get_exponent(self):
         return self._table[self.EXPONENT]
@@ -23,12 +32,12 @@ class Sidechain_table(object):
         return self._table[self.TARGET_ATOMS]
     
     def get_residue_types(self):
-        return self._table[self.SIDECHAIN_ATOMS].keys()
+        return self._sidechain_atoms.keys()
     
     def get_sidechain_atoms(self,residue_type):
         self._check_residue_type(residue_type)
         
-        return self._table[self.DATA][residue_type].keys()
+        return self._sidechain_atoms[residue_type]
     
 
     def _check_target_atom(self, atom_name):
@@ -60,7 +69,7 @@ class Sidechain_table(object):
         self._check_target_atom(target_atom)
         self._check_sidechain_atom(residue_type, sidechain_atom)
         
-        return self._table[self.DATA][residue_type][sidechain_atom][target_atom]
+        return self._table[DATA][residue_type][sidechain_atom][target_atom]
     
 #        self.ATOMS = 'atoms'
 #        self.OFFSETS='offsets'
