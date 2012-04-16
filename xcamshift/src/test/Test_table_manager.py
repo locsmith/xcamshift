@@ -189,7 +189,7 @@ class Test_table_manager(unittest2.TestCase):
     def testGetNonBondedTable(self):
         table = self.table_manager.get_non_bonded_table('ALA')
         
-        result = table.get_non_bonded_coefficient("CA", "sphere_2", "S", "SP3")
+        result = table.get_non_bonded_coefficient("CA", "sphere_1", "S", "SP3")
         
         self.assertAlmostEqual(result, -101.81223165473585)
         
@@ -210,10 +210,10 @@ class Test_table_manager(unittest2.TestCase):
         self.assertSequenceEqual(EXPECTED_COEFFICIENT_KEYS,coefficient_keys)
         
         exponent = table.get_exponent('sphere_1')
-        self.assertAlmostEqual(exponent, 1.0)
+        self.assertAlmostEqual(exponent, -3.0)
         
         exponent = table.get_exponent('sphere_2')
-        self.assertAlmostEqual(exponent, -3.0)
+        self.assertAlmostEqual(exponent, 1.0)
         
         chem_types = table.get_chem_types()
         chem_types.sort()

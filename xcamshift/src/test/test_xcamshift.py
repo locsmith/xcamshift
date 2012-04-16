@@ -645,7 +645,7 @@ class TestXcamshift(unittest2.TestCase):
         
         for sphere_exponent in remote_component_spheres_and_exponents.values():
             sphere_exponent.sort()
-            self.assertSequenceEqual(sphere_exponent, [(0,1.0),(1,-3.0)])
+            self.assertSequenceEqual(sphere_exponent, [(0,-3.0),(1,1.0),])
             
             
         
@@ -666,13 +666,12 @@ class TestXcamshift(unittest2.TestCase):
         self.assertSequenceEqual(test_non_bonded_set_2, non_bonded_2)
         
         components_0 = non_bonded_potential._get_components_for_id('NBRM',0)
-        print components_0
         self.assertLengthIs(components_0,2)
-        self.assertEqual(components_0[0][:3], (0,0,1.0))
-        self.assertEqual(components_0[1][:3], (0,1,-3.0))
+        self.assertEqual(components_0[0][:3], (0,0,-3.0))
+        self.assertEqual(components_0[1][:3], (0,1,1.0))
         
-        expected_coefficients_0 = (-0.0069306876125918232, 0.047420617840734335, 0.043722646930490425, 0.0093801308883550549, -0.063176276536097933, 0.34500777174208075)
-        expected_coefficients_1 = (31.32384112711744, -12.5982466223797, -14.86605302072972, -1.6214566324137984, 2.505391454472044,  -88.71419716149445)
+        expected_coefficients_1 = (-0.0069306876125918232, 0.047420617840734335, 0.043722646930490425, 0.0093801308883550549, -0.063176276536097933, 0.34500777174208075)
+        expected_coefficients_0 = (31.32384112711744, -12.5982466223797, -14.86605302072972, -1.6214566324137984, 2.505391454472044,  -88.71419716149445)
         self.assertSequenceAlmostEqual(components_0[0][3:], expected_coefficients_0, self.DEFAULT_DECIMAL_PLACES)
         self.assertSequenceAlmostEqual(components_0[1][3:], expected_coefficients_1, self.DEFAULT_DECIMAL_PLACES)
 
@@ -722,8 +721,8 @@ class TestXcamshift(unittest2.TestCase):
     
     
 if __name__ == "__main__":
-#    unittest2.main()
+    unittest2.main()
 #    TestXcamshift.list_test_shifts()
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testNonBondedComponents')
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistances')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistances')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
