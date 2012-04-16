@@ -1,0 +1,21 @@
+# ring current coefficients for camshift 1.35.0
+# NOTE / TODO: coeeficients for 5 and 6 member rings may currently be swapped for TRP
+---
+
+target_atoms :  ["HA", "CA", "HN", "N", "C", "CB"]
+# Note the order of atoms in these declarations matter, t
+# they effect the direction of the ring normal 
+# the order should be going from the ring join point going round the ring 
+# favouring lower numbered atoms first??
+rings : {
+     PHE : { "6":  ["CG","CD1","CE1","CZ","CE2","CD2"]},
+     TYR : { "6" : ["CG","CD1","CE1","CZ","CE2","CD2"]},
+     #TODO: not corrected for ring order from here on in
+     TRP : { "6" : ["CD","CE1","CE2","CZ1","CZ2","CH"],
+             "5" : ["CG","CD1","CD2","CE1","CE2"]},
+     HIS : { "5" : ["CG","CD2","CE1","ND1","NE2"]}
+
+}
+
+# these values  are mutiplied by 1000 before they are used by the ring table class (this matches camshifts impementation)
+%s
