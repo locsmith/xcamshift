@@ -228,7 +228,18 @@ class Test_table_manager(unittest2.TestCase):
         
         translation = table.get_chem_type_translation("NH1")
         self.assertEqual(translation, ['N','SP3'])
-
+        
+    def test_table_hierachy(self):
+        table = self.table_manager.get_non_bonded_table('GLY')
+        
+        expected_exponent =  -3.0
+        exponent = table.get_exponent('sphere_1')
+        self.assertAlmostEqual(expected_exponent, exponent)
+        
+        expected_coefficent = -90.04553541
+        coefficient = table.get_non_bonded_coefficient("CA", "sphere_1", "S", "SP3")
+        self.assertAlmostEqual(expected_coefficent, coefficient)
 
 if __name__ == "__main__":
-    unittest2.main()
+#    unittest2.main()
+    unittest2.main(module='test.Test_table_manager.py',defaultTest='Test_table_manager.test_table_hierachy')

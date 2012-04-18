@@ -11,7 +11,7 @@ import yaml
 import extra_table
 from dihedral_table import Dihedral_table, Dihedral_parameter_table,\
     Composite_dihedral_table
-from python_utils import tupleit
+from python_utils import tupleit, Hierarchical_dict
 from sidechain_table import Sidechain_table
 from constants_table import Constants_table
 from ring_table import Ring_table
@@ -83,14 +83,23 @@ class Table_manager(object):
             residue_types = (self.BASE_TABLE,)
         return residue_types
 
+    #TODO: this could come from the file itself...
+    def _find_parent_table(self, table_type, residue_type):
+        result = None 
+        if residue_type != self.BASE_TABLE:
+            result = self._get_table(table_type,None)
+        return result
+#    
+    
+    
     def __load_table(self, table_type, residue_type=None):
-
+        
         residue_types = self.__get_residue_types(residue_type)
-            
+        
+        new_table = None
         for residue_type in residue_types:
             table_name = self.__get_table_name(table_type,residue_type)
             
-            new_table = None
             for search_path in self.search_paths:
                 path = os.path.join(search_path, table_name)
                 
@@ -104,10 +113,15 @@ class Table_manager(object):
                             break
                     except Exception as detail:
                         self.__raise_table_load_error(table_name, detail)
-                        
+            if new_table != None:
+                break
+            
         if new_table == None:
             self.__raise_table_load_error(table_name, "the table couldn't be found in %s" % ", ".join(self.search_paths))
         
+        parent  = self._find_parent_table(table_type,residue_type)
+        new_table = Hierarchical_dict(new_table, parent=parent)
+            
         self.tables[key]=new_table
         
     
@@ -128,7 +142,15 @@ class Table_manager(object):
         
         return result
 
+
+    def _force_residue_type_lowercase(self, residue_type):
+        if residue_type != None:
+            residue_type = residue_type.lower()
+        return residue_type
+
     def _get_table(self,table_type,residue_type=None):
+        
+        residue_type = self._force_residue_type_lowercase(residue_type)
 
         result = self.__search_for_table(table_type,residue_type)
         
