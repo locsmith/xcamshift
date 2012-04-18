@@ -5,10 +5,16 @@ Created on 17 Jan 2012
 '''
 import unittest2
 from python_utils import tupleit, IsMappingType, Dict_walker,\
-    value_from_key_path, filter_dict
+    value_from_key_path, filter_dict, Hierarchical_dict
 from UserDict import UserDict
 from numpy.distutils.misc_util import dict_append
 from copy import deepcopy
+import collections
+import abc
+from unittest2.util import safe_repr
+import difflib
+import pprint
+import copy
 
 TEST_DICT_DATA_1 = {1: {2:{3:4,5:6}},7:8}
         
@@ -64,6 +70,45 @@ class Test_python_utils(unittest2.TestCase):
         
         self.assertDictEqual(test_data,{1: {2: {3: 4, 5: 6}}})
 
+
+
+    def assertDictEqual(self, d1, d2, msg=None):
+        self.assertTrue(IsMappingType(d1), 'First argument is not a dictionary')
+        self.assertTrue(IsMappingType(d2), 'Second argument is not a dictionary')
+
+        if d1 != d2:
+            standardMsg = '%s != %s' % (safe_repr(d1, True), safe_repr(d2, True))
+            diff = ('\n' + '\n'.join(difflib.ndiff(
+                           pprint.pformat(d1).splitlines(),
+                           pprint.pformat(d2).splitlines())))
+            standardMsg = self._truncateMessage(standardMsg, diff)
+            self.fail(self._formatMessage(msg, standardMsg))
+            
+                
+
+    def build_test_hier_dict(self):
+        dict_0 = {1:-1, 3:-30}
+        hdict_1 = Hierarchical_dict({2:-2}, parent=dict_0)
+        hdict_2 = Hierarchical_dict({3:-3}, parent=hdict_1)
+        return hdict_2, hdict_1, dict_0
+
+    def test_hier_dict_lookup(self):
+        hdict_2, hdict_1, dict_0 = self.build_test_hier_dict() #@UnusedVariable
+        
+        
+        self.assertDictEqual(hdict_2, {1:-1,2:-2,3:-3})
+        self.assertDictEqual(hdict_1, {1:-1,2:-2,3:-30})
+        
+        hdict_2, hdict_1, dict_0 = self.build_test_hier_dict()
+        hdict_2[3]=3
+        
+        self.assertEqual(hdict_2[3], 3)
+        self.assertEqual(dict_0[3], -30)
+
+        hdict_2, hdict_1, dict_0 = self.build_test_hier_dict()
+        
+        del hdict_2[3]
+        self.assertEqual(hdict_2[3], -30)
         
         
 

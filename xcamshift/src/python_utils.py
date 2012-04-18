@@ -3,6 +3,7 @@ Created on Apr 10, 2012
 
 @author: garyt
 '''
+from UserDict import DictMixin
 
 def tupleit(t):
     """ 
@@ -112,3 +113,57 @@ def filter_dict(target_dict, pred, invert = False):
         del target_dict[key]
         
     return target_dict
+
+
+
+
+PARENT_KWARG = 'parent'
+class Hierarchical_dict(object,DictMixin):
+    '''
+    classdocs
+    '''
+    
+    def __init__(self,*args, **kwargs):
+        '''
+        Constructor
+        '''
+        
+        if PARENT_KWARG in kwargs:
+            self._parent = kwargs[PARENT_KWARG]
+            del kwargs[PARENT_KWARG]
+        else:
+            self._parent = None
+            
+        self._data  = dict(*args,**kwargs)
+        
+    def set_parent(self,parent):
+        self._parent = parent
+        
+    def __setitem__(self, key, value):
+        self._data[key]=value
+        
+    def __getitem__(self,key):
+        result = None
+        if key in self._data:
+            result  = self._data[key]
+        elif self._parent != None:
+            result = self._parent[key]
+        else:
+            raise KeyError(key)
+        return result
+            
+    def __delitem__(self, key):
+        del self._data[key]
+        
+    def keys(self):
+        
+        keys = []
+        if self._parent != None:
+            keys = self._parent.keys()
+        keys.extend(self._data.keys())
+        
+        return keys
+            
+    def __str__(self):
+        result = [self._data.__str__(), self._parent.__str__()]
+        return ' -> '.join(result)
