@@ -225,14 +225,14 @@ data:
             CE1:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
             CE2:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
             CZ:   {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
-            OHN:  {HA  :   0.01563876, CA  :  -3.70787188, HN  :   ,           N   :   ,           C   :   ,           CB  :   0.10161305}
+            OH:   {HA  :   0.01563876, CA  :  -3.70787188, HN  :   ,           N   :   ,           C   :   ,           CB  :   0.10161305}
             HB1:  {HA  :   ,           CA  :   5.41535700, HN  :   ,           N   :   ,           C   :  -0.07615137, CB  :  -0.29388182}
             HB2:  {HA  :   ,           CA  :   5.41535700, HN  :   ,           N   :   ,           C   :  -0.07615137, CB  :  -0.29388182}
             HD1:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
             HD2:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
             HE1:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
             HE2:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
-            HHN:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
+            HH:   {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
 
       VAL:
             CB:   {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }

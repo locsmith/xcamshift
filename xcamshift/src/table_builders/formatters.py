@@ -57,8 +57,8 @@ def fixup_decimal_spacing(line):
 
 
 def fixup_convert_H_to_HN(line):
-    line = re.sub("H  ", "HN ", line)
-    line = re.sub("H:  ", "HN: ", line)
+    line = re.sub(" H  ", " HN ", line)
+    line = re.sub(" H:  ", " HN: ", line)
     line = line.replace('[H, ','[HN,')
     return line
 
