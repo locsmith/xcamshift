@@ -96,16 +96,16 @@ data:
             CB:   {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
             CG1:  {HA  :   ,           CA  :  -2.23609188, HN  :   ,           N   :   ,           C   :   ,           CB  :  27.82752629}
             CG2:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
-            CD:   {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :  30.79721019}
+            CD1:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :  30.79721019}
             HB:   {HA  :   ,           CA  :   2.09954751, HN  :   ,           N   :   ,           C   :   ,           CB  :  22.60629554}
             HG11: {HA  :  -0.01204314, CA  :   ,           HN  :   ,           N   :   ,           C   :  -0.16850933, CB  : -33.54874187}
             HG12: {HA  :  -0.01204314, CA  :   ,           HN  :   ,           N   :   ,           C   :  -0.16850933, CB  : -33.54874187}
             HG21: {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
             HG22: {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
             HG23: {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
-            HD1:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
-            HD2:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
-            HD3:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
+            HD11: {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
+            HD12: {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
+            HD13: {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
 
       LEU:
             CB:   {HA  :   ,           CA  :   4.13002610, HN  :   ,           N   :   ,           C   :   ,           CB  :   0.00000000}
@@ -114,7 +114,7 @@ data:
             CD2:  {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
             HB1:  {HA  :   0.00152585, CA  :  -3.05055220, HN  :   ,           N   :   ,           C   :  -0.22564904, CB  :   ,         }
             HB2:  {HA  :   0.00152585, CA  :  -3.05055220, HN  :   ,           N   :   ,           C   :  -0.22564904, CB  :   ,         }
-            HG1:  {HA  :   ,           CA  :  -0.72987603, HN  :   ,           N   :   ,           C   :   0.13906389, CB  :   0.54172839}
+            HG:   {HA  :   ,           CA  :  -0.72987603, HN  :   ,           N   :   ,           C   :   0.13906389, CB  :   0.54172839}
             HD11: {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
             HD12: {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
             HD13: {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
