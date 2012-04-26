@@ -1,0 +1,31 @@
+CamShift chemical shift predictor v1.35
+(c) 2006-2009 Kai Kohlhoff and University of Cambridge.
+Please cite:
+Kohlhoff K J, Robustelli P, Cavalli A, Salvatella X, Vendruscolo M (2009)
+Fast and Accurate Predictions of Protein NMR Chemical Shifts from
+Interatomic Distances, JACS 131 (39), pp 13894-13895
+
+	>> Segment contains 30 0 (30) defined and missing atoms
+	>> Generation of molecule coor done 
+almost-1.35@molecule> Tue Apr 24 18:09:11 2012
+almost-1.35@molecule> Molecule generation completed 3 fragments
+
+	ALA_1 GLY_2 ALA_3 
+
+	>> Build details:
+
+	>> Number of fragments:   3
+	>> Number of atoms:       30
+	>> Number of bonds:       29
+	>> Number of angles:      51
+	>> Number of dihedrals:   65
+	>> Number of impropers:   5
+	>> Number of groups:      8
+	>> Number of fixed excl.: 0
+
+
+   ID       AA       HA       CA       HN        N        C       CB
+---------------------------------------------------------------------
+    1      ALA   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+    2      GLY   4.2131  43.6719   8.4774 113.0363 173.4442   0.0000
+    3      ALA   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
