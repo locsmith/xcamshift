@@ -55,9 +55,9 @@ class Segment_Manager():
             segment = atom.segmentName()
             segments.add(segment)
             
-            residue_num = atom.residueNum()
+            residue_number = atom.residueNum()
             residues  = segment_residues.setdefault(segment,{})
-            residues.setdefault(residue_num,[]).append(atom_index)
+            residues.setdefault(residue_number,[]).append(atom_index)
             
         segment_info_map = {}
         for segment in segment_residues:
