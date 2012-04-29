@@ -249,7 +249,8 @@ class Distance_component_factory(Atom_component_factory):
     
     def get_table_name(self):
         return 'ATOM'
-
+    
+#TODO: check if previous residue offsets are included
 class Random_coil_context :
     def __init__(self,atom,offset,table):
         
@@ -270,13 +271,20 @@ class Random_coil_component_factory(Atom_component_factory):
     
     #TODO: push to base
     #TODO should random coil have a translation table
-    def _translate_atom_name(self, atom_name,context):
-        return atom_name
+    def _translate_atom_name(self, residue_type, atom_name,table):
+        
+        return  table.get_translation(residue_type,atom_name)
+        
+        
 
     def _get_component_for_atom(self, atom, context):
         result = None
+        
         atom_name = atom.atomName()
-        atom_name = self._translate_atom_name(atom_name,context)
+        residue_type = atom.residueName()
+        table  =  context._table
+        atom_name = self._translate_atom_name(residue_type,atom_name,table)
+        
         if atom_name in context._table.get_atoms():
             value = context._table.get_random_coil_shift(context.offset, context.to_residue_type, atom_name)
             if value != None:

@@ -2,7 +2,8 @@
 ---
 
 offsets:   [-1,0,1]
-atoms:     ["HA", "CA", "HN", "N", "C", "CB"]
+atoms:     [HA, CA, "HN", "N", "C", "CB"]
+translations: {[GLY,HA1]: HA}
 data: {
 
   

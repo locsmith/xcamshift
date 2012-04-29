@@ -4,6 +4,8 @@ Created on 30 Dec 2011
 @author: garyt
 '''
 
+TRANSLATIONS = 'translations'
+        
 class Random_coil_table(object):
     
     DATA = 'data'
@@ -40,4 +42,12 @@ class Random_coil_table(object):
         if atom in atom_random_coil_table:
             result =  atom_random_coil_table[atom]
             
+        return result
+    
+    def get_translation(self,residue,atom):
+        result =  atom
+        
+        key = residue, atom
+        if key in self._table[TRANSLATIONS]:
+            result =  self._table[TRANSLATIONS][key]
         return result
