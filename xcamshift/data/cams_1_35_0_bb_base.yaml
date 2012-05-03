@@ -41,7 +41,9 @@ to_atoms:    ["N","HN","CA","HA","C","O"]
 from_atoms:  ["HN","N","HA","CA","C","CB"]
 offsets:     [-1,0,1]
 translation_table: {OT1 : "O", HT1: "HN", HA1 : "HA"}
-
+translations: {}
+residue_type : BASE
+table_type : BACKBONE
 data:
 
       -1:

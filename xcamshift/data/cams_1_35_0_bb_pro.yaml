@@ -1,3 +1,6 @@
+residue_type : PRO
+table_type : BACKBONE
+translations : {}
 data:
 
       -1:

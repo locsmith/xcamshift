@@ -1,3 +1,6 @@
+residue_type : GLY
+table_type : BACKBONE
+translations: {[GLY,HA1]: HA}
 data:
 
       -1:
