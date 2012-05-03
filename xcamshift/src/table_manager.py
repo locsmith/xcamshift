@@ -130,6 +130,14 @@ class Table_manager(object):
         result = ((table_type,residue_type),(table_type,self.BASE_TABLE))
         return result
     
+    #TODO: remove __'s
+    def _seach_for_loaded_table(self,table_type, residue_type):
+        result  = None
+        key = table_type, residue_type
+        if key in self.tables:
+            result  = self.tables[key]
+        return result
+    
     def __search_for_table(self, table_type, residue_type):
         keys= self.__get_seach_keys(table_type, residue_type)
         tables = self.tables
@@ -148,11 +156,12 @@ class Table_manager(object):
             residue_type = residue_type.lower()
         return residue_type
 
+    #TODO: this is a really inefficient method it will do lots of disk accesses, why not load all residue type tables on first call
     def _get_table(self,table_type,residue_type=None):
         
         residue_type = self._force_residue_type_lowercase(residue_type)
 
-        result = self.__search_for_table(table_type,residue_type)
+        result = self._seach_for_loaded_table(table_type,residue_type)
         
         if result == None:
             self.__load_table(table_type,residue_type)
