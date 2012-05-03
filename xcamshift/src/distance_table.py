@@ -22,7 +22,6 @@ class Distance_table(object):
         self.FROM_ATOMS = 'from_atoms'
         self.TO_ATOMS = 'to_atoms'
         self.OFFSETS='offsets'
-        self.TRANSLATION_TABLE = "translation_table"
         
         self._translation_to_table = self._build_from_translation_table(table)
         self._translation_from_table = self._build_from_translation_table(table)
@@ -37,7 +36,6 @@ class Distance_table(object):
         result  = {}
         if TRANSLATIONS in data_table:
             for key,to_atom in data_table[TRANSLATIONS].items():
-                print 'key',key
                 residue, from_atom = key
                 new_key = (residue,to_atom)
                 result[new_key]= from_atom

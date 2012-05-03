@@ -40,8 +40,9 @@ scaling:     1.0
 to_atoms:    ["N","HN","CA","HA","C","O"]
 from_atoms:  ["HN","N","HA","CA","C","CB"]
 offsets:     [-1,0,1]
-translation_table: {OT1 : "O", HT1: "HN", HA1 : "HA"}
-translations: {}
+#TODO check use of global translations of OT1 and HT1 (they seem to have no effect currently!!??
+#TODO check if GLY translations can be moved here...
+translations: {[-,OT1] : O, [-,HT1] : HN}
 residue_type : BASE
 table_type : BACKBONE
 data:
