@@ -12,12 +12,15 @@ Created on 24 Apr 2012
 
 
 
+
+
 '''
 import sys
 import re
 from collection_backport import OrderedDict
 from itertools import ifilter
 from functools import partial
+import yaml
 
 class Camshift_output_parser(object):
     
@@ -72,6 +75,10 @@ class Camshift_output_parser(object):
             
         return result
 
+def load_constants():
+    constants_h = open('data/cams_1_35_0_constants_base.yaml')
+    return yaml.load(constants_h)
+
 def get_first_and_last(data):
     residue_numbers = set()
     
@@ -121,12 +128,26 @@ def get_longest_length(accumulator ,value):
     return result 
     
 
+def offset_by_well(data, constants, scale = 1.0, epsilon = 0.1):
+    for key in data:
+        segid, residue_num, atom_name = key
+        
+        offset = constants['flat_bottom_limit'][atom_name] * scale + epsilon
+        data[key] += offset
+        
+    return data
+
+
 if __name__ == '__main__':
     
-    parser = Camshift_output_parser(sys.argv[1])
+    camshift_parser = Camshift_output_parser(sys.argv[1])
 
-    data  = parser.parse()
+    data  = camshift_parser.parse()
     data  = remove_first_and_last_by_residue(data)
+    
+    constants = load_constants()
+    
+#    data  = offset_by_well(data,constants)
     
     print format_as_atom_selection_float_dict(data)
             
