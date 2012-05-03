@@ -177,26 +177,31 @@ class Dihedral_component_factory(Atom_component_factory):
 
 class DistanceContext:
 
+    def _translate_atom_name_from_table(self, residue_type, atom_name,table):
+        return  table.get_translation_from_table(residue_type,atom_name)
     
     
     def __init__(self, from_atom, offset, to_atom_name ,table):
         
         self.complete = False
         self._table = table
-        
+        self.to_atom_name =  to_atom_name
         self.segment = from_atom.segmentName()
         
         self.offset = offset
         
-        from_residue_number = from_atom.residueNum()
+        self.from_residue_number = from_atom.residueNum()
+        self.from_residue_type = Atom_utils._get_residue_type(self.segment,self. from_residue_number)
         
-        self.to_atom_name = to_atom_name
-        self.to_residue_number = from_residue_number+offset
-        to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, self.to_atom_name)
+        self.to_residue_number = self.from_residue_number+offset
+        to_residue_type = Atom_utils._get_residue_type(self.segment, self.to_residue_number)
+        
+        to_atom_name = self._translate_atom_name_from_table(to_residue_type, to_atom_name, table)
+        
+        to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, to_atom_name)
         
         if len(to_atom) == 0:
-            self.to_atom_name =  self._table.get_translation(self.to_atom_name)
-            to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, self.to_atom_name)
+            to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, to_atom_name)
             
         num_to_atom = len(to_atom)
         if num_to_atom > 1:
@@ -212,6 +217,14 @@ class Distance_component_factory(Atom_component_factory):
     def __init__(self):
         pass
     
+    #TODO: remove just kept to satisfy an abstract method declaration
+    def _translate_atom_name(self, atom_name, context):
+        pass
+
+    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
+        
+        return  table.get_translation_to_table(residue_type,atom_name)
+    
     def _build_contexts(self, atom, table):
         contexts = []
         for offset in table.get_offsets():
@@ -225,10 +238,13 @@ class Distance_component_factory(Atom_component_factory):
         table = context._table
         
         from_atom_name = atom.atomName()
-        from_atom_name = self._translate_atom_name(from_atom_name, context)
+        from_residue_type = atom.residueName()
+        from_atom_name = self._translate_atom_name_to_table(from_residue_type,from_atom_name,table)
+        
         offset = context.offset
         to_atom_name = context.to_atom_name
-        to_atom_name = self._translate_atom_name(to_atom_name,context)
+        to_residue_type = context.to_residue_type
+        to_atom_name = self._translate_atom_name_to_table(to_residue_type,to_atom_name,table)
         
         
         result = None
@@ -243,9 +259,6 @@ class Distance_component_factory(Atom_component_factory):
                         result = (from_atom_index,to_atom_index,value,exponent)
         return result
 
-    
-    def _translate_atom_name(self, atom_name, context):
-        return context._table.get_translation(atom_name)
     
     def get_table_name(self):
         return 'ATOM'
@@ -2025,15 +2038,15 @@ class Xcamshift():
         result  = [0] * Segment_Manager().get_number_atoms()
         
         result_elements = {}
-        keys=[]
-        for potential in self.potential:
-            num_atoms = len(result)
-            sub_result  = [0.0] * num_atoms
-            potential.set_shifts(sub_result)
-            key = potential.get_abbreviated_name()
-            keys.append(key)
-            result_elements[key] = sub_result
-        
+#        keys=[]
+#        for potential in self.potential:
+#            num_atoms = len(result)
+#            sub_result  = [0.0] * num_atoms
+#            potential.set_shifts(sub_result)
+#            key = potential.get_abbreviated_name()
+#            keys.append(key)
+#            result_elements[key] = sub_result
+#        
         
         keys = []
         for potential in self.potential:
