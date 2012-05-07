@@ -128,6 +128,10 @@ class Dihedral_component_factory(Atom_component_factory):
 
     def get_table_name(self):
         return 'ATOM'
+    
+    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
+        
+        return  table.get_translation_to_table(residue_type,atom_name)
 
 #TODO: make this more generic and move to super class
     def _build_contexts(self, atom, table):
@@ -145,8 +149,10 @@ class Dihedral_component_factory(Atom_component_factory):
     def _get_component_for_atom(self, atom, context):
         table = context._table
         
+        
         from_atom_name = atom.atomName()
-        from_atom_name = self._translate_atom_name(from_atom_name, context)
+        from_residue_type = atom.residueName()
+        from_atom_name = self._translate_atom_name_to_table(from_residue_type,from_atom_name,table)
         
         result = None
         if from_atom_name in table.get_target_atoms():

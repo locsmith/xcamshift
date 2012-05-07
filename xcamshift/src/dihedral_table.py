@@ -152,6 +152,25 @@ class Dihedral_parameter_table(Dihedral_table_base):
                     result  = parameter[target_atom]
 #            
         return result    
+
+        #TODO: move to base
+    #TODO: make distance base
+    def get_translation_to_table(self,residue,atom):
+        result =  atom
+        
+        key = residue, atom
+        if key in self._table[TRANSLATIONS]:
+            result =  self._table[TRANSLATIONS][key]
+        return result
+
+    def get_translation_from_table(self, residue, atom):
+        result = atom
+        
+        key = residue,atom
+        if key in self._translation_from_table:
+            result = self._translation_from_table[key]
+        return result
+
     
 class Composite_dihedral_table():
     
@@ -185,4 +204,12 @@ class Composite_dihedral_table():
     
     def get_parameter(self,target_atom,dihedral_key,parameter):
         return self._parameter_table.get_dihedral_parameter(target_atom,dihedral_key,parameter)
+
+    #TODO: move to base
+    #TODO: make distance base
+    def get_translation_to_table(self,residue,atom):
+        return self._parameter_table.get_translation_to_table(residue,atom)
+
+    def get_translation_from_table(self, residue, atom):
+        return self._parameter_table.get_translation_from_table(residue,atom)
     

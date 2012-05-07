@@ -10,7 +10,7 @@ from protocol import initStruct
 from pdbTool import PDBTool
 from xcamshift import Xcamshift
 from utils import Atom_utils
-from common_constants import RANDOM_COIL, NON_BONDED, BACK_BONE
+from common_constants import RANDOM_COIL, NON_BONDED, BACK_BONE, DIHEDRAL
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -40,11 +40,12 @@ class Test(unittest2.TestCase):
             atom_ids = Atom_utils.find_atom_id(segment, residue_number, atom)
             
             sub_potential = xcamshift.get_named_sub_potential(sub_potential_name)
-
+            
+            print atom_ids[0]
             shift = sub_potential.calc_single_atom_shift(atom_ids[0])
             expected_shift = aga_subpotential_shifts[key]
             
-            if sub_potential_name not in (RANDOM_COIL, NON_BONDED, BACK_BONE):
+            if sub_potential_name not in (RANDOM_COIL, NON_BONDED, BACK_BONE, DIHEDRAL):
                 print key, expected_shift, shift
             else:
                 self.assertAlmostEqual(expected_shift, shift, places=self.DEFAULT_DECIMAL_PLACES - 1, msg=`key`)
@@ -58,14 +59,13 @@ class Test(unittest2.TestCase):
         expected_bb_shifts = dict(aga_component_shifts_bb)
         expected_component_keys = expected_bb_shifts.keys()
         for component_index, component in enumerate(bb_subpotential._get_component_list()):
-            from_atom_id, to_atom_id, coefficient, exponent = component
+            from_atom_id, to_atom_id = component[0:2]
             from_atom_key = Atom_utils._get_atom_info_from_index(from_atom_id)
             to_atom_key = Atom_utils._get_atom_info_from_index(to_atom_id)
             
             expected_key = from_atom_key, to_atom_key
-            distance = Atom_utils._calculate_distance(from_atom_id, to_atom_id)
-#            print distance
-#            print component
+#            distance = Atom_utils._calculate_distance(from_atom_id, to_atom_id)
+
             self.assertIn(expected_key, expected_component_keys, `expected_key` + " exists")
             
             shift = bb_subpotential._calc_component_shift(component_index)
