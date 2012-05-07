@@ -198,6 +198,7 @@ class DistanceContext:
         
         to_atom_name = self._translate_atom_name_from_table(to_residue_type, to_atom_name, table)
         
+        #TODO remove select atom with translation
         to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, to_atom_name)
         
         if len(to_atom) == 0:
@@ -239,11 +240,13 @@ class Distance_component_factory(Atom_component_factory):
         
         from_atom_name = atom.atomName()
         from_residue_type = atom.residueName()
+        #TODO move translation into context
         from_atom_name = self._translate_atom_name_to_table(from_residue_type,from_atom_name,table)
         
         offset = context.offset
         to_atom_name = context.to_atom_name
         to_residue_type = context.to_residue_type
+        #TODO move translation into context
         to_atom_name = self._translate_atom_name_to_table(to_residue_type,to_atom_name,table)
         
         
