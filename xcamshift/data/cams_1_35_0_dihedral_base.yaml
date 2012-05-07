@@ -5,7 +5,7 @@ exponent : 1.0
 offsets : [-1,0,1]
 target_atoms : ["HA", "CA", "HN", "N", "C", "CB"]
 dihedral_atoms : ["C", "N", "O", "CA", "C", "CB", "CG"]
-translations : [CG : "OG"]
+
 
 data:
            [[C,  -1], [N,   0], [CA,  0], [C,   0]] : {HA:    0.39606483, CA:    0.47780154, HN:   0.14048572, N:    0.13061770, C:   -0.06636460, CB:    0.63683724}
