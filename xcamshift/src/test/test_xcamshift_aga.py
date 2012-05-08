@@ -11,6 +11,7 @@ from pdbTool import PDBTool
 from xcamshift import Xcamshift
 from utils import Atom_utils
 from common_constants import RANDOM_COIL, NON_BONDED, BACK_BONE, DIHEDRAL
+from common_constants import SIDE_CHAIN, XTRA
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -41,11 +42,10 @@ class Test(unittest2.TestCase):
             
             sub_potential = xcamshift.get_named_sub_potential(sub_potential_name)
             
-            print atom_ids[0]
             shift = sub_potential.calc_single_atom_shift(atom_ids[0])
             expected_shift = aga_subpotential_shifts[key]
             
-            if sub_potential_name not in (RANDOM_COIL, NON_BONDED, BACK_BONE, DIHEDRAL):
+            if sub_potential_name not in (RANDOM_COIL, NON_BONDED, BACK_BONE, DIHEDRAL, XTRA):
                 print key, expected_shift, shift
             else:
                 self.assertAlmostEqual(expected_shift, shift, places=self.DEFAULT_DECIMAL_PLACES - 1, msg=`key`)

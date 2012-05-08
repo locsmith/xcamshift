@@ -4,6 +4,8 @@ Created on 30 Dec 2011
 @author: garyt
 '''
 
+TRANSLATIONS = 'translations'
+
 class Extra_table(object):
     
     DATA = 'data'
@@ -20,7 +22,23 @@ class Extra_table(object):
     
     def __init__(self, table):
         self._table = table
+        self._translation_to_table = self._build_from_translation_table(table)
+        self._translation_from_table = self._build_from_translation_table(table)
+        
+    def _build_to_translation_table(self,data_table):
+        result  = {}
+        if TRANSLATIONS in data_table:
+            result  =  data_table[TRANSLATIONS]
+        return result
     
+    def _build_from_translation_table(self,data_table):
+        result  = {}
+        if TRANSLATIONS in data_table:
+            for key,to_atom in data_table[TRANSLATIONS].items():
+                residue, from_atom = key
+                new_key = (residue,to_atom)
+                result[new_key]= from_atom
+        return result
     def get_translation(self,atom):
         return atom
     
@@ -82,4 +100,21 @@ class Extra_table(object):
                 if target_atom in target_atoms:
                     result  = target_atoms[target_atom]
             
+        return result
+        #TODO: move to base
+    #TODO: make distance base
+    def get_translation_to_table(self,residue,atom):
+        result =  atom
+        
+        key = residue, atom
+        if key in self._table[TRANSLATIONS]:
+            result =  self._table[TRANSLATIONS][key]
+        return result
+
+    def get_translation_from_table(self, residue, atom):
+        result = atom
+        
+        key = residue,atom
+        if key in self._translation_from_table:
+            result = self._translation_from_table[key]
         return result

@@ -326,16 +326,24 @@ class Random_coil_component_factory(Atom_component_factory):
     
 class ExtraContext(object):
 
-
+    def _translate_atom_name_from_table(self, residue_type, atom_name,table):
+        return  table.get_translation_from_table(residue_type,atom_name)
+    
     def _select_atom_with_translation(self, segment, residue_number_1, atom_name_1):
+#        print segment, residue_number_1, atom_name_1
+        residue_type  = Atom_utils._get_residue_type(segment, residue_number_1)
+        atom_name_1 = self._translate_atom_name_from_table(residue_type, atom_name_1, self._table)
         target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
-        if len(target_atom_1) == 0:
-            atom_name_1 = self._table.get_translation(atom_name_1)
-            target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
+#        print target_atom_1
+#        (segment, residue_number_1, atom_name_1)
+#        if len(target_atom_1) == 0:
+#            atom_name_1 = self._table.get_translation(atom_name_1)
+#            target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
         num_to_atom = len(target_atom_1)
         if num_to_atom > 1:
             self._get_atom_names(target_atom_1)
             raise Exception("unexpected number of to atoms selected (> 1) %d" % num_to_atom)
+#        print Atom_utils.target_atom_1
         return target_atom_1
 
     def __init__(self, from_atom, key_1, key_2 ,table):
@@ -362,6 +370,13 @@ class ExtraContext(object):
 
 
 class Extra_component_factory(Atom_component_factory):
+
+    def _translate_atom_name(self, atom_name,context):
+        pass
+    
+    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
+        
+        return  table.get_translation_to_table(residue_type,atom_name)
     
     def _build_contexts(self, atom, table):
         contexts = []
@@ -379,9 +394,10 @@ class Extra_component_factory(Atom_component_factory):
     def  _get_component_for_atom(self, atom, context):
         table = context._table
 
-        
         from_atom_name = atom.atomName()
-        from_atom_name = self._translate_atom_name(from_atom_name, context)
+        from_residue_type = atom.residueName()
+        #TODO move translation into context
+        from_atom_name = self._translate_atom_name_to_table(from_residue_type,from_atom_name,table)
         
         result = None
         if from_atom_name in table.get_target_atoms():
@@ -394,9 +410,6 @@ class Extra_component_factory(Atom_component_factory):
                 exponent = context._table.get_exponent()
                 result = (from_atom_index,distance_index_1,distance_index_2,value,exponent)
         return result
-
-    def _translate_atom_name(self, atom_name,context):
-        return context._table.get_translation(atom_name)
     
     def get_table_name(self):
         return 'ATOM'
