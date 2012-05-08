@@ -10,8 +10,7 @@ from protocol import initStruct
 from pdbTool import PDBTool
 from xcamshift import Xcamshift
 from utils import Atom_utils
-from common_constants import RANDOM_COIL, NON_BONDED, BACK_BONE, DIHEDRAL
-from common_constants import SIDE_CHAIN, XTRA
+from common_constants import BACK_BONE
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -27,6 +26,10 @@ class Test(unittest2.TestCase):
         for key, value in expected_force_factors.items():
             if almostEqual(value, 0.0, self.DEFAULT_DECIMAL_PLACES):
                 del expected_force_factors[key]
+    
+    def assertEmpty(self, expected_force_factors,msg = None):
+        return self.assertEqual(len(expected_force_factors), 0)
+
                 
     def setUp(self):
         initStruct("test_data/aga/aga.psf")
@@ -34,23 +37,25 @@ class Test(unittest2.TestCase):
 
     def test_glycine_shifts(self):
         xcamshift = Xcamshift()
+        
+        sub_potential_shifts = dict( aga_subpotential_shifts)
         for key in aga_subpotential_shifts:
             segment, residue_number, atom, sub_potential_name = key
             if atom == 'HA':
                 atom = 'HA1'
-            atom_ids = Atom_utils.find_atom_id(segment, residue_number, atom)
+            atom_ids = Atom_utils.find_atom_ids(segment, residue_number, atom)
             
             sub_potential = xcamshift.get_named_sub_potential(sub_potential_name)
             
             shift = sub_potential.calc_single_atom_shift(atom_ids[0])
             expected_shift = aga_subpotential_shifts[key]
             
-            if sub_potential_name not in (RANDOM_COIL, NON_BONDED, BACK_BONE, DIHEDRAL, XTRA):
-                print key, expected_shift, shift
-            else:
-                self.assertAlmostEqual(expected_shift, shift, places=self.DEFAULT_DECIMAL_PLACES - 1, msg=`key`)
+            self.assertAlmostEqual(expected_shift, shift, places=self.DEFAULT_DECIMAL_PLACES - 1, msg=`key`)
             
-#            self.assertAlmostEqual(shift, aga_shifts[key])
+            del sub_potential_shifts[key]
+            
+        self.assertEmpty(sub_potential_shifts)
+            
     def test_component_shifts_bb(self):
         
         xcamshift = Xcamshift()

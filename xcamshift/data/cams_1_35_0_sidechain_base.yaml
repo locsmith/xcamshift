@@ -3,6 +3,7 @@
 
 exponent : 1.0
 target_atoms : ["HA", "CA", "HN", "N", "C", "CB"]
+translations : {[SER, OG] : CG, [GLY,HA1] : HA}
 
 data:
 
