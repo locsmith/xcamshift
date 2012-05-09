@@ -16,7 +16,7 @@ from observed_chemical_shifts import Observed_shift_table
 from segment_manager import Segment_Manager
 from table_manager import Table_manager
 from python_utils import tupleit
-from utils import Atom_utils, AXES, Z
+from utils import Atom_utils, AXES
 from vec3 import Vec3, norm, cross, dot
 import abc
 import sys
