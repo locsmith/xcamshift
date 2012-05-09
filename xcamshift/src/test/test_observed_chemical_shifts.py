@@ -78,7 +78,7 @@ class TestObservedShiftTable(unittest2.TestCase):
         atom_id_indices = dict(shift_table.get_indices_for_atom_id())
         
         for i,elem in enumerate(shift_table.dump_observed_shifts()):
-            atom_ids = Atom_utils.find_atom_id(*elem[0])
+            atom_ids = Atom_utils.find_atom_ids(*elem[0])
             self.assertEqual(len(atom_ids), 1)
             atom_id = atom_ids[0]
             self.assertEqual(atom_id_indices[atom_id],i)

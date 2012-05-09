@@ -35,7 +35,7 @@ class Atom_utils(object):
         return residue_atoms
 
     @staticmethod
-    def find_atom_id(segment='*', residue_number='#', atom='*'):
+    def find_atom_ids(segment='*', residue_number='#', atom='*'):
         atoms  = Atom_utils.find_atom(segment,residue_number,atom)
         return [atom.index() for atom in atoms]
     

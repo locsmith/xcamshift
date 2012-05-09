@@ -495,7 +495,7 @@ class TestXcamshiftA4(unittest2.TestCase):
         expected  = [0.0] * len(shifts)
         
         for target_atom_key in ala_4.ala_4_expected_shifts:
-            target_atom_id  = Atom_utils.find_atom_id(*target_atom_key)[0]
+            target_atom_id  = Atom_utils.find_atom_ids(*target_atom_key)[0]
             expected[target_atom_id] = ala_4.ala_4_expected_shifts[target_atom_key]
             
         self.assertSequenceAlmostEqual(expected, shifts,self.DEFAULT_DECIMAL_PLACES)
