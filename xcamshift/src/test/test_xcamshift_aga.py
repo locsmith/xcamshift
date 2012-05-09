@@ -18,7 +18,7 @@ def almostEqual(first, second, places = 7):
         result=True
     return result
 
-class Test(unittest2.TestCase):
+class TestXcamshifAGA(unittest2.TestCase):
     DEFAULT_DECIMAL_PLACES = 5
     DEFAULT_ERROR = 10 ** -DEFAULT_DECIMAL_PLACES
 
@@ -98,5 +98,5 @@ class Test(unittest2.TestCase):
             
         
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
+    #import sys;sys.argv = ['', 'TestXcamshifAGA.testName']
     unittest2.main()
