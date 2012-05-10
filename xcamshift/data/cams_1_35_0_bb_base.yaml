@@ -42,7 +42,7 @@ from_atoms:  ["HN","N","HA","CA","C","CB"]
 offsets:     [-1,0,1]
 #TODO check use of global translations of OT1 and HT1 (they seem to have no effect currently!!??
 #TODO check if GLY translations can be moved here...
-translations: {[-,OT1] : O, [-,HT1] : HN}
+translations: {[-,OT1] : O, [-,HT1] : HN,[GLY,HA1]: HA}
 residue_type : BASE
 table_type : BACKBONE
 data:

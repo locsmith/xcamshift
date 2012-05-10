@@ -2,6 +2,7 @@
 ---
 
 target_atoms :  ["C", "CA", "CB", "HA", "HN", "N"]
+translations : {[GLY,HA1] : HA}
 
 # chem type translations
 #

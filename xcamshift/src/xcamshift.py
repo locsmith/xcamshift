@@ -1214,18 +1214,27 @@ class Backbone_atom_indexer:
 
 class Ring_backbone_context(object,Backbone_atom_indexer):
     
+    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
+        return  table.get_translation_to_table(residue_type,atom_name)
+    
     def __init__(self, atom, table):
         self.complete =  False
         
         self.target_atom_id  =  atom.index()
         
-# TODO: I need to think about atom name translations
-#        atom_name = table.translate_atom_name(atom_name)
-        atom_name  =  Atom_utils._get_atom_name_from_index(self.target_atom_id)
-        self.atom_name_index =self._get_atom_id(atom_name, table)
-        if self.atom_name_index >= 0:
-            self.complete = True
+        segment = atom.segmentName()
         
+        atom_name  =  Atom_utils._get_atom_name_from_index(self.target_atom_id)
+        residue_number = atom.residueNum()
+        residue_type = Atom_utils._get_residue_type(segment, residue_number)
+        
+        atom_name = self._translate_atom_name_to_table(residue_type, atom_name, table)
+        
+        if atom_name in table.get_target_atoms():
+            self.atom_name_index =self._get_atom_id(atom_name, table)
+            if self.atom_name_index >= 0:
+                self.complete = True
+
 class Ring_factory_base():
     #TODO: add a general test that the component is active for the structure
 
@@ -1266,13 +1275,9 @@ class Ring_backbone_component_factory (Atom_component_factory, Ring_factory_base
     def _build_contexts(self, atom, table):
         contexts = []
         if  self._have_targets(table):
-            #TODO: should translate atom name here
-            atom_name =  atom.atomName()
-            #print atom_name, atom_name in table.get_target_atoms(), table.get_target_atoms()
-            if atom_name in table.get_target_atoms():
-                context = Ring_backbone_context(atom,table)
-                if context.complete:
-                    contexts.append(context)
+            context = Ring_backbone_context(atom,table)
+            if context.complete:
+                contexts.append(context)
         return contexts
 
 class Ring_sidechain_component_factory(Residue_component_factory,Ring_factory_base):
