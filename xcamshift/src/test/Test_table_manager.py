@@ -240,6 +240,7 @@ class Test_table_manager(unittest2.TestCase):
         coefficient = table.get_non_bonded_coefficient("CA", "sphere_1", "S", "SP3")
         self.assertAlmostEqual(expected_coefficent, coefficient)
     
+    #TODO caching shouldn't be on the _table value but on the wrapper class
     def test_caching(self):
         table_1 = self.table_manager.get_non_bonded_table('GLY')
         table_2 = self.table_manager.get_non_bonded_table('GLY')

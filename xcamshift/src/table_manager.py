@@ -22,6 +22,7 @@ from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 #TODO: cleanup internal structure, caching needs a better implementation
 #TODO: remove specific functions to load tables?
 #TODO: needs composite table support and hierachical item integration
+#TODO: caching should work on the wrapper object not the internal _table object
 class Table_manager(object):
 
     NON_BONDED = "nb"
