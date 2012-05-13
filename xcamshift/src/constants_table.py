@@ -3,8 +3,9 @@ Created on 25 Jan 2012
 
 @author: garyt
 '''
+from table_base import Table_base
 
-class Constants_table(object):
+class Constants_table(Table_base):
     '''
     classdocs
     '''
@@ -17,7 +18,7 @@ class Constants_table(object):
     TANH_AMPLITUDE = 'tanh_amplitude'
     
     def __init__(self, table):
-        self._table = table
+        super(Constants_table, self).__init__(table)
     
     def get_flat_bottom_constant(self):
         return self._table[self.FLAT_BOTTOM_CONSTANT]

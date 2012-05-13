@@ -3,14 +3,14 @@ Created on 30 Dec 2011
 
 @author: garyt
 '''
+from table_base import Table_base, TRANSLATIONS
 
-TRANSLATIONS = 'translations'
         
-class Random_coil_table(object):
+class Random_coil_table(Table_base):
     
     DATA = 'data'
     def __init__(self, table):
-        self._table = table
+        super(Random_coil_table, self).__init__(table)
         
         self.ATOMS = 'atoms'
         self.OFFSETS='offsets'
@@ -20,6 +20,9 @@ class Random_coil_table(object):
     
     def get_atoms(self):
         return self._table[self.ATOMS]
+    
+    def get_target_atoms(self):
+        return self.get_atoms()
     
     def __check_residue_keys(self, offset, residue, atom):
         

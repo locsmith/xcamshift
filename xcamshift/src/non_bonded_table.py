@@ -3,11 +3,12 @@ Created on 19 Jan 2012
 
 @author: garyt
 '''
+from table_base import Table_base
 
 TRANSLATIONS = 'translations'
 
 
-class Non_bonded_table(object):
+class Non_bonded_table(Table_base):
 
 
 
@@ -19,40 +20,8 @@ class Non_bonded_table(object):
     CHEM_TYPE_TRANSLATIONS = 'chem_type_translations'
     
     def __init__(self, table):
-        self._table = table
-        self._translation_to_table = self._build_from_translation_table(table)
-        self._translation_from_table = self._build_from_translation_table(table)
+        super(Non_bonded_table, self).__init__(table)
         
-    def _build_to_translation_table(self,data_table):
-        result  = {}
-        if TRANSLATIONS in data_table:
-            result  =  data_table[TRANSLATIONS]
-        return result
-    
-    def _build_from_translation_table(self,data_table):
-        result  = {}
-        if TRANSLATIONS in data_table:
-            for key,to_atom in data_table[TRANSLATIONS].items():
-                residue, from_atom = key
-                new_key = (residue,to_atom)
-                result[new_key]= from_atom
-        return result
-    
-    def get_translation_to_table(self,residue,atom):
-        result =  atom
-        key = residue, atom
-        if key in self._table[TRANSLATIONS]:
-            result =  self._table[TRANSLATIONS][key]
-        return result
-
-    def get_translation_from_table(self, residue, atom):
-        result = atom
-        
-        key = residue,atom
-        if key in self._translation_from_table:
-            result = self._translation_from_table[key]
-        return result
-    
     def get_exponent(self,sphere):
         self._check_sphere(sphere)
         return self._table[self.DATA][sphere][self.EXPONENT]
