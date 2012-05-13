@@ -45,7 +45,7 @@ class Test_table_manager(unittest2.TestCase):
         
     def testFromAtomList(self):
         table = self.table_manager.get_BB_Distance_Table('glu') 
-        from_atom_list = table.get_from_atoms()
+        from_atom_list = table.get_target_atoms()
         expected = set(('N','HN','CA','HA','C','CB'))
         self.assertItemsEqual(expected, from_atom_list)
 

@@ -62,6 +62,7 @@ class Table_manager(object):
         
         self.search_paths = paths + ['.',self.DEFAULT_DIRECTORY]
         self.tables ={}
+        self.searched_for_tables = set()
         
         add_access_to_yaml_list_based_keys()
                 
@@ -98,6 +99,11 @@ class Table_manager(object):
         
         new_table = None
         for residue_type in residue_types:
+            table_search_key = table_type,residue_type
+           
+            if table_search_key in self.searched_for_tables:
+                continue
+
             table_name = self.__get_table_name(table_type,residue_type)
             
             for search_path in self.search_paths:
@@ -113,16 +119,18 @@ class Table_manager(object):
                             break
                     except Exception as detail:
                         self.__raise_table_load_error(table_name, detail)
+            self.searched_for_tables.add(table_search_key)
+            
             if new_table != None:
                 break
-            
-        if new_table == None:
-            self.__raise_table_load_error(table_name, "the table couldn't be found in %s" % ", ".join(self.search_paths))
         
-        parent  = self._find_parent_table(table_type,residue_type)
-        new_table = Hierarchical_dict(new_table, parent=parent)
-            
-        self.tables[key]=new_table
+
+        if new_table != None:
+            parent  = self._find_parent_table(table_type,residue_type)
+            new_table = Hierarchical_dict(new_table, parent=parent)
+                
+            self.tables[key]=new_table
+
         
     
 
@@ -147,7 +155,10 @@ class Table_manager(object):
             if key in  tables:
                 result = tables[key]
                 break
-        
+
+        if result == None:
+            self.__raise_table_load_error(table_type, "the table couldn't be found in %s" % ", ".join(self.search_paths))
+            
         return result
 
 
@@ -162,7 +173,7 @@ class Table_manager(object):
         residue_type = self._force_residue_type_lowercase(residue_type)
 
         result = self._seach_for_loaded_table(table_type,residue_type)
-        
+#        print result
         if result == None:
             self.__load_table(table_type,residue_type)
             
@@ -199,5 +210,5 @@ class Table_manager(object):
         return Ring_table(self._get_table(self.RING,residue_type))
     
     def get_non_bonded_table(self,residue_type):
-        return Non_bonded_table(self._get_table(self.NON_BONDED,residue_type))
+        return Non_bonded_table(self._getR_table(self.NON_BONDED,residue_type))
             
