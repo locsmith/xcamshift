@@ -19,6 +19,9 @@ from non_bonded_table import Non_bonded_table
 from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 
 
+#TODO: cleanup internal structure, caching needs a better implementation
+#TODO: remove specific functions to load tables?
+#TODO: needs composite table support and hierachical item integration
 class Table_manager(object):
 
     NON_BONDED = "nb"
@@ -100,10 +103,10 @@ class Table_manager(object):
         new_table = None
         for residue_type in residue_types:
             table_search_key = table_type,residue_type
-           
+#            print 'search for ', table_search_key
             if table_search_key in self.searched_for_tables:
                 continue
-
+#            print residue_type
             table_name = self.__get_table_name(table_type,residue_type)
             
             for search_path in self.search_paths:
@@ -130,7 +133,7 @@ class Table_manager(object):
             new_table = Hierarchical_dict(new_table, parent=parent)
                 
             self.tables[key]=new_table
-
+#        print self.tables.keys()
         
     
 
@@ -140,12 +143,14 @@ class Table_manager(object):
     
     #TODO: remove __'s
     def _seach_for_loaded_table(self,table_type, residue_type):
+
         result  = None
         key = table_type, residue_type
         if key in self.tables:
             result  = self.tables[key]
         return result
     
+    #TODO:  combine with search for loaded table and and rename
     def __search_for_table(self, table_type, residue_type):
         keys= self.__get_seach_keys(table_type, residue_type)
         tables = self.tables
@@ -173,7 +178,7 @@ class Table_manager(object):
         residue_type = self._force_residue_type_lowercase(residue_type)
 
         result = self._seach_for_loaded_table(table_type,residue_type)
-#        print result
+        
         if result == None:
             self.__load_table(table_type,residue_type)
             
@@ -210,5 +215,5 @@ class Table_manager(object):
         return Ring_table(self._get_table(self.RING,residue_type))
     
     def get_non_bonded_table(self,residue_type):
-        return Non_bonded_table(self._getR_table(self.NON_BONDED,residue_type))
+        return Non_bonded_table(self._get_table(self.NON_BONDED,residue_type))
             
