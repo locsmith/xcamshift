@@ -196,10 +196,10 @@ class DistanceContext:
         
         self.offset = offset
         
-        self.from_residue_number = from_atom.residueNum()
-        self.from_residue_type = Atom_utils._get_residue_type(self.segment,self. from_residue_number)
+        self.residue_number = from_atom.residueNum()
+        self.residue_type = Atom_utils._get_residue_type(self.segment,self. residue_number)
         
-        self.to_residue_number = self.from_residue_number+offset
+        self.to_residue_number = self.residue_number+offset
         to_residue_type = Atom_utils._get_residue_type(self.segment, self.to_residue_number)
         
         to_atom_name = self._translate_atom_name_from_table(to_residue_type, to_atom_name, table)
