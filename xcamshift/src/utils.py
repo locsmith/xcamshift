@@ -15,6 +15,9 @@ Z = 2
 AXES = X,Y,Z
 
 
+#TODO: add more general caching mechanism
+#TODO: 
+cache = {}
 class Atom_utils(object):
     @staticmethod
     def _calculate_distance(distance_atom_id_1, distance_atom_id_2):
@@ -29,10 +32,22 @@ class Atom_utils(object):
         return distance
     
     @staticmethod
+    def clear_cache():
+        global cache
+        cache = {}
+        
+    @staticmethod
     def find_atom(segment='*', residue_number='#', atom='*'):
-        selection = '(segid "%s" and resid %i and name %s)' % (segment, int(residue_number), atom)
-        residue_atoms = AtomSel(selection)
-        return residue_atoms
+        global cache
+        result = None
+        key = segment, int(residue_number), atom
+        if key in cache:
+            result = cache[key]
+        else:
+            selection = '(segid "%s" and resid %i and name %s)' % key
+            result = AtomSel(selection)
+            cache[key]=result
+        return result 
 
     @staticmethod
     def find_atom_ids(segment='*', residue_number='#', atom='*'):
@@ -42,8 +57,7 @@ class Atom_utils(object):
     #TODO what is the difference between this and the called method
     @staticmethod
     def _select_atom_with_translation(segment='*', residue_number='#',atom='*'):
-        residue_atoms = Atom_utils.find_atom(segment, residue_number, atom)
-        return residue_atoms
+        return Atom_utils.find_atom(segment, residue_number, atom)
 
     @staticmethod
     def _get_residue_type(segment, residue_number):

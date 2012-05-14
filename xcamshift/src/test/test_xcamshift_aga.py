@@ -34,7 +34,8 @@ class TestXcamshifAGA(unittest2.TestCase):
     def setUp(self):
         initStruct("test_data/aga/aga.psf")
         PDBTool("test_data/aga/aga.pdb").read()
-
+        Atom_utils.clear_cache()
+        
     def test_glycine_shifts(self):
         xcamshift = Xcamshift()
         

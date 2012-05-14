@@ -94,7 +94,7 @@ class TestXcamshiftA4(unittest2.TestCase):
     def setUp(self):
         initStruct("test_data/4_ala/A4.psf")
         PDBTool("test_data/4_ala/A4.pdb").read()
-
+        Atom_utils.clear_cache()
 
     def make_result_array_forces(self):
 #        TODO: use segment manager

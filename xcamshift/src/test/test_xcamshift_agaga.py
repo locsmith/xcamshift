@@ -4,8 +4,7 @@ Created on Apr 23, 2012
 @author: garyt
 '''
 import unittest2
-from test.agaga import agaga_shifts, agaga_subpotential_shifts, \
-    agaga_component_shifts_bb
+from test.agaga import agaga_subpotential_shifts, agaga_shifts,agaga_component_shifts_bb
 from protocol import initStruct
 from pdbTool import PDBTool
 from xcamshift import Xcamshift
@@ -35,7 +34,8 @@ class TestXcamshifAGAGA(unittest2.TestCase):
     def setUp(self):
         initStruct("test_data/agaga/agaga.psf")
         PDBTool("test_data/agaga/agaga.pdb").read()
-
+        Atom_utils.clear_cache()
+        
     def test_agaga_shifts(self):
         xcamshift = Xcamshift()
         

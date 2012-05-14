@@ -333,7 +333,7 @@ class ExtraContext(object):
 
         residue_type  = Atom_utils._get_residue_type(segment, residue_number_1)
         atom_name_1 = self._translate_atom_name_from_table(residue_type, atom_name_1, self._table)
-        target_atom_1 = Atom_utils._select_atom_with_translation(segment, residue_number_1, atom_name_1)
+        target_atom_1 = Atom_utils.find_atom(segment, residue_number_1, atom_name_1)
 
         num_to_atom = len(target_atom_1)
         if num_to_atom > 1:
