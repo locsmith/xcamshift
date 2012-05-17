@@ -4,7 +4,10 @@
 offsets : [-1,0,1]
 target_atoms : ["HA", "CA", "HN", "N", "C", "CB"]
 dihedral_atoms : ["C", "N", "O", "CA", "C", "CB", "CG"]
-translations : {[SER, OG] : CG, [GLY,HA1] : HA}
+translations : { [SER, OG] : CG, [GLY,HA1] : HA,
+                 [CYS,SG]  : CG,
+                 [ILE,CG1] : CG, [VAL,CG1] : CG,
+                 [THR,OG1] : CG}
 parameters : [0, 1, 2, 3, 4]
 
 data: {

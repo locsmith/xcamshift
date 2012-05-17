@@ -7,7 +7,11 @@ extra_atoms_2:   ["C", "CA", "CB", "HA", "N"]
 extra_offsets_1: [-1, 0 , 1]
 extra_offsets_2: [-1, 0 , 1] 
 target_atoms: ["HA", "CA", "HN", "N", "C", "CB"]
-translations : {[SER, OG] : CG, [GLY,HA1] : HA}
+translations : {[SER, OG]  : CG, [GLY,HA1]  : HA,
+                [VAL, CG1] : CG, [ILE, CG1] : CG,
+                [CYS, SG]  : CG,
+                [THR, OG1] : CG 
+}
 
 data:  
 
