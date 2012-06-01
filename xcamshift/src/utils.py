@@ -36,15 +36,27 @@ class Atom_utils(object):
         global cache
         cache = {}
         
+    @staticmethod  
+    def find_all_atoms():
+        global cache
+        result = None
+        key = "(all)"
+        if key in cache:
+            result = cache[key]
+        else:
+            result = AtomSel(key)
+            cache[key]=result
+        return result 
+        
     @staticmethod
     def find_atom(segment='*', residue_number='#', atom='*'):
         global cache
         result = None
-        key = segment, int(residue_number), atom
+        key = segment, residue_number, atom
         if key in cache:
             result = cache[key]
         else:
-            selection = '(segid "%s" and resid %i and name %s)' % key
+            selection = '(segid "%s" and resid %s and name %s)' % key
             result = AtomSel(selection)
             cache[key]=result
         return result 
@@ -111,4 +123,65 @@ class Atom_utils(object):
     def _get_chem_type(atom):
         return atom.chemType()
     
+def return_true(*args, **kwargs):
+    return True
+
+
+def iter_atoms(predicate=return_true):
+    atoms = Atom_utils.find_all_atoms()
+    for atom in atoms:
+        if predicate(atom):
+            yield atom
+        
+
+def iter_atom_ids(predicate=return_true):
+    for atom in iter_atoms():
+        atom_id = atom.index()
+        if predicate(atom_id):
+            yield atom_id
+        
+
+
+def iter_residue_types(predicate=return_true):
+    seen_residue_types = set()
     
+    for atom_id in iter_atom_ids():
+        residue_type = Atom_utils._get_residue_type_from_atom_id(atom_id)
+        not_seen = not residue_type in seen_residue_types
+        if not_seen and predicate(residue_type):
+            seen_residue_types.add(residue_type)
+            yield residue_type
+            
+
+def iter_residue_atoms(residue_predicate = return_true):
+    current_residue_atoms = None
+    current_residue_segment = None,None
+    
+    for atom in iter_atoms():
+        residue_number = atom.residueNum()
+        segid = atom.segmentName()
+        
+        key = segid, residue_number
+        
+        if not key == current_residue_segment:
+            
+            if current_residue_atoms != None  and residue_predicate(current_residue_atoms):
+                yield tuple(current_residue_atoms)
+                
+            current_residue_segment = key
+            current_residue_atoms = []
+        
+        current_residue_atoms.append(atom)
+        
+    if current_residue_atoms != None  and residue_predicate(current_residue_atoms):
+        yield tuple(current_residue_atoms)
+            
+        
+
+def iter_residue_atom_ids(predicate =  return_true):
+
+    for atoms in iter_residue_atoms():
+        atom_ids = tuple([atom.index() for atom in atoms])
+        if predicate(atom_ids):
+            yield atom_ids
+        
