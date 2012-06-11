@@ -70,7 +70,37 @@ class Table_manager(object):
         self._table_index = {}
         
         add_access_to_yaml_list_based_keys()
+    
+    def get_table_types(self):
 
+        types = set([key[0]for key in self.tables.keys()])
+        types = list(types)
+        types.sort()
+        return tuple(types)
+        
+
+    def _make_presorted_tuple(self, result):
+        result = list(result)
+        result.sort()
+        result = tuple(result)
+        
+        return result
+
+    def get_residue_types(self,table_type):
+        residues = set([key[1] for key in self.tables.keys() if key[0] == table_type])
+ 
+        self._make_presorted_tuple(residues)
+        return residues
+    
+    def get_all_residue_types(self):
+        result = set()
+        for table_type in self.get_table_types():
+            for residue_type in self.get_residue_types(table_type):
+                result.add(residue_type)
+        
+        
+        return self._make_presorted_tuple(result)
+    
     def __get_table_name(self, table_type, residue_type):
         return self.TEMPLATE_3 % (self.TYPE,self.VERSION,table_type,residue_type)
     
