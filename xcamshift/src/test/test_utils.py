@@ -104,7 +104,7 @@ class TestXcamshiftUtils(unittest2.TestCase):
             residue_atom_ids =  [atom.index()+1 for atom in residue_atoms]
             self.assertSequenceEqual(residue_atom_ids, expected_residue_atom_ids[1]) 
             
-    def test_all_atoms(self):
+    def test_find_all_atoms(self):
         all_atoms = Atom_utils.find_all_atoms()
         self.assertEqual(len(all_atoms),47)
         for i,atom in enumerate(all_atoms):
