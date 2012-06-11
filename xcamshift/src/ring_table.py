@@ -80,5 +80,9 @@ class Ring_table(Table_base):
         self._check_residue_type(residue_type)
         self._check_ring_type(residue_type, ring_type)
         
-        return self._table[self.DATA][residue_type,ring_type][target_atom]*1000
+        coefficient = self._table[self.DATA][residue_type,ring_type][target_atom]
+        
+        if coefficient != None:
+            coefficient *= 1000.0
+        return coefficient
 
