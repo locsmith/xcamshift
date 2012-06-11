@@ -67,9 +67,10 @@ class Table_manager(object):
         self.search_paths = paths + ['.',self.DEFAULT_DIRECTORY]
         self.tables ={}
         self.searched_for_tables = set()
+        self._table_index = {}
         
         add_access_to_yaml_list_based_keys()
-                
+
     def __get_table_name(self, table_type, residue_type):
         return self.TEMPLATE_3 % (self.TYPE,self.VERSION,table_type,residue_type)
     
@@ -95,6 +96,22 @@ class Table_manager(object):
             result = self._get_table(table_type,None)
         return result
 #    
+    
+    
+
+    def _register_new_table(self, new_table, key):
+        self.tables[key] = new_table
+
+
+    def _ornament_table(self, new_table, table_type, residue_type):
+        table_index = self._table_index.setdefault(table_type,0)
+        ornaments  = {
+                        'residue_type' : residue_type,
+                        'table_type' : table_type,
+                        'index' : table_index
+                      }
+        new_table.update(ornaments)
+        self._table_index[table_type]+=1
     
     
     def __load_table(self, table_type, residue_type=None):
@@ -133,7 +150,9 @@ class Table_manager(object):
             parent  = self._find_parent_table(table_type,residue_type)
             new_table = Hierarchical_dict(new_table, parent=parent)
                 
-            self.tables[key]=new_table
+            self._register_new_table(new_table, key)
+            self._ornament_table(new_table,table_type,residue_type)
+            
 #        print self.tables.keys()
         
     
