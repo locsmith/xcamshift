@@ -4,10 +4,11 @@ Created on 17 Jan 2012
 @author: garyt
 '''
 
-from simulation import currentSimulation
 from atom import Atom
-from vec3 import  norm
 from atomSel import AtomSel
+from simulation import currentSimulation
+from vec3 import norm
+from segment_manager import Segment_Manager
 
 X = 0
 Y = 1
@@ -185,3 +186,12 @@ def iter_residue_atom_ids(predicate =  return_true):
         if predicate(atom_ids):
             yield atom_ids
         
+def iter_residues_and_segments(predicate =  return_true):
+    segment_manager =  Segment_Manager()
+    
+    for segment in segment_manager.get_segments():
+        segment_info = segment_manager.get_segment_info(segment)
+        for residue_num in range (segment_info.first_residue, segment_info.last_residue+1):
+            if predicate(segment,residue_num):
+                yield segment,residue_num
+    
