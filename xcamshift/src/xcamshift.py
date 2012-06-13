@@ -2047,6 +2047,55 @@ class Non_bonded_potential(Distance_based_potential):
         if distance < 5.0:
             result = super(Non_bonded_potential, self)._calc_component_shift(index)
         return result
+    
+    #TODO centralise table manager (each sub potential has its own table manager at the moment)
+    #TODO complete
+    def __str__(self):
+        atom_list = self._get_component_list('ATOM')
+        
+        indexer  = Backbone_atom_indexer()
+        table_manager = self._table_manager
+        residue_types = table_manager.get_all_residue_types()   
+        
+        offset_names = {}
+        
+        for residue_type in residue_types:
+            table =  table_manager.get_non_bonded_table(residue_type)
+            indexer._get_offset_names(table, offset_names)                             
+
+        result = []
+        result.append('atom list (%i entries)' % len(atom_list) )
+        result.append('')
+        result.append('residue types: %s' %  ', '.join(residue_types))
+        result.append('')
+        result.append('type table:')
+        result.append('')
+        
+        offset_items = offset_names.items()
+        offset_items.sort()
+        
+        result.append('\n'.join(['%2i. %-4s %-2s' % ((i,) + elem) for i,elem in offset_items]))
+        result.append('')
+        
+
+        
+        for i, atom_elem in enumerate(atom_list):
+            atom_id, atom_type = atom_elem
+            
+            atom_sel = Atom_utils._get_atom_name(atom_id)
+            i_elem =  (`i`+'.',) + atom_elem + (atom_sel,)
+            
+            all_elem=i_elem + offset_names[atom_type]
+            result.append('%-5s [%-4i %2i] : %s - [%-4s,%-2s]' % all_elem)
+        
+        non_bonded_remote_list = self._get_component_list('NBRM')
+        
+        result.append('')
+        result.append('non bonded remote list (%i entries)' % len(non_bonded_remote_list) )
+        for i, remote_elem in enumerate(non_bonded_remote_list):
+            result.append('%i,%s' % ( i, `remote_elem`))
+            
+        return '\n'.join(result)
 
 class Xcamshift():
     def __init__(self):
