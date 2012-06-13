@@ -17,7 +17,8 @@ from observed_chemical_shifts import Observed_shift_table
 from segment_manager import Segment_Manager
 from table_manager import Table_manager
 from python_utils import tupleit
-from utils import Atom_utils, AXES
+from utils import Atom_utils, AXES, iter_residue_atoms,\
+    iter_residues_and_segments
 from vec3 import Vec3, norm, cross, dot
 import abc
 import sys
@@ -1213,9 +1214,46 @@ class Sidechain_potential(Distance_based_potential):
 
 
 class Backbone_atom_indexer:
-    
+    #TODO add table base to allow for varying numbers of atoms in table//
+
+    def _get_target_atoms(self, table):
+        target_atoms = table.get_target_atoms()
+        return target_atoms
+
+
+    def _get_table_index(self, table):
+        return table._table['index']
+
+
+    def _get_table_offset(self, table):
+        target_atoms = self._get_target_atoms(table)
+        num_target_atoms = len(target_atoms)
+        offset = num_target_atoms * self._get_table_index(table)
+        return offset
+
     def _get_atom_id(self,atom_name,table):
-        return table.get_target_atoms().index(atom_name)
+        target_atoms = self._get_target_atoms(table)
+        offset= self._get_table_offset(table)
+        return offset + target_atoms.index(atom_name)
+
+    def _get_atom_name_offsets(self,table):
+        result = []
+        
+        offset = self._get_table_offset(table)
+        for i,atom_name in enumerate(self._get_target_atoms(table)):
+            result.append((table._table['residue_type'], atom_name, offset+i,))
+            
+        return tuple(result)
+    
+    def _get_offset_names(self,table, add_to=None):
+        result = add_to
+        if result == None:
+            result = {}
+        
+        for residue_type, atom_name,atom_index in self._get_atom_name_offsets(table):
+            result[atom_index] = (residue_type, atom_name)
+        return result
+        
 
 class Ring_backbone_context(object,Backbone_atom_indexer):
     
@@ -1366,7 +1404,7 @@ class Ring_sidechain_atom_factory(Ring_sidechain_component_factory):
 class Ring_coefficient_component_factory(Ring_sidechain_component_factory,Backbone_atom_indexer):
     def __init__(self):
         super(Ring_coefficient_component_factory, self).__init__()
-        
+        self._seen_tables  = set()
         
     def get_table_name(self):
         return 'COEF'
@@ -1381,8 +1419,46 @@ class Ring_coefficient_component_factory(Ring_sidechain_component_factory,Backbo
             atom_id = self._get_atom_id(target_atom_name, table)
             if atom_id > -1:
                 coef = table.get_ring_coefficient(target_atom_name,residue_type,ring_type)
-                coef_component = atom_id,ring_id,coef
-                component_list.add_component(coef_component)
+                if coef != None:
+                    coef_component = atom_id,ring_id,coef
+                    component_list.add_component(coef_component)
+    
+
+    def _is_new_table_type(self, table):
+        table_residue_type = table._table['residue_type']
+        
+        result = not table_residue_type in self._seen_tables
+        self._seen_tables.add(table_residue_type)
+        
+        return result
+
+    def create_residue_components(self, component_list, table, segment, residue_number):
+        class residue_type_in_table(object):
+            def __init__(self,accepted_residue_types=None):
+                self._accepted_residue_types =  accepted_residue_types
+                
+            def __call__(self, segment, residue_number):
+                
+                result = False
+                residue_type = Atom_utils._get_residue_type(segment, residue_number)
+                
+                if residue_type in self._accepted_residue_types:
+                    result = True
+                
+                return result
+        
+        if  self._have_targets(table):
+            if self._is_new_table_type(table):
+#                residue_type = Atom_utils._get_residue_type(segment,residue_number)
+                
+#                print 'here2, residue_number type:', residue_type, table.get_residue_types(), segment, residue_number
+                
+                for segment,residue_number in iter_residues_and_segments(residue_type_in_table(table.get_residue_types())):
+#                    print segment,residue_number
+                    ring_ids = self._get_or_make_ring_ids(segment,residue_number,table)
+                    for ring_id in ring_ids:
+                        self.create_ring_components(component_list, table, segment, residue_number, ring_id)
+
     
 class Ring_Potential(Base_potential):
     def __init__(self):
