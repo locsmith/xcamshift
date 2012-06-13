@@ -5,6 +5,7 @@ Created on 27 Dec 2011
 #TODO: need to translate from_atom names
 '''
 
+#TODO: add tests to exclude atoms/distances which are not defined
 
 
 from atomSel import AtomSel, intersection
