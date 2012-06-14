@@ -32,19 +32,25 @@ class Component_factory(object):
         pass
     
     @abc.abstractmethod
-    def create_components(self, component_list, table, segment,target_residue_number,selected_atoms):
+    def create_components(self, component_list, table_source, segment,target_residue_number,selected_atoms):
         pass
         
     @abc.abstractmethod
     def get_table_name(self):
         pass
+    
+    def _get_table_for_residue(self, segment, target_residue_number, table_provider):
+        from_residue_type = Atom_utils._get_residue_type(segment, target_residue_number)
+        table = table_provider(from_residue_type)
+        return table
 
 class Residue_component_factory(Component_factory):
     
     def is_residue_acceptable(self, segment, residue_number, segment_manager):
         return True
     
-    def create_components(self, component_list, table, segment,target_residue_number,selected_atoms):
+    def create_components(self, component_list, table_source, segment,target_residue_number,selected_atoms):
+        table = self._get_table_for_residue(segment, target_residue_number, table_source)
         self.create_residue_components(component_list, table, segment, target_residue_number)
     
     @abc.abstractmethod
@@ -59,7 +65,11 @@ class Atom_component_factory(Component_factory):
         
         return residue_number > segment_info.first_residue and residue_number < segment_info.last_residue
 
-    def create_components(self, component_list, table, segment,target_residue_number,selected_atoms):
+
+
+
+    def create_components(self, component_list, table_provider, segment,target_residue_number,selected_atoms):
+        table = self._get_table_for_residue(segment, target_residue_number, table_provider)
         self.create_atom_components(component_list, table, selected_atoms)
     
     @abc.abstractmethod
@@ -514,14 +524,13 @@ class Base_potential(object):
     
     
     def _create_components_for_residue(self, name, segment, target_residue_number, atom_selection):
-        from_residue_type = Atom_utils._get_residue_type(segment, target_residue_number)
-        table = self._get_table(from_residue_type)
         selected_atoms = intersection(Atom_utils._select_atom_with_translation(segment, target_residue_number), atom_selection)
         
         component_factory = self._component_factories[name]
+        table_source =  self._get_table_source()
         if component_factory.is_residue_acceptable(segment,target_residue_number,self._segment_manager):
             component_list =  self._component_list_data[name]
-            component_factory.create_components(component_list, table, segment,target_residue_number,selected_atoms)
+            component_factory.create_components(component_list, table_source, segment, target_residue_number,selected_atoms)
 #                if component_factory.is_target_required(Atom_component_factory.ATOM):
 #                    component_factory.create_atom_components(component_list, table, selected_atoms)
 #                if component_factory.is_target_required(Atom_component_factory.RESIDUE):
@@ -549,7 +558,7 @@ class Base_potential(object):
     
     
     @abc.abstractmethod
-    def _get_table(self, from_residue_type):
+    def _get_table_source(self):
         pass
         
     @abc.abstractmethod
@@ -819,8 +828,8 @@ class Distance_potential(Distance_based_potential):
         return BACK_BONE
     
 
-    def _get_table(self, from_residue_type):
-        return self._table_manager.get_BB_Distance_Table(from_residue_type)
+    def _get_table_source(self):
+        return self._table_manager.get_BB_Distance_Table
 
             
     def __str__(self):
@@ -870,8 +879,8 @@ class Extra_potential(Distance_based_potential):
 #    def _translate_atom_name(self, atom_name,context):
 #        return context._table.get_translation(atom_name)
         
-    def _get_table(self, residue_type):
-        return self._table_manager.get_extra_table(residue_type)
+    def _get_table_source(self):
+        return self._table_manager.get_extra_table
     
     
 
@@ -929,8 +938,8 @@ class RandomCoilShifts(Base_potential):
         False
          
     
-    def _get_table(self, from_residue_type):
-        return self._table_manager.get_random_coil_table(from_residue_type)
+    def _get_table_source(self):
+        return self._table_manager.get_random_coil_table
 
     
     def _calc_component_shift(self,index):
@@ -960,8 +969,8 @@ class Dihedral_potential(Base_potential):
     def get_abbreviated_name(self):
         return DIHEDRAL
 
-    def _get_table(self, residue_type):
-        return self._table_manager.get_dihedral_table(residue_type)
+    def _get_table_source(self):
+        return self._table_manager.get_dihedral_table
 
     
                 
@@ -1172,8 +1181,8 @@ class Sidechain_potential(Distance_based_potential):
         self._add_component_factory(Sidechain_component_factory())
         
         
-    def  _get_table(self, residue_type):
-        return self._table_manager.get_sidechain_table(residue_type)
+    def  _get_table_source(self):
+        return self._table_manager.get_sidechain_table
     
     def _get_indices(self):
         return super(Sidechain_potential, self)._get_indices()
@@ -1473,8 +1482,8 @@ class Ring_Potential(Base_potential):
         return RING
     
     
-    def _get_table(self, from_residue_type):
-        return self._table_manager.get_ring_table(from_residue_type)
+    def _get_table_source(self):
+        return self._table_manager.get_ring_table
     
 
     
@@ -2055,7 +2064,7 @@ class Null_component_factory(object):
     def is_residue_acceptable(self, segment, residue_number, segment_manager):
         False
     
-    def create_components(self, component_list, table, segment,target_residue_number,selected_atoms):
+    def create_components(self, component_list, table_source, segment,target_residue_number,selected_atoms):
         return []
         
     def get_table_name(self):
@@ -2075,8 +2084,8 @@ class Non_bonded_potential(Distance_based_potential):
         
         self._non_bonded_list = Non_bonded_list()
     
-    def _get_table(self, from_residue_type):
-        return Table_manager.get_default_table_manager().get_non_bonded_table(from_residue_type)
+    def _get_table_source(self):
+        return Table_manager.get_default_table_manager().get_non_bonded_table
         
     def get_abbreviated_name(self):
         return NON_BONDED
