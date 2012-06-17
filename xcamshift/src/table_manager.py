@@ -230,7 +230,10 @@ class Table_manager(object):
                 break
 
         if result == None:
-            self.__raise_table_load_error(table_type, "the table couldn't be found in %s" % ", ".join(self.search_paths))
+            search_paths = ", ".join(self.search_paths)
+            working_directory =  os.getcwd()
+            args =  search_paths, working_directory
+            self.__raise_table_load_error(table_type, "the table couldn't be found in %s working directory is: %s" % args)
             
         return result
 
