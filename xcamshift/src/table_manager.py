@@ -17,6 +17,7 @@ from constants_table import Constants_table
 from ring_table import Ring_table
 from non_bonded_table import Non_bonded_table
 from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
+import utils
 
 
 #TODO: cleanup internal structure, caching needs a better implementation
@@ -243,6 +244,14 @@ class Table_manager(object):
             residue_type = residue_type.lower()
         return residue_type
 
+
+    def load_tables_for_know_residues(self, table_type):
+        for residue_type in utils.iter_residue_types():
+            residue_type = self._force_residue_type_lowercase(residue_type)
+            if not (table_type,residue_type) in self.searched_for_tables:
+                self.__load_table(table_type, residue_type)
+
+
     #TODO: this is a really inefficient method it will do lots of disk accesses, why not load all residue type tables on first call
     def _get_table(self,table_type,residue_type=None):
         
@@ -251,7 +260,7 @@ class Table_manager(object):
         result = self._seach_for_loaded_table(table_type,residue_type)
         
         if result == None:
-            self.__load_table(table_type,residue_type)
+            self.load_tables_for_know_residues(table_type)
             
         result = self.__search_for_table(table_type,residue_type)
         return result
