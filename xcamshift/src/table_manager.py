@@ -246,6 +246,7 @@ class Table_manager(object):
 
 
     def load_tables_for_know_residues(self, table_type):
+        # add sequence lookup delegate to allow testing (currently we need a real molecule)
         for residue_type in utils.iter_residue_types():
             residue_type = self._force_residue_type_lowercase(residue_type)
             if not (table_type,residue_type) in self.searched_for_tables:

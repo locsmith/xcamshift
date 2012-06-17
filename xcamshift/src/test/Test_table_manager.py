@@ -6,6 +6,9 @@ Created on 30 Dec 2011
 import unittest2
 from table_manager import Table_manager
 from keys import Atom_key, Dihedral_key
+from protocol import initStruct
+from pdbTool import PDBTool
+from utils import Atom_utils
 
 
 
@@ -16,6 +19,9 @@ class Test_table_manager(unittest2.TestCase):
     TARGET_ATOMS = ["HA", "CA", "HN", "N", "C", "CB"]
 
     def setUp(self):
+        # TODO add a delegate to get a sequence to the table manager and remove dependance on a psf file
+        initStruct("test_data/gb3/gb3.psf")
+        Atom_utils.clear_cache()
         self.table_manager = Table_manager()
         self.table_manager.add_search_path('../../data')
 
@@ -248,4 +254,4 @@ class Test_table_manager(unittest2.TestCase):
 
 if __name__ == "__main__":
 #    unittest2.main()
-    unittest2.main(module='test.Test_table_manager.py',defaultTest='Test_table_manager.test_table_hierachy')
+    unittest2.main(module='test.Test_table_manager',defaultTest='Test_table_manager.test_table_hierachy')
