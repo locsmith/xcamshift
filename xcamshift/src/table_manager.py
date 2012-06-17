@@ -71,6 +71,24 @@ class Table_manager(object):
         
         add_access_to_yaml_list_based_keys()
     
+    def __str__(self):
+        result = []
+        result.append('table manager')
+        result.append('')
+        result.append('search paths: %s' % ', '.join(self.search_paths))
+        result.append('')
+        key_list = ', '.join(['%s.%s' % (table,residue) for table,residue in self.searched_for_tables])
+#        print key_list
+        result.append('searched for tables: %s' %  key_list)
+        result.append('')
+        # add table indices in output
+        key_list = ', '.join(['%s.%s' % (table,residue) for table,residue in self.tables.keys()])
+        result.append('tables: %s' % key_list)
+        result.append('')
+        
+        
+        return '\n'.join(result)
+    
     def get_table_types(self):
 
         types = set([key[0]for key in self.tables.keys()])
