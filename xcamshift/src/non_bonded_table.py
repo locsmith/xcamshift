@@ -58,6 +58,7 @@ class Non_bonded_table(Table_base):
             message = template % (coefficent_key, ', '.join(coefficent_keys_string))
             raise KeyError(message)
     
+    # chnage this to get chem types
     def get_remote_atom_types(self, sphere):
         self._check_sphere(sphere)
         coefficent_keys = self._table[self.DATA][sphere].keys()
@@ -65,6 +66,7 @@ class Non_bonded_table(Table_base):
         coefficent_keys.sort()
         return tuple(coefficent_keys) 
     
+    #change this to get chem_type_translations
     def get_chem_types(self):
         return self._table[self.CHEM_TYPE_TRANSLATIONS].keys()
     

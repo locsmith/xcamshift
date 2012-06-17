@@ -8,7 +8,7 @@ Created on 27 Dec 2011
 #TODO: add tests to exclude atoms/distances which are not defined
 
 
-from atomSel import AtomSel, intersection
+from atomSel import AtomSel,intersection
 from component_list import Component_list
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
@@ -23,6 +23,7 @@ from vec3 import Vec3, norm, cross, dot
 import abc
 import sys
 from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED
+import itertools
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -2134,9 +2135,82 @@ class Non_bonded_potential(Distance_based_potential):
             result = super(Non_bonded_potential, self)._calc_component_shift(index)
         return result
     
+    class Chem_type_indexer(object):
+        def get_tables_by_index(self, table_manager):
+            table_index_map = {}
+            
+            for residue_type in table_manager.get_residue_types(NON_BONDED):
+                table = table_manager.get_non_bonded_table(residue_type)
+                index  = table._table['index']
+                table_index_map[index]=table
+            
+            keys = table_index_map.keys()
+            keys.sort()
+            result = []
+            
+            for key in keys:
+                result.append(table_index_map[key])
+            
+            return tuple(result) 
+            
+
+        def build_index(self, table_manager):
+            table_manager.get_non_bonded_table('base')
+            tables_by_index = self.get_tables_by_index(table_manager)
+            
+            i = 0
+            for table in tables_by_index:
+                table_id = table._table['index']
+                for sphere in table.get_spheres():
+                    for chem_type in table.get_remote_atom_types(sphere):
+                        key = table_id,sphere,chem_type
+                        self._index[key] = i
+                        self._inverted_index[i] = key
+                        self._max_index = i
+                        i += 1
+                        
+
+        def __init__(self,table_manager):
+            self._index = {}
+            self._inverted_index = {}
+            self._max_index = 0
+            
+            self.build_index(table_manager)
+            
+        def get_index_for_key(self,key):
+            return self._index[key]
+        
+        def get_key_for_index(self,index):
+            return self._inverted_index[index]
+        
+        def get_max_index(self):
+            return self._max_index
+            
+
+        def _flatten(self, lst):
+            for el in lst:
+                if hasattr(el, '__iter__') and not isinstance(el, basestring):
+                    for x in self._flatten(el):
+                        yield x
+                else:
+                    yield el
+
+        def __str__(self):
+            result  = []
+            
+            result.append('non bonded chem_type index (%i entries)' % (self.get_max_index() +1))
+            result.append('')
+            for index in range(self.get_max_index()):
+                key = self.get_key_for_index(index)
+                flat_key =  (index,) + tuple([elem for elem in self._flatten(key)])
+                result.append('%3i. %i %s [%s,%s]' % flat_key)
+            return '\n'.join(result)
+                
+        
     #TODO centralise table manager (each sub potential has its own table manager at the moment)
     #TODO complete
     def __str__(self):
+        non_bonded_indexer = Non_bonded_potential.Chem_type_indexer(Table_manager.get_default_table_manager())
         atom_list = self._get_component_list('ATOM')
         
         indexer  = Backbone_atom_indexer()
@@ -2150,26 +2224,30 @@ class Non_bonded_potential(Distance_based_potential):
             indexer._get_offset_names(table, offset_names)                             
 
         result = []
-        result.append('atom list (%i entries)' % len(atom_list) )
+        result.append('Non bonded table')
         result.append('')
         result.append('residue types: %s' %  ', '.join(residue_types))
         result.append('')
+        result.append(non_bonded_indexer.__str__())
+        result.append('')
         result.append('type table:')
         result.append('')
-        
+
         offset_items = offset_names.items()
         offset_items.sort()
         
-        result.append('\n'.join(['%2i. %-4s %-2s' % ((i,) + elem) for i,elem in offset_items]))
+        result.append('\n'.join(['%2i. %-4s %-2s' % ((i+1,) + elem) for i,elem in offset_items]))
         result.append('')
         
-
+        result.append('')
+        result.append('atom list (%i entries)' % len(atom_list) )
+        result.append('')
         
         for i, atom_elem in enumerate(atom_list):
             atom_id, atom_type = atom_elem
             
             atom_sel = Atom_utils._get_atom_name(atom_id)
-            i_elem =  (`i`+'.',) + atom_elem + (atom_sel,)
+            i_elem =  (`i+1`+'.',) + atom_elem + (atom_sel,)
             
             all_elem=i_elem + offset_names[atom_type]
             result.append('%-5s [%-4i %2i] : %s - [%-4s,%-2s]' % all_elem)
