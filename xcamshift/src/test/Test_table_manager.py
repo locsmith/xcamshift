@@ -237,7 +237,11 @@ class Test_table_manager(unittest2.TestCase):
         self.assertEqual(translation, ('N','SP3'))
         
     def test_table_hierachy(self):
+        table = self.table_manager.get_non_bonded_table('base')
+        self.assertEqual(table._table['residue_type'], 'base',)
+        
         table = self.table_manager.get_non_bonded_table('GLY')
+        self.assertEqual(table._table['residue_type'], 'gly',)
         
         expected_exponent =  -3.0
         exponent = table.get_exponent('sphere_1')
