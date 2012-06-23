@@ -16,7 +16,7 @@ Z = 2
 AXES = X,Y,Z
 
 
-#TODO: add more general caching mechanism
+#TODO: add more general caching mechanism IMPORTANT and add as part of force field
 #TODO: 
 cache = {}
 class Atom_utils(object):
@@ -35,6 +35,8 @@ class Atom_utils(object):
     @staticmethod
     def clear_cache():
         global cache
+        global seen_residue_types
+        seen_residue_types =  None
         cache = {}
         
     @staticmethod  
@@ -143,14 +145,19 @@ def iter_atom_ids(predicate=return_true):
         
 
 
+seen_residue_types = None
 def iter_residue_types(predicate=return_true):
-    seen_residue_types = set()
-    
-    for atom_id in iter_atom_ids():
-        residue_type = Atom_utils._get_residue_type_from_atom_id(atom_id)
-        not_seen = not residue_type in seen_residue_types
-        if not_seen and predicate(residue_type):
-            seen_residue_types.add(residue_type)
+    global seen_residue_types
+    if seen_residue_types ==  None:
+        seen_residue_types = set()
+        for atom_id in iter_atom_ids():
+            residue_type = Atom_utils._get_residue_type_from_atom_id(atom_id)
+            not_seen = not residue_type in seen_residue_types
+            if not_seen and predicate(residue_type):
+                seen_residue_types.add(residue_type)
+                yield residue_type
+    else:
+        for residue_type in seen_residue_types:
             yield residue_type
             
 
