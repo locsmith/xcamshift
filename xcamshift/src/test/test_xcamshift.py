@@ -87,6 +87,7 @@ class TestXcamshift(unittest2.TestCase):
         initStruct("test_data/3_ala/3ala.psf")
         PDBTool("test_data/3_ala/3ala.pdb").read()
         Atom_utils.clear_cache()
+        Table_manager.reset_default_table_manager()
 
     def make_result_array_forces(self):
 #        TODO: use segment manager
@@ -688,10 +689,11 @@ class TestXcamshift(unittest2.TestCase):
         non_bonded_potential = Non_bonded_potential()
         target_atoms = non_bonded_potential._get_all_components('ATOM')
         remote_atoms  = non_bonded_potential._get_all_components('NBRM')
+#        coefficient_list = non_bonded_potential._get_all_components('COEF')
         
         component_list =  Component_list()
-        
-        boxes = non_bonded_list.get_boxes(target_atoms, remote_atoms,component_list)
+#, coefficient_list
+        boxes = non_bonded_list.get_boxes(target_atoms, remote_atoms, component_list)
         for box_component in boxes:
             target_atom_id, distant_atom_id,coefficient,exponent  = box_component
             
