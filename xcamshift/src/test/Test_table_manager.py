@@ -231,10 +231,10 @@ class Test_table_manager(unittest2.TestCase):
         self.assertSequenceEqual(chem_types, expected_chem_types)
         
         translation = table.get_chem_type_translation("CA")
-        self.assertEqual(translation, ['C','SP2'])
+        self.assertEqual(translation, ('C','SP2'))
         
         translation = table.get_chem_type_translation("NH1")
-        self.assertEqual(translation, ['N','SP3'])
+        self.assertEqual(translation, ('N','SP3'))
         
     def test_table_hierachy(self):
         table = self.table_manager.get_non_bonded_table('GLY')
