@@ -87,7 +87,7 @@ class Non_bonded_table(Table_base):
     def get_chem_type_translation(self, chem_type):
         self._check_chem_type(chem_type)
         
-        return self._table[self.CHEM_TYPE_TRANSLATIONS][chem_type]
+        return tuple(self._table[self.CHEM_TYPE_TRANSLATIONS][chem_type])
     
     def get_non_bonded_coefficient(self,target_atom,sphere,remote_atom_type,hybridisation):
         self._check_target_atom(target_atom)
