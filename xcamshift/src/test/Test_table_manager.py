@@ -22,6 +22,7 @@ class Test_table_manager(unittest2.TestCase):
         # TODO add a delegate to get a sequence to the table manager and remove dependance on a psf file
         initStruct("test_data/gb3/gb3.psf")
         Atom_utils.clear_cache()
+        Table_manager.reset_default_table_manager()
         self.table_manager = Table_manager()
         self.table_manager.add_search_path('../../data')
 

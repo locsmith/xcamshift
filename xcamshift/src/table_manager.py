@@ -38,6 +38,10 @@ class Table_manager(object):
             Table_manager.__default = Table_manager()
         return Table_manager.__default
     
+    @staticmethod
+    def reset_default_table_manager():
+        Table_manager.__default = None
+        
     '''
     class to load and store a set of yaml tables for the camshift forcefield, 
     results are looked up in order favouring specific residue types 
@@ -105,16 +109,26 @@ class Table_manager(object):
         
         return result
 
-    def get_residue_types(self,table_type):
+    
+    def _load_tables(self, table_type):
+        for residue_type in utils.iter_residue_types():
+            self._get_table(table_type, residue_type)
+            
+    
+    
+    def get_residue_types_for_table(self,table_type):
+        self._load_tables(table_type)
         residues = set([key[1] for key in self.tables.keys() if key[0] == table_type])
  
         self._make_presorted_tuple(residues)
         return residues
     
-    def get_all_residue_types(self):
+    #TODO: note this only works for loaded potentials
+    def get_all_known_residue_types(self):
+        
         result = set()
         for table_type in self.get_table_types():
-            for residue_type in self.get_residue_types(table_type):
+            for residue_type in self.get_residue_types_for_table(table_type):
                 result.add(residue_type)
         
         
@@ -244,10 +258,15 @@ class Table_manager(object):
             residue_type = residue_type.lower()
         return residue_type
 
-
+    def iter_residue_types(self):
+        yield('base')
+        
+        for residue_type in utils.iter_residue_types():
+            yield residue_type
+            
     def load_tables_for_know_residues(self, table_type):
         # add sequence lookup delegate to allow testing (currently we need a real molecule)
-        for residue_type in utils.iter_residue_types():
+        for residue_type in self.iter_residue_types():
             residue_type = self._force_residue_type_lowercase(residue_type)
             if not (table_type,residue_type) in self.searched_for_tables:
                 self.__load_table(table_type, residue_type)
