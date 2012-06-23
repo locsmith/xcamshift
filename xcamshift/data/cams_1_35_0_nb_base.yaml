@@ -63,7 +63,7 @@ chem_type_translations: {
     
     CP   : [C, SP3],
     
-    NA   : [N, SP3], NC2  : [N, SP3], NH2  : [N, SP3], NH3  : [N, SP3],
+    NC2  : [N, SP3], NH2  : [N, SP3], NH3  : [N, SP3],
 
     OH   : [O, SP3],
 
