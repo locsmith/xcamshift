@@ -236,7 +236,7 @@ class Test_table_manager(unittest2.TestCase):
         translation = table.get_chem_type_translation("NH1")
         self.assertEqual(translation, ('N','SP3'))
         
-    def test_table_hierachy(self):
+     def test_table_hierachy(self):
         table = self.table_manager.get_non_bonded_table('base')
         self.assertEqual(table._table['residue_type'], 'base',)
         
@@ -258,5 +258,5 @@ class Test_table_manager(unittest2.TestCase):
         self.assertEqual(id(table_1._table), id(table_2._table))
 
 if __name__ == "__main__":
-#    unittest2.main()
-    unittest2.main(module='test.Test_table_manager',defaultTest='Test_table_manager.test_table_hierachy')
+    unittest2.main()
+#    unittest2.main(module='test.Test_table_manager',defaultTest='Test_table_manager.test_table_hierachy')

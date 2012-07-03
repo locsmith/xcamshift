@@ -18,6 +18,7 @@ class Non_bonded_table(Table_base):
     EXPONENT = 'exponent'
     DATA = 'data'
     CHEM_TYPE_TRANSLATIONS = 'chem_type_translations'
+    CHEM_TYPE_CONVERSIONS = 'chem_type_conversions'
     
     def __init__(self, table):
         super(Non_bonded_table, self).__init__(table)
@@ -88,6 +89,13 @@ class Non_bonded_table(Table_base):
         self._check_chem_type(chem_type)
         
         return tuple(self._table[self.CHEM_TYPE_TRANSLATIONS][chem_type])
+    
+    def get_chem_type_conversion(self, residue_type, atom_name, chem_type):
+        
+        chem_type_key =  residue_type,atom_name
+        if chem_type_key in self._table[self.CHEM_TYPE_CONVERSIONS]:
+            chem_type = self._table[self.CHEM_TYPE_CONVERSIONS][chem_type_key]
+        return chem_type
     
     def get_non_bonded_coefficient(self,target_atom,sphere,remote_atom_type,hybridisation):
         self._check_target_atom(target_atom)
