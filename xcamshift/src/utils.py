@@ -19,6 +19,7 @@ AXES = X,Y,Z
 #TODO: add more general caching mechanism IMPORTANT and add as part of force field
 #TODO: 
 cache = {}
+atom_by_index_cache = {}
 class Atom_utils(object):
     @staticmethod
     def _calculate_distance(distance_atom_id_1, distance_atom_id_2):
@@ -38,6 +39,7 @@ class Atom_utils(object):
         global seen_residue_types
         seen_residue_types =  None
         cache = {}
+        atom_by_index_cache = {}
         
     @staticmethod  
     def find_all_atoms():
@@ -86,7 +88,12 @@ class Atom_utils(object):
 
     @staticmethod
     def _get_atom_by_index(atom_index):
-        return AtomSel("(id %i)" % (atom_index + 1))[0]
+        if atom_index in atom_by_index_cache:
+            result = atom_by_index_cache[atom_index]
+        else:
+            result = AtomSel("(id %i)" % (atom_index + 1))[0]
+            atom_by_index_cache[atom_index] =  result
+        return result
     
     @staticmethod
     def _get_atom_info_from_index(atom_index):
