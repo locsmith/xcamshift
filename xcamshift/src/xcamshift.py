@@ -2202,7 +2202,6 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
         residue_types = self._table_manager.get_all_known_residue_types()
         non_bonded_tables  = [self._table_manager.get_non_bonded_table(residue_type) for residue_type in residue_types]
         chem_type = self.get_translated_chem_type(atom, table)
-        print Atom_utils._get_atom_info_from_index(atom.index()), chem_type
         for sphere in table.get_spheres():
             
             key =  sphere, chem_type
@@ -2405,7 +2404,6 @@ class Non_bonded_potential(Distance_based_potential):
             i = 0
             for sphere in table.get_spheres():
                 for chem_type in table.get_remote_atom_types(sphere):  
-                    print  i,chem_type,sphere
                     i+= 1
                     yield chem_type,sphere
 
