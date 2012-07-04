@@ -24,6 +24,7 @@ import abc
 import sys
 from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED
 import itertools
+from abc import abstractmethod, ABCMeta
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -2135,11 +2136,26 @@ class Non_bonded_potential(Distance_based_potential):
             result = super(Non_bonded_potential, self)._calc_component_shift(index)
         return result
     
-    class Chem_type_indexer(object):
-        def get_tables_by_index(self, table_manager):
+    class Base_indexer(object):
+        
+        __metaclass__ = ABCMeta
+        
+        def __init__(self,table_manager):
+            self._index = {}
+            self._inverted_index = {}
+            self._max_index = 0
+            
+            self._build_index(table_manager)
+            
+        @abstractmethod
+        def iter_keys(self,table):
+            pass
+        
+        def _get_tables_by_index(self, table_manager):
             table_index_map = {}
             
-            for residue_type in table_manager.get_residue_types(NON_BONDED):
+            #TODO remove dependence on non bonded table
+            for residue_type in table_manager.get_residue_types_for_table(NON_BONDED):
                 table = table_manager.get_non_bonded_table(residue_type)
                 index  = table._table['index']
                 table_index_map[index]=table
@@ -2152,31 +2168,22 @@ class Non_bonded_potential(Distance_based_potential):
                 result.append(table_index_map[key])
             
             return tuple(result) 
-            
-
-        def build_index(self, table_manager):
+                   
+        def _build_index(self, table_manager):
             table_manager.get_non_bonded_table('base')
-            tables_by_index = self.get_tables_by_index(table_manager)
+            tables_by_index = self._get_tables_by_index(table_manager)
             
             i = 0
             for table in tables_by_index:
-                table_id = table._table['index']
-                for sphere in table.get_spheres():
-                    for chem_type in table.get_remote_atom_types(sphere):
-                        key = table_id,sphere,chem_type
+                for key in self.iter_keys(table):
+                    
+                    if not key in self._index:
                         self._index[key] = i
                         self._inverted_index[i] = key
                         self._max_index = i
                         i += 1
                         
 
-        def __init__(self,table_manager):
-            self._index = {}
-            self._inverted_index = {}
-            self._max_index = 0
-            
-            self.build_index(table_manager)
-            
         def get_index_for_key(self,key):
             return self._index[key]
         
@@ -2195,16 +2202,54 @@ class Non_bonded_potential(Distance_based_potential):
                 else:
                     yield el
 
+
+        def get_key_str(self, index):
+            key = self.get_key_for_index(index)
+            flat_key = tuple([elem for elem in self._flatten(key)])
+            format_string = '[%s, %-4s, %8s]'
+            key_str = format_string % flat_key
+            return key_str
+
         def __str__(self):
             result  = []
             
             result.append('non bonded chem_type index (%i entries)' % (self.get_max_index() +1))
             result.append('')
-            for index in range(self.get_max_index()):
-                key = self.get_key_for_index(index)
-                flat_key =  (index,) + tuple([elem for elem in self._flatten(key)])
-                result.append('%3i. %i %s [%s,%s]' % flat_key)
+            keys = self._inverted_index.keys()
+            keys.sort()
+            for index in keys:
+                key_str = self.get_key_str(index)
+                index_str = '%3i.' %( index+1) 
+                result.append(index_str + ' '  + key_str)
             return '\n'.join(result)
+
+    
+    class Sphere_indexer(Base_indexer):
+        def __init__(self,table_manager):
+            super(Non_bonded_potential.Sphere_indexer, self).__init__(table_manager)
+            
+        def iter_keys(self,table):
+            for sphere in table.get_spheres():
+                yield sphere           
+        
+        
+    class Chem_type_indexer(Base_indexer):
+
+        def __init__(self,table_manager):
+            super(Non_bonded_potential.Chem_type_indexer, self).__init__(table_manager)
+            
+            
+          
+        def iter_keys(self, table):
+            i = 0
+            for sphere in table.get_spheres():
+                for chem_type in table.get_remote_atom_types(sphere):  
+                    print  i,chem_type,sphere
+                    i+= 1
+                    yield chem_type,sphere
+
+                         
+            
                 
         
     #TODO centralise table manager (each sub potential has its own table manager at the moment)
