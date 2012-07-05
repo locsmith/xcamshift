@@ -19,7 +19,11 @@ from utils import Atom_utils
 import sys
 from table_manager import Table_manager
 from vec3 import Vec3
-from common_constants import BACK_BONE
+from common_constants import BACK_BONE, RANDOM_COIL, XTRA, DIHEDRAL, SIDE_CHAIN,\
+    NON_BONDED, RING
+from test.gb3 import gb3_component_shifts_sc, gb3_component_shifts_ring
+import os
+import time
 TOTAL_ENERGY = 'total'
 #def text_keys_to_atom_ids(keys, segment = '*'):
 #    result = []
@@ -41,11 +45,21 @@ TOTAL_ENERGY = 'total'
 #    return result
 #
 ##class testSegmentManager(object):
-class TestXcamshiftAFA(unittest2.TestCase):
+
+def almostEqual(first, second, places = 7):
+    result  = False
+    if round(abs(second-first), places) == 0:
+        result=True
+    return result
+
+class TestXcamshiftGB3(unittest2.TestCase):
 
     # TODO add extra places
     DEFAULT_DECIMAL_PLACES = 5
     DEFAULT_ERROR = 10**-DEFAULT_DECIMAL_PLACES
+    
+    def assertEmpty(self, expected_force_factors,msg = None):
+        return self.assertEqual(len(expected_force_factors), 0)
 #
 #    
 #    def assertEmpty(self, expected_force_factors,msg = None):
@@ -84,7 +98,8 @@ class TestXcamshiftAFA(unittest2.TestCase):
 #            
     def setUp(self):
         initStruct("test_data/gb3/gb3.psf")
-        PDBTool("test_data/gb3/gb3_refined_II_almost.pdb").read()
+        PDBTool("test_data/gb3/gb3_refined_II.pdb").read()
+        Atom_utils.clear_cache()
 #
 ##TODO: shoulf be private
 #    def make_result_array_forces(self):
@@ -223,26 +238,204 @@ class TestXcamshiftAFA(unittest2.TestCase):
 #                    self.assertSequenceAlmostEqual(ring_atom_forces, expected_ring_forces, self.DEFAULT_DECIMAL_PLACES)
     def test_chemical_shifts(self):
         xcamshift  = Xcamshift()
-#        print xcamshift.print_shifts()
+
         bad_residues =  set()
-        for key in gb3.gb3_component_shifts:
+        component_shifts_keys = gb3.gb3_subpotential_shifts.keys()
+        component_shifts_keys.sort()
+        do_update = True
+        for i,key in enumerate(component_shifts_keys):
             segment, residue_number,atom,sub_potential = key
             sub_potential = xcamshift.get_named_sub_potential(sub_potential)
-            if sub_potential.get_abbreviated_name()  ==  BACK_BONE:
-                atom_ids  =  Atom_utils.find_atom_ids(segment, residue_number, atom)
-                if len(atom_ids) > 0:
-    #            find_atom(segment, residue_number, atom)
-                    shift  = sub_potential.calc_single_atom_shift(atom_ids[0])
-                    expected_shift = gb3.gb3_component_shifts[key]
-                    residue_type = Atom_utils._get_residue_type_from_atom_id(atom_ids[0])
-                    if abs(shift-expected_shift) > 0.0001:
-                        print ` key` +' ' + residue_type, expected_shift, shift
-                        bad_residues.add(key[1])
-        print bad_residues
+            if  do_update and key[3] == NON_BONDED:
+                sub_potential.update_non_bonded_list()
+                do_update = False
+
+            atom_ids  =  Atom_utils.find_atom_ids(segment, residue_number, atom)
+            if len(atom_ids) > 0:
+                shift  = sub_potential.calc_single_atom_shift(atom_ids[0])
+                expected_shift = gb3.gb3_subpotential_shifts[key]
+                residue_type = Atom_utils._get_residue_type_from_atom_id(atom_ids[0])
+#               self.assertAlmostEqual(shift, expected_shift, self.DEFAULT_DECIMAL_PLACES-1, msg=`key` + " " + residue_type)
+
 #        print xcamshift.print_shifts()
+    
+#    def test_non_bonded_components(self):
+#        xcamshift =  Xcamshift()
+#        sub_potential = xcamshift.get_named_sub_potential(NON_BONDED)
+#        sub_potential.update_non_bonded_list()
+#        
+#        non_bonded_components =  dict(gb3.gb3_component_shifts_non_bonded)
+#        
+#        exponent_keys = {-3 : 0, 1 : 1}
+#        for target_atom_id, remote_atom_id, coefficient, exponent in sub_potential._get_component_list('NBLT'):
+#            target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
+#            remote_atom_key =  Atom_utils._get_atom_info_from_index(remote_atom_id)
+#            
+#            if target_atom_key[2]== 'HA1':
+#                target_atom_key =  list(target_atom_key)
+#                target_atom_key[2]= 'HA'
+#                target_atom_key =  tuple(target_atom_key)
+#                
+#            exponent_key = exponent_keys[int(exponent)]
+#            non_bonded_component_key = (target_atom_key, remote_atom_key, exponent_key)
+#            
+#            
+#            if Atom_utils._calculate_distance(target_atom_id, remote_atom_id) > 5.0:
+#                continue
+#            
+#            self.assertIn(non_bonded_component_key, non_bonded_components, `non_bonded_component_key`)
+#            del non_bonded_components[non_bonded_component_key]
+#            
+#        self.assertEmpty(non_bonded_components)
         
+    
+    def test_non_bonded_components(self):
+        xcamshift =  Xcamshift()
+        sub_potential = xcamshift.get_named_sub_potential(NON_BONDED)
+        sub_potential.update_non_bonded_list()
+        
+        non_bonded_components =  dict(gb3.gb3_component_shifts_non_bonded)
+        
+        exponent_keys = {-3 : 0, 1 : 1}
+        for target_atom_id, remote_atom_id, coefficient, exponent in sub_potential._get_component_list('NBLT'):
+            target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
+            remote_atom_key =  Atom_utils._get_atom_info_from_index(remote_atom_id)
+            
+            if target_atom_key[2]== 'HA1':
+                target_atom_key =  list(target_atom_key)
+                target_atom_key[2]= 'HA'
+                target_atom_key =  tuple(target_atom_key)
+                
+            exponent_key = exponent_keys[int(exponent)]
+            non_bonded_component_key = (target_atom_key, remote_atom_key, exponent_key)
+            
+            
+            if Atom_utils._calculate_distance(target_atom_id, remote_atom_id) > 5.0:
+                continue
+            
+            self.assertIn(non_bonded_component_key, non_bonded_components, `non_bonded_component_key`)
+            del non_bonded_components[non_bonded_component_key]
+            
+        self.assertEmpty(non_bonded_components)
+        
+    def test_non_bonded_component_shifts(self):
+        xcamshift =  Xcamshift()
+        sub_potential = xcamshift.get_named_sub_potential(NON_BONDED)
+        sub_potential.update_non_bonded_list()
+        
+        non_bonded_components =  dict(gb3.gb3_component_shifts_non_bonded)
+        
+        exponent_keys = {-3 : 0, 1 : 1}
+        for i, (target_atom_id, remote_atom_id, coefficient, exponent) in enumerate(sub_potential._get_component_list('NBLT')):
+            target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
+            remote_atom_key =  Atom_utils._get_atom_info_from_index(remote_atom_id)
+            
+            if target_atom_key[2]== 'HA1':
+                target_atom_key =  list(target_atom_key)
+                target_atom_key[2]= 'HA'
+                target_atom_key =  tuple(target_atom_key)
+                
+            exponent_key = exponent_keys[int(exponent)]
+            non_bonded_component_key = (target_atom_key, remote_atom_key, exponent_key)
+            
+            
+            if Atom_utils._calculate_distance(target_atom_id, remote_atom_id) > 5.0:
+                continue
+            shift = sub_potential._calc_component_shift(i)
+            self.assertAlmostEqual(shift,non_bonded_components[non_bonded_component_key],self.DEFAULT_DECIMAL_PLACES-2,`i` + ' '  + `non_bonded_component_key`)
+            del non_bonded_components[non_bonded_component_key]
+            
+        self.assertEmpty(non_bonded_components)
+    def remove_zero_valued_keys(self, expected_force_factors):
+        for key, value in expected_force_factors.items():
+            if almostEqual(value, 0.0, self.DEFAULT_DECIMAL_PLACES):
+                del expected_force_factors[key]
+
+#    def test_component_shifts_sidechain(self):
+#        return
+#        
+#        xcamshift = Xcamshift()
+#        sidechain_subpotential = xcamshift.get_named_sub_potential(SIDE_CHAIN)
+#        
+#        expected_sidechain_shifts = dict(gb3_component_shifts_sc)
+#        expected_component_keys = expected_sidechain_shifts.keys()
+#        for component_index, component in enumerate(sidechain_subpotential._get_component_list()):
+#            from_atom_id, to_atom_id = component[0:2]
+#            from_atom_key = Atom_utils._get_atom_info_from_index(from_atom_id)
+#            to_atom_key = Atom_utils._get_atom_info_from_index(to_atom_id)
+#            
+##            print from_atom_key, to_atom_key
+#            if from_atom_key[2] == 'HA1':
+#                from_atom_key = from_atom_key[0],from_atom_key[1],'HA'
+#                
+#            expected_key = from_atom_key, to_atom_key
+#            
+#            self.assertIn(expected_key, expected_component_keys, `expected_key` + " exists")
+#            
+#            shift = sidechain_subpotential._calc_component_shift(component_index)
+#            
+#            self.assertAlmostEqual(expected_sidechain_shifts[expected_key], shift, places=self.DEFAULT_DECIMAL_PLACES - 1, msg=`expected_key`)
+#            
+#            del expected_sidechain_shifts[expected_key]
+#            
+#        self.remove_zero_valued_keys(expected_sidechain_shifts)
+#        self.assertEmpty(expected_sidechain_shifts)
+#        
+
+#    def test_component_shifts_ring(self):
+#        
+#        xcamshift = Xcamshift()
+#        ring_subpotential = xcamshift.get_named_sub_potential(RING)
+#        
+#        expected_ring_shifts = dict(gb3_component_shifts_ring)
+#        expected_component_keys = expected_ring_shifts.keys()
+#        for component_index, component in enumerate(ring_subpotential._get_component_list()):
+#            from_atom_id, atom_type_id = component
+#            from_atom_info_list = ring_subpotential._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
+#            
+##            print Atom_utils._get_atom_info_from_index(from_atom_id), from_atom_info_list
+#            from_atom_key = list(Atom_utils._get_atom_info_from_index(from_atom_id))
+#            
+#            if from_atom_key[2] == 'HA1':
+#                from_atom_key[2] =  'HA'
+#            from_atom_key = tuple(from_atom_key)
+#            
+#            for sub_component_index, from_atom_info in enumerate(from_atom_info_list):
+#                from_atom_id, ring_id, coefficent = from_atom_info
+##                print 'debug ', (from_atom_id, atom_type_id), from_atom_info
+#                ring_info = ring_subpotential._get_component_list('RING').get_components_for_atom_id(ring_id)
+##                print ring_info[0][1]
+#                
+#                ring_atoms =  ring_info[0][1]
+#                ring_residue_type = Atom_utils._get_residue_type_from_atom_id(ring_atoms[1])
+#                ring_residue = Atom_utils._get_atom_info_from_index(ring_atoms[0])[1]
+#                expected_key =   from_atom_key,(ring_residue,ring_residue_type,len(ring_atoms))
+##                print expected_key
+#                self.assertIn(expected_key, expected_component_keys, `expected_key`)
+#            
+#
+#
+#                shift = ring_subpotential._calc_sub_component_shift(component_index, sub_component_index)
+#                self.assertAlmostEqual(expected_ring_shifts[expected_key], shift, places=self.DEFAULT_DECIMAL_PLACES - 2, msg=`expected_key`)
+#                if abs(expected_ring_shifts[expected_key] - shift) > 0.001:
+#                    print 'fail', expected_key, expected_ring_shifts[expected_key], shift, Atom_utils._get_residue_type_from_atom_id(from_atom_id)
+#                    print
+#                
+#                del expected_ring_shifts[expected_key]
+#                print
+#
+#            
+#        self.remove_zero_valued_keys(expected_ring_shifts)
+#        print expected_ring_shifts
+#        self.assertEmpty(expected_ring_shifts)
+import cProfile
+
+
+
 if __name__ == "__main__":
     unittest2.main()
+#    cProfile.run('unittest2.main()')
+    
 #    TestXcamshift.list_test_shifts()
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetTanh')
+#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_non_bonded_component_shifts')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
