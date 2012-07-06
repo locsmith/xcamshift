@@ -637,17 +637,20 @@ class TestXcamshift(unittest2.TestCase):
             
         self.assertEmpty(target_atom_types)
         
-        remote_component_spheres_and_exponents = {}
+        remote_component_chem_type_ids = set()
         for component in non_bonded_potential._get_all_components('NBRM'):
             atom_info = Atom_utils._get_atom_info_from_index(component[0])
+            remote_component_chem_type_ids.update(component[1:])
             
-            remote_component_spheres_and_exponents.setdefault(atom_info,[]).append(component[1:3])
-            
+        remote_component_chem_type_ids =  list(remote_component_chem_type_ids)
+        remote_component_chem_type_ids.sort()
         
-        for sphere_exponent in remote_component_spheres_and_exponents.values():
-            sphere_exponent.sort()
-            self.assertSequenceEqual(sphere_exponent, [(0,-3.0),(1,1.0),])
+        num_chem_types = len(remote_component_chem_type_ids) / 2
+        remote_chem_type_ids_first_half = remote_component_chem_type_ids[:num_chem_types]
+        for i, elem in enumerate(remote_chem_type_ids_first_half):
+            self.assertEqual(elem, remote_component_chem_type_ids[i+num_chem_types]-8)
             
+        self.assertEqual(remote_chem_type_ids_first_half, [0,1,2,4,5])
             
         
         non_bonded_1, non_bonded_2 = self._split_tuple_pair_to_column_sets(ala_3.ala3_putative_non_bonded_pairs)
@@ -667,14 +670,18 @@ class TestXcamshift(unittest2.TestCase):
         self.assertSequenceEqual(test_non_bonded_set_2, non_bonded_2)
         
         components_0 = non_bonded_potential._get_components_for_id('NBRM',0)
-        self.assertLengthIs(components_0,2)
-        self.assertEqual(components_0[0][:3], (0,0,-3.0))
-        self.assertEqual(components_0[1][:3], (0,1,1.0))
+        chem_types_0 = components_0[0][1:]
+        self.assertLengthIs(components_0,1)
+        self.assertEqual(components_0[0], (0,12,4))
         
-        expected_coefficients_1 = (-0.0069306876125918232, 0.047420617840734335, 0.043722646930490425, 0.0093801308883550549, -0.063176276536097933, 0.34500777174208075)
-        expected_coefficients_0 = (31.32384112711744, -12.5982466223797, -14.86605302072972, -1.6214566324137984, 2.505391454472044,  -88.71419716149445)
-        self.assertSequenceAlmostEqual(components_0[0][3:], expected_coefficients_0, self.DEFAULT_DECIMAL_PLACES)
-        self.assertSequenceAlmostEqual(components_0[1][3:], expected_coefficients_1, self.DEFAULT_DECIMAL_PLACES)
+        
+        coefficents_0 = non_bonded_potential._get_components_for_id('COEF',chem_types_0[0])[0][3:]
+        coefficents_1 = non_bonded_potential._get_components_for_id('COEF',chem_types_0[1])[0][3:]
+        
+        expected_coefficients_0 = (-0.0069306876125918232, 0.047420617840734335, 0.043722646930490425, 0.0093801308883550549, -0.063176276536097933, 0.34500777174208075)
+        expected_coefficients_1 = (31.32384112711744, -12.5982466223797, -14.86605302072972, -1.6214566324137984, 2.505391454472044,  -88.71419716149445)
+        self.assertSequenceAlmostEqual(coefficents_0, expected_coefficients_0, self.DEFAULT_DECIMAL_PLACES)
+        self.assertSequenceAlmostEqual(coefficents_1, expected_coefficients_1, self.DEFAULT_DECIMAL_PLACES)
 
     
     def testDistances(self):
@@ -689,18 +696,28 @@ class TestXcamshift(unittest2.TestCase):
         non_bonded_potential = Non_bonded_potential()
         target_atoms = non_bonded_potential._get_all_components('ATOM')
         remote_atoms  = non_bonded_potential._get_all_components('NBRM')
-#        coefficient_list = non_bonded_potential._get_all_components('COEF')
+        coefficient_list = non_bonded_potential._get_component_list('COEF')
         
         component_list =  Component_list()
-#, coefficient_list
-        boxes = non_bonded_list.get_boxes(target_atoms, remote_atoms, component_list)
+        boxes = non_bonded_list.get_boxes(target_atoms, remote_atoms, component_list, coefficient_list)
+        
+#        local_boxes = []
+#        for box_component in boxes:
+#            local_boxes.append((box_component[0],box_component[1],box_component[3],))
+#        local_boxes.sort()
+#        for box_component in local_boxes:
+#            print box_component
+            
+            
         for box_component in boxes:
-            target_atom_id, distant_atom_id,coefficient,exponent  = box_component
+            target_atom_id, distant_atom_id, coefficient,exponent  = box_component
             
             target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
             box_atom_key = Atom_utils._get_atom_info_from_index(distant_atom_id)
             atom_key = target_atom_key,box_atom_key
                 
+#            print box_component, atom_key
+            
             if exponent == 1.0:
                 self.assertElemeInSet(atom_key, expected_box_atoms_1)
                 expected_box_atoms_1.remove(atom_key)
@@ -725,6 +742,6 @@ class TestXcamshift(unittest2.TestCase):
 if __name__ == "__main__":
     unittest2.main()
 #    TestXcamshift.list_test_shifts()
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testNonBondedComponents')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetTanh')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistances')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
