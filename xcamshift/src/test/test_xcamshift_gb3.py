@@ -351,83 +351,82 @@ class TestXcamshiftGB3(unittest2.TestCase):
             if almostEqual(value, 0.0, self.DEFAULT_DECIMAL_PLACES):
                 del expected_force_factors[key]
 
-#    def test_component_shifts_sidechain(self):
-#        return
-#        
-#        xcamshift = Xcamshift()
-#        sidechain_subpotential = xcamshift.get_named_sub_potential(SIDE_CHAIN)
-#        
-#        expected_sidechain_shifts = dict(gb3_component_shifts_sc)
-#        expected_component_keys = expected_sidechain_shifts.keys()
-#        for component_index, component in enumerate(sidechain_subpotential._get_component_list()):
-#            from_atom_id, to_atom_id = component[0:2]
-#            from_atom_key = Atom_utils._get_atom_info_from_index(from_atom_id)
-#            to_atom_key = Atom_utils._get_atom_info_from_index(to_atom_id)
-#            
-##            print from_atom_key, to_atom_key
-#            if from_atom_key[2] == 'HA1':
-#                from_atom_key = from_atom_key[0],from_atom_key[1],'HA'
-#                
-#            expected_key = from_atom_key, to_atom_key
-#            
-#            self.assertIn(expected_key, expected_component_keys, `expected_key` + " exists")
-#            
-#            shift = sidechain_subpotential._calc_component_shift(component_index)
-#            
-#            self.assertAlmostEqual(expected_sidechain_shifts[expected_key], shift, places=self.DEFAULT_DECIMAL_PLACES - 1, msg=`expected_key`)
-#            
-#            del expected_sidechain_shifts[expected_key]
-#            
-#        self.remove_zero_valued_keys(expected_sidechain_shifts)
-#        self.assertEmpty(expected_sidechain_shifts)
-#        
+    def test_component_shifts_sidechain(self):
+        return
+        
+        xcamshift = Xcamshift()
+        sidechain_subpotential = xcamshift.get_named_sub_potential(SIDE_CHAIN)
+        
+        expected_sidechain_shifts = dict(gb3_component_shifts_sc)
+        expected_component_keys = expected_sidechain_shifts.keys()
+        for component_index, component in enumerate(sidechain_subpotential._get_component_list()):
+            from_atom_id, to_atom_id = component[0:2]
+            from_atom_key = Atom_utils._get_atom_info_from_index(from_atom_id)
+            to_atom_key = Atom_utils._get_atom_info_from_index(to_atom_id)
+            
+#            print from_atom_key, to_atom_key
+            if from_atom_key[2] == 'HA1':
+                from_atom_key = from_atom_key[0],from_atom_key[1],'HA'
+                
+            expected_key = from_atom_key, to_atom_key
+            
+            self.assertIn(expected_key, expected_component_keys, `expected_key` + " exists")
+            
+            shift = sidechain_subpotential._calc_component_shift(component_index)
+            
+            self.assertAlmostEqual(expected_sidechain_shifts[expected_key], shift, places=self.DEFAULT_DECIMAL_PLACES - 1, msg=`expected_key`)
+            
+            del expected_sidechain_shifts[expected_key]
+            
+        self.remove_zero_valued_keys(expected_sidechain_shifts)
+        self.assertEmpty(expected_sidechain_shifts)
+        
 
-#    def test_component_shifts_ring(self):
-#        
-#        xcamshift = Xcamshift()
-#        ring_subpotential = xcamshift.get_named_sub_potential(RING)
-#        
-#        expected_ring_shifts = dict(gb3_component_shifts_ring)
-#        expected_component_keys = expected_ring_shifts.keys()
-#        for component_index, component in enumerate(ring_subpotential._get_component_list()):
-#            from_atom_id, atom_type_id = component
-#            from_atom_info_list = ring_subpotential._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
-#            
-##            print Atom_utils._get_atom_info_from_index(from_atom_id), from_atom_info_list
-#            from_atom_key = list(Atom_utils._get_atom_info_from_index(from_atom_id))
-#            
-#            if from_atom_key[2] == 'HA1':
-#                from_atom_key[2] =  'HA'
-#            from_atom_key = tuple(from_atom_key)
-#            
-#            for sub_component_index, from_atom_info in enumerate(from_atom_info_list):
-#                from_atom_id, ring_id, coefficent = from_atom_info
-##                print 'debug ', (from_atom_id, atom_type_id), from_atom_info
-#                ring_info = ring_subpotential._get_component_list('RING').get_components_for_atom_id(ring_id)
-##                print ring_info[0][1]
-#                
-#                ring_atoms =  ring_info[0][1]
-#                ring_residue_type = Atom_utils._get_residue_type_from_atom_id(ring_atoms[1])
-#                ring_residue = Atom_utils._get_atom_info_from_index(ring_atoms[0])[1]
-#                expected_key =   from_atom_key,(ring_residue,ring_residue_type,len(ring_atoms))
-##                print expected_key
-#                self.assertIn(expected_key, expected_component_keys, `expected_key`)
-#            
-#
-#
-#                shift = ring_subpotential._calc_sub_component_shift(component_index, sub_component_index)
-#                self.assertAlmostEqual(expected_ring_shifts[expected_key], shift, places=self.DEFAULT_DECIMAL_PLACES - 2, msg=`expected_key`)
-#                if abs(expected_ring_shifts[expected_key] - shift) > 0.001:
-#                    print 'fail', expected_key, expected_ring_shifts[expected_key], shift, Atom_utils._get_residue_type_from_atom_id(from_atom_id)
-#                    print
-#                
-#                del expected_ring_shifts[expected_key]
-#                print
-#
-#            
-#        self.remove_zero_valued_keys(expected_ring_shifts)
-#        print expected_ring_shifts
-#        self.assertEmpty(expected_ring_shifts)
+    def test_component_shifts_ring(self):
+        
+        xcamshift = Xcamshift()
+        ring_subpotential = xcamshift.get_named_sub_potential(RING)
+        
+        expected_ring_shifts = dict(gb3_component_shifts_ring)
+        expected_component_keys = expected_ring_shifts.keys()
+        for component_index, component in enumerate(ring_subpotential._get_component_list()):
+            from_atom_id, atom_type_id = component
+            from_atom_info_list = ring_subpotential._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
+            
+#            print Atom_utils._get_atom_info_from_index(from_atom_id), from_atom_info_list
+            from_atom_key = list(Atom_utils._get_atom_info_from_index(from_atom_id))
+            
+            if from_atom_key[2] == 'HA1':
+                from_atom_key[2] =  'HA'
+            from_atom_key = tuple(from_atom_key)
+            
+            for sub_component_index, from_atom_info in enumerate(from_atom_info_list):
+                from_atom_id, ring_id, coefficent = from_atom_info
+#                print 'debug ', (from_atom_id, atom_type_id), from_atom_info
+                ring_info = ring_subpotential._get_component_list('RING').get_components_for_atom_id(ring_id)
+#                print ring_info[0][1]
+                
+                ring_atoms =  ring_info[0][1]
+                ring_residue_type = Atom_utils._get_residue_type_from_atom_id(ring_atoms[1])
+                ring_residue = Atom_utils._get_atom_info_from_index(ring_atoms[0])[1]
+                expected_key =   from_atom_key,(ring_residue,ring_residue_type,len(ring_atoms))
+#                print expected_key
+                self.assertIn(expected_key, expected_component_keys, `expected_key`)
+            
+
+
+                shift = ring_subpotential._calc_sub_component_shift(component_index, sub_component_index)
+                self.assertAlmostEqual(expected_ring_shifts[expected_key], shift, places=self.DEFAULT_DECIMAL_PLACES - 2, msg=`expected_key`)
+                if abs(expected_ring_shifts[expected_key] - shift) > 0.001:
+                    print 'fail', expected_key, expected_ring_shifts[expected_key], shift, Atom_utils._get_residue_type_from_atom_id(from_atom_id)
+                    print
+                
+                del expected_ring_shifts[expected_key]
+
+            
+        self.remove_zero_valued_keys(expected_ring_shifts)
+        self.assertEmpty(expected_ring_shifts)
+        
 import cProfile
 
 
