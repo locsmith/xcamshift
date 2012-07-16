@@ -432,21 +432,25 @@ class Sidechain_context():
     
     
     
-    def __init__(self, from_atom, residue_type, sidechain_atom, table):
+    def __init__(self, from_atom, residue_type, sidechain_atom_selection, table):
         
         self._table = table
+        self.complete =  False
+        
+        from_atom_index = from_atom.index()
         
         segment = from_atom.segmentName()
         sidechain_residue_number = from_atom.residueNum()
-        sidechain_atom = Atom_utils._select_atom_with_translation(segment, sidechain_residue_number, sidechain_atom)
-        
+        sidechain_atom = Atom_utils._select_atom_with_translation(segment, sidechain_residue_number, sidechain_atom_selection)
         
         self.sidechain_atom_index = sidechain_atom[0].index()
         
-        self.residue_type = residue_type
-        self.sidechain_atom_name = sidechain_atom[0].atomName()
+        if self.sidechain_atom_index != from_atom_index:
         
-        self.complete = True
+            self.residue_type = residue_type
+            self.sidechain_atom_name = sidechain_atom[0].atomName()
+            
+            self.complete = True
 
 class Sidechain_component_factory(Atom_component_factory):
 
