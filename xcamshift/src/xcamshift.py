@@ -1739,7 +1739,7 @@ class Ring_Potential(Base_potential):
                     else:
                         
                         for axis in AXES:
-                            g[axis] = ring_atom_positions[0] - ring_atom_positions[1] + ring_atom_positions[3] - ring_atom_positions[4]
+                            g[axis] = ring_atom_positions[0][axis] - ring_atom_positions[1][axis] + ring_atom_positions[3][axis] - ring_atom_positions[4][axis]
             
                 # 0 1 2 2 1   (0+1) %3 (0+2) %3
                 # 1 2 0 0 2
