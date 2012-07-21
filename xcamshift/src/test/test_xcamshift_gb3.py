@@ -65,37 +65,45 @@ class TestXcamshiftGB3(unittest2.TestCase):
 #    def assertEmpty(self, expected_force_factors,msg = None):
 #        return self.assertEqual(len(expected_force_factors), 0)
 #    
-#    def check_almost_equal(self, list_1, list_2, delta = 1e-7):
-#        difference_offset = -1
-#        for i, (elem_1, elem_2) in enumerate(zip(list_1, list_2)):
-#            diff = abs(elem_1 - elem_2)
-#            if diff > delta:
-#                difference_offset = i
-#                break
-#        return difference_offset
-#    
-#    def are_almost_equal_sequences(self, list_1, list_2, delta =  1e-7):
-#        result = True
-#        if self.check_almost_equal(list_1, list_2, delta) > 0:
-#            result = False
-#        return result
-#        
-#    def assertSequenceAlmostEqual(self,result,expected,places = 7):
-#        delta  = 10**-places
-#        len_result = len(result)
-#        len_expected = len(expected)
-#        if len_result != len_expected:
-#            raise AssertionError("the two lists are of different length %i and %i" % (len_result,len_expected))
-#        
-#        difference_offset = self.check_almost_equal(result, expected, delta)
-#        
-#        if difference_offset > -1:
-#            template = "lists differ at item %i: %s - %s > %s"
-#            elem_1 = result[difference_offset]
-#            elem_2 = expected[difference_offset]
-#            message = template % (difference_offset, `elem_1`,`elem_2`,delta)
-#            raise AssertionError(message)
-#            
+    def check_almost_equal(self, list_1, list_2, delta = 1e-7):
+        difference_offset = -1
+        for i, (elem_1, elem_2) in enumerate(zip(list_1, list_2)):
+            diff = abs(elem_1 - elem_2)
+            if diff > delta:
+                difference_offset = i
+                break
+        return difference_offset
+    
+    def are_almost_equal_sequences(self, list_1, list_2, delta =  1e-7):
+        result = True
+        if self.check_almost_equal(list_1, list_2, delta) > 0:
+            result = False
+        return result
+        
+    def assertSequenceAlmostEqual(self,result,expected,places = 7,msg=''):
+        delta  = 10**-places
+        if len(msg) > 0:
+            msg = msg + " "
+        len_result = len(result)
+        len_expected = len(expected)
+        if len_result != len_expected:
+            raise AssertionError((msg + "the two lists are of different length %i and %i") % (len_result,len_expected))
+        
+        difference_offset = self.check_almost_equal(result, expected, delta)
+        
+        if difference_offset > -1:
+            template = "lists differ at item %i: %s - %s > %s"
+            elem_1 = result[difference_offset]
+            elem_2 = expected[difference_offset]
+            message = template % (difference_offset, `elem_1`,`elem_2`,delta)
+            raise AssertionError(msg + message)
+        
+    def remove_almost_zero_force_elems(self, expected_forces_dict, delta = 1e-7):
+        ZEROS_3 = 0.0, 0.0, 0.0
+        for key, value in expected_forces_dict.items():
+            if self.check_almost_equal(ZEROS_3, value):
+                del expected_forces_dict[key]         
+
     def setUp(self):
         initStruct("test_data/gb3/gb3.psf")
         PDBTool("test_data/gb3/gb3_refined_II.pdb").read()
@@ -236,7 +244,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
 #                    expected_ring_forces = AFA.ring_forces_harmonic[ring_force_key]
 #                    ring_atom_forces = forces[ring_atom_id]
 #                    self.assertSequenceAlmostEqual(ring_atom_forces, expected_ring_forces, self.DEFAULT_DECIMAL_PLACES)
-    def test_chemical_shifts(self):
+    def test_component_chemical_shifts(self):
         xcamshift  = Xcamshift()
 
         bad_residues =  set()
@@ -257,7 +265,71 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 residue_type = Atom_utils._get_residue_type_from_atom_id(atom_ids[0])
                 self.assertAlmostEqual(shift, expected_shift, self.DEFAULT_DECIMAL_PLACES-1, msg=`key` + " " + residue_type)
 
-#        print xcamshift.print_shifts()
+    def _test_force_sets(self, xcamshift, expected_energy, expected_forces):
+        expected_forces = dict(expected_forces)
+        number_atoms = Segment_Manager().get_number_atoms()
+        derivs = [None] * number_atoms
+        energy = xcamshift.calcEnergyAndDerivs(derivs)
+        
+        print energy
+        print derivs
+        for atom_id in range(number_atoms):
+            
+            atom_key  =  Atom_utils._get_atom_info_from_index(atom_id)
+            if atom_key in expected_forces:
+                force_triplet = derivs[atom_id]
+                expected_force_triplet = expected_forces[atom_key]
+                
+#                self.assertSequenceAlmostEqual(force_triplet, expected_force_triplet, self.DEFAULT_DECIMAL_PLACES)
+                print atom_key, force_triplet, expected_force_triplet,
+                try:
+                    print force_triplet[0] /  expected_force_triplet[0]
+                except:
+                    print 
+                del expected_forces[atom_key]
+                
+        self.remove_almost_zero_force_elems(expected_forces, self.DEFAULT_DECIMAL_PLACES)
+        self.assertEmpty(expected_forces)
+                
+        self.assertAlmost
+        
+    def _setup_xcamshift_with_shifts_table(self, test_shifts):
+        xcamshift = Xcamshift()
+        observed_shifts = Observed_shift_table(test_shifts)
+        xcamshift.set_observed_shifts(observed_shifts)
+        return xcamshift
+    
+    def test_forces(self):
+        xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+
+        bad_residues =  set()
+        component_forces_keys = gb3.gb3_forces.keys()
+        component_forces_keys.sort()
+        
+        non_bonded_potential  = xcamshift.get_named_sub_potential(NON_BONDED)
+        non_bonded_potential.update_non_bonded_list()
+        expected_energy =  gb3.gb3_energies
+        expected_forces = gb3.gb3_forces
+        
+        self._test_force_sets(xcamshift, expected_energy, expected_forces)
+        
+#        xcamshift.calcEnergyAndDerivs(derivs)
+#        for i,key in enumerate(component_forces_keys):
+#            print key
+#            segment, residue_number,atom = key
+#            sub_potential = xcamshift.get_named_sub_potential(sub_potential)
+#            if  do_update and key[3] == NON_BONDED:
+#                sub_potential.update_non_bonded_list()
+#                do_update = False
+#
+#            atom_ids  =  Atom_utils.find_atom_ids(segment, residue_number, atom)
+#            if len(atom_ids) > 0:
+#                shift  = sub_potential.calc_single_atom_shift(atom_ids[0])
+#                expected_shift = gb3.gb3_subpotential_shifts[key]
+#                residue_type = Atom_utils._get_residue_type_from_atom_id(atom_ids[0])
+#                self.assertAlmostEqual(shift, expected_shift, self.DEFAULT_DECIMAL_PLACES-1, msg=`key` + " " + residue_type)
+#                
+##        print xcamshift.print_shifts()
     
 #    def test_non_bonded_components(self):
 #        xcamshift =  Xcamshift()
@@ -426,15 +498,37 @@ class TestXcamshiftGB3(unittest2.TestCase):
             
         self.remove_zero_valued_keys(expected_ring_shifts)
         self.assertEmpty(expected_ring_shifts)
+
+    def test_force_components_add_up(self):
+        summary = {}
+        gb3_forces_copy  = dict(gb3.gb3_forces)
+        
+        
+        for elem in gb3.gb3_component_forces:
+            key =  elem[1]
+            summary_forces = summary.setdefault(key,[0.0,]*3)
+            for i, value in enumerate(gb3.gb3_component_forces[elem]):
+                summary_forces[i] += value
+        
+        for i,elem in enumerate(sorted(summary)):
+
+            self.assertSequenceAlmostEqual(summary[elem], gb3_forces_copy[elem], 2, `elem`)
+
+            del gb3_forces_copy[elem]
+        
+        self.remove_almost_zero_force_elems(gb3_forces_copy)
+        
+        self.assertEmpty(gb3_forces_copy)
         
 import cProfile
 
 
 
 if __name__ == "__main__":
-    unittest2.main()
+#    unittest2.main()
 #    cProfile.run('unittest2.main()')
     
 #    TestXcamshift.list_test_shifts()
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_non_bonded_component_shifts')
+#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_forces')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components_add_up')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
