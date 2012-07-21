@@ -68,19 +68,23 @@ class TestXcamshift(unittest2.TestCase):
             result = False
         return result
         
-    def assertSequenceAlmostEqual(self,result,expected, delta = 1e-7):
+    def assertSequenceAlmostEqual(self,result,expected, delta = 1e-7, msg=""):
         len_result = len(result)
         len_expected = len(expected)
         if len_result != len_expected:
             raise AssertionError("the two lists are of different length %i and %i" % (len_result,len_expected))
         
         difference_offset = self.check_almost_equal(result, expected, delta)
-                
+        
+            
         if difference_offset > 0:
-            template = "lists differ at item %i: %s - %s > %s"
+            if msg != "":
+                msg = msg + " "
+                
+            template = "%slists differ at item %i: %s - %s > %s"
             elem_1 = result[difference_offset]
             elem_2 = expected[difference_offset]
-            message = template % (difference_offset, `elem_1`,`elem_2`,delta)
+            message = template % (msg,difference_offset, `elem_1`,`elem_2`,delta)
             raise AssertionError(message)
             
     def setUp(self):
@@ -585,7 +589,7 @@ class TestXcamshift(unittest2.TestCase):
                 force_triplet = derivs[atom_id]
                 expected_force_triplet = expected_forces[atom_key]
                 
-                self.assertSequenceAlmostEqual(force_triplet, expected_force_triplet, self.DEFAULT_DECIMAL_PLACES)
+                self.assertSequenceAlmostEqual(force_triplet, expected_force_triplet, self.DEFAULT_DECIMAL_PLACES, atom_key)
                 del expected_forces[atom_key]
                 
         self.remove_almost_zero_force_elems(expected_forces, self.DEFAULT_DECIMAL_PLACES)
