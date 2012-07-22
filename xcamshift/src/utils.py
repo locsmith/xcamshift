@@ -106,7 +106,7 @@ class Atom_utils(object):
         return atom.atomName()
     
     @staticmethod
-    def _get_atom_name(atom_index, template="%-5i '%4s' %i [%3s] %-4s"):
+    def _get_atom_name(atom_index, template="%-5i '%4s' %3i [%3s] %-4s"):
         atom = Atom_utils._get_atom_by_index(atom_index)
         
         segid = atom.segmentName()
@@ -116,11 +116,12 @@ class Atom_utils(object):
         
         return template % (atom_index, segid, residue_number, residue_type, atom_name)
     
+    #TODO: make template common
     @staticmethod
-    def _get_atom_names(atoms,template  = "%-5i '%4s' %i [%3s] %-4s", joiner=", "):
+    def _get_atom_names(atoms,template  = "%-5i '%4s' %3i [%3s] %-4s", joiner=", "):
         atom_names = []
         for atom in atoms:
-            atom_names.append(Atom_utils._get_atom_name(atom))
+            atom_names.append(Atom_utils._get_atom_name(atom),template=template)
         return joiner.join(atom_names)
             
     @staticmethod
