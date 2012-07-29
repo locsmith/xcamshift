@@ -1831,7 +1831,7 @@ class Ring_Potential(Base_potential):
             # we need to populate the lists automatilly and make it part of the lists implementation
             self._get_component_list('RING')
             
-            self._build_ring_data_cache()
+
             
             coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
             for i,coef_component  in enumerate(coef_components):
