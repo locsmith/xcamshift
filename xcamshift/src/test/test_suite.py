@@ -15,7 +15,8 @@ from test.test_python_utils import Test_python_utils
 from test.test_table_importers import Test_table_importers
 from test.test_xcamshift_aga import TestXcamshifAGA
 from test.test_xcamshift_vin import TestXcamshiftVIN
-from test.test_xcamshift_gb3 import TestXcamshiftGB3
+from test.test_xcamshift_agfa import TestXcamshiftAGFA
+#from test.test_xcamshift_gb3 import TestXcamshiftGB3
 
 def load_tests(loader, tests, pattern):
     suite = unittest2.TestSuite()
@@ -30,7 +31,8 @@ def load_tests(loader, tests, pattern):
     suite.addTests(tests = loader.loadTestsFromTestCase(Test_table_importers))
     suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshifAGA))
     suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftVIN))
-    suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftGB3))
+    suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftAGFA))
+#    suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftGB3))
     
     return suite
 
