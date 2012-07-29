@@ -1784,7 +1784,9 @@ class Ring_Potential(Base_potential):
     def _build_ring_data_cache(self):
         #TODO: remove double normal calculation
         normals = self._get_cache_list('NORM')
+        normals.clear()
         centres =  self._get_cache_list('CENT')
+        centres.clear()
         
         for ring_component in self._get_component_list('RING'):
             ring_id =  ring_component[0]
