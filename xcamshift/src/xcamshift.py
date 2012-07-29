@@ -1710,7 +1710,6 @@ class Ring_Potential(Base_potential):
             #print "terms",-force_factor, sub_terms.gradUQ[0], sub_terms.dL3, sub_terms.u, sub_terms.gradVQ[axis], sub_terms.dL6
             target_force_triplet[axis] += -force_factor * (sub_terms.gradUQ[axis] * sub_terms.dL3 - sub_terms.u * sub_terms.gradVQ[axis]) / sub_terms.dL6
         
-        return sub_terms, axis, AXES
 
     #TODO: calculation of GradU and gradV are not consistent with force_terms for target atom correct
     #TODO: reduce number of parameters to method
