@@ -2645,6 +2645,7 @@ class Xcamshift():
         table_manager = Table_manager.get_default_table_manager()
         constants_table = table_manager.get_constants_table(residue_type)
         
+        atom_name = constants_table.get_translation_to_table(residue_type,atom_name)
         flat_bottom_limit = constants_table.get_flat_bottom_limit(atom_name)
         #TODO:  move to class body this is a global scaling for the 
         # whole force field
@@ -2660,10 +2661,13 @@ class Xcamshift():
             result = shift_diff + flat_bottom_shift_limit
         return result
     
-    
+#    TODO: investigate need for atom name and residue_type for these lookups do they need caching?
+#          how does cacmshift do it 
     def _get_end_harmonic(self, residue_type, atom_name):
         table_manager = Table_manager.get_default_table_manager()
         constants_table = table_manager.get_constants_table(residue_type)
+        
+        atom_name = constants_table.get_translation_to_table(residue_type,atom_name)
         
         return constants_table.get_end_harmonic(atom_name)
     
@@ -2672,6 +2676,8 @@ class Xcamshift():
         table_manager = Table_manager.get_default_table_manager()
         constants_table = table_manager.get_constants_table(residue_type)
         
+        atom_name = constants_table.get_translation_to_table(residue_type,atom_name)
+                
         return constants_table.get_scale_harmonic(atom_name)
     
     
@@ -2679,6 +2685,8 @@ class Xcamshift():
         table_manager = Table_manager.get_default_table_manager()
         constants_table = table_manager.get_constants_table(residue_type)
         
+        atom_name = constants_table.get_translation_to_table(residue_type,atom_name)
+                
         return constants_table.get_tanh_y_offset(atom_name)
     
     
@@ -2731,6 +2739,8 @@ class Xcamshift():
         table_manager = Table_manager.get_default_table_manager()
         constants_table = table_manager.get_constants_table(residue_type)
         
+        atom_name = constants_table.get_translation_to_table(residue_type,atom_name)
+        
         return constants_table.get_weight(atom_name)
     
     #TODO: maybe call this a scaling??
@@ -2740,12 +2750,16 @@ class Xcamshift():
         table_manager = Table_manager.get_default_table_manager()
         constants_table = table_manager.get_constants_table(residue_type)
         
+        atom_name = constants_table.get_translation_to_table(residue_type,atom_name)
+        
         return constants_table.get_tanh_amplitude(atom_name)
     
     
     def _get_tanh_elongation(self, residue_type, atom_name):
         table_manager = Table_manager.get_default_table_manager()
         constants_table = table_manager.get_constants_table(residue_type)
+        
+        atom_name = constants_table.get_translation_to_table(residue_type,atom_name)
         
         return constants_table.get_tanh_elongation(atom_name)
     
