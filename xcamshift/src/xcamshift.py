@@ -2532,7 +2532,11 @@ class Xcamshift():
                           Non_bonded_potential()
                           ]
         self._shift_table = Observed_shift_table()
+        self._shift_cache = {}
     
+    def clear_shift_cache(self):
+        self._shift_cache = {}
+        
     def get_sub_potential_names(self):
         return [potential.get_abbreviated_name() for potential in self.potential]
     
@@ -2628,8 +2632,11 @@ class Xcamshift():
         
     def calc_single_atom_shift(self,atom_index):
         result  = 0.0
-        for potential in self.potential:
-            result += potential.calc_single_atom_shift(atom_index)
+        if atom_index in self._shift_cache:
+            result = self._shift_cache[atom_index]
+        else:
+            for potential in self.potential:
+                result += potential.calc_single_atom_shift(atom_index)
         return result
     
     
