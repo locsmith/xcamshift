@@ -1,6 +1,8 @@
 # constants and defaults for camshift 1.35.0
 ---
 
+translations: {[GLY,HA1]: HA}
+
 flat_bottom_constant : 0.4
 
 flat_bottom_limit : {
