@@ -2689,16 +2689,24 @@ class Xcamshift():
                 
         return constants_table.get_tanh_y_offset(atom_name)
     
-    
+
+        
+
+    def get_shift_difference(self, target_atom_index):
+        
+        theory_shift = self.calc_single_atom_shift(target_atom_index)
+        
+        observed_shift = self._shift_table.get_chemical_shift(target_atom_index)
+        
+        return observed_shift - theory_shift
+        
+
     def _calc_single_atom_energy(self, target_atom_index):
         
         energy = 0.0
         if target_atom_index in self._shift_table.get_atom_indices():
             
-            theory_shift = self.calc_single_atom_shift(target_atom_index)
-            observed_shift = self._shift_table.get_chemical_shift(target_atom_index)
-            
-            shift_diff = observed_shift - theory_shift
+            shift_diff = self.get_shift_difference(target_atom_index)
             
             residue_type = Atom_utils._get_residue_type_from_atom_id(target_atom_index)
             atom_name = Atom_utils._get_atom_name_from_index(target_atom_index)
