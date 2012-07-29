@@ -2286,6 +2286,16 @@ class Non_bonded_potential(Distance_based_potential):
 #        self.update_non_bonded_list()
         return Distance_based_potential.calc_single_atom_force_set(self, target_atom_id, force_factor, forces)
     
+    def _calc_single_force_set(self,index,factor, forces):
+        target_atom_index,distant_atom_index = self._get_target_and_distant_atom_ids(index)
+        
+        result  = 0.0
+        distance  = Atom_utils._calculate_distance(target_atom_index, distant_atom_index)
+#        TODO: this should be the non bonded distance cutoff
+        if distance < 5.0:
+            result = Distance_based_potential._calc_single_force_set(self,index, factor, forces)
+        return result
+    
     def _calc_component_shift(self, index):
         target_atom_index,distant_atom_index = self._get_target_and_distant_atom_ids(index)
         
