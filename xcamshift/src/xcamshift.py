@@ -2734,12 +2734,20 @@ class Xcamshift():
                 energy += energy_component
         return energy
     
-    def _calc_single_atom_force_set(self,target_atom_id,forces):
         
-        self._calc_single_force_factor(target_atom_id, forces)
-        for potential in self.potential:
+    def _calc_single_atom_force_set_with_potentials(self, target_atom_id, forces, potentials_list):
+#        print 'forces _calc_single_atom_force_set_with_potentials', forces 
+#        self._calc_single_force_factor(target_atom_id, forces)
+        for potential in potentials_list:
             factor  = self._calc_single_factor(target_atom_id)
             potential.calc_single_atom_force_set(target_atom_id,factor,forces)
+        return forces
+
+    def _calc_single_atom_force_set(self,target_atom_id,forces,potentials=None):
+#        print 'forces xcamshift._calc_single_atom_force_set',forces
+        if potentials ==  None:
+            potentials =  self.potential
+        self._calc_single_atom_force_set_with_potentials(target_atom_id, forces, potentials)
         
         return forces
 
@@ -2841,12 +2849,17 @@ class Xcamshift():
         return energy
     
     
-    def calcEnergyAndDerivs(self,derivs):
-        energy = self.calcEnergy()
+
+    def _calc_derivs(self, derivs,potentials=None):
+        
         active_target_atom_ids = self._get_active_target_atom_ids()
         
         for target_atom_id in active_target_atom_ids:
-            self._calc_single_atom_force_set(target_atom_id, derivs)
+            self._calc_single_atom_force_set(target_atom_id, derivs, potentials)
+
+    def calcEnergyAndDerivs(self,derivs):
+        energy = self.calcEnergy()
+        self._calc_derivs(derivs)
         
         return energy
         
