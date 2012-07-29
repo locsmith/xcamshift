@@ -640,7 +640,7 @@ class Base_potential(object):
             if target_atom_id in components.get_component_atom_ids():
                 index_range = components.get_component_range(target_atom_id)
                 for index in range(*index_range):
-                    forces = self._calc_single_force_set(index,force_factor,forces)
+                    self._calc_single_force_set(index,force_factor,forces)
         return forces
         
     
@@ -787,7 +787,7 @@ class Distance_based_potential(Base_potential):
             target_forces[offset] -= distance[offset] * force_factor
             distant_forces[offset] += distance[offset] * force_factor
         
-        return forces
+
     
     def _calc_component_shift(self, index):
         
@@ -1178,7 +1178,7 @@ class Dihedral_potential(Base_potential):
                 force_component = weight * base_force[offset]
                 force_triplet[offset]+= force_component
                 
-        return forces
+
     
 class Sidechain_potential(Distance_based_potential):
     
@@ -2296,7 +2296,7 @@ class Non_bonded_potential(Distance_based_potential):
 #        TODO: this should be the non bonded distance cutoff
         if distance < 5.0:
             result = Distance_based_potential._calc_single_force_set(self,index, factor, forces)
-        return result
+
     
     def _calc_component_shift(self, index):
         target_atom_index,distant_atom_index = self._get_target_and_distant_atom_ids(index)

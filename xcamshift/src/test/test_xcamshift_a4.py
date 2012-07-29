@@ -441,7 +441,7 @@ class TestXcamshiftA4(unittest2.TestCase):
             factor = factors[target_atom_key]
     #            print expected_key,factor
             forces = self.make_result_array_forces()
-            forces = non_bonded_potential._calc_single_force_set(i, factor,forces)
+            non_bonded_potential._calc_single_force_set(i, factor,forces)
             
             target_force_triplet = forces[target_atom_id]
             remote_force_triplet  = forces[remote_atom_id]

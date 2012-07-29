@@ -427,9 +427,9 @@ class TestXcamshift(unittest2.TestCase):
             
             test_factor = test_factors[target_atom_key]
             
-            result_array = self.make_result_array_forces()
+            forces = self.make_result_array_forces()
             
-            forces = distance_potential._calc_single_force_set(i, test_factor, result_array)
+            distance_potential._calc_single_force_set(i, test_factor, forces)
             
             distant_atom_forces_1 = self.get_force_triplet(distant_atom_index_1, forces)
             distant_atom_forces_2 = self.get_force_triplet(distant_atom_index_2, forces)
@@ -505,7 +505,7 @@ class TestXcamshift(unittest2.TestCase):
             for elem in dihedral_atoms_key:
                 dihedral_atom_ids.extend(single_text_key_to_atom_ids(elem))
             test_factor = test_factors[target_atom_key]
-            forces = potential._calc_single_force_set(i,test_factor,forces)
+            potential._calc_single_force_set(i,test_factor,forces)
             dihedral_forces = self._extract_dihedral_forces(dihedral_atom_ids,forces)
             
             for forces,expected in zip(dihedral_forces,expected_forces_dict[expected_key]):
