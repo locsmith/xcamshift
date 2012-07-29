@@ -2114,12 +2114,6 @@ class Non_bonded_list(object):
                     #so only list chem type ids by know chem_types in the sturtcure not all chem types
 #                    print chem_type_id
 #                    print coefficient_list
-                    coefficient_data  = coefficient_list.get_components_for_atom_id(chem_type_id)
-#                    print coefficient_data
-                    coefficient_data = coefficient_data[0]
-                    coefficients = coefficient_data[3:]
-                    
-                    chem_type_id, sphere_id, exponent = coefficient_data[:3]
 #                    print chem_type_id, sphere_id, exponent 
                     
                     
@@ -2127,6 +2121,14 @@ class Non_bonded_list(object):
                         is_non_bonded = self._is_non_bonded(atom_id_1, atom_id_2)
                         
                     if is_non_bonded:
+                        coefficient_data  = coefficient_list.get_components_for_atom_id(chem_type_id)
+    #                    print coefficient_data
+                        coefficient_data = coefficient_data[0]
+                        coefficients = coefficient_data[3:]
+                        
+                        chem_type_id, sphere_id, exponent = coefficient_data[:3]
+#                    print chem_type_id, sphere_id, exponent 
+                    
                         try:
                             result_component = atom_id_1,atom_id_2,coefficients[atom_1_coefficent_offset],exponent 
                         except:
