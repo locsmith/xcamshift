@@ -2077,24 +2077,18 @@ class Non_bonded_list(object):
     
         
     def _is_non_bonded(self, atom_id_1, atom_id_2):
-        cutoff_distance_2 = self._get_cutoff_distance_2()
-        pos_1 = self._get_cached_pos(atom_id_1)
-        pos_2 = self._get_cached_pos(atom_id_2)
+        
         seg_1, residue_1 = Atom_utils._get_atom_info_from_index(atom_id_1)[:2]
         seg_2, residue_2 = Atom_utils._get_atom_info_from_index(atom_id_2)[:2]
-    #                if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
-    #                    continue
+
+
+        cutoff_distance = self._cutoff_distance + self._jitter
         is_non_bonded = True
         if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
             is_non_bonded = False
         else:
-            cumulative_distance_2 = 0.0
-            for axis in AXES:
-                cumulative_distance_2 += (pos_1[axis] - pos_2[axis]) ** 2
-                if cumulative_distance_2 >= cutoff_distance_2:
-                    is_non_bonded = False
-        
-    #                            break
+            is_non_bonded =  Atom_utils._calculate_distance(atom_id_1, atom_id_2) < cutoff_distance
+
         return is_non_bonded
     
     class NonBoolean:
