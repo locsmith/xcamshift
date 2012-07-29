@@ -954,12 +954,12 @@ class RandomCoilShifts(Base_potential):
 
 
     def __str__(self): 
-        #TODO: fails if there are no shifts added
         result = []
-        for atom_index,shift in self._shifts_list:
-            template = "%s %7.3f"
-            atom_name =  self._get_atom_name(atom_index)
-            string = template % (atom_name,shift)
+        for i,elem in enumerate(self._get_component_list()):
+            template = "%-5i  %15s % 8.3f"
+            atom_index,shift = elem
+            atom_name =  Atom_utils._get_atom_name(atom_index)
+            string = template % (i, atom_name,shift)
             result.append(string)
         return '\n'.join(result)
 
