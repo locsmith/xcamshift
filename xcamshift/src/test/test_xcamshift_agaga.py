@@ -18,7 +18,7 @@ def almostEqual(first, second, places = 7):
         result=True
     return result
 
-class TestXcamshifAGAGA(unittest2.TestCase):
+class TestXcamshiftUtils(unittest2.TestCase):
     DEFAULT_DECIMAL_PLACES = 5
     DEFAULT_ERROR = 10 ** -DEFAULT_DECIMAL_PLACES
 
