@@ -662,6 +662,65 @@ class Base_potential(object):
             forces[target_offset] = target_forces
         return target_forces
 
+class Shift_calculator:
+    DEFAULT_CUTOFF = 5.0
+    DEFAULT_SMOOTHING_FACTOR = 1.0
+    
+    def __init__(self, indices, smoothed):
+        self._target_atom_index = indices.target_atom_index
+        self._distance_atom_index_1 =  indices.distance_atom_index_1
+        self._distance_atom_index_2 =  indices .distance_atom_index_2
+        self._exponent_index  = indices.exponent_index
+        self._coefficient_index  = indices.coefficient_index
+        self._components =  None
+        self._smoothed =  smoothed
+        self._smoothing_factor =  Shift_calculator.DEFAULT_SMOOTHING_FACTOR
+        
+        self._cutoff =  Shift_calculator.DEFAULT_CUTOFF
+    
+    def set_cutoff(self, cutoff):
+        self._cutoff =  cutoff
+    
+    def set_smoothing_factor(self,smoothing_factor):
+        self._smoothing_factor = smoothing_factor
+        
+    def set_components(self,components):
+        self._components = components
+    
+    def _get_target_and_distant_atom_ids(self, index):
+        values  = self._components.get_component(index)
+        
+        
+        target_atom = values[self._distance_atom_index_1]
+        distance_atom = values[self._distance_atom_index_2]
+        return target_atom, distance_atom
+    
+    def _get_coefficient_and_exponent(self, index):
+        values = self._components.get_component(index)
+        
+
+
+        
+        coefficient = values[self._coefficient_index]
+        exponent = values[self._exponent_index]
+        
+        return coefficient, exponent
+    
+    def __call__(self, index):
+        target_atom_index, sidechain_atom_index = self._get_target_and_distant_atom_ids(index)
+        coefficient, exponent = self._get_coefficient_and_exponent(index)
+        distance = Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
+        smoothing_factor = self._smoothing_factor
+        if self._smoothed:
+            ratio = distance / self._cutoff
+    #            ratio2 = ratio**4
+    #            for i in range(2):
+    #                ratio *= ratio
+    #            print ratio2,ratio
+            smoothing_factor = 1.0 - ratio ** 8
+        result = smoothing_factor * distance ** exponent * coefficient
+        return result
+    
 class Distance_based_potential(Base_potential):
     
     def __init__(self,  smoothed = False):
@@ -669,6 +728,8 @@ class Distance_based_potential(Base_potential):
         self._smoothed = smoothed
         self._cutoff = 5.0
         
+        self.shift_calculator = Shift_calculator(self._get_indices(), self._smoothed)
+
     class Indices(object):
         def __init__(self, target_atom_index,distance_atom_index_1,
                      distance_atom_index_2, coefficent_index, exponent_index):
@@ -706,7 +767,11 @@ class Distance_based_potential(Base_potential):
         distance_atom = values[distance_atom_index_2]
         return target_atom, distance_atom
 
-
+    def _get_distance_components(self):
+        list_name  = self._get_distance_list_name()
+        return self._get_component_list(list_name)
+        
+        
     def _get_coefficient_and_exponent(self, index):
         list_name  = self._get_distance_list_name()
         
@@ -789,26 +854,12 @@ class Distance_based_potential(Base_potential):
         
 
     
-    def _calc_component_shift(self, index):
-        
-        
-        target_atom_index,sidechain_atom_index = self._get_target_and_distant_atom_ids(index)
-        coefficient,exponent =  self._get_coefficient_and_exponent(index)
-        
-        
-        distance = Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
-        
-        smoothing_factor  = 1.0
-        if self._smoothed:
-            ratio = distance / self._cutoff;
-#            ratio2 = ratio**4
-#            for i in range(2):
-#                ratio *= ratio
-#            print ratio2,ratio
-            smoothing_factor = 1.0 - ratio**8;
 
-            
-        return smoothing_factor *  distance ** exponent * coefficient
+
+    def _calc_component_shift(self, index):
+        components = self._get_distance_components()
+        self.shift_calculator.set_components(components)
+        return self.shift_calculator(index)
     
 class Distance_potential(Distance_based_potential):
     '''
