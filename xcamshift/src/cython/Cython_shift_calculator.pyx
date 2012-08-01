@@ -37,8 +37,9 @@ cdef class Fast_shift_calculator:
 #    
 #    def set_smoothing_factor(self,smoothing_factor):
 #        self._smoothing_factor = smoothing_factor
-#        
-    def set_components(self,components):
+#    
+#    TODO: this needs to be removed
+    cdef _set_components(self,components):
         self._components = components
     
     cdef inline _get_target_and_distant_atom_ids(self, index):
@@ -56,18 +57,22 @@ cdef class Fast_shift_calculator:
         
         return coefficient, exponent
 #    
-    def __call__(self, int index):
-        target_atom_index, sidechain_atom_index = self._get_target_and_distant_atom_ids(index)
-        coefficient, exponent = self._get_coefficient_and_exponent(index)
-        distance =self.distance(target_atom_index, sidechain_atom_index)
-#        Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
+    def __call__(self, object components, object results):
+        self._set_components(components)
         cdef float smoothing_factor = self._smoothing_factor
         cdef float ratio
-        if self._smoothed:
-            ratio = distance / self._cutoff
-            smoothing_factor = 1.0 - ratio ** 8
-        cdef float result = smoothing_factor * distance ** exponent * coefficient
-        return result
+        cdef float result
+        for index in range(len(components)):
+            target_atom_index, sidechain_atom_index = self._get_target_and_distant_atom_ids(index)
+            coefficient, exponent = self._get_coefficient_and_exponent(index)
+            distance =self.distance(target_atom_index, sidechain_atom_index)
+    #        Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
+
+            if self._smoothed:
+                ratio = distance / self._cutoff
+                smoothing_factor = 1.0 - ratio ** 8
+            results[index]  = smoothing_factor * distance ** exponent * coefficient
+            
 
     cdef float distance(self,int atom_index_1, atom_index_2):
 

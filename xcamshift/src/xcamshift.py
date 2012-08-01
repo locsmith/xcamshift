@@ -714,8 +714,9 @@ class Shift_calculator:
         
         return coefficient, exponent
     
-    def __call__(self, indices, results):
-        for index in indices:
+    def __call__(self, components, results):
+        self.set_components(components)
+        for index in range(len(components)):
             target_atom_index, sidechain_atom_index = self._get_target_and_distant_atom_ids(index)
             coefficient, exponent = self._get_coefficient_and_exponent(index)
             distance = Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
@@ -727,8 +728,8 @@ class Shift_calculator:
         #                ratio *= ratio
         #            print ratio2,ratio
                 smoothing_factor = 1.0 - ratio ** 8
-            result = smoothing_factor * distance ** exponent * coefficient
-        results[index] = result
+            results[index] = smoothing_factor * distance ** exponent * coefficient
+            
     
 class Distance_based_potential(Base_potential):
     
