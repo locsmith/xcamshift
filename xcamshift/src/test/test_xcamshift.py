@@ -311,7 +311,7 @@ class TestXcamshift(unittest2.TestCase):
             key = Atom_utils._get_atom_info_from_index(atom_index)[1:]
             expected_energy = expected_energys[key]
             energy = xcamshift._calc_single_atom_energy(atom_index)
-            self.assertAlmostEqual(energy, expected_energy, self.DEFAULT_DECIMAL_PLACES)
+            self.assertAlmostEqual(energy, expected_energy, self.DEFAULT_DECIMAL_PLACES-1)
         
 
     def testSingleEnergiesHarmonic(self):
@@ -548,7 +548,7 @@ class TestXcamshift(unittest2.TestCase):
 
     def _test_total_energy(self, xcamshift, expected_energy):
         calculated_energy = xcamshift.calcEnergy()
-        self.assertAlmostEqual(calculated_energy, expected_energy, self.DEFAULT_DECIMAL_PLACES)
+        self.assertAlmostEqual(calculated_energy, expected_energy, self.DEFAULT_DECIMAL_PLACES-1)
 
 
     def _setup_xcamshift_with_shifts_table(self, test_shifts):
@@ -595,7 +595,7 @@ class TestXcamshift(unittest2.TestCase):
         self.remove_almost_zero_force_elems(expected_forces, self.DEFAULT_DECIMAL_PLACES)
         self.assertEmpty(expected_forces)
                 
-        self.assertAlmostEqual(energy, expected_energy, self.DEFAULT_DECIMAL_PLACES)
+        self.assertAlmostEqual(energy, expected_energy, self.DEFAULT_DECIMAL_PLACES-1)
         
     
     def testCalcForceSetWell(self):

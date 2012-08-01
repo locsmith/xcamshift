@@ -25,6 +25,7 @@ import sys
 from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED
 import itertools
 from abc import abstractmethod, ABCMeta
+from cython.shift_calculators import Fast_shift_calculator
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -706,29 +707,31 @@ class Shift_calculator:
         
         return coefficient, exponent
     
-    def __call__(self, index):
-        target_atom_index, sidechain_atom_index = self._get_target_and_distant_atom_ids(index)
-        coefficient, exponent = self._get_coefficient_and_exponent(index)
-        distance = Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
-        smoothing_factor = self._smoothing_factor
-        if self._smoothed:
-            ratio = distance / self._cutoff
-    #            ratio2 = ratio**4
-    #            for i in range(2):
-    #                ratio *= ratio
-    #            print ratio2,ratio
-            smoothing_factor = 1.0 - ratio ** 8
-        result = smoothing_factor * distance ** exponent * coefficient
-        return result
+    def __call__(self, indices, results):
+        for index in indices:
+            target_atom_index, sidechain_atom_index = self._get_target_and_distant_atom_ids(index)
+            coefficient, exponent = self._get_coefficient_and_exponent(index)
+            distance = Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
+            smoothing_factor = self._smoothing_factor
+            if self._smoothed:
+                ratio = distance / self._cutoff
+        #            ratio2 = ratio**4
+        #            for i in range(2):
+        #                ratio *= ratio
+        #            print ratio2,ratio
+                smoothing_factor = 1.0 - ratio ** 8
+            result = smoothing_factor * distance ** exponent * coefficient
+        results[index] = result
     
 class Distance_based_potential(Base_potential):
     
-    def __init__(self,  smoothed = False):
+    def __init__(self,  smoothed = False, fast=False):
         super(Distance_based_potential, self).__init__()
         self._smoothed = smoothed
+        #TODO: sort placement out
         self._cutoff = 5.0
         
-        self.shift_calculator = Shift_calculator(self._get_indices(), self._smoothed)
+        self.shift_calculator = Fast_shift_calculator(self._get_indices(), self._smoothed)
 
     class Indices(object):
         def __init__(self, target_atom_index,distance_atom_index_1,
