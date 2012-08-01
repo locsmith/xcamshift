@@ -25,7 +25,7 @@ import sys
 from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED
 import itertools
 from abc import abstractmethod, ABCMeta
-from cython.shift_calculators import Fast_shift_calculator
+from cython.shift_calculators import Fast_distance_shift_calculator
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -514,10 +514,29 @@ class Base_potential(object):
         self._cache_list_data = {}
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._fast = False
-        
-    def set_fast(self, on):
-        self._fast = (on == True)
 
+
+    def set_fast(self, on):
+        self._fast =  (on == True)
+    
+    def _filter_components(self, target_atom_ids):
+        if target_atom_ids == None:
+            components = self._get_distance_components()
+        else:
+            target_atom_ids = set()
+            components = Component_list()
+            for component in self._get_distance_components():
+                if component[0] in target_atom_ids:
+                    components.add(component)
+        return components    
+    
+    def _calc_component_shift(self, index):
+        components = Component_list()
+        components.add_component(self._get_distance_components()[index])
+        results = [0.0]
+        self._shift_calculator(components,results)
+        return results[0]
+      
     def _prepare(self):
         pass
     
@@ -670,7 +689,7 @@ class Base_potential(object):
             forces[target_offset] = target_forces
         return target_forces
 
-class Shift_calculator:
+class Distance_shift_calculator:
     DEFAULT_CUTOFF = 5.0
     DEFAULT_SMOOTHING_FACTOR = 1.0
     
@@ -682,9 +701,9 @@ class Shift_calculator:
         self._coefficient_index  = indices.coefficient_index
         self._components =  None
         self._smoothed =  smoothed
-        self._smoothing_factor =  Shift_calculator.DEFAULT_SMOOTHING_FACTOR
+        self._smoothing_factor =  Distance_shift_calculator.DEFAULT_SMOOTHING_FACTOR
         
-        self._cutoff =  Shift_calculator.DEFAULT_CUTOFF
+        self._cutoff =  Distance_shift_calculator.DEFAULT_CUTOFF
     
     def set_cutoff(self, cutoff):
         self._cutoff =  cutoff
@@ -692,7 +711,7 @@ class Shift_calculator:
     def set_smoothing_factor(self,smoothing_factor):
         self._smoothing_factor = smoothing_factor
         
-    def set_components(self,components):
+    def _set_components(self,components):
         self._components = components
     
     def _get_target_and_distant_atom_ids(self, index):
@@ -715,7 +734,7 @@ class Shift_calculator:
         return coefficient, exponent
     
     def __call__(self, components, results):
-        self.set_components(components)
+        self._set_components(components)
         for index in range(len(components)):
             target_atom_index, sidechain_atom_index = self._get_target_and_distant_atom_ids(index)
             coefficient, exponent = self._get_coefficient_and_exponent(index)
@@ -739,20 +758,24 @@ class Distance_based_potential(Base_potential):
         #TODO: sort placement out
         self._cutoff = 5.0
         
-        self._shift_calculator = self.get_shift_calculator()
+        self._shift_calculator = self._get_shift_calculator()
         
-
-    def get_shift_calculator(self):
+    def set_fast(self, on):
+        self._fast = (on == True)
+        self._shift_calculator = self._get_shift_calculator()
+        
+    def _get_shift_calculator(self):
         if self._fast:
-            result  = self._shift_calculator = Fast_shift_calculator(self._get_indices(), self._smoothed)
+            result  = self._shift_calculator = Fast_distance_shift_calculator(self._get_indices(), self._smoothed)
         else:
-            result = self._shift_calculator = Shift_calculator(self._get_indices(), self._smoothed)
+            result = self._shift_calculator = Distance_shift_calculator(self._get_indices(), self._smoothed)
         return result
     
-    def set_fast(self, on):
-        super(Distance_based_potential, self).set_fast(on)
-        self._shift_calculator = self.get_shift_calculator()
-        
+#    TODO: remove to base class
+    def calc_shifts(self, target_atom_ids, results):
+        components  = self._filter_components(target_atom_ids)
+        self._shift_calculator(components,results)
+                
     class Indices(object):
         def __init__(self, target_atom_index,distance_atom_index_1,
                      distance_atom_index_2, coefficent_index, exponent_index):
@@ -877,27 +900,7 @@ class Distance_based_potential(Base_potential):
         
 
     
-    def _filter_components(self, target_atom_ids):
-        if target_atom_ids == None:
-            components = self._get_distance_components()
-        else:
-            target_atom_ids = set()
-            components = Component_list()
-            for component in self._get_distance_components():
-                if component[0] in target_atom_ids:
-                    components.add(component)
-        return components    
-    
-    def calc_shifts(self, target_atom_ids, results):
-        components  = self._filter_components(target_atom_ids)
-        self._shift_calculator(components,results)
-    
-    def _calc_component_shift(self, index):
-        components = Component_list()
-        components.add_component(self._get_distance_components()[index])
-        results = [0.0]
-        self._shift_calculator(components,results)
-        return results[0]
+ 
     
 class Distance_potential(Distance_based_potential):
     '''
@@ -1052,6 +1055,66 @@ class RandomCoilShifts(Base_potential):
             result.append(string)
         return '\n'.join(result)
 
+class Dihedral_shift_calculator:
+    def __init__(self):
+        self._components = None
+    
+    def _set_components(self,components):
+        self._components = components
+    def _get_component(self,index):
+        return self._components[index]
+    
+    def _get_dihedral_angle(self, dihedral_1_atom_id_1, dihedral_1_atom_id_2, 
+                                 dihedral_2_atom_id_1, dihedral_2_atom_id_2):
+        
+        atom_1  = Atom_utils._get_atom_by_index(dihedral_1_atom_id_1)
+        atom_2  = Atom_utils._get_atom_by_index(dihedral_1_atom_id_2)
+        atom_3  = Atom_utils._get_atom_by_index(dihedral_2_atom_id_1)
+        atom_4  = Atom_utils._get_atom_by_index(dihedral_2_atom_id_2)
+        
+        return Dihedral(atom_1,atom_2,atom_3,atom_4).value();
+
+    def _get_dihedral_atom_ids(self, index):
+        component = self._get_component(index)
+        
+        dihedrals = component[1:5]
+        return dihedrals
+
+
+    def _get_coefficient(self, index):
+        component = self._get_component(index)
+        coefficient = component[5]
+        return coefficient
+
+
+    def _get_parameters(self, index):
+        component = self._get_component(index)
+        parameters = component[6:11]
+        parameter_0, parameter_1, parameter_2, parameter_3, parameter_4 = parameters
+        return parameter_0, parameter_3, parameter_1, parameter_4, parameter_2
+
+    def __call__(self, components, results):
+        self._set_components(components)
+        for index in range(len(components)):
+            dihedral_atom_ids= self._get_dihedral_atom_ids(index)
+            
+            coefficient = self._get_coefficient(index)
+            
+            parameter_0, parameter_3, parameter_1, \
+            parameter_4, parameter_2               \
+            = self._get_parameters(index)
+            
+            angle = self._get_dihedral_angle(*dihedral_atom_ids)
+    
+            
+            angle_term = parameter_0 * cos(3.0 * angle + parameter_3) + \
+                         parameter_1 * cos(angle + parameter_4) +       \
+                         parameter_2
+            
+            shift = coefficient * angle_term
+    
+            results[index] = shift
+
 class Dihedral_potential(Base_potential):
 
     
@@ -1059,16 +1122,34 @@ class Dihedral_potential(Base_potential):
         Base_potential.__init__(self)
         self._add_component_factory(Dihedral_component_factory())
     
-
-
+        self._shift_calculator = self._get_shift_calculator()
+    
+    def set_fast(self, on):
+        self._fast = (on == True)
+        self._shift_calculator = self._get_shift_calculator()
+        
+    def calc_shifts(self, target_atom_ids, results):
+        components  = self._filter_components(target_atom_ids)
+        self._shift_calculator(components,results)
+        
     def get_abbreviated_name(self):
         return DIHEDRAL
 
+    def _get_shift_calculator(self):
+        return Dihedral_shift_calculator()
+    
     def _get_table_source(self):
         return self._table_manager.get_dihedral_table
 
+    def _get_distance_components(self):
+        return self._get_component_list()
     
-                
+    def _calc_component_shift(self, index):
+        components = Component_list()
+        components.add_component(self._get_distance_components()[index])
+        results = [0.0]
+        self._shift_calculator(components,results)
+        return results[0]
         
 
 
@@ -1159,31 +1240,9 @@ class Dihedral_potential(Base_potential):
         parameter_0, parameter_1, parameter_2, parameter_3, parameter_4 = parameters
         return parameter_0, parameter_3, parameter_1, parameter_4, parameter_2
     
+    
     def _get_force_parameters(self,index):
         return self._get_parameters(index)[:-1]
-
-    def _calc_component_shift(self, index):
-        
-       
-        dihedral_atom_ids= self._get_dihedral_atom_ids(index)
-        
-        coefficient = self._get_coefficient(index)
-        
-        parameter_0, parameter_3, parameter_1, \
-        parameter_4, parameter_2               \
-        = self._get_parameters(index)
-        
-        angle = self._get_dihedral_angle(*dihedral_atom_ids)
-
-        
-        angle_term = parameter_0 * cos(3.0 * angle + parameter_3) + \
-                     parameter_1 * cos(angle + parameter_4) +       \
-                     parameter_2
-        
-        shift = coefficient * angle_term
-
-        return shift
-    
     
 #    TODO make this consistent with the distance forces factor
     def _calc_single_force_factor(self,index):

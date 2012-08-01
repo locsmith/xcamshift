@@ -5,7 +5,7 @@ Created on 31 Jul 2012
 '''
 from xplor_access cimport norm,Vec3,currentSimulation
 
-cdef class Fast_shift_calculator:
+cdef class Fast_distance_shift_calculator:
     DEFAULT_CUTOFF  = 5.0
     DEFAULT_SMOOTHING_FACTOR = 1.0
     
