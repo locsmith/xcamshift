@@ -518,7 +518,7 @@ class Base_potential(object):
     def set_fast(self, on):
         self._fast = (on == True)
 
-    def prepare(self):
+    def _prepare(self):
         pass
     
     def get_component_table_names(self):
@@ -877,8 +877,21 @@ class Distance_based_potential(Base_potential):
         
 
     
-
-
+    def _filter_components(self, target_atom_ids):
+        if target_atom_ids == None:
+            components = self._get_distance_components()
+        else:
+            target_atom_ids = set()
+            components = Component_list()
+            for component in self._get_distance_components():
+                if component[0] in target_atom_ids:
+                    components.add(component)
+        return components    
+    
+    def calc_shifts(self, target_atom_ids, results):
+        components  = self._filter_components(target_atom_ids)
+        self._shift_calculator(components,results)
+    
     def _calc_component_shift(self, index):
         components = Component_list()
         components.add_component(self._get_distance_components()[index])
@@ -2712,12 +2725,34 @@ class Xcamshift():
         result.sort()
         return result
     
-    
+    def _calc_shift_cache(self):
+        self._shift_cache = {}
+        target_atom_ids = self._get_active_target_atom_ids()
+        result = [0.0]*len(target_atom_ids)
+        self.calc_shifts(None, result)
+        
+        for target_atom_id, result in zip(target_atom_ids,result):
+            self._shift_cache[target_atom_id] =  result
+        
+    def calc_shifts(self, target_atom_ids, result):
+        self._prepare_potentials()
+        for potential in self.potential:
+            if hasattr(potential, 'calc_shifts'):
+                potential.calc_shifts(target_atom_ids, result)
+            else:
+                if target_atom_ids == None:
+                    target_atom_ids =  self._get_active_target_atom_ids()
+                for i,target_atom_id in enumerate(target_atom_ids):
+                    shift = self.calc_single_atom_shift(target_atom_id)
+                    result[i] = shift
+                    
+    #TODO: deprecated remove use calc_shifts
     def set_shifts(self, result):
         target_atom_ids =  self._get_target_atom_ids()
-        for target_atom_id in target_atom_ids:
-            shift = self.calc_single_atom_shift(target_atom_id)
-            result[target_atom_id] = shift
+        result_shifts  = [0.0] * len(target_atom_ids)
+        self.calc_shifts(target_atom_ids, result_shifts)
+        for target_atom_id, shift in zip(target_atom_ids,result_shifts):
+            result[target_atom_id] =  shift
         
         return result
     
@@ -2932,14 +2967,19 @@ class Xcamshift():
         active_target_atom_ids = list(active_target_atom_ids)
         return active_target_atom_ids
     
-    def prepare(self):
+
+    def _prepare_potentials(self):
         for potential in self.potential:
             potential.set_fast(self._fast)
-            potential.prepare()
+            potential._prepare()
+
+    def _prepare(self):
+        self._prepare_potentials()
+        self._calc_shift_cache()
             
     def calcEnergy(self, prepare =  True):
         if prepare:
-            self.prepare()
+            self._prepare()
             
         active_target_atom_ids = self._get_active_target_atom_ids()
         
@@ -2959,7 +2999,7 @@ class Xcamshift():
             self._calc_single_atom_force_set(target_atom_id, derivs, potentials)
 
     def calcEnergyAndDerivs(self,derivs):
-        self.prepare()
+        self._prepare()
         energy = self.calcEnergy(prepare=False)
         
         self._calc_derivs(derivs)
