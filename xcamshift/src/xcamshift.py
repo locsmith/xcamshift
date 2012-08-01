@@ -738,8 +738,20 @@ class Distance_based_potential(Base_potential):
         #TODO: sort placement out
         self._cutoff = 5.0
         
-        self.shift_calculator = Fast_shift_calculator(self._get_indices(), self._smoothed)
+        self._shift_calculator = self.get_shift_calculator()
+        
 
+    def get_shift_calculator(self):
+        if self._fast:
+            result  = self._shift_calculator = Fast_shift_calculator(self._get_indices(), self._smoothed)
+        else:
+            result = self._shift_calculator = Shift_calculator(self._get_indices(), self._smoothed)
+        return result
+    
+    def set_fast(self, on):
+        super(Distance_based_potential, self).set_fast(on)
+        self._shift_calculator = self.get_shift_calculator()
+        
     class Indices(object):
         def __init__(self, target_atom_index,distance_atom_index_1,
                      distance_atom_index_2, coefficent_index, exponent_index):
@@ -867,9 +879,11 @@ class Distance_based_potential(Base_potential):
 
 
     def _calc_component_shift(self, index):
-        components = self._get_distance_components()
-        self.shift_calculator.set_components(components)
-        return self.shift_calculator(index)
+        components = Component_list()
+        components.add_component(self._get_distance_components()[index])
+        results = [0.0]
+        self._shift_calculator(components,results)
+        return results[0]
     
 class Distance_potential(Distance_based_potential):
     '''
