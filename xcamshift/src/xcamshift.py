@@ -1626,7 +1626,76 @@ class Ring_coefficient_component_factory(Ring_sidechain_component_factory,Backbo
                     for ring_id in ring_ids:
                         self.create_ring_components(component_list, table, segment, residue_number, ring_id)
 
+class Ring_shift_calculator:
     
+    def __init__(self):
+        self._components = None
+        self._coef_components = None
+        self._ring_components = None
+        
+    def _set_components(self,components):
+        self._components = components
+        
+    def _set_coef_components(self,coef_components):
+        self._coef_components =  coef_components
+            
+    def _set_ring_components(self,coef_components):
+        self._ring_components =  coef_components
+    
+    def _set_normal_cache(self,normals):
+        self._normals = normals
+        
+    def _set_centre_cache(self,centres):
+        self._centres = centres
+        
+    def _get_ring_centre(self, ring_id):
+        return  self._centres.get_component(ring_id)
+    
+    def _get_ring_normal(self, ring_id):
+        return self._normals.get_component(ring_id)
+    
+    def _calc_sub_component_shift(self, atom_component,  coef_component):
+        
+        target_atom_id,  = atom_component[0]
+        ring_id, coefficient = coef_component[1]
+        
+        target_atom_pos = Atom_utils._get_atom_pos(target_atom_id)
+        ring_centre = self._get_ring_centre(ring_id)
+        
+        #TODO add this to a cache the same way that camshift does
+        ring_normal = self._get_ring_normal(ring_id)
+        length_normal = norm(ring_normal)
+    
+        #correct name?
+        direction_vector = target_atom_pos - ring_centre
+        
+        distance = norm(direction_vector)
+        distance3 = distance ** 3
+        
+        angle = dot(direction_vector, ring_normal) / (distance * length_normal)
+        contrib = (1.0 - 3.0 * angle ** 2) / distance3
+        
+#        print Atom_utils._get_atom_info_from_index(target_atom_id), ring_id, angle, distance3, coefficient, contrib * coefficient, angle
+        return contrib * coefficient
+    
+    def _get_coef_components(self, atom_type_id):
+        return self._coef_components.get_components_for_atom_id(atom_type_id)
+    
+    def __call__(self, components, results):
+        self._set_components(components)
+        for index in range(len(components)):
+            component = components[index]
+            atom_type_id = component[1]
+
+            shift = 0.0
+        
+            
+            for coef_component in self._get_coef_components(atom_type_id):
+                shift += self._calc_sub_component_shift(component,  coef_component)
+            
+            results[index] = shift
+
+#    ---
 class Ring_Potential(Base_potential):
     def __init__(self):
         super(Ring_Potential, self).__init__()
@@ -1635,16 +1704,36 @@ class Ring_Potential(Base_potential):
         self._add_component_factory(Ring_coefficient_component_factory())
         self._add_component_factory(Ring_sidechain_atom_factory())
         
+    def set_fast(self, on):
+        self._fast = (on == True)
+        self._shift_calculator = self._get_shift_calculator()
+        
+    def calc_shifts(self, target_atom_ids, results):
+        components  = self._filter_components(target_atom_ids)
+        if len(components) > 0:
+            self._shift_calculator._set_coef_components(self._get_component_list('COEF'))
+            self._shift_calculator._set_ring_components(self._get_component_list('RING'))
+            self._shift_calculator._set_normal_cache(self._get_cache_list('NORM'))
+            self._shift_calculator._set_centre_cache(self._get_cache_list('CENT'))
+            self._shift_calculator(components,results)
+        
         
     def get_abbreviated_name(self):
-        return RING
+        return DIHEDRAL
+
+    def _get_shift_calculator(self):
+#        if self._fast:
+        result = Ring_shift_calculator()
+#        else:
+#            result = Fast_dihedral_shift_calculator()
+        return result
     
     
     def _get_table_source(self):
         return self._table_manager.get_ring_table
     
-
-    
+    def _get_distance_components(self):
+        return self._get_component_list('ATOM')
 
     RING_ATOM_IDS = 1
 
@@ -1656,16 +1745,6 @@ class Ring_Potential(Base_potential):
         result /= len(positions)
         return result
 
-    def _calculate_one_ring_centre(self, ring_component):
-        
-        atom_ids = ring_component[self.RING_ATOM_IDS]
-        positions = []
-        for atom_id in atom_ids:
-            positions.append(Atom_utils._get_atom_pos(atom_id))
-            
-        result = self._average_vec3(positions)
-        
-        return result
             
     
     
@@ -1688,6 +1767,18 @@ class Ring_Potential(Base_potential):
             msg = template % num_atom_ids
             raise Exception(msg)
 
+
+    def _calculate_one_ring_centre(self, ring_component):
+        
+        atom_ids = ring_component[self.RING_ATOM_IDS]
+        positions = []
+        for atom_id in atom_ids:
+            positions.append(Atom_utils._get_atom_pos(atom_id))
+            
+        result = self._average_vec3(positions)
+        
+        return result
+    
     #TODO could try newells method http://www.opengl.org/wiki/Calculating_a_Surface_Normal
     def _calculate_one_ring_normal(self, ring_component):
         atom_ids = ring_component[self.RING_ATOM_IDS]
@@ -1721,50 +1812,15 @@ class Ring_Potential(Base_potential):
         return result
     
     
-    def _get_ring_centre(self, ring_id):
-        ring_component = self._get_component_list('RING').get_component(ring_id)
-        return self._calculate_one_ring_centre(ring_component)
+
     
-    def _get_ring_normal(self, ring_id):
-        ring_component = self._get_component_list('RING').get_component(ring_id)
-        return self._calculate_one_ring_normal(ring_component)
+    def _calc_component_shift(self, index):
+        components = Component_list()
+        components.add_component(self._get_distance_components()[index])
+        results = [0.0]
+        self._shift_calculator(components,results)
+        return results[0]
     
-
-    def _calc_sub_component_shift(self, target_atom_id,  sub_component_id):
-        
-        target_atom_id, atom_type_id = self._get_component_list('ATOM')[target_atom_id]
-        atom_type_id, ring_id, coefficient = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)[sub_component_id]
-        
-        target_atom_pos = Atom_utils._get_atom_pos(target_atom_id)
-        ring_centre = self._get_ring_centre(ring_id)
-        
-        #TODO add this to a cache the same way that camshift does
-        ring_normal = self._get_ring_normal(ring_id)
-        length_normal = norm(ring_normal)
-    
-        #correct name?
-        direction_vector = target_atom_pos - ring_centre
-        
-        distance = norm(direction_vector)
-        distance3 = distance ** 3
-        
-        angle = dot(direction_vector, ring_normal) / (distance * length_normal)
-        contrib = (1.0 - 3.0 * angle ** 2) / distance3
-        
-#        print Atom_utils._get_atom_info_from_index(target_atom_id), ring_id, angle, distance3, coefficient, contrib * coefficient, angle
-        return contrib * coefficient
-
-    def _calc_component_shift(self,component_id):
-
-        atom_type_id = self._get_component_list('ATOM')[component_id][1]
-
-        result = 0.0
-        
-        num_coef_components = len(self._get_component_list('COEF').get_components_for_atom_id(atom_type_id))
-        for coef_component_id in range(num_coef_components):
-            result += self._calc_sub_component_shift(component_id,  coef_component_id)
-            
-        return result
     
 
     #TODO: use this more places
