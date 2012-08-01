@@ -15,6 +15,7 @@ from test.gb3 import gb3_component_shifts_sc, gb3_component_shifts_ring
 from utils import Atom_utils
 import common_constants
 TOTAL_ENERGY = 'total'
+fast = False
 
 
 def almostEqual(first, second, places = 7):
@@ -111,8 +112,10 @@ class TestXcamshiftGB3(unittest2.TestCase):
         delta  = 10**-places
         return self.are_almost_equal_sequences(sequence, zeros, delta)
 
+
+
     def test_component_chemical_shifts(self):
-        xcamshift  = Xcamshift()
+        xcamshift = self._make_xcamshift()
 
         bad_residues =  set()
         component_shifts_keys = gb3.gb3_subpotential_shifts.keys()
@@ -135,13 +138,13 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
         
     def _setup_xcamshift_with_shifts_table(self, test_shifts):
-        xcamshift = Xcamshift()
+        xcamshift =self._make_xcamshift()
         observed_shifts = Observed_shift_table(test_shifts)
         xcamshift.set_observed_shifts(observed_shifts)
         return xcamshift
     
     def test_non_bonded_components(self):
-        xcamshift =  Xcamshift()
+        xcamshift =  self._make_xcamshift()
         sub_potential = xcamshift.get_named_sub_potential(NON_BONDED)
         sub_potential.update_non_bonded_list()
         
@@ -170,7 +173,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         self.assertEmpty(non_bonded_components)
         
     def test_non_bonded_component_shifts(self):
-        xcamshift =  Xcamshift()
+        xcamshift =  self._make_xcamshift()
         sub_potential = xcamshift.get_named_sub_potential(NON_BONDED)
         sub_potential.update_non_bonded_list()
         
@@ -397,7 +400,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         return expected_total_result_forces
 
     def test_total_forces_and_energy(self):
-        xcamshift =  self.make_xcamshift(gb3.gb3_zero_shifts)
+        xcamshift =  self._make_xcamshift(gb3.gb3_zero_shifts)
         
         total_result_forces = self.make_result_array_forces()
         energy = xcamshift.calcEnergyAndDerivs(total_result_forces)
@@ -410,9 +413,10 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
 
         
-    def make_xcamshift(self, shifts):
+    def _make_xcamshift(self, shifts={}):
         xcamshift = self._setup_xcamshift_with_shifts_table(shifts)
 
+        xcamshift.set_fast(fast)
         
         non_bonded = xcamshift.get_named_sub_potential(NON_BONDED)
         non_bonded.update_non_bonded_list()
@@ -483,7 +487,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         
         
 #       TODO: xcamshift should be created anew  for each passage through the loop but the non bonded list is too slow
-        xcamshift = self.make_xcamshift(gb3.gb3_zero_shifts)
+        xcamshift = self._make_xcamshift(gb3.gb3_zero_shifts)
         self.set_cache_shifts(xcamshift, gb3.gb3_shifts)
         
         for potential_name in common_constants.CAMSHIFT_SUB_POTENTIALS:

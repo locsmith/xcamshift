@@ -21,6 +21,7 @@ from utils import Atom_utils
 import sys
 from table_manager import Table_manager
 from component_list import Component_list
+fast = False
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -44,6 +45,13 @@ def almostEqual(first, second, places = 7):
 
 #class testSegmentManager(object):
 class TestXcamshift(unittest2.TestCase):
+    def _make_xcamshift(self, shifts={}, set_fast=True):
+        global fast
+        xcamshift = self._setup_xcamshift_with_shifts_table(shifts)
+        if set_fast:
+            xcamshift.set_fast(fast)
+        return xcamshift
+
 
     def assertLengthIs(self, components_0, length):
         return self.assertEqual(len(components_0), length)
@@ -284,7 +292,7 @@ class TestXcamshift(unittest2.TestCase):
             self.assertAlmostEqual(expected_shift, shift, self.DEFAULT_DECIMAL_PLACES)
 
     def testXcamshift(self):
-        xcamshift_potential =  Xcamshift()
+        xcamshift_potential =  self._make_xcamshift()
         
         shifts = self.make_result_array()
         shifts = xcamshift_potential.set_shifts(shifts)
@@ -303,7 +311,7 @@ class TestXcamshift(unittest2.TestCase):
         
 
     def _test_single_energies_ala_3(self, test_shifts, expected_energys):
-        xcamshift = Xcamshift()
+        xcamshift = self._make_xcamshift()
         shift_table = Observed_shift_table(test_shifts)
         xcamshift.set_observed_shifts(shift_table)
 
@@ -333,7 +341,7 @@ class TestXcamshift(unittest2.TestCase):
         self._test_single_energies_ala_3(test_shifts, expected_energys)
 
     def _test_single_factor_set(self, test_shifts, expected_factors):
-        xcamshift = Xcamshift()
+        xcamshift = self._make_xcamshift()
         shift_table = Observed_shift_table(test_shifts)
         xcamshift.set_observed_shifts(shift_table)
         for atom_index in shift_table.get_atom_indices():
@@ -558,19 +566,19 @@ class TestXcamshift(unittest2.TestCase):
         return xcamshift
 
     def testCalcTotalEnergyWell(self):
-        xcamshift = self._setup_xcamshift_with_shifts_table(ala_3.ala_3_test_shifts_well)
+        xcamshift = self._make_xcamshift(ala_3.ala_3_test_shifts_well)
         expected_energy = ala_3.ala_3_energies_well[TOTAL_ENERGY]
         
         self._test_total_energy(xcamshift, expected_energy)
         
     def testCalcTotalEnergyHarmonic(self):
-        xcamshift = self._setup_xcamshift_with_shifts_table(ala_3.ala_3_test_shifts_harmonic)
+        xcamshift = self._make_xcamshift(ala_3.ala_3_test_shifts_harmonic)
         expected_energy = ala_3.ala_3_energies_harmonic[TOTAL_ENERGY]
         
         self._test_total_energy(xcamshift, expected_energy)
 
     def testCalcTotalEnergyTanh(self):
-        xcamshift = self._setup_xcamshift_with_shifts_table(ala_3.ala_3_test_shifts_tanh)
+        xcamshift = self._make_xcamshift(ala_3.ala_3_test_shifts_tanh)
         expected_energy = ala_3.ala_3_energies_tanh[TOTAL_ENERGY]
         
         self._test_total_energy(xcamshift, expected_energy)
@@ -599,7 +607,7 @@ class TestXcamshift(unittest2.TestCase):
         
     
     def testCalcForceSetWell(self):
-        xcamshift = self._setup_xcamshift_with_shifts_table(ala_3.ala_3_test_shifts_well)
+        xcamshift = self._make_xcamshift(ala_3.ala_3_test_shifts_well)
         expected_energy = 0.0
         expected_forces = {}
         
@@ -607,7 +615,7 @@ class TestXcamshift(unittest2.TestCase):
 
     
     def testCalcForceSetTanh(self):
-        xcamshift = self._setup_xcamshift_with_shifts_table(ala_3.ala_3_test_shifts_tanh)
+        xcamshift = self._make_xcamshift(ala_3.ala_3_test_shifts_tanh)
         expected_energy = ala_3.ala_3_energies_tanh[TOTAL_ENERGY]
         expected_forces =ala_3.ala_3_total_forces_tanh
         
@@ -743,8 +751,9 @@ class TestXcamshift(unittest2.TestCase):
             print item
     
     def test_fast_flag(self):
-        xcamshift = Xcamshift()
+        xcamshift = self._make_xcamshift(set_fast=False)
         
+
         xcamshift.calcEnergy()
         for potential_name in xcamshift.get_sub_potential_names():
             potential  = xcamshift.get_named_sub_potential(potential_name)
@@ -755,9 +764,14 @@ class TestXcamshift(unittest2.TestCase):
         for potential_name in xcamshift.get_sub_potential_names():
             potential  = xcamshift.get_named_sub_potential(potential_name)
             self.assertTrue(potential._fast, potential_name)        
+
+def run_tests():
+    if fast:
+        print >> sys.stderr, TestXcamshift.__module__,"using fast calculators"
+    unittest2.main(module='test.test_xcamshift')
     
 if __name__ == "__main__":
-    unittest2.main()
+    run_tests()
 #    TestXcamshift.list_test_shifts()
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetTanh')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistances')
