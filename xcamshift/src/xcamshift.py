@@ -512,8 +512,12 @@ class Base_potential(object):
         self._component_list_data  = {}
         self._component_factories = {}
         self._cache_list_data = {}
+        #TODO: this can go in the end... we just need some more clever logic in the get
+        self._fast = False
         
-    
+    def set_fast(self, on):
+        self._fast = (on == True)
+
     def prepare(self):
         pass
     
@@ -2604,7 +2608,11 @@ class Xcamshift():
                           ]
         self._shift_table = Observed_shift_table()
         self._shift_cache = {}
+        self._fast =  False
     
+    def set_fast(self,on):
+        self._fast = (on == True)
+        
     def clear_shift_cache(self):
         self._shift_cache = {}
         
@@ -2911,6 +2919,7 @@ class Xcamshift():
     
     def prepare(self):
         for potential in self.potential:
+            potential.set_fast(self._fast)
             potential.prepare()
             
     def calcEnergy(self, prepare =  True):

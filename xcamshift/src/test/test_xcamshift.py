@@ -742,6 +742,19 @@ class TestXcamshift(unittest2.TestCase):
         for item in ala_3.ala_3_test_shifts_tanh.items():
             print item
     
+    def test_fast_flag(self):
+        xcamshift = Xcamshift()
+        
+        xcamshift.calcEnergy()
+        for potential_name in xcamshift.get_sub_potential_names():
+            potential  = xcamshift.get_named_sub_potential(potential_name)
+            self.assertFalse(potential._fast, potential_name)
+        xcamshift.set_fast(True)
+        
+        xcamshift.calcEnergy()
+        for potential_name in xcamshift.get_sub_potential_names():
+            potential  = xcamshift.get_named_sub_potential(potential_name)
+            self.assertTrue(potential._fast, potential_name)        
     
 if __name__ == "__main__":
     unittest2.main()
