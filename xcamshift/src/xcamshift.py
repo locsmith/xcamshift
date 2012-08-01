@@ -513,7 +513,10 @@ class Base_potential(object):
         self._component_factories = {}
         self._cache_list_data = {}
         
-
+    
+    def prepare(self):
+        pass
+    
     def get_component_table_names(self):
         result = []
         for component_factory in self._component_factories.values():
@@ -2905,9 +2908,15 @@ class Xcamshift():
         active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
         active_target_atom_ids = list(active_target_atom_ids)
         return active_target_atom_ids
-
-    def calcEnergy(self):
-        
+    
+    def prepare(self):
+        for potential in self.potential:
+            potential.prepare()
+            
+    def calcEnergy(self, prepare =  True):
+        if prepare:
+            self.prepare()
+            
         active_target_atom_ids = self._get_active_target_atom_ids()
         
         energy = 0.0
@@ -2926,7 +2935,9 @@ class Xcamshift():
             self._calc_single_atom_force_set(target_atom_id, derivs, potentials)
 
     def calcEnergyAndDerivs(self,derivs):
-        energy = self.calcEnergy()
+        self.prepare()
+        energy = self.calcEnergy(prepare=False)
+        
         self._calc_derivs(derivs)
         
         return energy
