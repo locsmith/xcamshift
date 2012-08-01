@@ -3,7 +3,8 @@ Created on 31 Jul 2012
 
 @author: garyt
 '''
-from xplor_access cimport norm,Vec3,currentSimulation
+from xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom
+from libc.math cimport cos
 
 cdef class Fast_distance_shift_calculator:
     DEFAULT_CUTOFF  = 5.0
@@ -80,3 +81,79 @@ cdef class Fast_distance_shift_calculator:
         vec2 = currentSimulation().atomPosArr().data(atom_index_2)
         cdef Vec3 result =  vec2 - vec1
         return norm(result)
+    
+cdef class Fast_dihedral_shift_calculator:
+    cdef object _components
+    
+    def __init__(self):
+        self._components = None
+    
+    cdef _set_components(self, object components):
+        self._components = components
+        
+    cdef inline _get_component(self,int index):
+        return self._components[index]
+    
+    cdef inline _get_dihedral_angle(self, int dihedral_1_atom_id_1, int dihedral_1_atom_id_2, 
+                                          int dihedral_2_atom_id_1, int dihedral_2_atom_id_2):
+        cdef Atom atom1,atom_2, atom_3, atom_4
+        
+
+        atom_1  = currentSimulation().atomByID(dihedral_1_atom_id_1)
+        atom_2  = currentSimulation().atomByID(dihedral_1_atom_id_2)
+        atom_3  = currentSimulation().atomByID(dihedral_2_atom_id_1)
+        atom_4  = currentSimulation().atomByID(dihedral_2_atom_id_2)
+        
+        return Dihedral(atom_1,atom_2,atom_3,atom_4).value()
+
+
+    cdef inline _get_dihedral_atom_ids(self, int index):
+        component = self._get_component(index)
+        
+        return component[1], component[2],component[3],component[4]
+
+
+    cdef inline _get_coefficient(self, int index):
+        component = self._get_component(index)
+        coefficient = component[5]
+        return coefficient
+
+
+    cdef inline _get_parameters(self, int index):
+        component = self._get_component(index)
+        parameters = component[6:11]
+        parameter_0, parameter_1, parameter_2, parameter_3, parameter_4 = parameters
+        return parameter_0, parameter_3, parameter_1, parameter_4, parameter_2
+
+    def __call__(self, object components, object results):
+        cdef float angle
+        cdef float angle_term
+        cdef float shift
+        cdef float coefficient
+        cdef float parameter_0, parameter_1, \
+                   parameter_2, parameter_3, \
+                   parameter_4
+        cdef int dihedral_atom_id_1, dihedral_atom_id_2,dihedral_atom_id_3, dihedral_atom_id_4,  
+        
+        self._set_components(components)
+        for index in range(len(components)):
+            dihedral_atom_id_1, dihedral_atom_id_2, \
+            dihedral_atom_id_3, dihedral_atom_id_4 = self._get_dihedral_atom_ids(index)
+            
+            coefficient = self._get_coefficient(index)
+            
+            parameter_0, parameter_3, parameter_1, \
+            parameter_4, parameter_2               \
+            = self._get_parameters(index)
+            
+            angle = self._get_dihedral_angle(dihedral_atom_id_1, dihedral_atom_id_2,
+                                             dihedral_atom_id_3, dihedral_atom_id_4)
+    
+            
+            angle_term = parameter_0 * cos(3.0 * angle + parameter_3) + \
+                         parameter_1 * cos(angle + parameter_4) +       \
+                         parameter_2
+            
+            shift = coefficient * angle_term
+    
+            results[index] = shift

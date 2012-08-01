@@ -25,7 +25,7 @@ import sys
 from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED
 import itertools
 from abc import abstractmethod, ABCMeta
-from cython.shift_calculators import Fast_distance_shift_calculator
+from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -1136,7 +1136,11 @@ class Dihedral_potential(Base_potential):
         return DIHEDRAL
 
     def _get_shift_calculator(self):
-        return Dihedral_shift_calculator()
+        if self._fast:
+            result = Dihedral_shift_calculator()
+        else:
+            result = Fast_dihedral_shift_calculator()
+        return result
     
     def _get_table_source(self):
         return self._table_manager.get_dihedral_table
