@@ -1649,15 +1649,15 @@ class Ring_shift_calculator:
         self._centres = centres
         
     def _get_ring_centre(self, ring_id):
-        return  self._centres.get_component(ring_id)
+        return  self._centres.get_component(ring_id)[1]
     
     def _get_ring_normal(self, ring_id):
-        return self._normals.get_component(ring_id)
+        return self._normals.get_component(ring_id)[1]
     
     def _calc_sub_component_shift(self, atom_component,  coef_component):
         
-        target_atom_id,  = atom_component[0]
-        ring_id, coefficient = coef_component[1]
+        target_atom_id  = atom_component[0]
+        ring_id, coefficient = coef_component[1:]
         
         target_atom_pos = Atom_utils._get_atom_pos(target_atom_id)
         ring_centre = self._get_ring_centre(ring_id)
@@ -1703,18 +1703,27 @@ class Ring_Potential(Base_potential):
         self._add_component_factory(Ring_backbone_component_factory())
         self._add_component_factory(Ring_coefficient_component_factory())
         self._add_component_factory(Ring_sidechain_atom_factory())
-        
+        self._shift_calculator = self._get_shift_calculator()
+    
+    def _prepare(self): 
+        self._build_ring_data_cache()
+         
     def set_fast(self, on):
         self._fast = (on == True)
         self._shift_calculator = self._get_shift_calculator()
         
+
+    def _setup_shift_calculator(self):
+        self._shift_calculator._set_coef_components(self._get_component_list('COEF'))
+        self._shift_calculator._set_ring_components(self._get_component_list('RING'))
+        self._shift_calculator._set_normal_cache(self._get_cache_list('NORM'))
+        self._shift_calculator._set_centre_cache(self._get_cache_list('CENT'))
+
     def calc_shifts(self, target_atom_ids, results):
         components  = self._filter_components(target_atom_ids)
         if len(components) > 0:
-            self._shift_calculator._set_coef_components(self._get_component_list('COEF'))
-            self._shift_calculator._set_ring_components(self._get_component_list('RING'))
-            self._shift_calculator._set_normal_cache(self._get_cache_list('NORM'))
-            self._shift_calculator._set_centre_cache(self._get_cache_list('CENT'))
+            #TODO: add as general method in base
+            self._setup_shift_calculator()
             self._shift_calculator(components,results)
         
         
@@ -1818,6 +1827,7 @@ class Ring_Potential(Base_potential):
         components = Component_list()
         components.add_component(self._get_distance_components()[index])
         results = [0.0]
+        self._setup_shift_calculator()
         self._shift_calculator(components,results)
         return results[0]
     
@@ -2499,7 +2509,7 @@ class Non_bonded_potential(Distance_based_potential):
         self._get_non_bonded_list()
         self._non_bonded_list.update()
         
-
+#    TODO add a with prepare construct
     def calc_single_atom_shift(self, target_atom_id):
 #        self.update_non_bonded_list()
         return Distance_based_potential.calc_single_atom_shift(self, target_atom_id)
