@@ -1137,9 +1137,9 @@ class Dihedral_potential(Base_potential):
 
     def _get_shift_calculator(self):
         if self._fast:
-            result = Dihedral_shift_calculator()
-        else:
             result = Fast_dihedral_shift_calculator()
+        else:
+            result = Dihedral_shift_calculator()
         return result
     
     def _get_table_source(self):
