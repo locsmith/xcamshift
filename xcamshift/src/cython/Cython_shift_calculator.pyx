@@ -3,7 +3,8 @@ Created on 31 Jul 2012
 
 @author: garyt
 '''
-from xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot
+from vec3 import Vec3 as python_vec3
+from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross
 from libc.math cimport cos
 
 cdef class Fast_distance_shift_calculator:
@@ -253,4 +254,98 @@ cdef class Fast_ring_shift_calculator:
                 shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
             
             results[index] = shift
-#    
+#   
+cdef int RING_ATOM_IDS = 1
+    
+cdef class Fast_ring_data_calculator:
+
+    def __init__(self):
+        pass
+    
+    cdef Vec3 _calculate_one_ring_centre(self, ring_component):
+
+        atom_ids = ring_component[RING_ATOM_IDS]
+        cdef float num_atom_ids = len(atom_ids)
+        cdef Vec3 total,result
+
+        total=Vec3(0.0,0.0,0.0)
+        for atom_id in atom_ids:
+            total+=currentSimulation().atomPosArr().data(atom_id)
+
+#        TODO get operator / workin properly
+        result = Vec3(total.x()/num_atom_ids,total.y()/num_atom_ids,total.z()/num_atom_ids)
+        
+        return result
+    
+    
+#    def _check_ring_size_ok(self, atom_ids):
+#        num_atom_ids = len(atom_ids)
+#        if num_atom_ids < 5 or num_atom_ids > 6:
+#            template = "ring normals function is only implemented for 5 or six member rings i got %d atoms"
+#            msg = template % num_atom_ids
+#            raise Exception(msg)
+#
+
+    cdef Vec3  _calculate_normal(self,int[3] atom_id_triplet):
+    
+        cdef Vec3 normal
+        cdef Vec3 vec_1 
+        cdef Vec3 vec_2
+
+        cdef Vec3 atom_vector_1, atom_vector_2, atom_vector_3
+        
+        atom_vector_1 = currentSimulation().atomPosArr().data(atom_id_triplet[0])
+        atom_vector_2 = currentSimulation().atomPosArr().data(atom_id_triplet[1])
+        atom_vector_3 = currentSimulation().atomPosArr().data(atom_id_triplet[2])
+
+        vec_1 =  atom_vector_1 -atom_vector_2
+        vec_2 =  atom_vector_3- atom_vector_2
+            
+        return cross(vec_1,vec_2)
+   
+    #TODO could try newells method http://www.opengl.org/wiki/Calculating_a_Surface_Normal
+    cdef Vec3 _calculate_one_ring_normal(self, ring_component):
+
+        atom_ids = ring_component[RING_ATOM_IDS]
+#        self._check_ring_size_ok(atom_ids)
+        
+        cdef int[3] atom_triplet_1
+        cdef int[3] atom_triplet_2
+        self._build_atom_triplet(atom_ids[:3], atom_triplet_1)
+        self._build_atom_triplet(atom_ids[-3:], atom_triplet_2)
+       
+        
+        normal_1 = self._calculate_normal(atom_triplet_1)
+        normal_2 = self._calculate_normal(atom_triplet_2)
+        return self. _average_2_vec_3(normal_1, normal_2)
+       
+    cdef inline  _build_atom_triplet(self,atom_ids, int[3]& result):
+        for i in range(3):
+            result[i] = atom_ids[i]
+        
+        
+    cdef inline Vec3 _average_2_vec_3(self, Vec3& vector_1, Vec3& vector_2):
+            
+        cdef Vec3 sum
+        
+        sum =  vector_1 + vector_2
+            
+        return Vec3(sum.x()/2.0, sum.y()/2.0, sum.z()/2.0)
+
+    
+            
+    def __call__(self, rings, normals, centres):
+        for ring_component in rings:
+            ring_id = ring_component[0]
+
+            centre = self._calculate_one_ring_centre(ring_component)
+            result_centre =  python_vec3(centre.x(),centre.y(),centre.z())
+            centre_component = ring_id, result_centre
+            centres.add_component(centre_component)
+            
+            normal = self._calculate_one_ring_normal(ring_component)
+            result_normal =  python_vec3(normal.x(),normal.y(),normal.z())
+            normal_component = ring_id, result_normal
+            normals.add_component(normal_component)
+            
+

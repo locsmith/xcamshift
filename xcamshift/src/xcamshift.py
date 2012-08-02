@@ -26,7 +26,7 @@ from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN
 import itertools
 from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
-                                     Fast_ring_shift_calculator
+                                     Fast_ring_shift_calculator, Fast_ring_data_calculator
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -1747,7 +1747,6 @@ class Ring_data_calculator:
             vec_2 =  atom_vectors[2] - atom_vectors[1]
                 
             normals.append(cross(vec_1,vec_2))
-        
         result = self._average_vec3(normals)
        
         return result
@@ -1777,6 +1776,7 @@ class Ring_Potential(Base_potential):
         self._add_component_factory(Ring_backbone_component_factory())
         self._add_component_factory(Ring_coefficient_component_factory())
         self._add_component_factory(Ring_sidechain_atom_factory())
+        self._fast =False
         self._shift_calculator = self._get_shift_calculator()
         self._ring_data_calculator = self._get_ring_data_calculator()
     
@@ -1787,6 +1787,7 @@ class Ring_Potential(Base_potential):
     def set_fast(self, on):
         self._fast = (on == True)
         self._shift_calculator = self._get_shift_calculator()
+        self._ring_data_calculator =  self._get_ring_data_calculator()
         
     def _setup_shift_calculator(self):
         self._shift_calculator._set_coef_components(self._get_component_list('COEF'))
@@ -1795,8 +1796,12 @@ class Ring_Potential(Base_potential):
         self._shift_calculator._set_centre_cache(self._get_cache_list('CENT'))
 
     def _get_ring_data_calculator(self):
-        return Ring_data_calculator()
-
+        if self._fast:
+            result = Fast_ring_data_calculator()
+        else:
+            result = Ring_data_calculator()
+        return result
+    
     def calc_shifts(self, target_atom_ids, results):
         components  = self._filter_components(target_atom_ids)
         if len(components) > 0:

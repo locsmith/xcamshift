@@ -7,6 +7,8 @@ Created on 31 Jul 2012
 cdef extern from "fixedVector.hh":
     cdef float norm(Vec3)
     cdef float dot(Vec3&, Vec3&)
+    cdef Vec3 cross(Vec3&, Vec3&)
+
     
 cdef extern from "vec3.hh":
     cdef cppclass Vec3:
