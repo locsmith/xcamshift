@@ -1682,7 +1682,7 @@ class Ring_shift_calculator:
         return contrib * coefficient
     
     def _get_coef_components(self, atom_type_id):
-        return self._coef_components.get_component(atom_type_id)
+        return self._coef_components.get_components_for_atom_id(atom_type_id)
     
     def __call__(self, components, results):
         self._set_components(components)
@@ -1692,9 +1692,9 @@ class Ring_shift_calculator:
 
             shift = 0.0
         
-            
-            coef_component =  self._get_coef_components(atom_type_id)
-            shift += self._calc_sub_component_shift(component,  coef_component)
+            for coef_component in self._get_coef_components(atom_type_id):
+
+                shift += self._calc_sub_component_shift(component,  coef_component)
             
             results[index] = shift
 
