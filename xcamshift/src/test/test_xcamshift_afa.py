@@ -176,7 +176,7 @@ class TestXcamshiftAFA(unittest2.TestCase):
     def test_ring_calculate_normals(self):
         ring_potential = self.make_ring_potential()
         
-        ring_potential. _build_ring_data_cache()
+        ring_potential._build_ring_data_cache()
         ring_normals = [elem[1] for elem in ring_potential._get_cache_list('NORM')]
         expected = [Vec3(*AFA.expected_ring_normals),]
         
