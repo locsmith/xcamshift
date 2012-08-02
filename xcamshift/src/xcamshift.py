@@ -2256,8 +2256,48 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
     def get_table_name(self):
         return 'NBRM'
     
+class Non_bonded_calculator():
+    
+    def __init__(self,min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
+        self._min_residue_seperation =  min_residue_seperation
+        self._cutoff_distance =  cutoff_distance
+        self._jitter = jitter
+        self._full_cutoff_distance =  self._cutoff_distance + self._jitter
+        
+    def _filter_by_residue(self, seg_1, residue_1, seg_2, residue_2):
+        result = False
+        
+        if seg_1 == seg_2:
+            distance =abs(residue_1-residue_2)
+            if distance < self._min_residue_seperation:
+                result =True
+        return result
+    
+    def _is_non_bonded(self, atom_id_1, atom_id_2):
+        
+        seg_1, residue_1 = Atom_utils._get_atom_info_from_index(atom_id_1)[:2]
+        seg_2, residue_2 = Atom_utils._get_atom_info_from_index(atom_id_2)[:2]
+
+        is_non_bonded = True
+        if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
+            is_non_bonded = False
+        else:
+            distance = Atom_utils._calculate_distance(atom_id_1, atom_id_2)
+            is_non_bonded =  distance < self._full_cutoff_distance
+        return is_non_bonded
+    
+    def __call__(self, atom_list_1, atom_list_2):
+        non_bonded_lists = []
+        for atom_id_1 in atom_list_1:
+            non_bonded_list = []
+            non_bonded_lists.append(non_bonded_list)
+            for i, atom_id_2 in enumerate(atom_list_2):
+                if self._is_non_bonded(atom_id_1, atom_id_2):
+                    non_bonded_list.append(i)
+        return  non_bonded_lists
     
 class Non_bonded_list(object):
+    
     def __init__(self,cutoff_distance= 5.0,jitter=0.2,update_frequency=5, min_residue_separation = 2):
         self._cutoff_distance = cutoff_distance
         self._jitter = jitter
@@ -2270,19 +2310,17 @@ class Non_bonded_list(object):
 
         self._min_residue_seperation = min_residue_separation
         self._pos_cache = {}
+        
+        self._non_bonded_list_calculator = self._get_non_bonded_calculator()
 
+    def _get_non_bonded_calculator(self):
+        return Non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
+    
     def _get_cutoff_distance_2(self):
         return (self._cutoff_distance+self._jitter)**2
     
 
-    def _filter_by_residue(self, seg_1, residue_1, seg_2, residue_2):
-        result = False
-        
-        if seg_1 == seg_2:
-            distance =abs(residue_1-residue_2)
-            if distance < self._min_residue_seperation:
-                result =True
-        return result
+
     
     def update(self):
         self._box_update_count +=1
@@ -2309,25 +2347,14 @@ class Non_bonded_list(object):
         return result
     
         
-    def _is_non_bonded(self, atom_id_1, atom_id_2):
-        
-        seg_1, residue_1 = Atom_utils._get_atom_info_from_index(atom_id_1)[:2]
-        seg_2, residue_2 = Atom_utils._get_atom_info_from_index(atom_id_2)[:2]
 
-
-        cutoff_distance = self._cutoff_distance + self._jitter
-        is_non_bonded = True
-        if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
-            is_non_bonded = False
-        else:
-            is_non_bonded =  Atom_utils._calculate_distance(atom_id_1, atom_id_2) < cutoff_distance
-
-        return is_non_bonded
-    
     class NonBoolean:
         def __nonzero__(self):
             raise Exception("internal error this object should never be used in a boolean comparison!!")
     
+
+
+
     def _build_boxes(self, component_list_1, component_list_2, target_component_list, coefficient_list):
         
 #        print
@@ -2335,17 +2362,9 @@ class Non_bonded_list(object):
 #            print elem
 #        print
         self._pos_cache = {}
-        non_bonded_lists = []
-        for component_1 in component_list_1:
-            non_bonded_list = []
-            non_bonded_lists.append(non_bonded_list)
-            for i,test_component_2 in enumerate(component_list_2): 
-                
-                atom_id_1 = component_1[0]
-                atom_id_2 = test_component_2[0]
-                
-                if self._is_non_bonded(atom_id_1, atom_id_2):
-                    non_bonded_list.append(i)
+        atom_ids_1 = [component[0] for component in component_list_1[:]]
+        atom_ids_2 = [component[0] for component in component_list_2[:]]
+        non_bonded_lists = self._non_bonded_list_calculator(atom_ids_1,atom_ids_2)
                     
 
         for i,non_bonded_list in enumerate(non_bonded_lists):
