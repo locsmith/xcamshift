@@ -1633,6 +1633,8 @@ class Ring_shift_calculator:
         self._components = None
         self._coef_components = None
         self._ring_components = None
+        self._centres =  None
+        self._normals = None
         
     def _set_components(self,components):
         self._components = components
@@ -1680,7 +1682,7 @@ class Ring_shift_calculator:
         return contrib * coefficient
     
     def _get_coef_components(self, atom_type_id):
-        return self._coef_components.get_components_for_atom_id(atom_type_id)
+        return self._coef_components.get_component(atom_type_id)
     
     def __call__(self, components, results):
         self._set_components(components)
@@ -1691,13 +1693,84 @@ class Ring_shift_calculator:
             shift = 0.0
         
             
-            for coef_component in self._get_coef_components(atom_type_id):
-                shift += self._calc_sub_component_shift(component,  coef_component)
+            coef_component =  self._get_coef_components(atom_type_id)
+            shift += self._calc_sub_component_shift(component,  coef_component)
             
             results[index] = shift
 
+class Ring_data_calculator:
+    
+    def __init__(self):
+        pass
+    
+    def _average_vec3(self, positions):
+        result = Vec3(0.0,0.0,0.0)
+        for position in positions:
+            result += position
+        
+        result /= len(positions)
+        return result
+
+    
+    def _calculate_one_ring_centre(self, ring_component):
+        
+        atom_ids = ring_component[Ring_Potential.RING_ATOM_IDS]
+        positions = []
+        for atom_id in atom_ids:
+            positions.append(Atom_utils._get_atom_pos(atom_id))
+            
+        result = self._average_vec3(positions)
+        
+        return result
+    
+    
+    def _check_ring_size_ok(self, atom_ids):
+        num_atom_ids = len(atom_ids)
+        if num_atom_ids < 5 or num_atom_ids > 6:
+            template = "ring normals function is only implemented for 5 or six member rings i got %d atoms"
+            msg = template % num_atom_ids
+            raise Exception(msg)
+
+    #TODO could try newells method http://www.opengl.org/wiki/Calculating_a_Surface_Normal
+    def _calculate_one_ring_normal(self, ring_component):
+        atom_ids = ring_component[Ring_Potential.RING_ATOM_IDS]
+        self._check_ring_size_ok(atom_ids)
+        
+        atom_triplets = atom_ids[:3],atom_ids[-3:]
+        
+        normals  = []
+        for atom_triplet in atom_triplets:
+            atom_vectors = []
+            for atom_id in atom_triplet:
+                atom_vectors.append(Atom_utils._get_atom_pos(atom_id))
+            vec_1 = atom_vectors[0] -atom_vectors[1]
+            vec_2 =  atom_vectors[2] - atom_vectors[1]
+                
+            normals.append(cross(vec_1,vec_2))
+        
+        result = self._average_vec3(normals)
+       
+        return result
+    
+    
+    def __call__(self, rings, normals, centres):
+        for ring_component in rings:
+            ring_id = ring_component[0]
+            
+            normal = self._calculate_one_ring_normal(ring_component)
+            normal_component = ring_id, normal
+            normals.add_component(normal_component)
+            
+            centre = self._calculate_one_ring_centre(ring_component)
+            centre_component = ring_id, centre
+            centres.add_component(centre_component)
+
 #    ---
 class Ring_Potential(Base_potential):
+
+    
+    
+    
     def __init__(self):
         super(Ring_Potential, self).__init__()
         
@@ -1705,20 +1778,24 @@ class Ring_Potential(Base_potential):
         self._add_component_factory(Ring_coefficient_component_factory())
         self._add_component_factory(Ring_sidechain_atom_factory())
         self._shift_calculator = self._get_shift_calculator()
+        self._ring_data_calculator = self._get_ring_data_calculator()
     
     def _prepare(self): 
         self._build_ring_data_cache()
+        self._setup_shift_calculator()
          
     def set_fast(self, on):
         self._fast = (on == True)
         self._shift_calculator = self._get_shift_calculator()
         
-
     def _setup_shift_calculator(self):
         self._shift_calculator._set_coef_components(self._get_component_list('COEF'))
         self._shift_calculator._set_ring_components(self._get_component_list('RING'))
         self._shift_calculator._set_normal_cache(self._get_cache_list('NORM'))
         self._shift_calculator._set_centre_cache(self._get_cache_list('CENT'))
+
+    def _get_ring_data_calculator(self):
+        return Ring_data_calculator()
 
     def calc_shifts(self, target_atom_ids, results):
         components  = self._filter_components(target_atom_ids)
@@ -1747,81 +1824,10 @@ class Ring_Potential(Base_potential):
 
     RING_ATOM_IDS = 1
 
-    def _average_vec3(self, positions):
-        result = Vec3(0.0,0.0,0.0)
-        for position in positions:
-            result += position
-        
-        result /= len(positions)
-        return result
 
-            
-    
-    
-    def _calculate_ring_centres(self):
-        ring_components = self._get_component_list('RING')
-        
-        result= []
-        
-        for ring_component in ring_components:
-            result.append(self._calculate_one_ring_centre(ring_component))
-            
-        return result
     
 
 
-    def _check_ring_size_ok(self, atom_ids):
-        num_atom_ids = len(atom_ids)
-        if num_atom_ids < 5 or num_atom_ids > 6:
-            template = "ring normals function is only implemented for 5 or six member rings i got %d atoms"
-            msg = template % num_atom_ids
-            raise Exception(msg)
-
-
-    def _calculate_one_ring_centre(self, ring_component):
-        
-        atom_ids = ring_component[self.RING_ATOM_IDS]
-        positions = []
-        for atom_id in atom_ids:
-            positions.append(Atom_utils._get_atom_pos(atom_id))
-            
-        result = self._average_vec3(positions)
-        
-        return result
-    
-    #TODO could try newells method http://www.opengl.org/wiki/Calculating_a_Surface_Normal
-    def _calculate_one_ring_normal(self, ring_component):
-        atom_ids = ring_component[self.RING_ATOM_IDS]
-        self._check_ring_size_ok(atom_ids)
-        
-        atom_triplets = atom_ids[:3],atom_ids[-3:]
-        
-        normals  = []
-        for atom_triplet in atom_triplets:
-            atom_vectors = []
-            for atom_id in atom_triplet:
-                atom_vectors.append(Atom_utils._get_atom_pos(atom_id))
-            vec_1 = atom_vectors[0] -atom_vectors[1]
-            vec_2 =  atom_vectors[2] - atom_vectors[1]
-                
-            normals.append(cross(vec_1,vec_2))
-        
-        result = self._average_vec3(normals)
-       
-        return result
-    
-    
-    def _calculate_ring_normals(self):
-        ring_components = self._get_component_list('RING')
-        
-        result= []
-        
-        for ring_component in ring_components:
-            result.append(self._calculate_one_ring_normal(ring_component))
-            
-        return result
-    
-    
 
     
     def _calc_component_shift(self, index):
@@ -2011,17 +2017,8 @@ class Ring_Potential(Base_potential):
         centres =  self._get_cache_list('CENT')
         centres.clear()
         
-        for ring_component in self._get_component_list('RING'):
-            ring_id =  ring_component[0]
-            
-            normal = self._calculate_one_ring_normal(ring_component)
-            normal_component = ring_id,normal
-            normals.add_component(normal_component)
-            
-            
-            centre = self._calculate_one_ring_centre(ring_component)
-            centre_component = ring_id,centre
-            centres.add_component(centre_component)
+        rings = self._get_component_list('RING')
+        self._ring_data_calculator(rings, normals, centres)
     
     
 

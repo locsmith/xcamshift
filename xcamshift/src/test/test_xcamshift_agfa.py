@@ -302,6 +302,7 @@ class TestXcamshiftAGFA(unittest2.TestCase):
         
         expected_ring_shifts = dict(agfa.agfa_component_shifts_ring)
         expected_component_keys = expected_ring_shifts.keys()
+        ring_subpotential._prepare()
         for component_index, component in enumerate(ring_subpotential._get_component_list()):
             from_atom_id, atom_type_id = component
             from_atom_info_list = ring_subpotential._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
@@ -325,8 +326,9 @@ class TestXcamshiftAGFA(unittest2.TestCase):
                 self.assertIn(expected_key, expected_component_keys, `expected_key`)
             
 
-
-                shift = ring_subpotential._calc_sub_component_shift(component_index, sub_component_index)
+                atom_component = ring_subpotential._get_component_list('ATOM').get_component(component_index)
+                coef_component =  ring_subpotential._get_component_list('COEF').get_component(atom_component[1])
+                shift = ring_subpotential._shift_calculator._calc_sub_component_shift(atom_component, coef_component)
                 self.assertAlmostEqual(expected_ring_shifts[expected_key], shift, places=self.DEFAULT_DECIMAL_PLACES - 1, msg=`expected_key`)
                 if abs(expected_ring_shifts[expected_key] - shift) > 0.0001:
                     print 'fail', expected_key, expected_ring_shifts[expected_key], shift, Atom_utils._get_residue_type_from_atom_id(from_atom_id)
