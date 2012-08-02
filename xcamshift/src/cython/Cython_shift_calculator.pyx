@@ -3,7 +3,7 @@ Created on 31 Jul 2012
 
 @author: garyt
 '''
-from xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom
+from xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot
 from libc.math cimport cos
 
 cdef class Fast_distance_shift_calculator:
@@ -157,3 +157,100 @@ cdef class Fast_dihedral_shift_calculator:
             shift = coefficient * angle_term
     
             results[index] = shift
+ 
+cdef class Fast_ring_shift_calculator:
+    cdef object _components
+    cdef object _coef_components
+    cdef object _ring_components
+    cdef object _centre_cache
+    cdef object _normal_cache
+    
+    
+    def __init__(self):
+        self._components = None
+        self._coef_components = None
+        self._ring_components = None
+        self._centre_cache = None
+        self._normal_cache = None
+        
+    def _set_components(self,components):
+        self._components = components
+        
+    def _set_coef_components(self,coef_components):
+        self._coef_components =  coef_components
+            
+    def _set_ring_components(self,coef_components):
+        self._ring_components =  coef_components
+    
+    def _set_normal_cache(self,normals):
+        self._normal_cache = normals
+        
+    def _set_centre_cache(self,centres):
+        self._centre_cache = centres
+
+    cdef _get_coef_components(self, int atom_type_id):
+        return self._coef_components.get_components_for_atom_id(atom_type_id)
+            
+    cdef Vec3 _get_ring_normal(self, int ring_id):
+        cdef float x, y ,z 
+        x,y,z =  self._normal_cache.get_component(ring_id)[1]
+        return  Vec3(x,y,z)
+    
+    cdef Vec3 _get_ring_centre(self, int ring_id):
+        cdef float x, y ,z 
+        x,y,z = self._centre_cache.get_component(ring_id)[1]
+        return  Vec3(x,y,z)
+    
+    cdef float  _calc_sub_component_shift(self, int target_atom_id, int ring_id, float coefficient):
+        
+        cdef Vec3 target_atom_pos
+        cdef Vec3 ring_centre
+        cdef Vec3 ring_normal
+        cdef float lenght_normal
+        cdef Vec3 direction_vector
+        cdef float distance, distance3, angle, contrib
+        
+        target_atom_pos =  currentSimulation().atomPosArr().data(target_atom_id)
+        ring_centre = self._get_ring_centre(ring_id)
+
+        #TODO add this to a cache the same way that camshift does
+        ring_normal = self._get_ring_normal(ring_id)
+        length_normal = norm(ring_normal)
+    
+        #correct name?
+        direction_vector = target_atom_pos - ring_centre
+        
+        distance = norm(direction_vector)
+        distance3 = distance ** 3
+        
+        angle = dot(direction_vector, ring_normal) / (distance * length_normal)
+        contrib = (1.0 - 3.0 * angle ** 2) / distance3
+        
+#        print Atom_utils._get_atom_info_from_index(target_atom_id), ring_id, angle, distance3, coefficient, contrib * coefficient, angle
+        return contrib * coefficient
+
+    
+    def __call__(self, components, results):
+        cdef int target_atom_id
+        cdef int ring_id
+        cdef float coefficient
+        
+        self._set_components(components)
+        
+        for index in range(len(components)):
+            component = components[index]
+            atom_type_id = component[1]
+
+            shift = 0.0
+        
+            
+            for coef_component in self._get_coef_components(atom_type_id):
+#                TODO: remove magic numbers or add structs
+
+                target_atom_id = component[0]
+                ring_id = coef_component[1]
+                coefficient = coef_component[2]
+                shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
+            
+            results[index] = shift
+#    
