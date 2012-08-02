@@ -1729,7 +1729,7 @@ class Ring_Potential(Base_potential):
         
         
     def get_abbreviated_name(self):
-        return DIHEDRAL
+        return RING
 
     def _get_shift_calculator(self):
         if self._fast:
