@@ -14,7 +14,9 @@ from common_constants import  SIDE_CHAIN, NON_BONDED, RING
 from test.gb3 import gb3_component_shifts_sc, gb3_component_shifts_ring
 from utils import Atom_utils
 import common_constants
+import sys
 TOTAL_ENERGY = 'total'
+fast = False
 
 
 def almostEqual(first, second, places = 7):
@@ -113,17 +115,15 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
     def test_component_chemical_shifts(self):
         xcamshift  = Xcamshift()
-
+        xcamshift._prepare()
+        
         bad_residues =  set()
         component_shifts_keys = gb3.gb3_subpotential_shifts.keys()
         component_shifts_keys.sort()
-        do_update = True
+
         for i,key in enumerate(component_shifts_keys):
             segment, residue_number,atom,sub_potential = key
             sub_potential = xcamshift.get_named_sub_potential(sub_potential)
-            if  do_update and key[3] == NON_BONDED:
-                sub_potential.update_non_bonded_list()
-                do_update = False
 
             atom_ids  =  Atom_utils.find_atom_ids(segment, residue_number, atom)
             if len(atom_ids) > 0:
@@ -141,9 +141,11 @@ class TestXcamshiftGB3(unittest2.TestCase):
         return xcamshift
     
     def test_non_bonded_components(self):
+        #TODO: add common loading method for xcamshift
         xcamshift =  Xcamshift()
+        xcamshift._prepare()
         sub_potential = xcamshift.get_named_sub_potential(NON_BONDED)
-        sub_potential.update_non_bonded_list()
+
         
         non_bonded_components =  dict(gb3.gb3_component_shifts_non_bonded)
         
@@ -511,9 +513,19 @@ class TestXcamshiftGB3(unittest2.TestCase):
 #            self.assertAlmostEqual(gb3.gb3_shifts[elem], -gb3.gb3_shift_diffs[elem], self.DEFAULT_DECIMAL_PLACES-3,  elem)
 
 
-
+def run_tests():
+    if fast:
+        print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
+    unittest2.main(module='test.test_xcamshift_gb3')
+#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_energies')
+#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
+    
 if __name__ == "__main__":
-    unittest2.main()
+    run_tests()
+    
+#if __name__ == "__main__":
+##    unittest2.main()
 #    cProfile.run('unittest2.main()')
     
 #    TestXcamshift.list_test_shifts()
