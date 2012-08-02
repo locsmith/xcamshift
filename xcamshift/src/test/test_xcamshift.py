@@ -769,6 +769,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshift.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetWell')
     
 if __name__ == "__main__":
     run_tests()

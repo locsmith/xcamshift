@@ -20,6 +20,9 @@ import sys
 from table_manager import Table_manager
 from vec3 import Vec3
 TOTAL_ENERGY = 'total'
+
+fast =  False
+
 def text_keys_to_atom_ids(keys, segment = '*'):
     result = []
     for key in keys:
@@ -99,14 +102,14 @@ class TestXcamshiftAFA(unittest2.TestCase):
         return result
 
     def test_ring_table_names(self):
-        ring_potential = Ring_Potential()
+        ring_potential = self.make_ring_potential()
         
         expected_table_names = ('ATOM','COEF','RING')
         table_names = ring_potential.get_component_table_names()
         self.assertSequenceEqual(expected_table_names,table_names)
     
     def test_ring__bb_atoms(self):
-        ring_potential = Ring_Potential()
+        ring_potential = self.make_ring_potential()
         
         ring_table = Table_manager.get_default_table_manager().get_ring_table('PHE')
         all_components = ring_potential._get_component_list('COEF').get_all_components()
@@ -118,7 +121,7 @@ class TestXcamshiftAFA(unittest2.TestCase):
             self.assertAlmostEqual(coefficient, expected_coefficient, self.DEFAULT_DECIMAL_PLACES)
         
     def test_ring_sidechain_atoms(self):
-        ring_potential = Ring_Potential()
+        ring_potential = self.make_ring_potential()
         
         ATOM_NAMES_PHE_RING = ["CG", "CD1", "CD2", "CE1", "CE2", "CZ"]
 
@@ -135,7 +138,7 @@ class TestXcamshiftAFA(unittest2.TestCase):
             self.assertEmpty(ATOM_NAMES_PHE_RING)
             
     def test_ring_bb_atoms(self):
-        ring_potential = Ring_Potential()
+        ring_potential = self.make_ring_potential()
         
         
 
@@ -162,7 +165,7 @@ class TestXcamshiftAFA(unittest2.TestCase):
                 self.assertAlmostEqual(item1, item2, places)
 
     def test_ring_calculate_centre(self):
-        ring_potential = Ring_Potential()
+        ring_potential = self.make_ring_potential()
         
         ring_centres = ring_potential._calculate_ring_centres()
         expected = [Vec3(*AFA.expected_ring_centre),]
@@ -170,7 +173,7 @@ class TestXcamshiftAFA(unittest2.TestCase):
         self.assertListVec3AlmostEqual(ring_centres, expected)
 
     def test_ring_calculate_normals(self):
-        ring_potential = Ring_Potential()
+        ring_potential = self.make_ring_potential()
         
         ring_normals = ring_potential._calculate_ring_normals()
         expected = [Vec3(*AFA.expected_ring_normals),]
@@ -179,7 +182,8 @@ class TestXcamshiftAFA(unittest2.TestCase):
         self.assertListVec3AlmostEqual(ring_normals, expected, self.DEFAULT_DECIMAL_PLACES)
     
     def test_calc_component_shift(self):
-        ring_potential = Ring_Potential()
+        ring_potential = self.make_ring_potential()
+        ring_potential._prepare()
         
         for i in range(len(ring_potential._get_component_list('ATOM'))):
             component_shift = ring_potential._calc_component_shift(i)
@@ -190,8 +194,15 @@ class TestXcamshiftAFA(unittest2.TestCase):
             #TODO: is the difference in error down to coordinates?
             self.assertAlmostEqual(component_shift, expected_shift, places=self.DEFAULT_DECIMAL_PLACES)
             
-    def test_calc_component_forces(self):
+
+    def make_ring_potential(self):
+        global fast
         ring_potential = Ring_Potential()
+        ring_potential.set_fast(fast)
+        return ring_potential
+
+    def test_calc_component_forces(self):
+        ring_potential = self.make_ring_potential()
         
         for target_atom_id,atom_type_id in ring_potential._get_component_list('ATOM'):
             for ring_id,ring_atom_ids in ring_potential._get_component_list('RING'):
@@ -222,8 +233,15 @@ class TestXcamshiftAFA(unittest2.TestCase):
                     ring_atom_forces = forces[ring_atom_id]
                     self.assertSequenceAlmostEqual(ring_atom_forces, expected_ring_forces, self.DEFAULT_DECIMAL_PLACES)
             
+
+def run_tests():
+    if fast:
+        print >> sys.stderr, TestXcamshiftAFA.__module__,"using fast calculators"
+    unittest2.main(module='test.test_xcamshift_afa')
+#    unittest2.main(module='test.test_xcamshift_afa',defaultTest='TestXcamshiftAFA.test_calc_component_shift')
+    
 if __name__ == "__main__":
-    unittest2.main()
+    run_tests()
 #    TestXcamshift.list_test_shifts()
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetTanh')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
