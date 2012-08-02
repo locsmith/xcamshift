@@ -262,9 +262,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 expected_key =   from_atom_key,(ring_residue,ring_residue_type,len(ring_atoms))
                 self.assertIn(expected_key, expected_component_keys, `expected_key`)
             
-
-
-                shift = ring_subpotential._calc_sub_component_shift(component_index, sub_component_index)
+                
+                shift = ring_subpotential._shift_calculator._calc_sub_component_shift(component, from_atom_info)
                 self.assertAlmostEqual(expected_ring_shifts[expected_key], shift, places=self.DEFAULT_DECIMAL_PLACES - 2, msg=`expected_key`)
                 if abs(expected_ring_shifts[expected_key] - shift) > 0.001:
                     print 'fail', expected_key, expected_ring_shifts[expected_key], shift, Atom_utils._get_residue_type_from_atom_id(from_atom_id)
