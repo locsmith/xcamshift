@@ -204,7 +204,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 del expected_force_factors[key]
 
     def test_component_shifts_sidechain(self):
-        return
+
         
         xcamshift = Xcamshift()
         sidechain_subpotential = xcamshift.get_named_sub_potential(SIDE_CHAIN)
