@@ -240,6 +240,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         
         xcamshift = Xcamshift()
         ring_subpotential = xcamshift.get_named_sub_potential(RING)
+        ring_subpotential._prepare()
         
         expected_ring_shifts = dict(gb3_component_shifts_ring)
         expected_component_keys = expected_ring_shifts.keys()
@@ -325,10 +326,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
     def test_energies(self):
         xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
-
+        xcamshift._prepare()
         
-        non_bonded_subpotential = xcamshift.get_named_sub_potential(NON_BONDED)
-        non_bonded_subpotential.update_non_bonded_list()
         
         total_component_energies = 0.0
         for key in sorted(gb3.gb3_energies):
@@ -353,9 +352,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         
     def test_shift_differences(self):
         xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
-        
-        non_bonded  = xcamshift.get_named_sub_potential(NON_BONDED)
-        non_bonded.update_non_bonded_list()        
+        xcamshift._prepare()
         
         
         for key in sorted(gb3.gb3_shift_diffs):
@@ -516,8 +513,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
-    unittest2.main(module='test.test_xcamshift_gb3')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_energies')
+#    unittest2.main(module='test.test_xcamshift_gb3')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
     
