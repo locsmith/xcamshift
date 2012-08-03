@@ -129,7 +129,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
             atom_ids  =  Atom_utils.find_atom_ids(segment, residue_number, atom)
             if len(atom_ids) > 0:
-                shift  = sub_potential.calc_single_atom_shift(atom_ids[0])
+                shift  = sub_potential._calc_single_atom_shift(atom_ids[0])
                 expected_shift = gb3.gb3_subpotential_shifts[key]
                 residue_type = Atom_utils._get_residue_type_from_atom_id(atom_ids[0])
                 self.assertAlmostEqual(shift, expected_shift, self.DEFAULT_DECIMAL_PLACES-2, msg=`key` + " " + residue_type)
@@ -362,7 +362,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
             
             target_atom_index = self.get_atom_index(key)
             
-            shift_diff = xcamshift.calc_single_atom_shift(target_atom_index)
+            shift_diff = xcamshift._calc_single_atom_shift(target_atom_index)
 
             self.assertAlmostEqual(shift_diff, - expected_shift_diff, self.DEFAULT_DECIMAL_PLACES-2,key)
             

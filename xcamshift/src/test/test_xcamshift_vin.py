@@ -47,7 +47,7 @@ class TestXcamshiftVIN(unittest2.TestCase):
             
             atom_ids = Atom_utils.find_atom_ids(segment, residue_number, atom)
             
-            shift = xcamshift.calc_single_atom_shift(atom_ids[0])
+            shift = xcamshift._calc_single_atom_shift(atom_ids[0])
             expected_shift = vin_shifts_copy[key]
             
             self.assertAlmostEqual(expected_shift, shift, places=self.DEFAULT_DECIMAL_PLACES - 2, msg=`key`)
@@ -65,7 +65,7 @@ class TestXcamshiftVIN(unittest2.TestCase):
             
             sub_potential = xcamshift.get_named_sub_potential(sub_potential_name)
             
-            shift = sub_potential.calc_single_atom_shift(atom_ids[0])
+            shift = sub_potential._calc_single_atom_shift(atom_ids[0])
             expected_shift = vin_subpotential_shifts[key]
 
             self.assertAlmostEqual(expected_shift, shift, places=self.DEFAULT_DECIMAL_PLACES - 1, msg=`key`)

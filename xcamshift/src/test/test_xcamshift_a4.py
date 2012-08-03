@@ -375,7 +375,7 @@ class TestXcamshiftA4(unittest2.TestCase):
 #            remote_atom_id = Atom_utils.find_atom(*remote_atom_key)[0].index()
 #            
 #            force_factor =  ala_4.ala4_force_factors_non_bonded[target_atom_key]
-#            shift = non_bonded_potential.calc_single_atom_shift(target_atom_id)
+#            shift = non_bonded_potential._calc_single_atom_shift(target_atom_id)
 #            print 'shift',(target_atom_key,remote_atom_key), target_atom_key,shift
 
     def _test_non_bonded_force_factors(self, non_bonded_potential, non_bonded_force_factors, active_shifts, factors):
@@ -511,7 +511,7 @@ class TestXcamshiftA4(unittest2.TestCase):
             
             for target_atom_id in sub_potential.get_target_atom_ids():
                 expected_key = Atom_utils._get_atom_info_from_index(target_atom_id),sub_potential_name
-                single_atom_shift = sub_potential.calc_single_atom_shift(target_atom_id)
+                single_atom_shift = sub_potential._calc_single_atom_shift(target_atom_id)
 
                 #TODO: remove limitation to 4decimal points due to poor float reading in almost
                 self.assertAlmostEqual(expected_shift_components[expected_key],single_atom_shift,self.DEFAULT_DECIMAL_PLACES-1, `expected_key`)
