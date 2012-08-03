@@ -650,7 +650,7 @@ class Base_potential(object):
         components = self._get_component_list()
         return  components.get_component_atom_ids()
         
-    def calc_single_atom_shift(self, target_atom_id):
+    def _calc_single_atom_shift(self, target_atom_id):
         components =  self._get_component_list()
 
         result = 0.0
@@ -679,7 +679,7 @@ class Base_potential(object):
         components =  self._get_component_list()
         
         for target_atom_id in components.get_component_atom_ids():
-            result[target_atom_id] +=  self.calc_single_atom_shift(target_atom_id)
+            result[target_atom_id] +=  self._calc_single_atom_shift(target_atom_id)
             
     def _have_derivative(self):
         return True
@@ -2548,9 +2548,9 @@ class Non_bonded_potential(Distance_based_potential):
         self._non_bonded_list.update()
         
 #    TODO add a with prepare construct
-    def calc_single_atom_shift(self, target_atom_id):
+    def _calc_single_atom_shift(self, target_atom_id):
 #        self.update_non_bonded_list()
-        return Distance_based_potential.calc_single_atom_shift(self, target_atom_id)
+        return Distance_based_potential._calc_single_atom_shift(self, target_atom_id)
     
     def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
 #        self.update_non_bonded_list()
@@ -2790,7 +2790,88 @@ class Non_bonded_potential(Distance_based_potential):
                 result.append(line)
         return '\n'.join(result)
 
+
+class Energy_calculator:
+    def __init__(self):
+        self._energy_term_cache =  None
+        self._theory_shifts =   None
+        self._observed_shifts =  None
+        
+    def set_observed_shifts(self, observed_shifts):
+        self._observed_shifts =  observed_shifts
+        
+    def set_calculated_shifts(self, calculated_shifts):
+        self._theory_shifts =  calculated_shifts
+    
+    def set_energy_term_cache(self, energy_term_cache ):
+        self._energy_term_cache =  energy_term_cache
+        
+    def _get_energy_terms(self, target_atom_index):
+        return self._energy_term_cache[target_atom_index]
+    
+    def _get_calculated_atom_shift(self, target_atom_index):
+        return self._theory_shifts[target_atom_index]
+    
+    def _get_observed_atom_shift(self, target_atom_index):
+        return self._observed_shifts.get_chemical_shift(target_atom_index)
+    
+    def _get_shift_difference(self, target_atom_index):
+        
+        theory_shift = self._get_calculated_atom_shift(target_atom_index)
+        
+        observed_shift = self._get_observed_atom_shift(target_atom_index)
+        
+        return observed_shift - theory_shift
+
+    def _adjust_shift(self, shift_diff, flat_bottom_shift_limit):
+        result  = 0.0
+        if (shift_diff > 0.0):
+            result = shift_diff-flat_bottom_shift_limit
+        else:
+            result = shift_diff + flat_bottom_shift_limit
+        return result
+        
+    def __call__(self,target_atom_ids):
+        
+        energy = 0.0
+        
+        for target_atom_index in target_atom_ids:
+            shift_diff = self._get_shift_difference(target_atom_index)
+            energy_terms = self._get_energy_terms(target_atom_index)
+            
+
+            flat_bottom_shift_limit = energy_terms.flat_bottom_shift_limit
+            
+            
+            if abs(shift_diff) > flat_bottom_shift_limit:
+                adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
+                
+                end_harmonic = energy_terms.end_harmonic
+                scale_harmonic = energy_terms.scale_harmonic
+                
+                
+                energy_component = 0.0
+                if adjusted_shift_diff < end_harmonic:
+                    energy_component = (adjusted_shift_diff/scale_harmonic)**2
+                else:
+                    tanh_amplitude = energy_terms.tanh_amplitude
+                    tanh_elongation = energy_terms.tanh_elongation
+                    tanh_y_offset = energy_terms.tanh_y_offset
+                    
+                    tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
+                    energy_component = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset;
+
+                energy += energy_component
+        return energy
+
+
 class Xcamshift():
+
+    
+    
+    
+
+
     def __init__(self):
         self.potential = [
                           RandomCoilShifts(),
@@ -2804,9 +2885,16 @@ class Xcamshift():
         self._shift_table = Observed_shift_table()
         self._shift_cache = {}
         self._fast =  False
+         
         self._energy_term_cache = self._create_energy_term_cache()
-
+        self._energy_calculator = self._get_energy_calculator()
+        self.update_energy_calculator()
     
+    def update_energy_calculator(self):
+        self._energy_calculator.set_calculated_shifts(self._shift_cache)
+        self._energy_calculator.set_observed_shifts(self._shift_table)
+        self._energy_calculator.set_energy_term_cache(self._energy_term_cache)
+
     def set_fast(self,on):
         self._fast = (on == True)
         
@@ -2815,6 +2903,12 @@ class Xcamshift():
         
     def get_sub_potential_names(self):
         return [potential.get_abbreviated_name() for potential in self.potential]
+    
+    def _get_energy_calculator(self):
+        calculator  = Energy_calculator()
+
+        
+        return calculator
     
     def get_named_sub_potential(self,name):
         result =  None
@@ -2912,7 +3006,7 @@ class Xcamshift():
                 if target_atom_ids == None:
                     target_atom_ids =  self._get_active_target_atom_ids()
                 for i,target_atom_id in enumerate(target_atom_ids):
-                    shift = self.calc_single_atom_shift(target_atom_id)
+                    shift = self._calc_single_atom_shift(target_atom_id)
                     result[i] = shift
                     
     #TODO: deprecated remove use calc_shifts
@@ -2929,14 +3023,17 @@ class Xcamshift():
         self._shift_table  =  shift_table
         self._shift_cache =  {}
         self._energy_term_cache =  self._create_energy_term_cache()
+        self.update_energy_calculator()
         
-    def calc_single_atom_shift(self,atom_index):
+#TODO: recast to use self._calc_shift_cache()
+    def _calc_single_atom_shift(self,atom_index):
         result  = 0.0
         if atom_index in self._shift_cache:
             result = self._shift_cache[atom_index]
         else:
             for potential in self.potential:
-                result += potential.calc_single_atom_shift(atom_index)
+                result += potential._calc_single_atom_shift(atom_index)
+            self._shift_cache[atom_index] = result
         return result
     
     
@@ -2994,17 +3091,22 @@ class Xcamshift():
 
     def get_shift_difference(self, target_atom_index):
         
-        theory_shift = self.calc_single_atom_shift(target_atom_index)
+        theory_shift = self._calc_single_atom_shift(target_atom_index)
         
         observed_shift = self._shift_table.get_chemical_shift(target_atom_index)
         
         return observed_shift - theory_shift
         
-
+#    def _calc_single_atom_shift(self,target_atom_index):
+#        calculated_shift  = self._calc_single_atom_shift(target_atom_index)
+#        self._shift_cache[target_atom_index] =  calculated_shift
+        
     def _calc_single_atom_energy(self, target_atom_index):
         
         target_atom_ids = [target_atom_index]
-        return self._calc_energies(target_atom_ids)
+        self._calc_single_atom_shift(target_atom_index)
+        self.update_energy_calculator()
+        return self._energy_calculator(target_atom_ids)
         
     
         
@@ -3058,7 +3160,7 @@ class Xcamshift():
         factor = 0.0
         if target_atom_id in self._shift_table.get_atom_indices():
             
-            theory_shift = self.calc_single_atom_shift(target_atom_id)
+            theory_shift = self._calc_single_atom_shift(target_atom_id)
             observed_shift = self._shift_table.get_chemical_shift(target_atom_id)
             
             shift_diff = observed_shift - theory_shift
@@ -3149,41 +3251,8 @@ class Xcamshift():
                 cache[target_atom_index] = Xcamshift.Constant_cache(self,residue_type, atom_name)
         return cache
     
-    def _get_energy_terms(self, target_atom_index_index):
-        return self._energy_term_cache[target_atom_index_index]
-    
-    def _calc_energies(self,target_atom_ids):
-        energy = 0.0
-        
-        for target_atom_index in target_atom_ids:
-            shift_diff = self.get_shift_difference(target_atom_index)
-            
-            energy_terms = self._get_energy_terms(target_atom_index)
-            
 
-            flat_bottom_shift_limit = energy_terms.flat_bottom_shift_limit
-            
-            
-            if abs(shift_diff) > flat_bottom_shift_limit:
-                adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
-                
-                end_harmonic = energy_terms.end_harmonic
-                scale_harmonic = energy_terms.scale_harmonic
-                
-                
-                energy_component = 0.0
-                if adjusted_shift_diff < end_harmonic:
-                    energy_component = (adjusted_shift_diff/scale_harmonic)**2
-                else:
-                    tanh_amplitude = energy_terms.tanh_amplitude
-                    tanh_elongation = energy_terms.tanh_elongation
-                    tanh_y_offset = energy_terms.tanh_y_offset
-                    
-                    tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
-                    energy_component = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset;
 
-                energy += energy_component
-        return energy
 
         
     def calcEnergy(self, prepare =  True):
@@ -3191,12 +3260,8 @@ class Xcamshift():
             self._prepare()
             
         active_target_atom_ids = self._get_active_target_atom_ids()
-        
-        energy = 0.0
-        for target_atom_id in active_target_atom_ids:
-            energy+= self._calc_single_atom_energy(target_atom_id)
-        
-        return energy
+        self.update_energy_calculator()
+        return self._energy_calculator(active_target_atom_ids)
     
     
 
