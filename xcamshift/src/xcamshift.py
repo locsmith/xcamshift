@@ -2804,6 +2804,8 @@ class Xcamshift():
         self._shift_table = Observed_shift_table()
         self._shift_cache = {}
         self._fast =  False
+        self._energy_term_cache = self._create_energy_term_cache()
+
     
     def set_fast(self,on):
         self._fast = (on == True)
@@ -2925,6 +2927,8 @@ class Xcamshift():
     
     def set_observed_shifts(self, shift_table):
         self._shift_table  =  shift_table
+        self._shift_cache =  {}
+        self._energy_term_cache =  self._create_energy_term_cache()
         
     def calc_single_atom_shift(self,atom_index):
         result  = 0.0
@@ -3118,33 +3122,62 @@ class Xcamshift():
         self._prepare_potentials()
         self._calc_shift_cache()
     
+    class Constant_cache():
+        def __init__(self, xcamshift, residue_type, atom_name):
+            self.flat_bottom_shift_limit = xcamshift._get_flat_bottom_shift_limit(residue_type, atom_name)
+            self.end_harmonic = xcamshift._get_end_harmonic(residue_type, atom_name)
+            self.scale_harmonic =  xcamshift._get_scale_harmonic(residue_type, atom_name)
+            self.weight = xcamshift._get_weight(residue_type, atom_name)
+            self.tanh_amplitude =  xcamshift._get_tanh_amplitude(residue_type,atom_name)
+            self.tanh_elongation = xcamshift._get_tanh_elongation(residue_type, atom_name)
+            self.tanh_y_offset = xcamshift._get_tanh_y_offset(residue_type, atom_name)
     
+    def _create_energy_term_cache(self):
+        cache = {}
+        seen_types = {}
+        table_manager =  Table_manager.get_default_table_manager()
+        for target_atom_index in self._get_active_target_atom_ids():
+            residue_type = Atom_utils._get_residue_type_from_atom_id(target_atom_index)
+            atom_name = Atom_utils._get_atom_name_from_index(target_atom_index)
+            
 
+            table = table_manager.get_constants_table(residue_type)
+            table_key = table.get_table_residue_type(), atom_name
+            if table_key in seen_types:
+                cache[target_atom_index] = seen_types[table_key]
+            else:
+                cache[target_atom_index] = Xcamshift.Constant_cache(self,residue_type, atom_name)
+        return cache
+    
+    def _get_energy_terms(self, target_atom_index_index):
+        return self._energy_term_cache[target_atom_index_index]
+    
     def _calc_energies(self,target_atom_ids):
         energy = 0.0
         
         for target_atom_index in target_atom_ids:
             shift_diff = self.get_shift_difference(target_atom_index)
             
-            residue_type = Atom_utils._get_residue_type_from_atom_id(target_atom_index)
-            atom_name = Atom_utils._get_atom_name_from_index(target_atom_index)
+            energy_terms = self._get_energy_terms(target_atom_index)
             
-            flat_bottom_shift_limit = self._get_flat_bottom_shift_limit(residue_type, atom_name)
+
+            flat_bottom_shift_limit = energy_terms.flat_bottom_shift_limit
+            
             
             if abs(shift_diff) > flat_bottom_shift_limit:
                 adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
                 
-                end_harmonic = self._get_end_harmonic(residue_type, atom_name)
-                scale_harmonic = self._get_scale_harmonic(residue_type, atom_name)
+                end_harmonic = energy_terms.end_harmonic
+                scale_harmonic = energy_terms.scale_harmonic
                 
                 
                 energy_component = 0.0
                 if adjusted_shift_diff < end_harmonic:
                     energy_component = (adjusted_shift_diff/scale_harmonic)**2
                 else:
-                    tanh_amplitude = self._get_tanh_amplitude(residue_type,atom_name)
-                    tanh_elongation = self._get_tanh_elongation(residue_type, atom_name)
-                    tanh_y_offset = self._get_tanh_y_offset(residue_type, atom_name)
+                    tanh_amplitude = energy_terms.tanh_amplitude
+                    tanh_elongation = energy_terms.tanh_elongation
+                    tanh_y_offset = energy_terms.tanh_y_offset
                     
                     tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
                     energy_component = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset;
