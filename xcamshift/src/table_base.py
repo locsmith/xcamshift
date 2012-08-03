@@ -6,6 +6,9 @@ Created on 11 May 2012
 from abc import abstractmethod, ABCMeta
 
 TRANSLATIONS = 'translations'
+TABLE_TYPE = 'table_type'
+RESIDUE_TYPE = 'residue_type'
+TABLE_INDEX = 'index'
 
 class Table_base(object):
     __metaclass__ = ABCMeta
@@ -51,4 +54,13 @@ class Table_base(object):
     @abstractmethod
     def get_target_atoms(self):
         pass
+    
+    def get_table_residue_type(self):
+        return self._table[RESIDUE_TYPE]
+    
+    def get_table_type(self):
+        return self._table[TABLE_TYPE]
+    
+    def get_table_index(self):
+        return self._table[TABLE_INDEX]
 

@@ -18,6 +18,7 @@ from ring_table import Ring_table
 from non_bonded_table import Non_bonded_table
 from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 import utils
+from table_base import RESIDUE_TYPE, TABLE_TYPE, TABLE_INDEX
 
 
 #TODO: cleanup internal structure, caching needs a better implementation
@@ -169,9 +170,9 @@ class Table_manager(object):
     def _ornament_table(self, new_table, table_type, residue_type):
         table_index = self._table_index.setdefault(table_type,0)
         ornaments  = {
-                        'residue_type' : residue_type,
-                        'table_type' : table_type,
-                        'index' : table_index
+                        RESIDUE_TYPE : residue_type,
+                        TABLE_TYPE : table_type,
+                        TABLE_INDEX : table_index
                       }
         new_table.update(ornaments)
         self._table_index[table_type]+=1
