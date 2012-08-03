@@ -88,6 +88,7 @@ class TestXcamshiftAFA(unittest2.TestCase):
         initStruct("test_data/ala_phe_ala/AFA.psf")
         PDBTool("test_data/ala_phe_ala/AFA.pdb").read()
         Atom_utils.clear_cache()
+        Segment_Manager.reset_segment_manager()
         
 #TODO: shoulf be private
     def make_result_array_forces(self):

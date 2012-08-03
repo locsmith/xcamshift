@@ -15,6 +15,7 @@ from test.gb3 import gb3_component_shifts_sc, gb3_component_shifts_ring
 from utils import Atom_utils
 import common_constants
 import sys
+from segment_manager import Segment_Manager
 TOTAL_ENERGY = 'total'
 fast = False
 
@@ -78,6 +79,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         initStruct("test_data/gb3/gb3.psf")
         PDBTool("test_data/gb3/gb3_refined_II.pdb").read()
         Atom_utils.clear_cache()
+        Segment_Manager.reset_segment_manager()
 #
 ##TODO: shoulf be private
     def make_result_array_forces(self):

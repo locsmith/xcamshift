@@ -508,7 +508,7 @@ class Base_potential(object):
     ALL = '(all)'
             
     def __init__(self):
-        self._segment_manager = Segment_Manager()
+        self._segment_manager = Segment_Manager.get_segment_manager()
         self._table_manager = Table_manager.get_default_table_manager()
         self._observed_shifts = Observed_shift_table()
         self._component_list_data  = {}
@@ -3111,6 +3111,7 @@ class Xcamshift():
     def _prepare_potentials(self):
         for potential in self.potential:
             potential.set_fast(self._fast)
+        
             potential._prepare()
 
     def _prepare(self):

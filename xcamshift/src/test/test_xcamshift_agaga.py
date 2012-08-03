@@ -11,6 +11,7 @@ from xcamshift import Xcamshift
 from utils import Atom_utils
 from common_constants import BACK_BONE
 import sys
+from segment_manager import Segment_Manager
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -34,6 +35,7 @@ class TestXcamshiftUtils(unittest2.TestCase):
     def setUp(self):
         initStruct("test_data/agaga/agaga.psf")
         PDBTool("test_data/agaga/agaga.pdb").read()
+        Segment_Manager.reset_segment_manager()
         Atom_utils.clear_cache()
         
     def test_agaga_shifts(self):

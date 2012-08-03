@@ -11,6 +11,7 @@ from utils import Atom_utils
 from xcamshift import Xcamshift
 import sys
 import unittest2
+from segment_manager import Segment_Manager
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -34,6 +35,7 @@ class TestXcamshiftVIN(unittest2.TestCase):
     def setUp(self):
         initStruct("test_data/vin/vin.psf")
         PDBTool("test_data/vin/vin.pdb").read()
+        Segment_Manager.reset_segment_manager()
         Atom_utils.clear_cache()
         
     def test_vin_shifts(self):

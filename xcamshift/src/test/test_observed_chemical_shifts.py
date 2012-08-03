@@ -10,6 +10,7 @@ from protocol import initStruct
 from pdbTool import PDBTool
 from test.ala_3 import ala_3_test_shifts_harmonic
 from utils import Atom_utils
+from segment_manager import Segment_Manager
 
 
 class TestObservedShiftTable(unittest2.TestCase):
@@ -20,6 +21,8 @@ class TestObservedShiftTable(unittest2.TestCase):
     def setUp(self):
         initStruct("test_data/3_ala/3ala.psf")
         PDBTool("test_data/3_ala/3ala.pdb").read()
+        Atom_utils.clear_cache()
+        Segment_Manager.reset_segment_manager()
         
     def assertEmpty(self, expected_keys, msg=""):
         return self.assertEqual(len(expected_keys), 0, msg)

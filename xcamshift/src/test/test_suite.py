@@ -32,7 +32,7 @@ def load_tests(loader, tests, pattern):
     suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshifAGA))
     suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftVIN))
     suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftAGFA))
-    suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftGB3))
+#    suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftGB3))
     
     return suite
 

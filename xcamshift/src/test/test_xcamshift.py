@@ -98,6 +98,7 @@ class TestXcamshift(unittest2.TestCase):
     def setUp(self):
         initStruct("test_data/3_ala/3ala.psf")
         PDBTool("test_data/3_ala/3ala.pdb").read()
+        Segment_Manager.reset_segment_manager()
         Atom_utils.clear_cache()
         Table_manager.reset_default_table_manager()
 

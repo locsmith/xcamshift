@@ -97,6 +97,7 @@ class TestXcamshiftAGFA(unittest2.TestCase):
     def setUp(self):
         initStruct("test_data/agfa/agfa.psf")
         PDBTool("test_data/agfa/agfa.pdb").read()
+        Segment_Manager.reset_segment_manager()
         Atom_utils.clear_cache()
 #
 ##TODO: shoulf be private

@@ -7,6 +7,7 @@ from protocol import initStruct
 from pdbTool import PDBTool
 from segment_manager import Segment_Manager
 import unittest2
+from utils import Atom_utils
 
 
 #class testSegmentManager(object):
@@ -16,7 +17,8 @@ class Test_segment_manager(unittest2.TestCase):
     def setUp(self):
         initStruct("test_data/3_ala/3ala.psf")
         PDBTool("test_data/3_ala/3ala.pdb").read()
-
+        Segment_Manager.reset_segment_manager()
+        Atom_utils.clear_cache()
 
     def testSegments(self):
         segments = Segment_Manager().get_segments()

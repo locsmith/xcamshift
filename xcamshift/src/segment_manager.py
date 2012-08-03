@@ -12,6 +12,19 @@ class Segment_Manager():
     def __init__(self):
         (self.__segments, self.__segment_info_map) =  self.__build_segments_and_residues()
     
+    __default = None
+    
+    @staticmethod 
+    def get_segment_manager():
+        if Segment_Manager.__default == None:
+            Segment_Manager.__default = Segment_Manager()
+        return Segment_Manager.__default
+    
+    @staticmethod
+    def reset_segment_manager():
+        Segment_Manager.__default = None
+        
+    
     class Segment_info():
         def __init__(self, first_residue, last_residue, 
                      first_atom_index, last_atom_index):

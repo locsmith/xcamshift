@@ -8,6 +8,7 @@ from protocol import initStruct
 from pdbTool import PDBTool
 from utils import Atom_utils, iter_residue_atoms, iter_residue_atom_ids
 import utils
+from segment_manager import Segment_Manager
 
 expected_residue_atom_ids  =  (
      (1,2,3,4,5,6,7,8,9,10,11,12),
@@ -58,6 +59,7 @@ class TestXcamshiftUtils(unittest2.TestCase):
         initStruct("test_data/agaga/agaga.psf")
         PDBTool("test_data/agaga/agaga.pdb").read()
         Atom_utils.clear_cache()
+        Segment_Manager.reset_segment_manager()
         
     def test_iterate_atoms(self):
         for i,atom in  enumerate(utils.iter_atoms()):

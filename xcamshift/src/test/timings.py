@@ -27,6 +27,7 @@ class Test(unittest2.TestCase):
     def setUp(self):
         initStruct("test_data/gb3/gb3.psf")
         PDBTool("test_data/gb3/gb3_refined_II.pdb").read()
+        Segment_Manager.reset_segment_manager()
         Atom_utils.clear_cache()
 
 

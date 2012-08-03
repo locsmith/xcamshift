@@ -9,6 +9,7 @@ from keys import Atom_key, Dihedral_key
 from protocol import initStruct
 from pdbTool import PDBTool
 from utils import Atom_utils
+from segment_manager import Segment_Manager
 
 
 
@@ -21,7 +22,8 @@ class Test_table_manager(unittest2.TestCase):
     def setUp(self):
         # TODO add a delegate to get a sequence to the table manager and remove dependance on a psf file
         initStruct("test_data/gb3/gb3.psf")
-        Atom_utils.clear_cache()
+        Atom_utils.clear_cache()        
+        Segment_Manager.reset_segment_manager()
         Table_manager.reset_default_table_manager()
         self.table_manager = Table_manager()
         self.table_manager.add_search_path('../../data')

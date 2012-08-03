@@ -11,6 +11,7 @@ from pdbTool import PDBTool
 from xcamshift import Xcamshift
 from utils import Atom_utils
 from common_constants import BACK_BONE
+from segment_manager import Segment_Manager
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -34,6 +35,7 @@ class TestXcamshifAGA(unittest2.TestCase):
     def setUp(self):
         initStruct("test_data/aga/aga.psf")
         PDBTool("test_data/aga/aga.pdb").read()
+        Segment_Manager.reset_segment_manager()
         Atom_utils.clear_cache()
         
     def test_glycine_shifts(self):
