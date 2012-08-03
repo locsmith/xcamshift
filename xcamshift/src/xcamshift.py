@@ -26,7 +26,8 @@ from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN
 import itertools
 from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
-                                     Fast_ring_shift_calculator, Fast_ring_data_calculator
+                                     Fast_ring_shift_calculator, Fast_ring_data_calculator,          \
+                                     Fast_non_bonded_calculator
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -2311,10 +2312,15 @@ class Non_bonded_list(object):
         self._min_residue_seperation = min_residue_separation
         self._pos_cache = {}
         
+        self._fast = False
         self._non_bonded_list_calculator = self._get_non_bonded_calculator()
 
     def _get_non_bonded_calculator(self):
-        return Non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
+        if self._fast:
+            result = Fast_non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
+        else:
+            result  = Non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
+        return result
     
     def _get_cutoff_distance_2(self):
         return (self._cutoff_distance+self._jitter)**2

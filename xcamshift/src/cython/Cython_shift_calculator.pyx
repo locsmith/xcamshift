@@ -5,7 +5,7 @@ Created on 31 Jul 2012
 '''
 from vec3 import Vec3 as python_vec3
 from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross
-from libc.math cimport cos
+from libc.math cimport cos,fabs
 
 cdef class Fast_distance_shift_calculator:
     DEFAULT_CUTOFF  = 5.0
@@ -349,3 +349,56 @@ cdef class Fast_ring_data_calculator:
             normals.add_component(normal_component)
             
 
+cdef class Fast_non_bonded_calculator:
+    
+    def __init__(self,min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
+        self._min_residue_seperation =  min_residue_seperation
+        self._cutoff_distance =  cutoff_distance
+        self._jitter = jitter
+        self._full_cutoff_distance =  self._cutoff_distance + self._jitter
+        
+    cdef inline bint _filter_by_residue(self, char* seg_1, int residue_1, char* seg_2, int residue_2):
+        cdef int sequence_distance
+        cdef bint result
+        
+        result = False
+        if seg_1 == seg_2:
+            sequence_distance =abs(residue_1-residue_2)
+            if sequence_distance < self._min_residue_seperation:
+                result =True
+        return result
+    
+    cdef inline bint  _is_non_bonded(self, int atom_id_1, int atom_id_2):
+        
+        cdef Atom atom_1, atom_2
+        cdef char *seg_1, *seg_2
+        cdef int residue_1, residue_2
+        cdef bint is_non_bonded
+        cdef float distance
+        
+        atom_1 = currentSimulation().atomByID(atom_id_1)
+        atom_2 = currentSimulation().atomByID(atom_id_2)
+        
+        seg_1 =  <char *>atom_1.segmentName()
+        residue_1 = atom_1.residueNum()
+        
+        seg_2 = <char*>atom_2.segmentName()
+        residue_2 =  atom_2.residueNum()
+
+        is_non_bonded = True
+        if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
+            is_non_bonded = False
+        else:
+            distance = norm(atom_1.pos() - atom_2.pos())
+            is_non_bonded =  distance < self._full_cutoff_distance
+        return is_non_bonded
+    
+    def __call__(self, atom_list_1, atom_list_2):
+        non_bonded_lists = []
+        for atom_id_1 in atom_list_1:
+            non_bonded_list = []
+            non_bonded_lists.append(non_bonded_list)
+            for i, atom_id_2 in enumerate(atom_list_2):
+                if self._is_non_bonded(atom_id_1, atom_id_2):
+                    non_bonded_list.append(i)
+        return  non_bonded_lists

@@ -3,6 +3,7 @@ Created on 31 Jul 2012
 
 @author: garyt
 '''
+from libc.string cimport const_char
 
 cdef extern from "fixedVector.hh":
     cdef float norm(Vec3)
@@ -23,7 +24,11 @@ cdef extern from "vec3.hh":
         
 cdef extern from "atom.hh":
     cdef cppclass Atom:
-        pass
+        const_char segmentName()
+        const_char residueName()
+        const_char atomName()
+        int   residueNum()
+        Vec3& pos()
         
 cdef extern from "dihedral.hh":
     cdef cppclass Dihedral:
