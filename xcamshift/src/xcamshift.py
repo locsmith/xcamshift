@@ -2261,9 +2261,7 @@ class Non_bonded_calculator():
     
     def __init__(self,min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
         self._min_residue_seperation =  min_residue_seperation
-        self._cutoff_distance =  cutoff_distance
-        self._jitter = jitter
-        self._full_cutoff_distance =  self._cutoff_distance + self._jitter
+        self._full_cutoff_distance =  cutoff_distance + jitter
         
     def _filter_by_residue(self, seg_1, residue_1, seg_2, residue_2):
         result = False
