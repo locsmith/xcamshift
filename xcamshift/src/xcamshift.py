@@ -2999,36 +2999,9 @@ class Xcamshift():
 
     def _calc_single_atom_energy(self, target_atom_index):
         
-        energy = 0.0
-        if target_atom_index in self._shift_table.get_atom_indices():
-            
-            shift_diff = self.get_shift_difference(target_atom_index)
-            
-            residue_type = Atom_utils._get_residue_type_from_atom_id(target_atom_index)
-            atom_name = Atom_utils._get_atom_name_from_index(target_atom_index)
-            
-            flat_bottom_shift_limit = self._get_flat_bottom_shift_limit(residue_type, atom_name)
-            
-            if abs(shift_diff) > flat_bottom_shift_limit:
-                adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
-                
-                end_harmonic = self._get_end_harmonic(residue_type, atom_name)
-                scale_harmonic = self._get_scale_harmonic(residue_type, atom_name)
-                
-                
-                energy_component = 0.0
-                if adjusted_shift_diff < end_harmonic:
-                    energy_component = (adjusted_shift_diff/scale_harmonic)**2
-                else:
-                    tanh_amplitude = self._get_tanh_amplitude(residue_type,atom_name)
-                    tanh_elongation = self._get_tanh_elongation(residue_type, atom_name)
-                    tanh_y_offset = self._get_tanh_y_offset(residue_type, atom_name)
-                    
-                    tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
-                    energy_component = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset;
-
-                energy += energy_component
-        return energy
+        target_atom_ids = [target_atom_index]
+        return self._calc_energies(target_atom_ids)
+        
     
         
     def _calc_single_atom_force_set_with_potentials(self, target_atom_id, forces, potentials_list):
@@ -3143,7 +3116,42 @@ class Xcamshift():
     def _prepare(self):
         self._prepare_potentials()
         self._calc_shift_cache()
+    
+    
+
+    def _calc_energies(self,target_atom_ids):
+        energy = 0.0
+        
+        for target_atom_index in target_atom_ids:
+            shift_diff = self.get_shift_difference(target_atom_index)
             
+            residue_type = Atom_utils._get_residue_type_from_atom_id(target_atom_index)
+            atom_name = Atom_utils._get_atom_name_from_index(target_atom_index)
+            
+            flat_bottom_shift_limit = self._get_flat_bottom_shift_limit(residue_type, atom_name)
+            
+            if abs(shift_diff) > flat_bottom_shift_limit:
+                adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
+                
+                end_harmonic = self._get_end_harmonic(residue_type, atom_name)
+                scale_harmonic = self._get_scale_harmonic(residue_type, atom_name)
+                
+                
+                energy_component = 0.0
+                if adjusted_shift_diff < end_harmonic:
+                    energy_component = (adjusted_shift_diff/scale_harmonic)**2
+                else:
+                    tanh_amplitude = self._get_tanh_amplitude(residue_type,atom_name)
+                    tanh_elongation = self._get_tanh_elongation(residue_type, atom_name)
+                    tanh_y_offset = self._get_tanh_y_offset(residue_type, atom_name)
+                    
+                    tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
+                    energy_component = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset;
+
+                energy += energy_component
+        return energy
+
+        
     def calcEnergy(self, prepare =  True):
         if prepare:
             self._prepare()
