@@ -5,7 +5,7 @@ Created on 31 Jul 2012
 '''
 from vec3 import Vec3 as python_vec3
 from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross
-from libc.math cimport cos,fabs
+from libc.math cimport cos,fabs, tanh
 
 cdef class Fast_distance_shift_calculator:
     DEFAULT_CUTOFF  = 5.0
@@ -402,3 +402,89 @@ cdef class Fast_non_bonded_calculator:
                 if self._is_non_bonded(atom_id_1, atom_id_2):
                     non_bonded_list.append(i)
         return  non_bonded_lists
+    
+cdef class Fast_energy_calculator:
+    def __init__(self):
+        self._energy_term_cache =  None
+        self._theory_shifts =   None
+        self._observed_shifts =  None
+        
+    def set_observed_shifts(self, observed_shifts):
+        self._observed_shifts =  observed_shifts
+        
+    def set_calculated_shifts(self, calculated_shifts):
+        self._theory_shifts =  calculated_shifts
+    
+    def set_energy_term_cache(self, energy_term_cache ):
+        self._energy_term_cache =  energy_term_cache
+        
+    cdef _get_energy_terms(self, int target_atom_index):
+        return self._energy_term_cache[target_atom_index]
+    
+    cdef inline float  _get_calculated_atom_shift(self, int target_atom_index):
+        return self._theory_shifts[target_atom_index]
+    
+    cdef inline float _get_observed_atom_shift(self, int target_atom_index):
+        return self._observed_shifts.get_chemical_shift(target_atom_index)
+    
+    cdef inline float  _get_shift_difference(self, int target_atom_index):
+        cdef float theory_shift
+        cdef float observed_shift
+        theory_shift = self._get_calculated_atom_shift(target_atom_index)
+        
+        observed_shift = self._get_observed_atom_shift(target_atom_index)
+        
+        return observed_shift - theory_shift
+
+    cdef inline float _adjust_shift(self, float shift_diff, float flat_bottom_shift_limit):
+        result  = 0.0
+        if (shift_diff > 0.0):
+            result = shift_diff-flat_bottom_shift_limit
+        else:
+            result = shift_diff + flat_bottom_shift_limit
+        return result
+        
+    def __call__(self,target_atom_ids):
+        
+        cdef float energy
+        cdef float flat_bottom_shift_limit
+        cdef float adjusted_shift_diff
+        cdef float end_harmonic
+        cdef float scale_harmonic
+        cdef float energy_component
+        cdef float tanh_amplitude
+        cdef float tanh_elongation
+        cdef float tanh_y_offset
+        cdef float tanh_argument
+        
+        energy = 0.0
+        
+        for target_atom_index in target_atom_ids:
+            shift_diff = self._get_shift_difference(target_atom_index)
+            energy_terms = self._get_energy_terms(target_atom_index)
+            
+
+            flat_bottom_shift_limit = energy_terms.flat_bottom_shift_limit
+            
+            
+            if abs(shift_diff) > flat_bottom_shift_limit:
+                adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
+                
+                end_harmonic = energy_terms.end_harmonic
+                scale_harmonic = energy_terms.scale_harmonic
+                
+                
+                energy_component = 0.0
+                if adjusted_shift_diff < end_harmonic:
+                    energy_component = (adjusted_shift_diff/scale_harmonic)**2
+                else:
+                    tanh_amplitude = energy_terms.tanh_amplitude
+                    tanh_elongation = energy_terms.tanh_elongation
+                    tanh_y_offset = energy_terms.tanh_y_offset
+                    
+                    tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
+                    energy_component = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset;
+
+                energy += energy_component
+        return energy
+
