@@ -501,6 +501,18 @@ class Sidechain_component_factory(Atom_component_factory):
     def get_table_name(self):
         return 'ATOM'
     
+class Default_force_calculator:
+    def __init__(self,potential):
+        self._potential =  potential
+        
+    def __call__(self, target_atom_ids, force_factors, forces, components):
+        component_target_atom_ids = components.get_component_atom_ids()
+        for i,target_atom_id in enumerate(target_atom_ids):
+            if target_atom_id in component_target_atom_ids:
+                index_range = components.get_component_range(target_atom_id)
+                for index in range(*index_range):
+                    self._potential._calc_single_force_set(index,force_factors[i],forces)
+                    
 class Base_potential(object):
     
     __metaclass__ = abc.ABCMeta
@@ -516,6 +528,7 @@ class Base_potential(object):
         self._cache_list_data = {}
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._fast = False
+        self._force_calculator = Default_force_calculator(self)
 
 
     def set_fast(self, on):
@@ -661,17 +674,15 @@ class Base_potential(object):
         
         return result
     
-    def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
+    def calc_force_set(self,target_atom_ids,force_factors,forces):
         if self._have_derivative():
             components =  self._get_component_list()
-        
-        
-            if target_atom_id in components.get_component_atom_ids():
-                index_range = components.get_component_range(target_atom_id)
-                for index in range(*index_range):
-                    self._calc_single_force_set(index,force_factor,forces)
-        return forces
-        
+            self._force_calculator(target_atom_ids,force_factors,forces, components)
+
+    def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
+        target_atom_ids = [target_atom_id]
+        force_factors = [force_factor]
+        self.calc_force_set(target_atom_ids,force_factor,forces)
     
     #TODO: make this just return a list in component order
     #TODO: remove
