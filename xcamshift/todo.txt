@@ -17,8 +17,8 @@ check other forces and the factors in the tanh regime)
 speed:
 ------
 
-1. ring normals and centres
-2. non bonded list
+1. ring normals and centres -  done
+2. non bonded list - done
 3. distance forces
 4. dihedral forces
 5. ring forces
