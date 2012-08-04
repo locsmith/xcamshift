@@ -501,18 +501,36 @@ class Sidechain_component_factory(Atom_component_factory):
     def get_table_name(self):
         return 'ATOM'
     
-class Default_force_calculator:
-    def __init__(self,potential):
+class Base_force_calculator(object):
+#    TODO remove potential field
+    def __init__(self,potential=None):
         self._potential =  potential
+        self._components =  None
+    
+    def _set_components(self,components):
+        self._components = components
         
-    def __call__(self, target_atom_ids, force_factors, forces, components):
+    def __call__(self, components, target_atom_ids, force_factors, forces):
+        self._set_components(components)
         component_target_atom_ids = components.get_component_atom_ids()
         for i,target_atom_id in enumerate(target_atom_ids):
             if target_atom_id in component_target_atom_ids:
                 index_range = components.get_component_range(target_atom_id)
                 for index in range(*index_range):
-                    self._potential._calc_single_force_set(index,force_factors[i],forces)
-                    
+                    self._calc_single_force_set(index,force_factors[i],forces)
+    
+    def _get_or_make_target_force_triplet(self, forces, target_offset):
+        target_forces = forces[target_offset]
+        if target_forces == None:
+            target_forces = [0.0] * 3
+            forces[target_offset] = target_forces
+        return target_forces
+
+#    TODO make abstract
+    def _calc_single_force_set(self,index,force_factor,forces):
+        self._potential._calc_single_force_set(index,force_factor,forces)
+
+        
 class Base_potential(object):
     
     __metaclass__ = abc.ABCMeta
@@ -528,7 +546,11 @@ class Base_potential(object):
         self._cache_list_data = {}
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._fast = False
-        self._force_calculator = Default_force_calculator(self)
+        
+        
+        
+    def _get_force_calculator(self):
+        return Base_force_calculator(self)
 
 
     def set_fast(self, on):
@@ -677,7 +699,7 @@ class Base_potential(object):
     def calc_force_set(self,target_atom_ids,force_factors,forces):
         if self._have_derivative():
             components =  self._get_component_list()
-            self._force_calculator(target_atom_ids,force_factors,forces, components)
+            self._force_calculator(components, target_atom_ids,force_factors,forces)
 
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
         target_atom_ids = [target_atom_id]
@@ -695,6 +717,7 @@ class Base_potential(object):
     def _have_derivative(self):
         return True
     
+#    TODO remove or make batched now in force calculaor
     def _get_or_make_target_force_triplet(self, forces, target_offset):
         target_forces = forces[target_offset]
         if target_forces == None:
@@ -762,90 +785,53 @@ class Distance_shift_calculator:
                 smoothing_factor = 1.0 - ratio ** 8
             results[index] = smoothing_factor * distance ** exponent * coefficient
             
+class Distance_based_potential_force_calculator(Base_force_calculator):
     
-class Distance_based_potential(Base_potential):
-    
-    def __init__(self,  smoothed = False, fast=False):
-        super(Distance_based_potential, self).__init__()
-        self._smoothed = smoothed
-        #TODO: sort placement out
-        self._cutoff = 5.0
-        
-        self._shift_calculator = self._get_shift_calculator()
-        
-    def set_fast(self, on):
-        self._fast = (on == True)
-        self._shift_calculator = self._get_shift_calculator()
-        
-    def _get_shift_calculator(self):
-        if self._fast:
-            result  = self._shift_calculator = Fast_distance_shift_calculator(self._get_indices(), self._smoothed)
-        else:
-            result = self._shift_calculator = Distance_shift_calculator(self._get_indices(), self._smoothed)
-        return result
-    
-#    TODO: remove to base class
-    def calc_shifts(self, target_atom_ids, results):
-        components  = self._filter_components(target_atom_ids)
-        self._shift_calculator(components,results)
-                
-    class Indices(object):
-        def __init__(self, target_atom_index,distance_atom_index_1,
-                     distance_atom_index_2, coefficent_index, exponent_index):
-            self.target_atom_index =  target_atom_index
-            self.distance_atom_index_1 = distance_atom_index_1
-            self.distance_atom_index_2 =  distance_atom_index_2
-            self.exponent_index = exponent_index
-            self.coefficient_index = coefficent_index
-            
-            
-        def __str__(self):
-            result = 'indices target= %i distance atom index 1 = %i index 2 = %i coefficent = %i exponent = %i'
-            msg = result % (self.target_atom_index, self.distance_atom_index_1,
-                            self.distance_atom_index_2, self.coefficient_index, self.exponent_index)
-            return msg                 
-            
-    @abc.abstractmethod
-    def _get_indices(self):
-        return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=0,
-                                                distance_atom_index_2=1,coefficent_index=2,
-                                                exponent_index=3)
-    
-#    @abc.abstractmethod
-    def _get_distance_list_name(self):
-        return 'ATOM'
 
+    DEFAULT_CUTOFF = 5.0
+    DEFAULT_SMOOTHING_FACTOR = 1.0
+    
+    def __init__(self, indices, smoothed):
+        super(Distance_based_potential_force_calculator, self).__init__()
+        self._target_atom_index = indices.target_atom_index
+        self._distance_atom_index_1 =  indices.distance_atom_index_1
+        self._distance_atom_index_2 =  indices .distance_atom_index_2
+        self._exponent_index  = indices.exponent_index
+        self._coefficient_index  = indices.coefficient_index
+        self._components =  None
+        self._smoothed =  smoothed
+        self._smoothing_factor =  Distance_shift_calculator.DEFAULT_SMOOTHING_FACTOR
+        self._cutoff =  Distance_based_potential_force_calculator.DEFAULT_CUTOFF
+        
+    def set_cutoff(self, cutoff):
+        self._cutoff =  cutoff
+    
+    def set_smoothing_factor(self,smoothing_factor):
+        self._smoothing_factor = smoothing_factor
+        
+    def _set_components(self,components):
+        self._components = components
+    
     def _get_target_and_distant_atom_ids(self, index):
-        list_name = self._get_distance_list_name()
-        values  = self._get_component(index,list_name)
+        values  = self._components.get_component(index)
         
-        indices = self._get_indices()
-        distance_atom_index_1 = indices.distance_atom_index_1
-        distance_atom_index_2 = indices.distance_atom_index_2
-        target_atom = values[distance_atom_index_1]
-        distance_atom = values[distance_atom_index_2]
+        
+        target_atom = values[self._distance_atom_index_1]
+        distance_atom = values[self._distance_atom_index_2]
         return target_atom, distance_atom
-
-    def _get_distance_components(self):
-        list_name  = self._get_distance_list_name()
-        return self._get_component_list(list_name)
-        
-        
+    
     def _get_coefficient_and_exponent(self, index):
-        list_name  = self._get_distance_list_name()
+        values = self._components.get_component(index)
         
-        values = self._get_component(index,list_name)
+
+
         
-        indices = self._get_indices()
-        
-        coefficient_index = indices.coefficient_index
-        exponent_index = indices.exponent_index
-        
-        coefficient = values[coefficient_index]
-        exponent = values[exponent_index]
+        coefficient = values[self._coefficient_index]
+        exponent = values[self._exponent_index]
         
         return coefficient, exponent
 
+        
     def _calc_single_force_factor(self,index,factor):
         
         target_atom, distance_atom = self._get_target_and_distant_atom_ids(index)
@@ -910,6 +896,99 @@ class Distance_based_potential(Base_potential):
         for offset in OFFSETS_3:
             target_forces[offset] -= distance[offset] * force_factor
             distant_forces[offset] += distance[offset] * force_factor
+
+class Distance_based_potential(Base_potential):
+    
+    def __init__(self,  smoothed = False, fast=False):
+        super(Distance_based_potential, self).__init__()
+        self._smoothed = smoothed
+        #TODO: sort placement out
+        #
+        self._cutoff = 5.0
+        
+        #TODO: move to base potential
+        self._shift_calculator = self._get_shift_calculator()
+        self._force_calculator = self._get_force_calculator()
+        
+    #TODO: move to base potential
+    def set_fast(self, on):
+        self._fast = (on == True)
+        self._shift_calculator = self._get_shift_calculator()
+        self._force_calculator = self._get_force_calculator()
+        
+    #TODO: move to base potential
+    def _get_shift_calculator(self):
+        if self._fast:
+            result  = self._shift_calculator = Fast_distance_shift_calculator(self._get_indices(), self._smoothed)
+        else:
+            result = self._shift_calculator = Distance_shift_calculator(self._get_indices(), self._smoothed)
+        return result
+    
+    def _get_force_calculator(self):
+        result = Distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
+        return result
+#    TODO: remove to base class
+    def calc_shifts(self, target_atom_ids, results):
+        components  = self._filter_components(target_atom_ids)
+        self._shift_calculator(components,results)
+                
+    class Indices(object):
+        def __init__(self, target_atom_index,distance_atom_index_1,
+                     distance_atom_index_2, coefficent_index, exponent_index):
+            self.target_atom_index =  target_atom_index
+            self.distance_atom_index_1 = distance_atom_index_1
+            self.distance_atom_index_2 =  distance_atom_index_2
+            self.exponent_index = exponent_index
+            self.coefficient_index = coefficent_index
+            
+            
+        def __str__(self):
+            result = 'indices target= %i distance atom index 1 = %i index 2 = %i coefficent = %i exponent = %i'
+            msg = result % (self.target_atom_index, self.distance_atom_index_1,
+                            self.distance_atom_index_2, self.coefficient_index, self.exponent_index)
+            return msg                 
+            
+    @abc.abstractmethod
+    def _get_indices(self):
+        return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=0,
+                                                distance_atom_index_2=1,coefficent_index=2,
+                                                exponent_index=3)
+    
+#    @abc.abstractmethod
+    def _get_distance_list_name(self):
+        return 'ATOM'
+
+    def _get_target_and_distant_atom_ids(self, index):
+        list_name = self._get_distance_list_name()
+        values  = self._get_component(index,list_name)
+        
+        indices = self._get_indices()
+        distance_atom_index_1 = indices.distance_atom_index_1
+        distance_atom_index_2 = indices.distance_atom_index_2
+        target_atom = values[distance_atom_index_1]
+        distance_atom = values[distance_atom_index_2]
+        return target_atom, distance_atom
+
+    def _get_distance_components(self):
+        list_name  = self._get_distance_list_name()
+        return self._get_component_list(list_name)
+        
+        
+    def _get_coefficient_and_exponent(self, index):
+        list_name  = self._get_distance_list_name()
+        
+        values = self._get_component(index,list_name)
+        
+        indices = self._get_indices()
+        
+        coefficient_index = indices.coefficient_index
+        exponent_index = indices.exponent_index
+        
+        coefficient = values[coefficient_index]
+        exponent = values[exponent_index]
+        
+        return coefficient, exponent
+
         
 
     
@@ -921,8 +1000,8 @@ class Distance_potential(Distance_based_potential):
     '''
 
 
-    def __init__(self):
-        super(Distance_potential, self).__init__()
+    def __init__(self, fast=False):
+        super(Distance_potential, self).__init__(smoothed = False, fast=fast)
         
         '''
         Constructor
@@ -1137,6 +1216,18 @@ class Dihedral_potential(Base_potential):
     
         self._shift_calculator = self._get_shift_calculator()
     
+#    TODO: remove only used for compatability during upgrades
+    def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
+        if self._have_derivative():
+            components =  self._get_component_list()
+        
+        
+            if target_atom_id in components.get_component_atom_ids():
+                index_range = components.get_component_range(target_atom_id)
+                for index in range(*index_range):
+                    self._calc_single_force_set(index,force_factor,forces)
+        return forces
+        
     def set_fast(self, on):
         self._fast = (on == True)
         self._shift_calculator = self._get_shift_calculator()
@@ -2508,7 +2599,19 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
 
 
 
-
+class Non_bonded_force_calculator(Distance_based_potential_force_calculator):
+    DEFAULT_CUTOFF = 5.0
+    def __init__(self, indices, smoothed):
+        Distance_based_potential_force_calculator.__init__(self,indices, smoothed)
+        self._cutoff = self.DEFAULT_CUTOFF
+    
+    def _calc_single_force_set(self, index, factor, forces):
+        target_atom_index,distant_atom_index = self._get_target_and_distant_atom_ids(index)
+        
+        distance  = Atom_utils._calculate_distance(target_atom_index, distant_atom_index)
+#        TODO: this should be the non bonded distance cutoff
+        if distance < 5.0:
+            super(Non_bonded_force_calculator, self)._calc_single_force_set(index, factor, forces)
 
 # target_atom_id, target_atom_type_id
 # remote_atom_id  remote_atom_type_id 
@@ -2524,6 +2627,9 @@ class Non_bonded_potential(Distance_based_potential):
         self._add_component_factory(Null_component_factory('NBLT'))
         
         self._non_bonded_list = Non_bonded_list()
+    
+    def _get_force_calculator(self):
+        return Non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
     
     def _get_table_source(self):
         return Table_manager.get_default_table_manager().get_non_bonded_table
@@ -2567,14 +2673,15 @@ class Non_bonded_potential(Distance_based_potential):
 #        self.update_non_bonded_list()
         return Distance_based_potential.calc_single_atom_force_set(self, target_atom_id, force_factor, forces)
     
-    def _calc_single_force_set(self,index,factor, forces):
-        target_atom_index,distant_atom_index = self._get_target_and_distant_atom_ids(index)
-        
-        result  = 0.0
-        distance  = Atom_utils._calculate_distance(target_atom_index, distant_atom_index)
-#        TODO: this should be the non bonded distance cutoff
-        if distance < 5.0:
-            result = Distance_based_potential._calc_single_force_set(self,index, factor, forces)
+#    def _calc_single_force_set(self,index,factor, forces):
+#        print 'here'
+#        target_atom_index,distant_atom_index = self._get_target_and_distant_atom_ids(index)
+#        
+#        distance  = Atom_utils._calculate_distance(target_atom_index, distant_atom_index)
+##        TODO: this should be the non bonded distance cutoff
+#        if distance < 5.0:
+#            self._force_calculator._set_components(self._get_component_list())
+#            self._force_calculator._calc_single_force_set(index, factor, forces)
 
     
     def _calc_component_shift(self, index):
@@ -3126,7 +3233,7 @@ class Xcamshift():
     def _calc_force_set_with_potentials(self, target_atom_ids, forces, potentials_list):
         factors  = self._calc_factors(target_atom_ids)
         for potential in potentials_list:
-            if hasattr(potential, 'calc_force_set'):
+            if hasattr(potential, '_force_calculator'):
                 potential.calc_force_set(target_atom_ids,factors,forces)
             else:
                 for i,target_atom_id in enumerate(target_atom_ids):

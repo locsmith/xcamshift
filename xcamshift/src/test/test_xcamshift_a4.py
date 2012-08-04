@@ -380,6 +380,7 @@ class TestXcamshiftA4(unittest2.TestCase):
 
     def _test_non_bonded_force_factors(self, non_bonded_potential, non_bonded_force_factors, active_shifts, factors):
         
+        non_bonded_potential._force_calculator._set_components(non_bonded_potential._get_component_list())
         for i, component in enumerate(non_bonded_potential._get_all_components()):
             target_atom_id, remote_atom_id, coefficient, exponent = component
             target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
@@ -396,7 +397,7 @@ class TestXcamshiftA4(unittest2.TestCase):
             expected_key = target_atom_key, remote_atom_key, int(exponent)
             factor = factors[target_atom_key]
     #            print expected_key,factor
-            force_factor = non_bonded_potential._calc_single_force_factor(i, factor)
+            force_factor = non_bonded_potential._force_calculator._calc_single_force_factor(i, factor)
             
             #TODO: check change from 7 to 5 dp is ok
             self.assertAlmostEqual(force_factor, non_bonded_force_factors[expected_key],places=self.DEFAULT_DECIMAL_PLACES)

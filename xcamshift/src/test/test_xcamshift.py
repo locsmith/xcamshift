@@ -383,7 +383,10 @@ class TestXcamshift(unittest2.TestCase):
         
         # TODO make this a dummy distance based potential, 
         # _calc_single_force_factor is in distance based potential
+        #TODO: test the force calculator not the potential
         distance_potential = Distance_potential()
+        distance_potential._force_calculator._set_components(distance_potential._get_component_list())
+            
         expected_force_factors = dict(ala_3.ala_3_distance_forces_well)
         test_force_factors = ala_3.ala_3_factors_harmonic
         
@@ -393,7 +396,7 @@ class TestXcamshift(unittest2.TestCase):
             expected_key = (target_atom_key,distant_atom_key)
             test_factor  =  test_force_factors[target_atom_key]
             
-            force = distance_potential._calc_single_force_factor(i, test_factor)
+            force = distance_potential._force_calculator._calc_single_force_factor(i, test_factor)
             expected_force_factor = expected_force_factors[expected_key]
             del expected_force_factors[expected_key]
 
@@ -419,6 +422,7 @@ class TestXcamshift(unittest2.TestCase):
         expected_forces_dict = dict(expected_forces)
         test_factors = ala_3.ala_3_factors_harmonic
         
+        distance_potential._force_calculator._set_components(distance_potential._get_component_list())
         indices = distance_potential._get_indices()
         
         #TODO don't like using dump here
@@ -438,7 +442,8 @@ class TestXcamshift(unittest2.TestCase):
             
             forces = self.make_result_array_forces()
             
-            distance_potential._calc_single_force_set(i, test_factor, forces)
+            #TODO: test the force calculator not the potential
+            distance_potential._force_calculator._calc_single_force_set(i, test_factor, forces)
             
             distant_atom_forces_1 = self.get_force_triplet(distant_atom_index_1, forces)
             distant_atom_forces_2 = self.get_force_triplet(distant_atom_index_2, forces)
