@@ -93,7 +93,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         result = [0.0] * num_atoms
         return result
 
-    def assertListVec3AlmostEqual(self, ring_centres, expecteds, places = DEFAULT_DECIMAL_PLACES):
+    def assertListVec3AlmostEqual(self, ring_centres, expecteds, places = DEFAULT_DECIMAL_PLACES, msg=''):
         self.assertEqual(len(ring_centres), len(expecteds))
         for i,(result, expected) in enumerate(zip(ring_centres, expecteds)):
             if (((result == None) and (expected == None)) or 
@@ -101,10 +101,10 @@ class TestXcamshiftGB3(unittest2.TestCase):
                ((expected == None) and self.is_almost_zero_sequence(result))):
                 continue
             elif result == None or expected == None:
-                message = "only one item is None at %i [%s,%s]"
-                raise AssertionError(message % (i,`result`,`expected`))
+                message = "only one item is None at %i [%s,%s] %s"
+                raise AssertionError(message % (i,`result`,`expected`,msg))
             else:
-                self.assertSequenceAlmostEqual(result, expected, places)
+                self.assertSequenceAlmostEqual(result, expected, places,msg=msg)
 
     def is_almost_zero_sequence(self,sequence,places = DEFAULT_DECIMAL_PLACES):
         len_sequence = len(sequence)
@@ -502,7 +502,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 result_forces = self.make_result_array_forces()
 
                 xcamshift._calc_single_atom_force_set_with_potentials(target_atom_id, result_forces, potentials_list)
-                self.assertListVec3AlmostEqual(result_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES-3)
+                self.assertListVec3AlmostEqual(result_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES-3, msg='%s -  %s' % (potential_name,target_atom_key))
 
                 # to list differences as well as check them uncomment this! 
                 # self.print_force_component_diffs(potential_name,target_atom_key, expected_forces, result_forces)
@@ -515,8 +515,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
-#    unittest2.main(module='test.test_xcamshift_gb3')
-    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
+    unittest2.main(module='test.test_xcamshift_gb3')
+#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
     
