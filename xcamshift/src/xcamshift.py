@@ -2189,24 +2189,30 @@ class Ring_Potential(Base_potential):
         #            #TODO: this is not how camshift does it, it uses the sum of the two ring normals
         self._calculate_ring_forces(atom_type_id, ring_id, force_factor * coefficient, force_terms, forces)
 
+    def calc_force_set(self, target_atom_ids, force_factor, forces ):
+        for i,target_atom_id in enumerate(target_atom_ids):
+            target_atom_components = self._get_component_list('ATOM').get_components_for_atom_id(target_atom_id)
+            
+            if len(target_atom_components) > 0:
+                target_atom_id, atom_type_id = target_atom_components[0]
+                
+                #TODO: this prompts the coef_component list for ring to be created but shouldn't be needed
+                # we need to populate the lists automatilly and make it part of the lists implementation
+                self._get_component_list('RING')
+                
+    
+                
+                coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
+                for coef_component in coef_components:
+    #                print 'coef_component', i, coef_component
+    #                 print 'here', target_atom_id, atom_type_id,
+    #                coef_component, force_factor
+                    self.calculate_single_ring_forces(target_atom_id, atom_type_id, coef_component, force_factor, forces)
+                    
     def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
-        target_atom_components = self._get_component_list('ATOM').get_components_for_atom_id(target_atom_id)
-        
-        if len(target_atom_components) > 0:
-            target_atom_id, atom_type_id = target_atom_components[0]
-            
-            #TODO: this prompts the coef_component list for ring to be created but shouldn't be needed
-            # we need to populate the lists automatilly and make it part of the lists implementation
-            self._get_component_list('RING')
-            
-
-            
-            coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
-            for i,coef_component  in enumerate(coef_components):
-#                print 'coef_component', i, coef_component
-#                 print 'here', target_atom_id, atom_type_id,
-#                coef_component, force_factor
-                 self.calculate_single_ring_forces(target_atom_id, atom_type_id, coef_component, force_factor, forces)
+        target_atom_ids = [target_atom_id]
+        force_factors = [force_factor]
+        self.calc_force_set(target_atom_ids, force_factors, forces)
 
         
 #    def _get_component_for_atom(self, atom, context):
@@ -3277,11 +3283,7 @@ class Xcamshift():
     def _calc_force_set_with_potentials(self, target_atom_ids, forces, potentials_list):
         factors  = self._calc_factors(target_atom_ids)
         for potential in potentials_list:
-            if hasattr(potential, '_force_calculator'):
-                potential.calc_force_set(target_atom_ids,factors,forces)
-            else:
-                for i,target_atom_id in enumerate(target_atom_ids):
-                    potential.calc_single_atom_force_set(target_atom_id,factors[i],forces)
+            potential.calc_force_set(target_atom_ids,factors,forces)
         
              
     def _calc_single_atom_force_set_with_potentials(self, target_atom_id, forces, potentials_list):
