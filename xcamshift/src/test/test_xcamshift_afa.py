@@ -206,7 +206,7 @@ class TestXcamshiftAFA(unittest2.TestCase):
 
     def test_calc_component_forces(self):
         ring_potential = self.make_ring_potential()
-        
+        ring_potential._setup_ring_calculator(ring_potential._force_calculator)
         for target_atom_id,atom_type_id in ring_potential._get_component_list('ATOM'):
             for ring_id,ring_atom_ids in ring_potential._get_component_list('RING'):
                 
@@ -219,7 +219,7 @@ class TestXcamshiftAFA(unittest2.TestCase):
                 ring_potential._build_ring_data_cache()
                 
                 forces = self.make_result_array_forces()
-                force_terms = ring_potential._build_force_terms(target_atom_id, ring_id)
+                force_terms = ring_potential._force_calculator._build_force_terms(target_atom_id, ring_id)
                 ring_potential._calc_target_atom_forces(target_atom_id, ring_id, force_factor, force_terms, forces)
                 
                 target_atom_forces = forces[target_atom_id]
@@ -227,7 +227,7 @@ class TestXcamshiftAFA(unittest2.TestCase):
                 self.assertSequenceAlmostEqual(target_atom_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES)
                 
                 forces = self.make_result_array_forces()
-                ring_potential._calculate_ring_forces(atom_type_id, ring_id, force_factor, force_terms, forces)
+                ring_potential._force_calculator._calculate_ring_forces(atom_type_id, ring_id, force_factor, force_terms, forces)
                 
                 for ring_atom_id in ring_atom_ids:
                     ring_atom_key  = Atom_utils._get_atom_info_from_index(ring_atom_id)

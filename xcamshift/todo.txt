@@ -19,6 +19,9 @@ speed:
 
 1. ring normals and centres -  done
 2. non bonded list - done
-3. distance forces
-4. dihedral forces
-5. ring forces
+3. distance forces - done
+4. dihedral forces -dome
+5. ring forces -dome
+6. flatten calc_shifts -done 
+7. add a factor calculator - done
+8. check non bonded implementation

@@ -1911,90 +1911,41 @@ class Ring_data_calculator:
             centre_component = ring_id, centre
             centres.add_component(centre_component)
 
-#    ---
-class Ring_Potential(Base_potential):
-
-    
-    
-    
-    def __init__(self):
-        super(Ring_Potential, self).__init__()
-        
-        self._add_component_factory(Ring_backbone_component_factory())
-        self._add_component_factory(Ring_coefficient_component_factory())
-        self._add_component_factory(Ring_sidechain_atom_factory())
-        self._fast =False
-        self._shift_calculator = self._get_shift_calculator()
-        self._ring_data_calculator = self._get_ring_data_calculator()
-    
-    def _prepare(self): 
-        self._build_ring_data_cache()
-        self._setup_shift_calculator()
-         
-    def set_fast(self, on):
-        self._fast = (on == True)
-        self._shift_calculator = self._get_shift_calculator()
-        self._ring_data_calculator =  self._get_ring_data_calculator()
-        
-    def _setup_shift_calculator(self):
-        self._shift_calculator._set_coef_components(self._get_component_list('COEF'))
-        self._shift_calculator._set_ring_components(self._get_component_list('RING'))
-        self._shift_calculator._set_normal_cache(self._get_cache_list('NORM'))
-        self._shift_calculator._set_centre_cache(self._get_cache_list('CENT'))
-
-    def _get_ring_data_calculator(self):
-        if self._fast:
-            result = Fast_ring_data_calculator()
-        else:
-            result = Ring_data_calculator()
-        return result
-    
-    def calc_shifts(self, target_atom_ids, results):
-        components  = self._filter_components(target_atom_ids)
-        if len(components) > 0:
-            #TODO: add as general method in base
-            self._setup_shift_calculator()
-            self._shift_calculator(components,results)
-        
-        
-    def get_abbreviated_name(self):
-        return RING
-
-    def _get_shift_calculator(self):
-        if self._fast:
-            result = Fast_ring_shift_calculator()
-        else:
-            result = Ring_shift_calculator()
-        return result
-    
-    
-    def _get_table_source(self):
-        return self._table_manager.get_ring_table
-    
-    def _get_distance_components(self):
-        return self._get_component_list('ATOM')
-
+class Ring_force_calculator(Base_force_calculator):
     RING_ATOM_IDS = 1
-
-
+        
+    def __init__(self):
+        super(Ring_force_calculator, self).__init__()
+        self._components = None
+        self._coef_components = None
+        self._ring_components = None
+        self._centres =  None
+        self._normals = None
+        
+    def _set_components(self,components):
+        self._components = components
+        
+    def _set_coef_components(self,coef_components):
+        self._coef_components =  coef_components
+            
+    def _set_ring_components(self,coef_components):
+        self._ring_components =  coef_components
     
-
-
-
+    def _set_normal_cache(self,normals):
+        self._normals = normals
+        
+    def _set_centre_cache(self,centres):
+        self._centres = centres
+        
+    def _get_ring_centre(self, ring_id):
+        return  self._centres.get_component(ring_id)[1]
     
-    def _calc_component_shift(self, index):
-        components = Component_list()
-        components.add_component(self._get_distance_components()[index])
-        results = [0.0]
-        self._setup_shift_calculator()
-        self._shift_calculator(components,results)
-        return results[0]
-    
-    
+    def _get_ring_normal(self, ring_id):
+        return self._normals.get_component(ring_id)[1]
 
-    #TODO: use this more places
+        #TODO: use this more places
     def _get_ring_atom_ids(self, ring_id):
-        ring_component = self._get_component_list('RING').get_component(ring_id)
+        ring_component = self._ring_components.get_component(ring_id)
         return ring_component[self.RING_ATOM_IDS]
        
     
@@ -2006,7 +1957,33 @@ class Ring_Potential(Base_potential):
         for ring_atom_id in ring_atom_ids:
             result.append(Atom_utils._get_atom_pos(ring_atom_id))
         return result
-    
+
+        
+    def _calc_single_force_set(self, index, force_factor, forces ):
+        component = self._get_component(index)
+        target_atom_id, atom_type_id = component
+        coef_components = self._coef_components.get_components_for_atom_id(atom_type_id)
+        for coef_component in coef_components:
+    #                print 'coef_component', i, coef_component
+    #                 print 'here', target_atom_id, atom_type_id,
+    #                coef_component, force_factor
+            self.calculate_single_ring_forces(target_atom_id, atom_type_id, coef_component, force_factor, forces)
+
+    def calculate_single_ring_forces(self, target_atom_id, atom_type_id, coef_component, force_factor, forces):
+        atom_type_id, ring_id, coefficient = coef_component
+#        print atom_type_id, ring_id, coefficient, self._get_component_list('RING').get_components_for_atom_id(ring_id)
+        force_terms = self._build_force_terms(target_atom_id, ring_id)
+        
+#        print Atom_utils._get_atom_info_from_index(target_atom_id)
+        self._calc_target_atom_forces(target_atom_id, ring_id, force_factor * coefficient, force_terms, forces)
+        #            #TODO: this is not how camshift does it, it uses the sum of the two ring normals
+        self._calculate_ring_forces(atom_type_id, ring_id, force_factor * coefficient, force_terms, forces)
+
+    def _build_force_terms(self, target_atom_id, ring_id):
+        component_list_data = {'ATOM': self._components, 'COEF' : self._coef_components, 'RING' : self._ring_components}
+        cache_list_data = {'CENT': self._centres, 'NORM': self._normals}
+        force_terms = self.Force_sub_terms(target_atom_id, ring_id, component_list_data, cache_list_data)
+        return force_terms
     
     class Force_sub_terms(object):
         
@@ -2071,8 +2048,7 @@ class Ring_Potential(Base_potential):
                 self.gradVQ[axis]= factor * self.d[axis]
             
 #            return  dL3, u, dL6, ring_normal,  atom_type_id, coefficient, d, factor, dn, dL3nL3, dL, nL, dLnL
-
-    #To close? currently this is a direct port
+#    ---
 
     def _calc_target_atom_forces(self, target_atom_id, ring_id, force_factor, sub_terms, forces):
         
@@ -2086,7 +2062,6 @@ class Ring_Potential(Base_potential):
             #               f.coor[pos1  ] += -fact * (gradUQx * v - u * gradVQx) / v2;
             #print "terms",-force_factor, sub_terms.gradUQ[0], sub_terms.dL3, sub_terms.u, sub_terms.gradVQ[axis], sub_terms.dL6
             target_force_triplet[axis] += -force_factor * (sub_terms.gradUQ[axis] * sub_terms.dL3 - sub_terms.u * sub_terms.gradVQ[axis]) / sub_terms.dL6
-        
 
     #TODO: calculation of GradU and gradV are not consistent with force_terms for target atom correct
     #TODO: reduce number of parameters to method
@@ -2161,6 +2136,118 @@ class Ring_Potential(Base_potential):
 #            print
 #        print 
 
+class Ring_Potential(Base_potential):
+
+    
+    RING_ATOM_IDS = 1
+    
+    def __init__(self):
+        super(Ring_Potential, self).__init__()
+        
+        self._add_component_factory(Ring_backbone_component_factory())
+        self._add_component_factory(Ring_coefficient_component_factory())
+        self._add_component_factory(Ring_sidechain_atom_factory())
+        self._fast =False
+        self._shift_calculator = self._get_shift_calculator()
+        self._ring_data_calculator = self._get_ring_data_calculator()
+        self._force_calculator = self._get_ring_force_calculator()
+        
+    def calc_force_set(self,target_atom_ids,force_factors,forces):
+        #TODO: is the right place for setup
+        self._setup_ring_calculator(self._force_calculator)
+        super(Ring_Potential, self).calc_force_set(target_atom_ids,force_factors,forces)
+        
+        
+    def _get_ring_force_calculator(self):
+        return Ring_force_calculator()
+    
+    def _prepare(self): 
+        self._build_ring_data_cache()
+        self._setup_ring_calculator(self._shift_calculator)
+         
+    def set_fast(self, on):
+        self._fast = (on == True)
+        self._shift_calculator = self._get_shift_calculator()
+        self._ring_data_calculator =  self._get_ring_data_calculator()
+        
+    def _setup_ring_calculator(self,calculator):
+        calculator._set_coef_components(self._get_component_list('COEF'))
+        calculator._set_ring_components(self._get_component_list('RING'))
+        calculator._set_normal_cache(self._get_cache_list('NORM'))
+        calculator._set_centre_cache(self._get_cache_list('CENT'))
+    
+    def _get_ring_data_calculator(self):
+        if self._fast:
+            result = Fast_ring_data_calculator()
+        else:
+            result = Ring_data_calculator()
+        return result
+    
+    def calc_shifts(self, target_atom_ids, results):
+        components  = self._filter_components(target_atom_ids)
+        if len(components) > 0:
+            #TODO: add as general method in base
+            self._setup_ring_calculator(self._shift_calculator)
+            self._shift_calculator(components,results)
+        
+        
+    def get_abbreviated_name(self):
+        return RING
+
+    def _get_shift_calculator(self):
+        if self._fast:
+            result = Fast_ring_shift_calculator()
+        else:
+            result = Ring_shift_calculator()
+        return result
+    
+        
+    def _get_table_source(self):
+        return self._table_manager.get_ring_table
+    
+    def _get_distance_components(self):
+        return self._get_component_list('ATOM')
+
+
+
+
+    
+
+
+
+    
+    def _calc_component_shift(self, index):
+        components = Component_list()
+        components.add_component(self._get_distance_components()[index])
+        results = [0.0]
+        self._setup_ring_calculator(self._shift_calculator)
+        self._shift_calculator(components,results)
+        return results[0]
+    
+    
+
+
+    
+    
+    
+
+    #To close? currently this is a direct port
+
+    def _calc_target_atom_forces(self, target_atom_id, ring_id, force_factor, sub_terms, forces):
+        
+        X = 0
+        Y = 1
+        Z = 2
+        AXES = X, Y, Z
+        target_force_triplet = self._get_or_make_target_force_triplet(forces, target_atom_id)
+    # update forces on query atom
+        for axis in AXES:
+            #               f.coor[pos1  ] += -fact * (gradUQx * v - u * gradVQx) / v2;
+            #print "terms",-force_factor, sub_terms.gradUQ[0], sub_terms.dL3, sub_terms.u, sub_terms.gradVQ[axis], sub_terms.dL6
+            target_force_triplet[axis] += -force_factor * (sub_terms.gradUQ[axis] * sub_terms.dL3 - sub_terms.u * sub_terms.gradVQ[axis]) / sub_terms.dL6
+        
+
+
     
     def _build_ring_data_cache(self):
         #TODO: remove double normal calculation
@@ -2174,47 +2261,28 @@ class Ring_Potential(Base_potential):
     
     
 
-    def _build_force_terms(self, target_atom_id, ring_id):
-        force_terms = self.Force_sub_terms(target_atom_id, ring_id, self._component_list_data, self._cache_list_data)
-        return force_terms
 
 
-    def calculate_single_ring_forces(self, target_atom_id, atom_type_id, component, force_factor, forces):
-        atom_type_id, ring_id, coefficient = component
-#        print atom_type_id, ring_id, coefficient, self._get_component_list('RING').get_components_for_atom_id(ring_id)
-        force_terms = self._build_force_terms(target_atom_id, ring_id)
-        
-#        print Atom_utils._get_atom_info_from_index(target_atom_id)
-        self._calc_target_atom_forces(target_atom_id, ring_id, force_factor * coefficient, force_terms, forces)
-        #            #TODO: this is not how camshift does it, it uses the sum of the two ring normals
-        self._calculate_ring_forces(atom_type_id, ring_id, force_factor * coefficient, force_terms, forces)
+
 
 #    def _calc_single_force_set(self, index, force_factor, forces):
 #        pass 
-    
-    def calc_force_set(self, target_atom_ids, force_factors, forces):
-        components = self._get_component_list()
-        component_target_atom_ids = components.get_component_atom_ids()
-        for i,target_atom_id in enumerate(target_atom_ids):
-            if target_atom_id in component_target_atom_ids:
-                index_range = components.get_component_range(target_atom_id)
-                for index in range(*index_range):
-                    self._calc_single_force_set(index,force_factors[i],forces)
 
-    def _calc_single_force_set(self, index, force_factor, forces ):
-        component = self._get_component_list().get_component(index)
-        target_atom_id, atom_type_id = component
-        coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
-        for coef_component in coef_components:
-    #                print 'coef_component', i, coef_component
-    #                 print 'here', target_atom_id, atom_type_id,
-    #                coef_component, force_factor
-            self.calculate_single_ring_forces(target_atom_id, atom_type_id, coef_component, force_factor, forces)
-                    
-    def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
-        target_atom_ids = [target_atom_id]
-        force_factors = [force_factor]
-        self.calc_force_set(target_atom_ids, force_factors, forces)
+
+#    def _calc_single_force_set(self, index, force_factor, forces ):
+#        component = self._get_component_list().get_component(index)
+#        target_atom_id, atom_type_id = component
+#        coef_components = self._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
+#        for coef_component in coef_components:
+#    #                print 'coef_component', i, coef_component
+#    #                 print 'here', target_atom_id, atom_type_id,
+#    #                coef_component, force_factor
+#            self.calculate_single_ring_forces(target_atom_id, atom_type_id, coef_component, force_factor, forces)
+#                    
+#    def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
+#        target_atom_ids = [target_atom_id]
+#        force_factors = [force_factor]
+#        self.calc_force_set(target_atom_ids, force_factors, forces)
 
         
 #    def _get_component_for_atom(self, atom, context):
