@@ -27,7 +27,7 @@ import itertools
 from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
                                      Fast_ring_shift_calculator, Fast_ring_data_calculator,          \
-                                     Fast_non_bonded_calculator
+                                     Fast_non_bonded_calculator, Fast_energy_calculator
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -2905,7 +2905,10 @@ class Xcamshift():
         return [potential.get_abbreviated_name() for potential in self.potential]
     
     def _get_energy_calculator(self):
-        calculator  = Energy_calculator()
+        if self._fast:
+            calculator  = Fast_energy_calculator()
+        else:
+            calculator  = Energy_calculator()
 
         
         return calculator
