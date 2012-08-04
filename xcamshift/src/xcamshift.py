@@ -509,7 +509,10 @@ class Base_force_calculator(object):
     
     def _set_components(self,components):
         self._components = components
-        
+    
+    def _get_component(self,index):
+        return self._components.get_component(index)
+    
     def __call__(self, components, target_atom_ids, force_factors, forces):
         self._set_components(components)
         component_target_atom_ids = components.get_component_atom_ids()
@@ -1206,6 +1209,126 @@ class Dihedral_shift_calculator:
             shift = coefficient * angle_term
     
             results[index] = shift
+            
+class Dihedral_force_calculator(Base_force_calculator):
+    
+    def __init__(self):
+        Base_force_calculator.__init__(self)
+
+    def _get_dihedral_atom_ids(self, index):
+        component = self._get_component(index)
+        
+        dihedrals = component[1:5]
+        return dihedrals
+    
+    def _get_dihedral_angle(self, dihedral_1_atom_id_1, dihedral_1_atom_id_2, 
+                                 dihedral_2_atom_id_1, dihedral_2_atom_id_2):
+        
+        atom_1  = Atom_utils._get_atom_by_index(dihedral_1_atom_id_1)
+        atom_2  = Atom_utils._get_atom_by_index(dihedral_1_atom_id_2)
+        atom_3  = Atom_utils._get_atom_by_index(dihedral_2_atom_id_1)
+        atom_4  = Atom_utils._get_atom_by_index(dihedral_2_atom_id_2)
+        
+        return Dihedral(atom_1,atom_2,atom_3,atom_4).value();
+
+    def _get_parameters(self, index):
+        component = self._get_component(index)
+        parameters = component[6:11]
+        parameter_0, parameter_1, parameter_2, parameter_3, parameter_4 = parameters
+        return parameter_0, parameter_3, parameter_1, parameter_4, parameter_2
+
+    def _get_coefficient(self, index):
+        component = self._get_component(index)
+        coefficient = component[5]
+        return coefficient
+    
+    def _get_force_parameters(self,index):
+        return self._get_parameters(index)[:-1]
+    
+#    TODO make this consistent with the distance forces factor
+    def _calc_single_force_factor(self,index):
+        
+        dihedral_atom_ids= self._get_dihedral_atom_ids(index)
+        
+        
+        parameter_0, parameter_3, parameter_1, \
+        parameter_4 = self._get_force_parameters(index)
+        
+        angle = self._get_dihedral_angle(*dihedral_atom_ids)
+        
+        result = -3.0 * parameter_0 * sin(3.0 * angle + parameter_3) - \
+                        parameter_1 * sin(angle + parameter_4)
+        return result
+
+    
+    #TODO: is this too close?
+    def _calc_single_force_set(self,index,factor,forces):
+        dihedral_factor = self._calc_single_force_factor(index)
+        dihedral_atom_ids= self._get_dihedral_atom_ids(index)
+        
+#        ATOM_ID_1 = 0
+        ATOM_ID_2 = 1
+        ATOM_ID_3 = 2
+#        ATOM_ID_4 = 3
+        
+        positions = []
+        for atom_id in dihedral_atom_ids:
+            positions.append(Atom_utils._get_atom_pos(atom_id))
+            
+        v1,v2,v3,v4 = positions
+        
+        r1 = v1 - v2
+        r2 = v3 - v2
+        r3 = r2 * -1
+        r4 = v4 - v3
+        
+        # compute normal vector to plane containing v1, v2, and v3
+        n1 = cross(r1, r2)
+        # compute normal vector to plane containing v2, v3, and v4
+        n2 = cross(r3, r4)
+                
+        r2_length = Atom_utils._calculate_distance(dihedral_atom_ids[ATOM_ID_2], dihedral_atom_ids[ATOM_ID_3])
+        r2_length_2 = r2_length**2.0
+        
+
+        weight = factor * self._get_coefficient(index)
+        
+
+#        // force calculation according to Bekker, Berendsen and van Gunsteren (1995),
+#        // Journal of Computational Chemistry 16, pp. 527-533:
+#        // Force and virial of torsional-angle-dependent potentials.
+        factor_1 = dihedral_factor * r2_length;
+        F1 = n1 *  (-factor_1 / norm(n1)**2)
+        F4 = n2 *  ( factor_1 / norm(n2)**2)
+        
+        factor_2 = dot(r1, r2) / r2_length_2;
+        factor_3 = dot(r3, r4) / r2_length_2;
+
+        T1 = F1 * (factor_2-1);
+        T2 = F4 * -factor_3
+        
+        F2 = T1 + T2
+        
+        T1 = F1 * -factor_2
+        T2 = F4 * (factor_3 -1)
+
+        F3 = T1 + T2
+
+#        // assign forces
+        X_OFFSET = 0
+        Y_OFFSET = 1
+        Z_OFFSET = 2
+        
+        OFFSETS_3 = (X_OFFSET,Y_OFFSET,Z_OFFSET)
+        
+        for atom_id,base_force in zip(dihedral_atom_ids,[F1,F2,F3,F4]):
+            force_triplet = self._get_or_make_target_force_triplet(forces, atom_id)
+            for offset in OFFSETS_3:
+                force_component = weight * base_force[offset]
+                force_triplet[offset]+= force_component
+                
+
+
 
 class Dihedral_potential(Base_potential):
 
@@ -1215,6 +1338,7 @@ class Dihedral_potential(Base_potential):
         self._add_component_factory(Dihedral_component_factory())
     
         self._shift_calculator = self._get_shift_calculator()
+        self._force_calculator = self._get_force_calculator()
     
 #    TODO: remove only used for compatability during upgrades
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
@@ -1352,88 +1476,8 @@ class Dihedral_potential(Base_potential):
     def _get_force_parameters(self,index):
         return self._get_parameters(index)[:-1]
     
-#    TODO make this consistent with the distance forces factor
-    def _calc_single_force_factor(self,index):
-        
-        dihedral_atom_ids= self._get_dihedral_atom_ids(index)
-        
-        
-        parameter_0, parameter_3, parameter_1, \
-        parameter_4 = self._get_force_parameters(index)
-        
-        angle = self._get_dihedral_angle(*dihedral_atom_ids)
-        
-        result = -3.0 * parameter_0 * sin(3.0 * angle + parameter_3) - \
-                        parameter_1 * sin(angle + parameter_4)
-        return result
-
-    
-    #TODO: is this too close?
-    def _calc_single_force_set(self,index,factor,forces):
-        dihedral_factor = self._calc_single_force_factor(index)
-        dihedral_atom_ids= self._get_dihedral_atom_ids(index)
-        
-#        ATOM_ID_1 = 0
-        ATOM_ID_2 = 1
-        ATOM_ID_3 = 2
-#        ATOM_ID_4 = 3
-        
-        positions = []
-        for atom_id in dihedral_atom_ids:
-            positions.append(Atom_utils._get_atom_pos(atom_id))
-            
-        v1,v2,v3,v4 = positions
-        
-        r1 = v1 - v2
-        r2 = v3 - v2
-        r3 = r2 * -1
-        r4 = v4 - v3
-        
-        # compute normal vector to plane containing v1, v2, and v3
-        n1 = cross(r1, r2)
-        # compute normal vector to plane containing v2, v3, and v4
-        n2 = cross(r3, r4)
-                
-        r2_length = Atom_utils._calculate_distance(dihedral_atom_ids[ATOM_ID_2], dihedral_atom_ids[ATOM_ID_3])
-        r2_length_2 = r2_length**2.0
-        
-
-        weight = factor * self._get_coefficient(index)
-        
-
-#        // force calculation according to Bekker, Berendsen and van Gunsteren (1995),
-#        // Journal of Computational Chemistry 16, pp. 527-533:
-#        // Force and virial of torsional-angle-dependent potentials.
-        factor_1 = dihedral_factor * r2_length;
-        F1 = n1 *  (-factor_1 / norm(n1)**2)
-        F4 = n2 *  ( factor_1 / norm(n2)**2)
-        
-        factor_2 = dot(r1, r2) / r2_length_2;
-        factor_3 = dot(r3, r4) / r2_length_2;
-
-        T1 = F1 * (factor_2-1);
-        T2 = F4 * -factor_3
-        
-        F2 = T1 + T2
-        
-        T1 = F1 * -factor_2
-        T2 = F4 * (factor_3 -1)
-
-        F3 = T1 + T2
-
-#        // assign forces
-        X_OFFSET = 0
-        Y_OFFSET = 1
-        Z_OFFSET = 2
-        
-        OFFSETS_3 = (X_OFFSET,Y_OFFSET,Z_OFFSET)
-        
-        for atom_id,base_force in zip(dihedral_atom_ids,[F1,F2,F3,F4]):
-            force_triplet = self._get_or_make_target_force_triplet(forces, atom_id)
-            for offset in OFFSETS_3:
-                force_component = weight * base_force[offset]
-                force_triplet[offset]+= force_component
-                
+    def _get_force_calculator(self):
+        return Dihedral_force_calculator()
 
     
 class Sidechain_potential(Distance_based_potential):

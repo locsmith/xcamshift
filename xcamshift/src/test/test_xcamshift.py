@@ -471,7 +471,7 @@ class TestXcamshift(unittest2.TestCase):
         expected_force_factors = dict(ala_3.ala_3_dihedral_force_factors_tanh)
         potential = Dihedral_potential()
         
-        
+        potential._force_calculator._set_components(potential._get_component_list())
         for i, data in enumerate(potential.dump()):
             SELECTION_INDEX = 0
             TARGET_ATOM_INDEX = 0
@@ -481,7 +481,7 @@ class TestXcamshift(unittest2.TestCase):
             
             force_factor_key = target_atom_key,dihedral_angle_key
             expected_force_factor =  expected_force_factors[force_factor_key]
-            force_factor = potential._calc_single_force_factor(i)
+            force_factor = potential._force_calculator._calc_single_force_factor(i)
             self.assertAlmostEqual(expected_force_factor, force_factor,self.DEFAULT_DECIMAL_PLACES)
 
             del expected_force_factors[force_factor_key]
@@ -504,6 +504,7 @@ class TestXcamshift(unittest2.TestCase):
     def _test_dihedral_forces(self, test_factors, potential,expected_forces):
         expected_forces_dict = dict(expected_forces)
         
+        potential._force_calculator._set_components(potential._get_component_list())
         for i, data in enumerate(potential.dump()):
             
             
@@ -519,7 +520,7 @@ class TestXcamshift(unittest2.TestCase):
             for elem in dihedral_atoms_key:
                 dihedral_atom_ids.extend(single_text_key_to_atom_ids(elem))
             test_factor = test_factors[target_atom_key]
-            potential._calc_single_force_set(i,test_factor,forces)
+            potential._force_calculator._calc_single_force_set(i,test_factor,forces)
             dihedral_forces = self._extract_dihedral_forces(dihedral_atom_ids,forces)
             
             for forces,expected in zip(dihedral_forces,expected_forces_dict[expected_key]):
