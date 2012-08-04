@@ -3112,22 +3112,32 @@ class Xcamshift():
         return self._energy_calculator(target_atom_ids)
         
     
+    def _calc_force_set_with_potentials(self, target_atom_ids, forces, potentials_list):
+        factors  = self._calc_factors(target_atom_ids)
+        for potential in potentials_list:
+            if hasattr(potential, 'calc_force_set'):
+                potential.calc_force_set(target_atom_ids,factors,forces)
+            else:
+                for i,target_atom_id in enumerate(target_atom_ids):
+                    potential.calc_single_atom_force_set(target_atom_id,factors[i],forces)
         
+             
     def _calc_single_atom_force_set_with_potentials(self, target_atom_id, forces, potentials_list):
 #        print 'forces _calc_single_atom_force_set_with_potentials', forces 
 #        self._calc_single_force_factor(target_atom_id, forces)
-        for potential in potentials_list:
-            factor  = self._calc_single_factor(target_atom_id)
-            potential.calc_single_atom_force_set(target_atom_id,factor,forces)
-        return forces
+        target_atom_ids = [target_atom_id]
+        self._calc_force_set_with_potentials(target_atom_ids, forces, potentials_list)
 
-    def _calc_single_atom_force_set(self,target_atom_id,forces,potentials=None):
-#        print 'forces xcamshift._calc_single_atom_force_set',forces
+    def _calc_force_set(self,target_atom_ids,forces,potentials=None):
         if potentials ==  None:
             potentials =  self.potential
-        self._calc_single_atom_force_set_with_potentials(target_atom_id, forces, potentials)
+        self._calc_force_set_with_potentials(target_atom_ids, forces, potentials)
+         
+    def _calc_single_atom_force_set(self,target_atom_id,forces,potentials=None):
+#        print 'forces xcamshift._calc_single_atom_force_set',forces
+        target_atom_ids = [target_atom_id]
+        self._calc_force_set(target_atom_ids, forces, potentials)
         
-        return forces
 
     def _get_weight(self, residue_type, atom_name):
         table_manager = Table_manager.get_default_table_manager()
@@ -3157,12 +3167,21 @@ class Xcamshift():
         
         return constants_table.get_tanh_elongation(atom_name)
     
-    
     def _calc_single_factor(self, target_atom_id):
+        target_atom_ids = [target_atom_id]
         
-        factor = 0.0
-        if target_atom_id in self._shift_table.get_atom_indices():
-            
+        if not target_atom_id in self._shift_table.get_atom_indices():
+            msg = "requested factor for target [%s] which is not in shift table"
+            target_atom_info = Atom_utils._get_atom_info_from_index(target_atom_id)
+            raise Exception(msg % target_atom_info)
+        
+        return self. _calc_factors(target_atom_ids)[0]
+    
+    def _calc_factors(self, target_atom_ids):
+        result  = []
+        for target_atom_id in target_atom_ids:
+            factor  = 0.0
+                
             theory_shift = self._calc_single_atom_shift(target_atom_id)
             observed_shift = self._shift_table.get_chemical_shift(target_atom_id)
             
@@ -3190,12 +3209,10 @@ class Xcamshift():
                     factor = 2.0 * weight * adjusted_shift_diff * fact / sqr_scale_harmonic;
                 else:
                     factor = weight * tanh_amplitude * tanh_elongation / (cosh(tanh_elongation * (adjusted_shift_diff - end_harmonic)))**2.0 * fact;
-                
-        else:
-            msg = "requested factor for target [%s] which is not in shift table"
-            target_atom_info = Atom_utils._get_atom_info_from_index(target_atom_id)
-            raise Exception(msg % target_atom_info)
-        return factor
+
+            result.append(factor)
+        return  result
+    
 
     def _calc_single_force_factor(self,target_atom_index,forces):
         factor = 1.0
@@ -3272,8 +3289,7 @@ class Xcamshift():
         
         active_target_atom_ids = self._get_active_target_atom_ids()
         
-        for target_atom_id in active_target_atom_ids:
-            self._calc_single_atom_force_set(target_atom_id, derivs, potentials)
+        self._calc_force_set(active_target_atom_ids, derivs, potentials)
 
     def calcEnergyAndDerivs(self,derivs):
         self._prepare()
