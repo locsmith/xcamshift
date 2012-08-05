@@ -597,6 +597,7 @@ class TestXcamshift(unittest2.TestCase):
         derivs = [None] * number_atoms
         energy = xcamshift.calcEnergyAndDerivs(derivs)
         
+        self.assertAlmostEqual(energy, expected_energy, self.DEFAULT_DECIMAL_PLACES-1)
         for atom_id in range(number_atoms):
             
             atom_key  =  Atom_utils._get_atom_info_from_index(atom_id)
