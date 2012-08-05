@@ -21,9 +21,18 @@ cdef float sum(Vec3 vec3):
 
 cdef inline  Vec3 operator_times (Vec3& vec3, float scale):
     return Vec3(vec3.x() * scale, vec3.y() * scale, vec3.z() * scale)
-    
+
+cdef inline float calc_distance(int atom_index_1, atom_index_2):
+
+    vec1 = currentSimulation().atomPosArr().data(atom_index_1)
+    vec2 = currentSimulation().atomPosArr().data(atom_index_2)
+    cdef Vec3 result =  vec2 - vec1
+    return norm(result)
+
 cdef float DEFAULT_CUTOFF = 5.0
 cdef float DEFAULT_SMOOTHING_FACTOR = 1.0
+cdef float DEFAULT_NB_CUTOFF = 5.0
+    
     
 cdef class Fast_distance_shift_calculator:
 
@@ -91,7 +100,7 @@ cdef class Fast_distance_shift_calculator:
             atom_indices = self._get_target_and_distant_atom_ids(index)
             
             coef_exp = self._get_coefficient_and_exponent(index)
-            distance =self.distance(atom_indices.target_atom_id, atom_indices.distant_atom_id)
+            distance =calc_distance(atom_indices.target_atom_id, atom_indices.distant_atom_id)
     #        Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
 
             if self._smoothed:
@@ -100,12 +109,7 @@ cdef class Fast_distance_shift_calculator:
             results[index]  = smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
             
     
-    cdef float distance(self,int atom_index_1, atom_index_2):
 
-        vec1 = currentSimulation().atomPosArr().data(atom_index_1)
-        vec2 = currentSimulation().atomPosArr().data(atom_index_2)
-        cdef Vec3 result =  vec2 - vec1
-        return norm(result)
     
 cdef class Fast_dihedral_shift_calculator:
     cdef object _components
@@ -610,14 +614,14 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         
         return result
  
-    cdef inline float _distance(self, int target_atom, int distance_atom):
-        cdef Vec3 target_pos, distant_pos, distance
-        cdef float result 
-        
-        target_pos = currentSimulation().atomPosArr().data(target_atom)
-        distant_pos =  currentSimulation().atomPosArr().data(distance_atom)
-        
-        return  norm(target_pos - distant_pos)
+#    cdef inline float _distance(self, int target_atom, int distance_atom):
+#        cdef Vec3 target_pos, distant_pos, distance
+#        cdef float result 
+#        
+#        target_pos = currentSimulation().atomPosArr().data(target_atom)
+#        distant_pos =  currentSimulation().atomPosArr().data(distance_atom)
+#        
+#        return  norm(target_pos - distant_pos)
         
     cdef inline Vec3 _xyz_distances(self, int target_atom, int distance_atom):
         cdef Vec3 target_pos, distant_pos
@@ -675,7 +679,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
 
 
  
-    cdef vec3_as_tuple(self,Vec3& vec_3):
+    cdef inline object vec3_as_tuple(self,Vec3& vec_3):
         return vec_3.x(), vec_3.y(), vec_3.z()
     
     cdef object _calc_single_force_set(self, int index, float factor, object forces):
@@ -701,3 +705,20 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         for i in range(3):
             python_target_forces[i] += target_forces[i]
             python_distant_forces [i] += distant_forces[i]
+
+cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_calculator):
+    cdef float _nb_cutoff
+    
+    def __init__(self, object indices, bint smoothed):
+        super(Fast_non_bonded_force_calculator, self).__init__(indices,smoothed)
+        self._nb_cutoff = DEFAULT_NB_CUTOFF
+    
+    cdef _calc_single_force_set(self, int index, float factor, object forces):
+        cdef target_distant_atom atom_ids
+        cdef float distance
+        atom_ids = self._get_target_and_distant_atom_ids(index)
+        
+        distance  = calc_distance(atom_ids.target_atom_id, atom_ids.distant_atom_id)
+#        TODO: this should be the non bonded distance cutoff
+        if distance < self._nb_cutoff:
+            self._contained.calc_single_force_set(index, factor, forces)

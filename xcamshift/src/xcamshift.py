@@ -28,7 +28,8 @@ from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
                                      Fast_ring_shift_calculator, Fast_ring_data_calculator,          \
                                      Fast_non_bonded_calculator, Fast_energy_calculator,             \
-                                     Fast_distance_based_potential_force_calculator
+                                     Fast_distance_based_potential_force_calculator,                 \
+                                     Fast_non_bonded_force_calculator
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -2725,10 +2726,10 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
 
 
 class Non_bonded_force_calculator(Distance_based_potential_force_calculator):
-    DEFAULT_CUTOFF = 5.0
+    DEFAULT_NB_CUTOFF = 5.0
     def __init__(self, indices, smoothed):
         Distance_based_potential_force_calculator.__init__(self,indices, smoothed)
-        self._cutoff = self.DEFAULT_CUTOFF
+        self._cutoff = self.DEFAULT_NB_CUTOFF
     
     def _calc_single_force_set(self, index, factor, forces):
         target_atom_index,distant_atom_index = self._get_target_and_distant_atom_ids(index)
@@ -2754,7 +2755,11 @@ class Non_bonded_potential(Distance_based_potential):
         self._non_bonded_list = Non_bonded_list()
     
     def _get_force_calculator(self):
-        return Non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
+        if self._fast:
+            result = Fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
+        else:
+            result = Non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
+        return result
     
     def _get_table_source(self):
         return Table_manager.get_default_table_manager().get_non_bonded_table
