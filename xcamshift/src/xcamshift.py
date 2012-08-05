@@ -27,7 +27,8 @@ import itertools
 from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
                                      Fast_ring_shift_calculator, Fast_ring_data_calculator,          \
-                                     Fast_non_bonded_calculator, Fast_energy_calculator
+                                     Fast_non_bonded_calculator, Fast_energy_calculator,             \
+                                     Fast_distance_based_potential_force_calculator
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -844,13 +845,13 @@ class Distance_based_potential_force_calculator(Base_force_calculator):
         target_pos = Atom_utils._get_atom_by_index(target_atom).pos()
         distant_pos =  Atom_utils._get_atom_by_index(distance_atom).pos()
         
-        distances  = target_pos - distant_pos
-        distance_2 = sum([elem**2 for elem in distances])
+        xyz_distances  = target_pos - distant_pos
+        sum_xyz_distances_2 = sum([elem**2 for elem in xyz_distances])
 
         factor= factor * coefficient
         
         if self._smoothed:
-            ratio = distance_2 / self._cutoff**2
+            ratio = sum_xyz_distances_2 / self._cutoff**2
             ratio =  ratio**4
             pre_exponent = exponent - (exponent + 8.0) * ratio
         else:
@@ -858,7 +859,7 @@ class Distance_based_potential_force_calculator(Base_force_calculator):
             
         reduced_exponent = (exponent - 2.0) / 2.0
         
-        force_factor = factor *  pre_exponent * distance_2 ** reduced_exponent
+        force_factor = factor *  pre_exponent * sum_xyz_distances_2 ** reduced_exponent
 
         return force_factor
 
@@ -879,8 +880,8 @@ class Distance_based_potential_force_calculator(Base_force_calculator):
         
         target_pos = Atom_utils._get_atom_by_index(target_atom).pos()
         distant_pos =  Atom_utils._get_atom_by_index(distant_atom).pos()
-        
-        distance  = target_pos - distant_pos
+#        print target_pos,distant_pos
+        xyz_distanceS  = target_pos - distant_pos
         
         force_factor  = self._calc_single_force_factor(index, factor)
         
@@ -896,9 +897,10 @@ class Distance_based_potential_force_calculator(Base_force_calculator):
         
         target_forces = self._get_or_make_target_force_triplet(forces, target_offset)
         distant_forces  = self._get_or_make_target_force_triplet(forces, distant_offset)
+        
         for offset in OFFSETS_3:
-            target_forces[offset] -= distance[offset] * force_factor
-            distant_forces[offset] += distance[offset] * force_factor
+            target_forces[offset] -= xyz_distanceS[offset] * force_factor
+            distant_forces[offset] += xyz_distanceS[offset] * force_factor
 
 class Distance_based_potential(Base_potential):
     
@@ -928,7 +930,10 @@ class Distance_based_potential(Base_potential):
         return result
     
     def _get_force_calculator(self):
-        result = Distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
+        if self._fast:
+            result = Fast_distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
+        else:
+            result = Distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
         return result
 #    TODO: remove to base class
     def calc_shifts(self, target_atom_ids, results):
