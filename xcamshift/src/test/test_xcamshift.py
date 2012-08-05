@@ -520,7 +520,7 @@ class TestXcamshift(unittest2.TestCase):
             for elem in dihedral_atoms_key:
                 dihedral_atom_ids.extend(single_text_key_to_atom_ids(elem))
             test_factor = test_factors[target_atom_key]
-            potential._force_calculator._calc_single_force_set(i,test_factor,forces)
+            potential._force_calculator._test_calc_single_force_set(i,test_factor,forces)
             dihedral_forces = self._extract_dihedral_forces(dihedral_atom_ids,forces)
             
             for forces,expected in zip(dihedral_forces,expected_forces_dict[expected_key]):
@@ -554,7 +554,9 @@ class TestXcamshift(unittest2.TestCase):
         self._test_distance_forces(factors_harmonic, sidechain_potential,expected_forces)
         
     def testDihedralPotentialSingleForceTanh(self):
+        global fast
         dihedral_potential = Dihedral_potential()
+        dihedral_potential.set_fast(fast)
         expected_forces = ala_3.ala_3_dihedral_forces_tanh
         factors_tanh = ala_3.ala_3_factors_tanh
 
@@ -777,7 +779,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshift.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift')
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetTanh')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDihedralPotentialSingleForceTanh')
     
 if __name__ == "__main__":
     run_tests()

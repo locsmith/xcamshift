@@ -29,7 +29,8 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_ring_shift_calculator, Fast_ring_data_calculator,          \
                                      Fast_non_bonded_calculator, Fast_energy_calculator,             \
                                      Fast_distance_based_potential_force_calculator,                 \
-                                     Fast_non_bonded_force_calculator
+                                     Fast_non_bonded_force_calculator,                               \
+                                     Fast_dihedral_force_calculator
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -1266,6 +1267,8 @@ class Dihedral_force_calculator(Base_force_calculator):
                         parameter_1 * sin(angle + parameter_4)
         return result
 
+    def _test_calc_single_force_set(self,index,factor,forces):
+        self._calc_single_force_set(index,factor,forces)
     
     #TODO: is this too close?
     def _calc_single_force_set(self,index,factor,forces):
@@ -1361,6 +1364,7 @@ class Dihedral_potential(Base_potential):
     def set_fast(self, on):
         self._fast = (on == True)
         self._shift_calculator = self._get_shift_calculator()
+        self._force_calculator = self._get_force_calculator()
         
     def calc_shifts(self, target_atom_ids, results):
         components  = self._filter_components(target_atom_ids)
@@ -1483,7 +1487,11 @@ class Dihedral_potential(Base_potential):
         return self._get_parameters(index)[:-1]
     
     def _get_force_calculator(self):
-        return Dihedral_force_calculator()
+        if self._fast:
+            result = Fast_dihedral_force_calculator()
+        else:
+            result  = Dihedral_force_calculator()
+        return result
 
     
 class Sidechain_potential(Distance_based_potential):

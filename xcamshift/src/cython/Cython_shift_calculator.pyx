@@ -5,7 +5,7 @@ Created on 31 Jul 2012
 '''
 from vec3 import Vec3 as python_vec3
 from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross
-from libc.math cimport cos,fabs, tanh, pow
+from libc.math cimport cos,sin,  fabs, tanh, pow
 
 
 cdef struct target_distant_atom:
@@ -55,7 +55,7 @@ cdef inline float calc_dihedral_angle(dihedral_ids dihedral_atom_ids):
     return Dihedral(atom_1,atom_2,atom_3,atom_4).value()
 
  
-cdef inline object vec3_as_tuple(Vec3& vec_3):
+cdef object vec3_as_tuple(Vec3& vec_3):
     return vec_3.x(), vec_3.y(), vec_3.z()
 
 cdef float DEFAULT_CUTOFF = 5.0
@@ -704,8 +704,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
 
 
  
-    cdef inline object vec3_as_tuple(self,Vec3& vec_3):
-        return vec_3.x(), vec_3.y(), vec_3.z()
+
     
     cdef object _calc_single_force_set(self, int index, float factor, object forces):
         
@@ -747,3 +746,147 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
 #        TODO: this should be the non bonded distance cutoff
         if distance < self._nb_cutoff:
             self._contained.calc_single_force_set(index, factor, forces)
+
+
+    
+cdef class Fast_dihedral_force_calculator(Base_force_calculator):
+    
+    def __init__(self):
+        Base_force_calculator.__init__(self)
+
+    cdef inline dihedral_ids _get_dihedral_atom_ids(self, int index):
+        cdef dihedral_ids result
+        
+        component = self._get_component(index)
+        
+        result.atom_id_1= component[1]
+        result.atom_id_2= component[2]
+        result.atom_id_3= component[3]
+        result.atom_id_4= component[4]
+        
+        return result
+    
+    cdef inline dihedral_parameters _get_parameters(self, int index):
+        component = self._get_component(index)
+        
+        cdef dihedral_parameters result  
+        
+        parameters = component[6:11]
+        
+        result.param_0 =  parameters[0]
+        result.param_1 =  parameters[3]
+        result.param_2 =  parameters[1]
+        result.param_3 =  parameters[4]
+        result.param_4 =  parameters[2]
+        
+            
+        return result
+    
+    cdef inline float _get_coefficient(self, int index):
+        component = self._get_component(index)
+        coefficient = component[5]
+        return coefficient
+    
+#    TODO make this consistent with the distance forces factor
+    cdef _calc_single_force_factor(self, int index):
+        
+        cdef dihedral_ids dihedral_atom_ids
+        cdef dihedral_parameters params
+        
+        
+        dihedral_atom_ids  = dihedral_atom_ids= self._get_dihedral_atom_ids(index)
+        
+        params = self._get_parameters(index)
+        
+        angle = calc_dihedral_angle(dihedral_atom_ids)
+        
+        result = -3.0 * params.param_0 * sin(3.0 * angle + params.param_1) - \
+                        params.param_2 * sin(angle + params.param_3)
+        return result
+
+    
+    #TODO: is this too close?
+    def _test_calc_single_force_set(self, int index, float factor, object forces):
+        self._calc_single_force_set(index, factor, forces)
+        
+    cdef _calc_single_force_set(self, int index, float factor, object forces):
+        cdef Vec3 r1, r2, r3, r4, temp
+        cdef Vec3 n1, n2
+        cdef float weight
+        cdef float factor_1, factor_2, factor_3
+        cdef Vec3 F1, F2, F3, F4
+        cdef Vec3 T1, T2, T3, T4
+        
+        cdef float dihedral_factor = self._calc_single_force_factor(index)
+        cdef dihedral_ids atom_ids = self._get_dihedral_atom_ids(index)
+        
+        v1 = currentSimulation().atomPosArr().data(atom_ids.atom_id_1)
+        v2 = currentSimulation().atomPosArr().data(atom_ids.atom_id_2)
+        v3 = currentSimulation().atomPosArr().data(atom_ids.atom_id_3)
+        v4 = currentSimulation().atomPosArr().data(atom_ids.atom_id_4)
+         
+        r1 = v1 - v2
+        r2 = v3 - v2
+        temp = Vec3(r2)
+        r3 = operator_times(temp, -1)
+        r4 = v4 - v3
+
+#        print vec3_as_tuple(r1), vec3_as_tuple(r2), vec3_as_tuple(r3), vec3_as_tuple(r4)
+        
+        # compute normal vector to plane containing v1, v2, and v3
+        n1 = cross(r1, r2)
+        # compute normal vector to plane containing v2, v3, and v4
+        n2 = cross(r3, r4)
+        
+        r2_length = calc_distance(atom_ids.atom_id_2,atom_ids.atom_id_3)
+        r2_length_2 = r2_length*r2_length
+        
+
+        weight = factor * self._get_coefficient(index)
+        
+        
+
+#        // force calculation according to Bekker, Berendsen and van Gunsteren (1995),
+#        // Journal of Computational Chemistry 16, pp. 527-533:
+##        // Force and virial of torsional-angle-dependent potentials.
+        factor_1 = dihedral_factor * r2_length
+        temp=Vec3(n1)
+        F1 = operator_times(temp, (-factor_1 / norm(n1)**2))
+        temp = Vec3(n2)
+        F4 = operator_times(temp, ( factor_1 / norm(n2)**2))
+        
+        factor_2 = dot(r1, r2) / r2_length_2
+        factor_3 = dot(r3, r4) / r2_length_2
+
+        temp = Vec3(F1)
+        T1 = operator_times(temp,  (factor_2-1))
+        temp = Vec3(F4)
+        T2 = operator_times(temp,  -factor_3)
+        
+        F2 = T1 + T2
+        
+        temp = Vec3(F1)
+        T1 = operator_times(temp,  -factor_2)
+        temp =Vec3(F4)
+        T2 = operator_times(temp, (factor_3 -1))
+
+        F3 = T1 + T2
+
+#        print vec3_as_tuple(F1), vec3_as_tuple(F2), vec3_as_tuple(F3), vec3_as_tuple(F4)
+#        // assign forces
+        force_triplet_1 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_1)
+        force_triplet_2 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_2)
+        force_triplet_3 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_3)
+        force_triplet_4 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_4)
+        
+        self.set_force_triplet(weight,force_triplet_1,F1)
+        self.set_force_triplet(weight,force_triplet_2,F2)
+        self.set_force_triplet(weight,force_triplet_3,F3)
+        self.set_force_triplet(weight,force_triplet_4,F4)
+        
+        
+    
+    cdef set_force_triplet(self, float weight, object force_triplet, Vec3 vector):
+        for offset in range(3):
+            force_component = weight * vector[offset]
+            force_triplet[offset]+= force_component
