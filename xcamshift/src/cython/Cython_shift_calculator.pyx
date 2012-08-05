@@ -16,6 +16,20 @@ cdef struct coefficient_exponent:
     float coefficient
     float exponent
     
+cdef struct dihedral_ids:
+    int atom_id_1
+    int atom_id_2
+    int atom_id_3
+    int atom_id_4
+
+cdef struct dihedral_parameters:
+    float param_0
+    float param_1
+    float param_2
+    float param_3
+    float param_4
+    
+    
 cdef float sum(Vec3 vec3):
     return vec3.x()+vec3.y()+vec3.z()
 
@@ -28,6 +42,21 @@ cdef inline float calc_distance(int atom_index_1, atom_index_2):
     vec2 = currentSimulation().atomPosArr().data(atom_index_2)
     cdef Vec3 result =  vec2 - vec1
     return norm(result)
+
+cdef inline float calc_dihedral_angle(dihedral_ids dihedral_atom_ids):
+    
+    
+
+    atom_1  = currentSimulation().atomByID(dihedral_atom_ids.atom_id_1)
+    atom_2  = currentSimulation().atomByID(dihedral_atom_ids.atom_id_2)
+    atom_3  = currentSimulation().atomByID(dihedral_atom_ids.atom_id_3)
+    atom_4  = currentSimulation().atomByID(dihedral_atom_ids.atom_id_4)
+    
+    return Dihedral(atom_1,atom_2,atom_3,atom_4).value()
+
+ 
+cdef inline object vec3_as_tuple(Vec3& vec_3):
+    return vec_3.x(), vec_3.y(), vec_3.z()
 
 cdef float DEFAULT_CUTOFF = 5.0
 cdef float DEFAULT_SMOOTHING_FACTOR = 1.0
@@ -123,66 +152,62 @@ cdef class Fast_dihedral_shift_calculator:
     cdef inline _get_component(self,int index):
         return self._components[index]
     
-    cdef inline _get_dihedral_angle(self, int dihedral_1_atom_id_1, int dihedral_1_atom_id_2, 
-                                          int dihedral_2_atom_id_1, int dihedral_2_atom_id_2):
-        cdef Atom atom1,atom_2, atom_3, atom_4
+
+    cdef inline dihedral_ids _get_dihedral_atom_ids(self, int index):
+        cdef dihedral_ids result
         
-
-        atom_1  = currentSimulation().atomByID(dihedral_1_atom_id_1)
-        atom_2  = currentSimulation().atomByID(dihedral_1_atom_id_2)
-        atom_3  = currentSimulation().atomByID(dihedral_2_atom_id_1)
-        atom_4  = currentSimulation().atomByID(dihedral_2_atom_id_2)
-        
-        return Dihedral(atom_1,atom_2,atom_3,atom_4).value()
-
-
-    cdef inline _get_dihedral_atom_ids(self, int index):
         component = self._get_component(index)
         
-        return component[1], component[2],component[3],component[4]
+        result.atom_id_1= component[1]
+        result.atom_id_2= component[2]
+        result.atom_id_3= component[3]
+        result.atom_id_4= component[4]
+        
+        return result
 
-
-    cdef inline _get_coefficient(self, int index):
+    cdef inline float _get_coefficient(self, int index):
         component = self._get_component(index)
         coefficient = component[5]
         return coefficient
 
 
-    cdef inline _get_parameters(self, int index):
+    cdef inline dihedral_parameters _get_parameters(self, int index):
         component = self._get_component(index)
+        
+        cdef dihedral_parameters result
+        
         parameters = component[6:11]
-        parameter_0, parameter_1, parameter_2, parameter_3, parameter_4 = parameters
-        return parameter_0, parameter_3, parameter_1, parameter_4, parameter_2
+        
+        result.param_0 =  parameters[0]
+        result.param_1 =  parameters[3]
+        result.param_2 =  parameters[1]
+        result.param_3 =  parameters[4]
+        result.param_4 =  parameters[2]
+        
+            
+        return result
 
     def __call__(self, object components, object results):
         cdef float angle
         cdef float angle_term
         cdef float shift
         cdef float coefficient
-        cdef float parameter_0, parameter_1, \
-                   parameter_2, parameter_3, \
-                   parameter_4
-        cdef int dihedral_atom_id_1, dihedral_atom_id_2,dihedral_atom_id_3, dihedral_atom_id_4,  
+        cdef dihedral_parameters parameters
+        cdef dihedral_ids dihedral_atom_ids  
         
         self._set_components(components)
         for index in range(len(components)):
-            dihedral_atom_id_1, dihedral_atom_id_2, \
-            dihedral_atom_id_3, dihedral_atom_id_4 = self._get_dihedral_atom_ids(index)
+            dihedral_atom_ids = self._get_dihedral_atom_ids(index)
             
             coefficient = self._get_coefficient(index)
             
-            parameter_0, parameter_3, parameter_1, \
-            parameter_4, parameter_2               \
-            = self._get_parameters(index)
+            parameters = self._get_parameters(index)
             
-            angle = self._get_dihedral_angle(dihedral_atom_id_1, dihedral_atom_id_2,
-                                             dihedral_atom_id_3, dihedral_atom_id_4)
+            angle = calc_dihedral_angle(dihedral_atom_ids)
     
-            
-            angle_term = parameter_0 * cos(3.0 * angle + parameter_3) + \
-                         parameter_1 * cos(angle + parameter_4) +       \
-                         parameter_2
-            
+            angle_term = parameters.param_0 * cos(3.0 * angle + parameters.param_1) + \
+                         parameters.param_2 * cos(angle +  parameters.param_3) +      \
+                         parameters.param_4
             shift = coefficient * angle_term
     
             results[index] = shift
