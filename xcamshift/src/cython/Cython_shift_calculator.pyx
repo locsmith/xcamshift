@@ -5,11 +5,28 @@ Created on 31 Jul 2012
 '''
 from vec3 import Vec3 as python_vec3
 from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross
-from libc.math cimport cos,fabs, tanh
+from libc.math cimport cos,fabs, tanh, pow
 
+
+cdef struct target_distant_atom:
+    int target_atom_id
+    int distant_atom_id
+
+cdef struct coefficient_exponent:
+    float coefficient
+    float exponent
+    
+cdef float sum(Vec3 vec3):
+    return vec3.x()+vec3.y()+vec3.z()
+
+cdef inline  Vec3 operator_times (Vec3& vec3, float scale):
+    return Vec3(vec3.x() * scale, vec3.y() * scale, vec3.z() * scale)
+    
+cdef float DEFAULT_CUTOFF = 5.0
+cdef float DEFAULT_SMOOTHING_FACTOR = 1.0
+    
 cdef class Fast_distance_shift_calculator:
-    DEFAULT_CUTOFF  = 5.0
-    DEFAULT_SMOOTHING_FACTOR = 1.0
+
     
     cdef int _target_atom_index
     cdef int _distance_atom_index_1
@@ -29,10 +46,10 @@ cdef class Fast_distance_shift_calculator:
         self._coefficient_index  = indices.coefficient_index
         
         self._smoothed =  smoothed
-        self._smoothing_factor =  self.DEFAULT_SMOOTHING_FACTOR
+        self._smoothing_factor =  DEFAULT_SMOOTHING_FACTOR
 #        
         self._components =  None
-        self._cutoff =  self.DEFAULT_CUTOFF
+        self._cutoff =  DEFAULT_CUTOFF
 #    
 #    def set_cutoff(self, cutoff):
 #        self._cutoff =  cutoff
@@ -44,38 +61,45 @@ cdef class Fast_distance_shift_calculator:
     cdef _set_components(self,components):
         self._components = components
     
-    cdef inline _get_target_and_distant_atom_ids(self, index):
+    cdef inline target_distant_atom _get_target_and_distant_atom_ids(self, int index):
+        cdef object values 
+        cdef target_distant_atom result 
         values  = self._components.get_component(index)
         
-        target_atom = values[self._distance_atom_index_1]
-        distance_atom = values[self._distance_atom_index_2]
-        return target_atom, distance_atom
+        result.target_atom_id = values[self._distance_atom_index_1]
+        result.distant_atom_id  = values[self._distance_atom_index_2]
+        return result
     
-    cdef inline _get_coefficient_and_exponent(self, index):
+    cdef inline coefficient_exponent _get_coefficient_and_exponent(self, int index):
+        cdef object values
+        cdef coefficient_exponent result
         values = self._components.get_component(index)
         
-        coefficient = values[self._coefficient_index]
-        exponent = values[self._exponent_index]
+        result.coefficient = values[self._coefficient_index]
+        result.exponent = values[self._exponent_index]
         
-        return coefficient, exponent
+        return result
 #    
     def __call__(self, object components, object results):
         self._set_components(components)
         cdef float smoothing_factor = self._smoothing_factor
         cdef float ratio
         cdef float result
+        cdef target_distant_atom atom_indices
+        cdef coefficient_exponent coef_exp
         for index in range(len(components)):
-            target_atom_index, sidechain_atom_index = self._get_target_and_distant_atom_ids(index)
-            coefficient, exponent = self._get_coefficient_and_exponent(index)
-            distance =self.distance(target_atom_index, sidechain_atom_index)
+            atom_indices = self._get_target_and_distant_atom_ids(index)
+            
+            coef_exp = self._get_coefficient_and_exponent(index)
+            distance =self.distance(atom_indices.target_atom_id, atom_indices.distant_atom_id)
     #        Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
 
             if self._smoothed:
                 ratio = distance / self._cutoff
                 smoothing_factor = 1.0 - ratio ** 8
-            results[index]  = smoothing_factor * distance ** exponent * coefficient
+            results[index]  = smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
             
-
+    
     cdef float distance(self,int atom_index_1, atom_index_2):
 
         vec1 = currentSimulation().atomPosArr().data(atom_index_1)
@@ -488,3 +512,192 @@ cdef class Fast_energy_calculator:
                 energy += energy_component
         return energy
 
+cdef class Base_force_calculator:
+    
+    cdef object _components
+    
+    def __init__(self,potential=None):
+        self._components =  None
+    
+    def _set_components(self,components):
+        self._components = components
+    
+    cdef inline object _get_component(self,int index):
+        return self._components.get_component(index)
+    
+#    TODO should most probably be a fixed array
+    def __call__(self, components, target_atom_ids, force_factors, forces):
+        self._set_components(components)
+        component_target_atom_ids = components.get_component_atom_ids()
+        for i,target_atom_id in enumerate(target_atom_ids):
+            if target_atom_id in component_target_atom_ids:
+                index_range = components.get_component_range(target_atom_id)
+                for index in range(*index_range):
+                    self._calc_single_force_set(index,force_factors[i],forces)
+    
+    cdef inline _get_or_make_target_force_triplet(self, object forces, object target_offset):
+        target_forces = forces[target_offset]
+        if target_forces == None:
+            target_forces = [0.0] * 3
+            forces[target_offset] = target_forces
+        return target_forces
+
+#    TODO make abstract
+    cdef _calc_single_force_set(self,int index, float force_factor, object forces):
+        raise Exception("unexpected! this method should be implemented")
+
+
+
+cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator):
+    
+
+
+    cdef int  _target_atom_index
+    cdef int  _distance_atom_index_1
+    cdef int  _distance_atom_index_2
+    cdef int  _exponent_index
+    cdef int  _coefficient_index
+    cdef bint  _smoothed 
+    cdef float _smoothing_factor
+    cdef float _cutoff
+    
+    def __init__(self, object indices, bint smoothed):
+        super(Fast_distance_based_potential_force_calculator, self).__init__()
+        self._target_atom_index = indices.target_atom_index
+        self._distance_atom_index_1 =  indices.distance_atom_index_1
+        self._distance_atom_index_2 =  indices .distance_atom_index_2
+        self._exponent_index  = indices.exponent_index
+        self._coefficient_index  = indices.coefficient_index
+        self._components =  None
+        self._smoothed =  smoothed
+        self._smoothing_factor =  DEFAULT_SMOOTHING_FACTOR
+        self._cutoff =  DEFAULT_CUTOFF
+        
+    def set_cutoff(self, cutoff):
+        self._cutoff =  cutoff
+    
+    def set_smoothing_factor(self,smoothing_factor):
+        self._smoothing_factor = smoothing_factor
+        
+    def _set_components(self,components):
+        self._components = components
+    
+    cdef target_distant_atom _get_target_and_distant_atom_ids(self, int index):
+        
+        cdef object values
+        cdef int target_atom_id
+        cdef int distant_atom_id
+        cdef target_distant_atom result
+        
+        values  = self._components.get_component(index)
+        
+        result.target_atom_id = values[self._distance_atom_index_1]
+        result.distant_atom_id = values[self._distance_atom_index_2]
+        
+        return result
+    
+    cdef inline coefficient_exponent _get_coefficient_and_exponent(self, int index):
+        cdef object values
+        cdef float coefficient
+        cdef float exponent
+        cdef coefficient_exponent result
+        values = self._components.get_component(index)
+        
+
+
+        result.coefficient = values[self._coefficient_index]
+        result.exponent = values[self._exponent_index]
+        
+        return result
+ 
+    cdef inline float _distance(self, int target_atom, int distance_atom):
+        cdef Vec3 target_pos, distant_pos, distance
+        cdef float result 
+        
+        target_pos = currentSimulation().atomPosArr().data(target_atom)
+        distant_pos =  currentSimulation().atomPosArr().data(distance_atom)
+        
+        return  norm(target_pos - distant_pos)
+        
+    cdef inline Vec3 _xyz_distances(self, int target_atom, int distance_atom):
+        cdef Vec3 target_pos, distant_pos
+        
+        
+        target_pos = currentSimulation().atomPosArr().data(target_atom)
+        distant_pos =  currentSimulation().atomPosArr().data(distance_atom)
+        
+        return target_pos - distant_pos
+        
+    cdef inline float _sum_xyz_distances_2(self, int target_atom, int distance_atom):
+        cdef Vec3 target_pos, distant_pos, distance
+        cdef float result =0.0
+        
+        target_pos = currentSimulation().atomPosArr().data(target_atom)
+        distant_pos =  currentSimulation().atomPosArr().data(distance_atom)
+        
+        distance = Vec3(target_pos - distant_pos)
+        
+        for i in range(3):
+            result += distance[i] * distance[i]
+            
+        return result 
+    
+    
+    cdef float _calc_single_force_factor(self, int index, float factor):
+        cdef target_distant_atom atom_ids
+        cdef coefficient_exponent coef_exp
+        cdef float exponent 
+        
+        cdef float full_factor
+        cdef float ratio, pre_exponent, reduced_exponent, sum_xyz_distances_2
+        
+        atom_ids = self._get_target_and_distant_atom_ids(index)
+        
+        coef_exp = self._get_coefficient_and_exponent(index)
+        
+        sum_xyz_distances_2 = self._sum_xyz_distances_2(atom_ids.target_atom_id, atom_ids.distant_atom_id)
+#
+        full_factor= factor * coef_exp.coefficient
+        
+        exponent = coef_exp.exponent
+        if self._smoothed:
+            ratio = sum_xyz_distances_2 / (self._cutoff**2)
+            ratio =  ratio**4
+            pre_exponent = exponent - (exponent + 8.0) * ratio
+        else:
+            pre_exponent = exponent
+            
+        reduced_exponent = (exponent - 2.0) / 2.0
+        
+        force_factor = full_factor *  pre_exponent * sum_xyz_distances_2 ** reduced_exponent
+
+        return force_factor
+
+
+ 
+    cdef vec3_as_tuple(self,Vec3& vec_3):
+        return vec_3.x(), vec_3.y(), vec_3.z()
+    
+    cdef object _calc_single_force_set(self, int index, float factor, object forces):
+        
+        cdef target_distant_atom atom_ids
+        cdef Vec3 xyz_distances, target_forces, distant_forces
+        cdef float force_factor, distance
+
+        atom_ids =  self._get_target_and_distant_atom_ids(index)
+        
+#        print atom_ids.target_atom_id,atom_ids.distant_atom_id
+        xyz_distances  = self._xyz_distances(atom_ids.target_atom_id,atom_ids.distant_atom_id)
+        
+        force_factor  = self._calc_single_force_factor(index, factor)
+        
+        
+        python_target_forces = self._get_or_make_target_force_triplet(forces, atom_ids.target_atom_id)
+        python_distant_forces  = self._get_or_make_target_force_triplet(forces, atom_ids.distant_atom_id)
+        
+        target_forces = operator_times(xyz_distances, -force_factor)
+        distant_forces = operator_times(xyz_distances, force_factor)
+        
+        for i in range(3):
+            python_target_forces[i] += target_forces[i]
+            python_distant_forces [i] += distant_forces[i]
