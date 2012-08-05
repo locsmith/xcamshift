@@ -604,7 +604,7 @@ class TestXcamshift(unittest2.TestCase):
                 force_triplet = derivs[atom_id]
                 expected_force_triplet = expected_forces[atom_key]
                 
-                self.assertSequenceAlmostEqual(force_triplet, expected_force_triplet, self.DEFAULT_DECIMAL_PLACES, atom_key)
+                self.assertSequenceAlmostEqual(force_triplet, expected_force_triplet, self.DEFAULT_DECIMAL_PLACES, `atom_key`)
                 del expected_forces[atom_key]
                 
         self.remove_almost_zero_force_elems(expected_forces, self.DEFAULT_DECIMAL_PLACES)
@@ -776,7 +776,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshift.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift')
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetWell')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetTanh')
     
 if __name__ == "__main__":
     run_tests()
