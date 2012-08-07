@@ -469,7 +469,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 target_atom_key = self.get_target_atom_key(raw_backbone_force_component_key)
                 target_atom_keys.add(target_atom_key)
         
-                return target_atom_keys
+            return target_atom_keys
 
         def build_expected_forces_for_potential(target_atom_key, raw_backbone_force_components):
             
