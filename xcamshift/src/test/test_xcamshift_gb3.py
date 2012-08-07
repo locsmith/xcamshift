@@ -411,7 +411,9 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
         
     def make_xcamshift(self, shifts):
+        global fast
         xcamshift = self._setup_xcamshift_with_shifts_table(shifts)
+        xcamshift.set_fast(fast)
 
         
         non_bonded = xcamshift.get_named_sub_potential(NON_BONDED)
