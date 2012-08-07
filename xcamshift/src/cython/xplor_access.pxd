@@ -24,7 +24,7 @@ cdef extern from "vec3.hh":
         Vec3& operator+(Vec3&)
         Vec3& operator*(Vec3&)
         float norm()
-        float operator[](long)
+        float& operator[](long)
         
 cdef extern from "atom.hh":
     cdef cppclass Atom:
