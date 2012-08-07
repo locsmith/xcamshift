@@ -349,7 +349,7 @@ class TestXcamshift(unittest2.TestCase):
             key = Atom_utils._get_atom_info_from_index(atom_index)[1:]
             factor = xcamshift._calc_single_factor(atom_index)
             expected_factor = expected_factors[key]
-            self.assertAlmostEqual(factor, expected_factor, self.DEFAULT_DECIMAL_PLACES)
+            self.assertAlmostEqual(factor, expected_factor, self.DEFAULT_DECIMAL_PLACES-1)
 
     def testSingleFactorHarmonic(self):
         test_shifts = ala_3.ala_3_test_shifts_harmonic
