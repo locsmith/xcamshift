@@ -30,7 +30,8 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_non_bonded_calculator, Fast_energy_calculator,             \
                                      Fast_distance_based_potential_force_calculator,                 \
                                      Fast_non_bonded_force_calculator,                               \
-                                     Fast_dihedral_force_calculator
+                                     Fast_dihedral_force_calculator,                                 \
+                                     Fast_ring_force_calculator
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -2173,8 +2174,12 @@ class Ring_Potential(Base_potential):
         
         
     def _get_ring_force_calculator(self):
-        return Ring_force_calculator()
-    
+        if self._fast:
+            result = Fast_ring_force_calculator()
+        else:
+            result =  Ring_force_calculator()
+        return result
+            
     def _prepare(self): 
         self._build_ring_data_cache()
         self._setup_ring_calculator(self._shift_calculator)
@@ -2183,6 +2188,7 @@ class Ring_Potential(Base_potential):
         self._fast = (on == True)
         self._shift_calculator = self._get_shift_calculator()
         self._ring_data_calculator =  self._get_ring_data_calculator()
+        self._force_calculator = self._get_ring_force_calculator()
         
     def _setup_ring_calculator(self,calculator):
         calculator._set_coef_components(self._get_component_list('COEF'))
@@ -2744,7 +2750,7 @@ class Non_bonded_force_calculator(Distance_based_potential_force_calculator):
         
         distance  = Atom_utils._calculate_distance(target_atom_index, distant_atom_index)
 #        TODO: this should be the non bonded distance cutoff
-        if distance < 5.0:
+        if distance < DEFAULT_NB_CUTOFF:
             super(Non_bonded_force_calculator, self)._calc_single_force_set(index, factor, forces)
 
 # target_atom_id, target_atom_type_id
@@ -3153,6 +3159,7 @@ class Xcamshift():
 
     def set_fast(self,on):
         self._fast = (on == True)
+        self._set_sub_potetials_fast()
         
     def clear_shift_cache(self):
         self._shift_cache = {}
@@ -3486,10 +3493,16 @@ class Xcamshift():
         return active_target_atom_ids
     
 
-    def _prepare_potentials(self):
+    def _set_sub_potetials_fast(self):
         for potential in self.potential:
             potential.set_fast(self._fast)
         
+        return potential
+
+    def _prepare_potentials(self):
+        self._set_sub_potetials_fast()
+        
+        for potential in self.potential:
             potential._prepare()
 
     def _prepare(self):

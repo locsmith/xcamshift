@@ -6,11 +6,16 @@ Created on 31 Jul 2012
 from vec3 import Vec3 as python_vec3
 from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross
 from libc.math cimport cos,sin,  fabs, tanh, pow
+from libc.stdlib cimport malloc, free
 
 
 cdef struct target_distant_atom:
     int target_atom_id
     int distant_atom_id
+    
+cdef struct target_type:
+    int  target_atom_id
+    int  atom_type_id
 
 cdef struct coefficient_exponent:
     float coefficient
@@ -22,6 +27,102 @@ cdef struct dihedral_ids:
     int atom_id_3
     int atom_id_4
 
+cdef struct Coef_component:
+    int atom_type_id
+    int ring_id
+    float coefficient
+
+cdef struct Ring_force_sub_terms:
+    Vec3 d
+    float dLnL
+    float dL3nL3
+    float dn
+    float dL
+    float nL
+    Vec3 gradUQ
+    float dL3 
+    float u  
+    Vec3 gradVQ
+    float dL6
+    Vec3 ring_normal
+
+cdef class Coef_components:
+    cdef int num_components
+    cdef Coef_component* _components
+    
+    def __init__ (self, object components):
+        self.num_components = len(components)
+        for i,component in enumerate(components):
+            self._components[i].atom_type_id = component[0] 
+            self._components[i].ring_id = component[1]
+            self._components[i].coefficient = component[2]
+        
+    def __cinit__(self, object components):
+        self._components = <Coef_component *>malloc(len(components) * sizeof(Coef_component))
+        if not self._components:
+            raise MemoryError()
+    
+    def __dealloc__(self):
+        free(self._components)
+        self._components = NULL
+    
+    cdef int _check_offset(self, int offset) except -1:
+    
+        if not offset < self.num_components:
+            raise IndexError("tried to access object at %i length is %i" % (offset,self._num_components))
+        if self._components is NULL:
+            raise AttributeError("trying to access deallocated memory!")
+        return 0
+
+    
+#    cdef set_component(self,int offset, coef_component& component):
+#        self._check_offset(offset)
+#        self._components[offset] = component
+
+    cdef inline Coef_component* get_component(self,int offset):
+        self._check_offset(offset)
+        return &self._components[offset] 
+
+cdef struct ring_atom_ids:
+    int num_atoms
+    int[6] atom_ids
+
+
+
+    
+
+cdef class Ring_atom_positions:
+    cdef int num_vecs
+    cdef Vec3* _vecs
+    
+    def __init__ (self, int num_vecs):
+        self.num_vecs = num_vecs
+
+        
+    def __cinit__(self, int num_vecs):
+        self._vecs = <Vec3 *>malloc(num_vecs * sizeof(Vec3))
+        if not self._vecs:
+            raise MemoryError()
+    
+    def __dealloc__(self):
+        free(self._vecs)
+        self._vecs = NULL
+    
+    cdef inline int _check_offset(self, int offset) except -1:
+        if not offset < self.num_vecs:
+            raise IndexError("tried to access object at %i length is %i" % (offset,self._num_vecs))
+        if self._vecs is NULL:
+            raise AttributeError("trying to access deallocated memory!")
+
+    
+    cdef set_vec(self,int offset, Vec3& vec):
+        self._check_offset(offset)
+        self._vecs[offset] = vec
+
+    cdef Vec3* get_vec(self,int offset):
+        self._check_offset(offset)
+        return &self._vecs[offset] 
+
 cdef struct dihedral_parameters:
     float param_0
     float param_1
@@ -30,8 +131,8 @@ cdef struct dihedral_parameters:
     float param_4
     
     
-cdef float sum(Vec3 vec3):
-    return vec3.x()+vec3.y()+vec3.z()
+#cdef float sum(Vec3 vec3):
+#    return vec3.x()+vec3.y()+vec3.z()
 
 cdef inline  Vec3 operator_times (Vec3& vec3, float scale):
     return Vec3(vec3.x() * scale, vec3.y() * scale, vec3.z() * scale)
@@ -745,7 +846,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         distance  = calc_distance(atom_ids.target_atom_id, atom_ids.distant_atom_id)
 #        TODO: this should be the non bonded distance cutoff
         if distance < self._nb_cutoff:
-            self._contained.calc_single_force_set(index, factor, forces)
+            Fast_distance_based_potential_force_calculator._calc_single_force_set(self,index, factor, forces)
 
 
     
@@ -890,3 +991,307 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         for offset in range(3):
             force_component = weight * vector[offset]
             force_triplet[offset]+= force_component
+            
+
+
+    
+    
+#cdef int RING_ATOM_IDS = 1
+cdef class Fast_ring_force_calculator(Base_force_calculator):
+
+    
+    cdef object _coef_components
+    cdef object _ring_components
+    cdef object _centre_cache
+    cdef object _normal_cache
+    
+    
+    def __init__(self):
+        super(Fast_ring_force_calculator, self).__init__()
+        self._components = None
+        self._coef_components = None
+        self._ring_components = None
+        self._centre_cache = None
+        self._normal_cache = None
+        
+    def _set_components(self,components):
+        self._components = components
+        
+    def _set_coef_components(self,coef_components):
+        self._coef_components =  coef_components
+            
+    def _set_ring_components(self,coef_components):
+        self._ring_components =  coef_components
+    
+    def _set_normal_cache(self,normals):
+        self._normal_cache = normals
+        
+    def _set_centre_cache(self,centres):
+        self._centre_cache = centres
+
+#    cdef _get_coef_components(self, int atom_type_id):
+#        return self._coef_components.get_components_for_atom_id(atom_type_id)
+            
+    cdef Vec3 _get_ring_normal(self, int ring_id):
+        cdef float x, y ,z 
+        x,y,z =  self._normal_cache.get_component(ring_id)[1]
+        return  Vec3(x,y,z)
+    
+    cdef Vec3 _get_ring_centre(self, int ring_id):
+        cdef float x, y ,z 
+        x,y,z = self._centre_cache.get_component(ring_id)[1]
+        return  Vec3(x,y,z)        
+        
+
+    
+
+    #TODO: use this more places
+    cdef inline ring_atom_ids _get_ring_atom_ids(self, int ring_id):
+        cdef object ring_component = self._ring_components.get_component(ring_id)
+        cdef object python_ring_atom_ids = ring_component[RING_ATOM_IDS]
+        cdef int num_atoms =  len(python_ring_atom_ids)
+        cdef ring_atom_ids  ring_atoms 
+        
+        ring_atoms.num_atoms  = num_atoms
+        for i in range(num_atoms):
+            ring_atoms.atom_ids[i] = python_ring_atom_ids[i]
+        return  ring_atoms
+       
+    
+
+    
+    cdef inline Ring_atom_positions _get_ring_atom_positions(self, int ring_id):
+        cdef ring_atom_ids ring_atoms =  self._get_ring_atom_ids(ring_id)
+        cdef int num_atoms = ring_atoms.num_atoms
+        cdef Ring_atom_positions  positions  = Ring_atom_positions(num_atoms) 
+        
+        cdef Vec3* position = NULL
+        for i in range(num_atoms):
+            position = positions.get_vec(i)
+            position[0] = currentSimulation().atomPosArr().data(ring_atoms.atom_ids[i])
+            
+        return positions
+
+    cdef inline target_type _get_target_and_type(self,int index):
+        component = self._get_component(index)
+#        TODO: this needs to contain better names a union?
+        cdef target_type result
+        result.target_atom_id = component[0]
+        result.atom_type_id = component[1]
+        
+        return result#
+    
+    cdef inline  Coef_components _get_coef_components(self, int atom_type_id):
+        cdef object python_coef_components = self._coef_components.get_components_for_atom_id(atom_type_id)
+        return Coef_components(python_coef_components)
+        
+    cdef _calc_single_force_set(self, int index, float force_factor, object forces):
+        cdef target_type target_atom_id_type =  self._get_target_and_type(index)
+        #TODO: make array a union
+        cdef Coef_components coef_components = self._get_coef_components(target_atom_id_type.atom_type_id)
+        cdef Coef_component* coef_component
+        for i in range(coef_components.num_components):
+            coef_component = coef_components.get_component(i)
+#            print coef_component.atom_type_id, coef_component.ring_id, coef_component.coefficient
+    #                print 'coef_component', i, coef_component
+    #                 print 'here', target_atom_id, atom_type_id,
+    #                coef_component, force_factor
+            self._calculate_single_ring_forces(target_atom_id_type.target_atom_id, target_atom_id_type.atom_type_id, coef_component, force_factor, forces)
+
+    cdef _calculate_single_ring_forces(self, int target_atom_id, int atom_type_id, Coef_component* coef_component, float force_factor, object forces):
+        
+#    print atom_type_id, ring_id, coefficient, self._get_component_list('RING').get_components_for_atom_id(ring_id)
+        cdef Ring_force_sub_terms force_terms = self._build_force_terms(target_atom_id, coef_component.ring_id)
+#        print coef_component
+        force_terms = self._build_force_terms(target_atom_id, coef_component[0].ring_id)
+        
+#        print vec3_as_tuple(force_terms.gradUQ), force_terms.dL3, force_terms.u, vec3_as_tuple(force_terms.gradVQ), force_terms.dL6
+#        print Atom_utils._get_atom_info_from_index(target_atom_id)
+        self._calc_target_atom_forces(target_atom_id, force_factor * coef_component.coefficient, force_terms, forces)
+#        #            #TODO: this is not how camshift does it, it uses the sum of the two ring normals
+        self._calculate_ring_forces(atom_type_id, coef_component.ring_id, force_factor * coef_component.coefficient, force_terms, forces)
+
+
+    cdef Ring_force_sub_terms _build_force_terms(self, int target_atom_id, int ring_id):
+        cdef Ring_force_sub_terms result
+        cdef Vec3 target_atom_pos  = currentSimulation().atomPosArr().data(target_atom_id)
+        
+        cdef Vec3 ring_centre = self._get_ring_centre(ring_id)
+        cdef Vec3 ring_normal = self._get_ring_normal(ring_id)
+        
+        # distance vector between atom of interest and ring center
+        cdef Vec3 d = target_atom_pos - ring_centre
+        cdef float dL = norm(d)
+        
+        # squared distance of atom of interest from ring center
+        cdef float dL2 = dot(d, d) #            if (dL2 < 0.5) cout << "CAMSHIFT WARNING: Distance between atom and center of ring alarmingly small at " << sqrt(dL2) << " Angstrom!" << endl;
+        
+        # calculate terms resulting from differentiating energy function with respect to query and ring atom coordinates
+        cdef float dL4 = dL ** 4
+        cdef float dL3 = dL ** 3
+        cdef float dL6 = dL3 ** 2
+        
+        cdef float nL = norm(ring_normal)
+        cdef float nL2 = nL ** 2
+        cdef float dLnL = dL * nL
+        cdef dL3nL3 = dL3 * nL2 * nL
+        
+        cdef float dn = dot(d, ring_normal)
+        cdef float dn2 = dn ** 2
+        
+        cdef float u = 1.0 - 3.0 * dn2 / (dL2 * nL2)
+        
+        cdef float gradUQ_factor = -6.0 * dn / (dL4 * nL2)
+        
+        #TODO: remove temporarys and operator_mu;t#
+        cdef Vec3 temp_d =  Vec3(d)
+        cdef Vec3 scaled_d = operator_times(temp_d,dn)
+        cdef Vec3 temp_normal = Vec3(ring_normal)
+        cdef Vec3 scaled_normal = operator_times(temp_normal,dL2)
+        cdef Vec3 temp_normal_distance = Vec3(scaled_normal - scaled_d)
+        gradUQ = operator_times(temp_normal_distance,gradUQ_factor)
+            
+        
+        cdef float gradVQ_factor = 3.0 * dL
+        cdef Vec3 gradVQ= operator_times(d,gradVQ_factor)
+        
+        result.dL3nL3 = dL3nL3
+        result.dLnL =dLnL
+        result.dn = dn
+        result.dL = dL
+        result.nL = nL
+        result.d = d
+        result.gradUQ = gradUQ
+        result.dL3 =dL3
+        result.u  = u
+        result.gradVQ = gradVQ
+        result.dL6 = dL6
+        result.ring_normal =  ring_normal
+        
+        return result
+#        return  dL3, u, dL6, ring_normal,  atom_type_id, coefficient, d, factor, dn, dL3nL3, dL, nL, dLnL
+##    ---
+#
+    cdef _calc_target_atom_forces(self, int target_atom_id, float force_factor, Ring_force_sub_terms sub_terms, object forces):
+        cdef object target_force_triplet
+        cdef int axis 
+        target_force_triplet = self._get_or_make_target_force_triplet(forces, target_atom_id)
+#    
+#        # update forces on query atom
+        cdef float term1
+        for axis in range(3):
+            #TODO: report this as a bug it produces an un initialized reference 
+            term1= (sub_terms.gradUQ[axis] * sub_terms.dL3 - sub_terms.u * sub_terms.gradVQ[axis])
+            target_force_triplet[axis] += -force_factor * term1 / sub_terms.dL6
+#             *  / sub_terms.dL6
+#
+#    #TODO: calculation of GradU and gradV are not consistent with force_terms for target atom correct
+#    #TODO: reduce number of parameters to method
+
+    cdef _calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Ring_force_sub_terms force_terms, object forces):
+        cdef Vec3 temp_normal =  Vec3(force_terms.ring_normal)
+        cdef Vec3 nSum = operator_times(temp_normal,2.0)  #            float_type g [3], ab [3], c [3]
+        cdef ring_atom_ids ring_atoms = self._get_ring_atom_ids(ring_id)
+        cdef Ring_atom_positions ring_atom_positions = self._get_ring_atom_positions(ring_id)
+    #// 2 for a 5-membered ring, 3 for a 6-membered ring
+        cdef int num_ring_atoms = ring_atoms.num_atoms
+        cdef int limit = num_ring_atoms - 3
+
+#        for atom_type_id, ring_id, coefficient in coef_components:
+        cdef Vec3 g = Vec3()
+        cdef int ring_atom_id
+        cdef int ring_atom_index
+        cdef int index_1
+        cdef int index_2
+        cdef float pos_1
+        cdef float pos_2
+        cdef float pos_3
+        cdef float pos_4
+        cdef int offset
+        
+        cdef int[3] indices_1
+        cdef int[3] indices_2
+        
+        cdef float[3] ab
+        cdef float[3] c
+        
+        cdef float factor
+        cdef float factor2
+        cdef float one_over_num_ring_atoms
+        cdef float factor3 
+        
+        cdef Vec3 gradU
+        cdef Vec3 gradV
+        
+        cdef int axis 
+        cdef float sub_term
+        for ring_atom_index in range(num_ring_atoms):
+            ring_atom_id = ring_atoms.atom_ids[ring_atom_index]
+            if ring_atom_index < limit:
+                for axis in range(3):
+                    index_1 = (ring_atom_index + 1) % 3
+                    index_2 = (ring_atom_index + 2) % 3
+                    pos_1 = (ring_atom_positions.get_vec(index_1)[0][axis])
+                    pos_2 = ring_atom_positions.get_vec(index_2)[0][axis]
+                    g[axis] =  pos_1 - pos_2 # atoms 3,4 (5 member) or 3,4,5 (6 member)
+            
+            else:
+                if  ring_atom_index >= num_ring_atoms - limit:
+                    offset = num_ring_atoms - 3 #2 for a 5-membered ring, 3 for a 6-membered ring
+                    for axis in range(3):
+                        index_1 = (ring_atom_index + 1 - offset) % 3 + offset
+                        index_2 = (ring_atom_index + 2 - offset) % 3 + offset
+                        pos_1 = ring_atom_positions.get_vec(index_1)[0][axis]
+                        pos_2 = ring_atom_positions.get_vec(index_2)[0][axis]
+                        g[axis] = pos_1 - pos_2
+                else:
+                    
+                    for axis in range(3):
+                        pos_1 = ring_atom_positions.get_vec(0)[0][axis]
+                        pos_2 = ring_atom_positions.get_vec(1)[0][axis] 
+                        pos_3 = ring_atom_positions.get_vec(3)[0][axis]
+                        pos_4 = ring_atom_positions.get_vec(4)[0][axis]
+                        g[axis] = pos_1 - pos_2 + pos_3 - pos_4
+        
+            # 0 1 2 2 1   (0+1) %3 (0+2) %3
+            # 1 2 0 0 2
+            # 2 0 1 10
+            #atom 2 (5-membered rings)
+            for axis in range(3):
+                indices_1[axis] = (axis + 1) % 3
+                indices_2[axis] = (axis + 2) % 3
+            
+            for axis in range(3):
+                index_1 = indices_1[axis]
+                index_2 = indices_2[axis]
+                ab[axis] = force_terms.d[index_1] * g[index_2] - force_terms.d[index_2] * g[index_1]
+
+            for axis in range(3):
+                index_1 = indices_1[axis]
+                index_2 = indices_2[axis]
+                c[axis] = nSum[index_1] * g[index_2] - nSum[index_2] * g[index_1]
+            
+            factor = -6.0 * force_terms.dn / force_terms.dL3nL3
+            factor2 = 0.25 * force_terms.dL / force_terms.nL
+            one_over_num_ring_atoms = 1.0 / float(num_ring_atoms)
+            factor3 = force_terms.nL / force_terms.dL * one_over_num_ring_atoms
+            
+            gradU = Vec3()
+            for axis in range(3):
+                gradU[axis] = factor * ((0.5 * ab[axis] - force_terms.ring_normal[axis] * one_over_num_ring_atoms) * force_terms.dLnL - force_terms.dn * (factor2 * c[axis] - factor3 * force_terms.d[axis]))
+                
+            gradV = Vec3()
+            factor = -3 * force_terms.dL * one_over_num_ring_atoms
+            for axis in range(3):
+                gradV[axis] = factor * force_terms.d[axis]
+            
+#TODO: rename force terms  sub_terms or vice versa
+
+            ring_target_force_triplet = self._get_or_make_target_force_triplet(forces, ring_atom_id)
+            for axis in range(3):
+                sub_term = (gradU[axis] * force_terms.dL3 - force_terms.u * gradV[axis])
+                sub_force = -force_factor * sub_term / force_terms.dL6
+                ring_target_force_triplet[axis] += sub_force
+#                print AXIS_NAMES[axis],sub_force,-force_factor, gradU[axis], force_terms.dL3, force_terms.u, gradV[axis],force_terms.dL6
+#            print
+##        print 
