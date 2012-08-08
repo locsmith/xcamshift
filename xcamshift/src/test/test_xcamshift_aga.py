@@ -12,6 +12,7 @@ from xcamshift import Xcamshift
 from utils import Atom_utils
 from common_constants import BACK_BONE
 from segment_manager import Segment_Manager
+fast  = False
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -38,8 +39,15 @@ class TestXcamshifAGA(unittest2.TestCase):
         Segment_Manager.reset_segment_manager()
         Atom_utils.clear_cache()
         
-    def test_glycine_shifts(self):
+
+    def _get_xcamshift(self):
+        global fast
         xcamshift = Xcamshift()
+        xcamshift.set_fast(fast)
+        return xcamshift
+
+    def test_glycine_shifts(self):
+        xcamshift = self._get_xcamshift()
         
         sub_potential_shifts = dict( aga_subpotential_shifts)
         for key in aga_subpotential_shifts:
@@ -53,7 +61,7 @@ class TestXcamshifAGA(unittest2.TestCase):
             shift = sub_potential._calc_single_atom_shift(atom_ids[0])
             expected_shift = aga_subpotential_shifts[key]
             
-            self.assertAlmostEqual(expected_shift, shift, places=self.DEFAULT_DECIMAL_PLACES - 1, msg=`key`)
+            self.assertAlmostEqual(expected_shift, shift, places=self.DEFAULT_DECIMAL_PLACES - 2, msg=`key`)
             
             del sub_potential_shifts[key]
             
@@ -61,7 +69,7 @@ class TestXcamshifAGA(unittest2.TestCase):
             
     def test_component_shifts_bb(self):
         
-        xcamshift = Xcamshift()
+        xcamshift = self._get_xcamshift()
         bb_subpotential = xcamshift.get_named_sub_potential(BACK_BONE)
         
         expected_bb_shifts = dict(aga_component_shifts_bb)
