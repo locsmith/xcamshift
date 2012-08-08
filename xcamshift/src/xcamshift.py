@@ -2750,7 +2750,7 @@ class Non_bonded_force_calculator(Distance_based_potential_force_calculator):
         
         distance  = Atom_utils._calculate_distance(target_atom_index, distant_atom_index)
 #        TODO: this should be the non bonded distance cutoff
-        if distance < DEFAULT_NB_CUTOFF:
+        if distance < Non_bonded_force_calculator.DEFAULT_NB_CUTOFF:
             super(Non_bonded_force_calculator, self)._calc_single_force_set(index, factor, forces)
 
 # target_atom_id, target_atom_type_id
@@ -3615,6 +3615,7 @@ class Xcamshift():
     def calcEnergyAndDerivs(self,derivs):
         self._prepare()
         energy = self.calcEnergy(prepare=False)
+        
         
         self._calc_derivs(derivs)
         
