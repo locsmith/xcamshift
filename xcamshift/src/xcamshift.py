@@ -1820,10 +1820,8 @@ class Ring_shift_calculator:
     def _get_ring_normal(self, ring_id):
         return self._normals.get_component(ring_id)[1]
     
-    def _calc_sub_component_shift(self, atom_component,  coef_component):
+    def _calc_sub_component_shift(self, target_atom_id,  ring_id, coefficient):
         
-        target_atom_id  = atom_component[0]
-        ring_id, coefficient = coef_component[1:]
         
         target_atom_pos = Atom_utils._get_atom_pos(target_atom_id)
         ring_centre = self._get_ring_centre(ring_id)

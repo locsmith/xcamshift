@@ -23,6 +23,8 @@ from vec3 import Vec3
 from common_constants import BACK_BONE, RANDOM_COIL, XTRA, DIHEDRAL, SIDE_CHAIN,\
     NON_BONDED, RING
 TOTAL_ENERGY = 'total'
+
+fast = False
 #def text_keys_to_atom_ids(keys, segment = '*'):
 #    result = []
 #    for key in keys:
@@ -294,9 +296,16 @@ class TestXcamshiftAGFA(unittest2.TestCase):
 #        self.assertEmpty(expected_sidechain_shifts)
         
 
+
+    def _get_scamshift(self):
+        global fast
+        xcamshift = Xcamshift()
+        xcamshift.set_fast(fast)
+        return xcamshift
+
     def test_component_shifts_ring(self):
         
-        xcamshift = Xcamshift()
+        xcamshift = self._get_scamshift()
         ring_subpotential = xcamshift.get_named_sub_potential(RING)
         
         ring_subpotential._get_component_list('COEF')
@@ -329,7 +338,7 @@ class TestXcamshiftAGFA(unittest2.TestCase):
 
                 atom_component = ring_subpotential._get_component_list('ATOM').get_component(component_index)
                 coef_component =  ring_subpotential._get_component_list('COEF').get_component(atom_component[1])
-                shift = ring_subpotential._shift_calculator._calc_sub_component_shift(atom_component, coef_component)
+                shift = ring_subpotential._shift_calculator._calc_sub_component_shift(atom_component[0], coef_component[1], coef_component[2])
                 self.assertAlmostEqual(expected_ring_shifts[expected_key], shift, places=self.DEFAULT_DECIMAL_PLACES - 1, msg=`expected_key`)
                 if abs(expected_ring_shifts[expected_key] - shift) > 0.0001:
                     print 'fail', expected_key, expected_ring_shifts[expected_key], shift, Atom_utils._get_residue_type_from_atom_id(from_atom_id)
