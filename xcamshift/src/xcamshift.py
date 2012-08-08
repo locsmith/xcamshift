@@ -31,7 +31,8 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_distance_based_potential_force_calculator,                 \
                                      Fast_non_bonded_force_calculator,                               \
                                      Fast_dihedral_force_calculator,                                 \
-                                     Fast_ring_force_calculator
+                                     Fast_ring_force_calculator,                                      \
+                                     Fast_force_factor_calculator
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -3208,8 +3209,11 @@ class Xcamshift():
 
 
     def _get_force_factor_calculator(self):
-        return Force_factor_calculator()
-    
+        if self._fast:
+            result  =  Fast_force_factor_calculator()
+        else:
+            result = Force_factor_calculator()
+        return result
     
             
             

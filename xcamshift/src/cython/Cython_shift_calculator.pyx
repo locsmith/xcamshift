@@ -5,7 +5,7 @@ Created on 31 Jul 2012
 '''
 from vec3 import Vec3 as python_vec3
 from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross
-from libc.math cimport cos,sin,  fabs, tanh, pow
+from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 
 
@@ -556,7 +556,8 @@ cdef class Fast_non_bonded_calculator:
                 if self._is_non_bonded(atom_id_1, atom_id_2):
                     non_bonded_list.append(i)
         return  non_bonded_lists
-    
+
+
 cdef class Fast_energy_calculator:
     def __init__(self):
         self._energy_term_cache =  None
@@ -642,6 +643,41 @@ cdef class Fast_energy_calculator:
                 energy += energy_component
         return energy
 
+cdef class Fast_force_factor_calculator(Fast_energy_calculator):
+
+    def __call__(self, target_atom_ids):
+        result  = []
+        for target_atom_id in target_atom_ids:
+            factor  = 0.0
+                
+            
+            shift_diff = self._get_shift_difference(target_atom_id)
+            energy_terms = self._get_energy_terms(target_atom_id)
+            
+
+            
+            flat_bottom_shift_limit = energy_terms.flat_bottom_shift_limit
+            
+            if abs(shift_diff) > flat_bottom_shift_limit:
+                adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
+                end_harmonic = energy_terms.end_harmonic
+                scale_harmonic = energy_terms.scale_harmonic
+                sqr_scale_harmonic = scale_harmonic**2
+                
+                weight = energy_terms.weight
+                
+                tanh_amplitude = energy_terms.tanh_amplitude
+                tanh_elongation = energy_terms.tanh_elongation
+                
+                # TODO: add factor and lambda to give fact
+                fact =1.0
+                if adjusted_shift_diff < end_harmonic:
+                    factor = 2.0 * weight * adjusted_shift_diff * fact / sqr_scale_harmonic;
+                else:
+                    factor = weight * tanh_amplitude * tanh_elongation / (cosh(tanh_elongation * (adjusted_shift_diff - end_harmonic)))**2.0 * fact;
+
+            result.append(factor)
+        return  result
 cdef class Base_force_calculator:
     
     cdef object _components
