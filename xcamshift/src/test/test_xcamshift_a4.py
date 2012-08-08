@@ -24,6 +24,8 @@ from component_list import Component_list
 from test import ala_4
 from segment_manager import Segment_Manager
 
+fast = False
+
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
     result = []
@@ -48,7 +50,7 @@ def almostEqual(first, second, places = 7):
 class TestXcamshiftA4(unittest2.TestCase):
 
     def _setup_xcamshift_with_shifts_table(self, test_shifts):
-        xcamshift = Xcamshift()
+        xcamshift = self._get_xcamshift()
         observed_shifts = Observed_shift_table(test_shifts)
         xcamshift.set_observed_shifts(observed_shifts)
         return xcamshift
@@ -313,8 +315,15 @@ class TestXcamshiftA4(unittest2.TestCase):
 
 
 
+
+    def _get_non_bonded_potential(self, smoothed = True):
+        global fast
+        non_bonded_potential = Non_bonded_potential(smoothed)
+        non_bonded_potential.set_fast(fast)
+        return non_bonded_potential
+
     def testNonBondedComponents(self):
-            non_bonded_potential = Non_bonded_potential()
+            non_bonded_potential = self._get_non_bonded_potential()
             non_bonded_potential.update_non_bonded_list()
     
             expected_components = dict(ala_4.ala_components_non_bond)
@@ -356,7 +365,7 @@ class TestXcamshiftA4(unittest2.TestCase):
         self.assertEmpty(non_bonded_shifts)
 
     def testNonBondedShiftsNoSmoothing(self):
-        non_bonded_potential = Non_bonded_potential(smoothed=False)
+        non_bonded_potential = self._get_non_bonded_potential(smoothed=False)
         
         non_bonded_shifts = dict(ala_4.ala4_predicted_shifts_non_smoothed)
         
@@ -364,7 +373,7 @@ class TestXcamshiftA4(unittest2.TestCase):
         self._test_non_bonded_shifts(non_bonded_potential, non_bonded_shifts)
 
     def testNonBondedShiftsSmoothed(self):
-        non_bonded_potential = Non_bonded_potential()
+        non_bonded_potential = self._get_non_bonded_potential()
         
         non_bonded_shifts = dict(ala_4.ala4_predicted_shifts_non_bond)
         
@@ -405,7 +414,7 @@ class TestXcamshiftA4(unittest2.TestCase):
         self.assertEmpty(non_bonded_force_factors)
 
     def testNonBondedForceFactorsNotSmoothed(self):
-        non_bonded_potential = Non_bonded_potential(smoothed=False)
+        non_bonded_potential = self._get_non_bonded_potential(smoothed=False)
         non_bonded_potential.set_observed_shifts(ala_4.ala_4_expected_shifts)
         non_bonded_potential.update_non_bonded_list()
         
@@ -415,7 +424,7 @@ class TestXcamshiftA4(unittest2.TestCase):
                                             ala_4.active_shifts, ala_4.ala4_factors_non_bonded)
         
     def testNonBondedForceFactorsSmoothed(self):
-        non_bonded_potential = Non_bonded_potential()
+        non_bonded_potential = self._get_non_bonded_potential()
         non_bonded_potential.set_observed_shifts(ala_4.ala_4_expected_shifts)
         non_bonded_potential.update_non_bonded_list()
         
@@ -468,7 +477,7 @@ class TestXcamshiftA4(unittest2.TestCase):
         self.assertEmpty(non_bonded_forces)
 
     def testNonBondedForces(self):
-        non_bonded_potential = Non_bonded_potential(smoothed=True)
+        non_bonded_potential = self._get_non_bonded_potential(smoothed=True)
         non_bonded_potential.set_observed_shifts(ala_4.ala_4_expected_shifts)
         non_bonded_potential.update_non_bonded_list()
         
@@ -489,8 +498,15 @@ class TestXcamshiftA4(unittest2.TestCase):
 #                    ring_atom_forces = forces[ring_atom_id]
 #                    self.assertSequenceAlmostEqual(ring_atom_forces, expected_ring_forces, self.DEFAULT_DECIMAL_PLACES)
 
+
+    def _get_xcamshift(self):
+        global fast
+        xcamshift_potential = Xcamshift()
+        xcamshift_potential.set_fast(fast)
+        return xcamshift_potential
+
     def  test_overall_shifts_a4(self):
-        xcamshift_potential =  Xcamshift()
+        xcamshift_potential = self._get_xcamshift()
         
         shifts = self.make_result_array()
         shifts = xcamshift_potential.set_shifts(shifts)
@@ -505,7 +521,7 @@ class TestXcamshiftA4(unittest2.TestCase):
         
 
     def testComponentShiftsA4(self):
-        xcamshift_potential =  Xcamshift()
+        xcamshift_potential =  self._get_xcamshift()
         
         expected_shift_components = dict(ala_4.ala_4_expected_shift_components)
         for sub_potential_name in xcamshift_potential.get_sub_potential_names():
