@@ -13,13 +13,15 @@ from common_constants import BACK_BONE
 import sys
 from segment_manager import Segment_Manager
 
+fast = False
+
 def almostEqual(first, second, places = 7):
     result  = False
     if round(abs(second-first), places) == 0:
         result=True
     return result
 
-class TestXcamshiftUtils(unittest2.TestCase):
+class TestXcamshiftAGAGA(unittest2.TestCase):
     DEFAULT_DECIMAL_PLACES = 5
     DEFAULT_ERROR = 10 ** -DEFAULT_DECIMAL_PLACES
 
@@ -38,8 +40,14 @@ class TestXcamshiftUtils(unittest2.TestCase):
         Segment_Manager.reset_segment_manager()
         Atom_utils.clear_cache()
         
-    def test_agaga_shifts(self):
+
+    def _get_xcamshift(self):
         xcamshift = Xcamshift()
+        xcamshift.set_fast(True)
+        return xcamshift
+
+    def test_agaga_shifts(self):
+        xcamshift = self._get_xcamshift()
         
         agaga_shifts_copy = dict( agaga_shifts)
         for key in agaga_shifts:
@@ -80,7 +88,7 @@ class TestXcamshiftUtils(unittest2.TestCase):
             
     def test_component_shifts_bb(self):
         
-        xcamshift = Xcamshift()
+        xcamshift = self._get_xcamshift()
         bb_subpotential = xcamshift.get_named_sub_potential(BACK_BONE)
         
         expected_bb_shifts = dict(agaga_component_shifts_bb)
@@ -117,7 +125,11 @@ class TestXcamshiftUtils(unittest2.TestCase):
             #TODO: correct this its due to limited output formats?
             self.assertAlmostEqual(test_data_sum[key], agaga_shifts[key], places=self.DEFAULT_DECIMAL_PLACES - 2, msg=key)
             
-        
+def run_tests():
+    if fast:
+        print >> sys.stderr, TestXcamshiftAGAGA.__module__,"using fast calculators"
+    unittest2.main(module='test.test_xcamshift_agaga')
+    
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'TestXcamshifAGA.testName']
-    unittest2.main()
+    run_tests()

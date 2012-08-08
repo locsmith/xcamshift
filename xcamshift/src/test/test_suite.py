@@ -13,31 +13,54 @@ from test.test_xcamshift_afa import TestXcamshiftAFA
 from test.test_xcamshift_a4 import TestXcamshiftA4
 from test.test_python_utils import Test_python_utils
 from test.test_table_importers import Test_table_importers
-from test.test_xcamshift_aga import TestXcamshifAGA
+from test.test_xcamshift_aga import TestXcamshiftAGA
 from test.test_xcamshift_vin import TestXcamshiftVIN
 from test.test_xcamshift_agfa import TestXcamshiftAGFA
+from test.test_xcamshift_agaga import TestXcamshiftAGAGA
 from test.test_xcamshift_gb3 import TestXcamshiftGB3
+import sys
+
+fast = False
 
 def load_tests(loader, tests, pattern):
+
+    test_list = (
+                TestXcamshiftAFA,
+                TestObservedShiftTable,
+                Test_segment_manager,
+                TestXcamshift,
+                Test_table_manager,
+                Test_component_list,
+                TestXcamshiftA4,
+                Test_python_utils,
+                Test_table_importers,
+                TestXcamshiftAGA,
+                TestXcamshiftVIN,
+                TestXcamshiftAGFA,
+                TestXcamshift,
+                TestXcamshiftAGAGA,
+                TestXcamshiftGB3
+)
+    
     suite = unittest2.TestSuite()
-    suite.addTests(tests = loader.loadTestsFromTestCase(TestObservedShiftTable))
-    suite.addTests(tests = loader.loadTestsFromTestCase(Test_segment_manager))
-    suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshift))
-    suite.addTests(tests = loader.loadTestsFromTestCase(Test_table_manager))
-    suite.addTests(tests = loader.loadTestsFromTestCase(Test_component_list))
-    suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftAFA))
-    suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftA4))
-    suite.addTests(tests = loader.loadTestsFromTestCase(Test_python_utils))
-    suite.addTests(tests = loader.loadTestsFromTestCase(Test_table_importers))
-    suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshifAGA))
-    suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftVIN))
-    suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftAGFA))
-#    suite.addTests(tests = loader.loadTestsFromTestCase(TestXcamshiftGB3))
+    
+    
+    if fast:
+        for test_case in test_list:
+            module  =  sys.modules[test_case.__module__]
+            if hasattr(module,'fast'):
+                setattr(module,'fast',True)
+            
+    test_list = [loader.loadTestsFromTestCase(test_case) for test_case in test_list]
+    
+    suite.addTests(test_list)
     
     return suite
 
-if __name__=="__main__":
-    
+def run_tests():
     unittest2.main(verbosity=10)
+    
+if __name__=="__main__":
+    run_tests()
     
 

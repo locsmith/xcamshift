@@ -122,7 +122,13 @@ class TestXcamshiftVIN(unittest2.TestCase):
 #            #TODO: correct this its due to limited output formats?
 #            self.assertAlmostEqual(test_data_sum[key], agaga_shifts[key], places=self.DEFAULT_DECIMAL_PLACES - 2, msg=key)
             
-        
+def run_tests():
+    if fast:
+        print >> sys.stderr, TestXcamshiftVIN.__module__,"using fast calculators"
+    unittest2.main(module='test.test_xcamshift_vin')
+#    unittest2.main(module='test.test_xcamshift_afa',defaultTest='TestXcamshiftAFA.test_calc_component_shift')
+    
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'TestXcamshifAGA.testName']
-    unittest2.main()
+    run_tests()
+    

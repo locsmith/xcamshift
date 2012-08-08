@@ -371,7 +371,7 @@ cdef class Fast_ring_shift_calculator:
         x,y,z = self._centre_cache.get_component(ring_id)[1]
         return  Vec3(x,y,z)
     
-    cdef float  _calc_sub_component_shift(self, int target_atom_id, int ring_id, float coefficient):
+    cpdef float  _calc_sub_component_shift(self, int target_atom_id, int ring_id, float coefficient):
         
         cdef Vec3 target_atom_pos
         cdef Vec3 ring_centre
@@ -763,7 +763,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     def _set_components(self,components):
         self._components = components
     
-    cdef target_distant_atom _get_target_and_distant_atom_ids(self, int index):
+    cdef inline target_distant_atom _get_target_and_distant_atom_ids(self, int index):
         
         cdef object values
         cdef int target_atom_id
@@ -824,7 +824,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         return result 
     
     
-    cdef float _calc_single_force_factor(self, int index, float factor):
+    cpdef float _calc_single_force_factor(self, int index, float factor):
         cdef target_distant_atom atom_ids
         cdef coefficient_exponent coef_exp
         cdef float exponent 
@@ -883,20 +883,20 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
             python_distant_forces [i] += distant_forces[i]
 
 cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_calculator):
-    cdef float _nb_cutoff
+    cdef float _non_bonded_cutoff
     
     def __init__(self, object indices, bint smoothed):
+        global DEFAULT_NB_CUTOFF
         super(Fast_non_bonded_force_calculator, self).__init__(indices,smoothed)
-        self._nb_cutoff = DEFAULT_NB_CUTOFF
-    
-    cdef _calc_single_force_set(self, int index, float factor, object forces):
-        cdef target_distant_atom atom_ids
-        cdef float distance
-        atom_ids = self._get_target_and_distant_atom_ids(index)
+        self._non_bonded_cutoff = DEFAULT_NB_CUTOFF
         
-        distance  = calc_distance(atom_ids.target_atom_id, atom_ids.distant_atom_id)
+
+    cpdef _calc_single_force_set(self, int index, float factor, object forces):
+        cdef target_distant_atom atom_ids = Fast_distance_based_potential_force_calculator._get_target_and_distant_atom_ids(self,index)
+        cdef float distance  = calc_distance(atom_ids.target_atom_id, atom_ids.distant_atom_id)
 #        TODO: this should be the non bonded distance cutoff
-        if distance < self._nb_cutoff:
+#TODO class variable of self are not being looked up!
+        if distance < 5.0:
             Fast_distance_based_potential_force_calculator._calc_single_force_set(self,index, factor, forces)
 
 

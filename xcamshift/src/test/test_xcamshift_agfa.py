@@ -353,9 +353,15 @@ class TestXcamshiftAGFA(unittest2.TestCase):
 #import cProfile
 
 
+def run_tests():
+    if fast:
+        print >> sys.stderr, TestXcamshiftAGFA.__module__,"using fast calculators"
+    unittest2.main(module='test.test_xcamshift_agfa')
+#    unittest2.main(module='test.test_xcamshift_afa',defaultTest='TestXcamshiftAFA.test_calc_component_shift')
+    
 
 if __name__ == "__main__":
-    unittest2.main()
+    run_tests()
 #    cProfile.run('unittest2.main()')
     
 #    TestXcamshift.list_test_shifts()

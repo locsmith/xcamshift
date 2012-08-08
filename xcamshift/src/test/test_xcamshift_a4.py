@@ -570,9 +570,13 @@ class TestXcamshiftA4(unittest2.TestCase):
         
         self._test_force_sets(xcamshift, expected_energy, expected_forces)
                 
+def run_tests():
+    if fast:
+        print >> sys.stderr, TestXcamshiftA4.__module__,"using fast calculators"
+    unittest2.main(module='test.test_xcamshift_a4')
     
 if __name__ == "__main__":
-    unittest2.main()
+    run_tests()
 #    TestXcamshift.list_test_shifts()
 #    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testComponentShiftsA4')
 #    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testNonBondedForces')

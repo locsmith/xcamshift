@@ -258,7 +258,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
             from_atom_key = tuple(from_atom_key)
             
             for sub_component_index, from_atom_info in enumerate(from_atom_info_list):
-                from_atom_id, ring_id, coefficent = from_atom_info
+                from_atom_type, ring_id, coefficent = from_atom_info
                 ring_info = ring_subpotential._get_component_list('RING').get_components_for_atom_id(ring_id)
                 
                 ring_atoms =  ring_info[0][1]
@@ -267,8 +267,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 expected_key =   from_atom_key,(ring_residue,ring_residue_type,len(ring_atoms))
                 self.assertIn(expected_key, expected_component_keys, `expected_key`)
             
-                
-                shift = ring_subpotential._shift_calculator._calc_sub_component_shift(component, from_atom_info)
+                shift = ring_subpotential._shift_calculator._calc_sub_component_shift(from_atom_id, ring_id,coefficent)
                 self.assertAlmostEqual(expected_ring_shifts[expected_key], shift, places=self.DEFAULT_DECIMAL_PLACES - 2, msg=`expected_key`)
                 if abs(expected_ring_shifts[expected_key] - shift) > 0.001:
                     print 'fail', expected_key, expected_ring_shifts[expected_key], shift, Atom_utils._get_residue_type_from_atom_id(from_atom_id)
@@ -520,7 +519,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift_gb3')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
+#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_component_shifts_ring')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
     

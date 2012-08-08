@@ -1855,7 +1855,7 @@ class Ring_shift_calculator:
         
             for coef_component in self._get_coef_components(atom_type_id):
 
-                shift += self._calc_sub_component_shift(component,  coef_component)
+                shift += self._calc_sub_component_shift(component[0],  coef_component[1], coef_component[2])
             
             results[index] = shift
 
