@@ -3126,6 +3126,79 @@ class Energy_calculator:
                 energy += energy_component
         return energy
 
+class Force_factor_calculator:
+    def __init__(self):
+        self._energy_term_cache =  None
+        self._theory_shifts =   None
+        self._observed_shifts =  None
+        
+    def set_observed_shifts(self, observed_shifts):
+        self._observed_shifts =  observed_shifts
+        
+    def set_calculated_shifts(self, calculated_shifts):
+        self._theory_shifts =  calculated_shifts
+    
+    def set_energy_term_cache(self, energy_term_cache ):
+        self._energy_term_cache =  energy_term_cache
+        
+    def _get_energy_terms(self, target_atom_index):
+        return self._energy_term_cache[target_atom_index]
+    
+    def _get_calculated_atom_shift(self, target_atom_index):
+        return self._theory_shifts[target_atom_index]
+    
+    def _get_observed_atom_shift(self, target_atom_index):
+        return self._observed_shifts.get_chemical_shift(target_atom_index)
+    
+    def _get_shift_difference(self, target_atom_index):
+        
+        theory_shift = self._get_calculated_atom_shift(target_atom_index)
+        
+        observed_shift = self._get_observed_atom_shift(target_atom_index)
+        
+        return observed_shift - theory_shift
+
+    def _adjust_shift(self, shift_diff, flat_bottom_shift_limit):
+        result  = 0.0
+        if (shift_diff > 0.0):
+            result = shift_diff-flat_bottom_shift_limit
+        else:
+            result = shift_diff + flat_bottom_shift_limit
+        return result
+
+    def __call__(self, target_atom_ids):
+        result  = []
+        for target_atom_id in target_atom_ids:
+            factor  = 0.0
+                
+            
+            shift_diff = self._get_shift_difference(target_atom_id)
+            energy_terms = self._get_energy_terms(target_atom_id)
+            
+
+            
+            flat_bottom_shift_limit = energy_terms.flat_bottom_shift_limit
+            
+            if abs(shift_diff) > flat_bottom_shift_limit:
+                adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
+                end_harmonic = energy_terms.end_harmonic
+                scale_harmonic = energy_terms.scale_harmonic
+                sqr_scale_harmonic = scale_harmonic**2
+                
+                weight = energy_terms.weight
+                
+                tanh_amplitude = energy_terms.tanh_amplitude
+                tanh_elongation = energy_terms.tanh_elongation
+                
+                # TODO: add factor and lambda to give fact
+                fact =1.0
+                if adjusted_shift_diff < end_harmonic:
+                    factor = 2.0 * weight * adjusted_shift_diff * fact / sqr_scale_harmonic;
+                else:
+                    factor = weight * tanh_amplitude * tanh_elongation / (cosh(tanh_elongation * (adjusted_shift_diff - end_harmonic)))**2.0 * fact;
+
+            result.append(factor)
+        return  result
 
 class Xcamshift():
 
@@ -3134,6 +3207,12 @@ class Xcamshift():
     
 
 
+    def _get_force_factor_calculator(self):
+        return Force_factor_calculator()
+    
+    
+            
+            
     def __init__(self):
         self.potential = [
                           RandomCoilShifts(),
@@ -3150,13 +3229,23 @@ class Xcamshift():
          
         self._energy_term_cache = self._create_energy_term_cache()
         self._energy_calculator = self._get_energy_calculator()
+        self._force_factor_calculator =  self._get_force_factor_calculator()
+
+
         self.update_energy_calculator()
+        self.update_force_factor_calculator()
+        
+    def _update_calculator(self, calculator):
+        calculator.set_calculated_shifts(self._shift_cache)
+        calculator.set_observed_shifts(self._shift_table)
+        calculator.set_energy_term_cache(self._energy_term_cache)
     
     def update_energy_calculator(self):
-        self._energy_calculator.set_calculated_shifts(self._shift_cache)
-        self._energy_calculator.set_observed_shifts(self._shift_table)
-        self._energy_calculator.set_energy_term_cache(self._energy_term_cache)
+        self._update_calculator(self._energy_calculator)
 
+    def update_force_factor_calculator(self):
+        self._update_calculator(self._force_factor_calculator)
+ 
     def set_fast(self,on):
         self._fast = (on == True)
         self._set_sub_potetials_fast()
@@ -3437,40 +3526,7 @@ class Xcamshift():
         return self. _calc_factors(target_atom_ids)[0]
     
     def _calc_factors(self, target_atom_ids):
-        result  = []
-        for target_atom_id in target_atom_ids:
-            factor  = 0.0
-                
-            theory_shift = self._calc_single_atom_shift(target_atom_id)
-            observed_shift = self._shift_table.get_chemical_shift(target_atom_id)
-            
-            shift_diff = observed_shift - theory_shift
-            
-            residue_type = Atom_utils._get_residue_type_from_atom_id(target_atom_id)
-            atom_name = Atom_utils._get_atom_name_from_index(target_atom_id)
-            
-            flat_bottom_shift_limit = self._get_flat_bottom_shift_limit(residue_type, atom_name)
-            
-            if abs(shift_diff) > flat_bottom_shift_limit:
-                adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
-                end_harmonic = self._get_end_harmonic(residue_type, atom_name)
-                scale_harmonic = self._get_scale_harmonic(residue_type, atom_name)
-                sqr_scale_harmonic = scale_harmonic**2
-                
-                weight = self._get_weight(residue_type,atom_name)
-                
-                tanh_amplitude = self._get_tanh_amplitude(residue_type,atom_name)
-                tanh_elongation = self._get_tanh_elongation(residue_type,atom_name)
-                
-                # TODO: add factor and lambda to give fact
-                fact =1.0
-                if adjusted_shift_diff < end_harmonic:
-                    factor = 2.0 * weight * adjusted_shift_diff * fact / sqr_scale_harmonic;
-                else:
-                    factor = weight * tanh_amplitude * tanh_elongation / (cosh(tanh_elongation * (adjusted_shift_diff - end_harmonic)))**2.0 * fact;
-
-            result.append(factor)
-        return  result
+        return self._force_factor_calculator(target_atom_ids)
     
 
     def _calc_single_force_factor(self,target_atom_index,forces):
@@ -3553,7 +3609,7 @@ class Xcamshift():
     def _calc_derivs(self, derivs,potentials=None):
         
         active_target_atom_ids = self._get_active_target_atom_ids()
-        
+        self.update_force_factor_calculator()
         self._calc_force_set(active_target_atom_ids, derivs, potentials)
 
     def calcEnergyAndDerivs(self,derivs):

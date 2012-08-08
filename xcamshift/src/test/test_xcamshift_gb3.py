@@ -487,6 +487,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 #       TODO: xcamshift should be created anew  for each passage through the loop but the non bonded list is too slow
         xcamshift = self.make_xcamshift(gb3.gb3_zero_shifts)
         self.set_cache_shifts(xcamshift, gb3.gb3_shifts)
+        xcamshift.update_energy_calculator()
+        xcamshift.update_force_factor_calculator()
         
         for potential_name in common_constants.CAMSHIFT_SUB_POTENTIALS:
             
@@ -517,8 +519,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
-    unittest2.main(module='test.test_xcamshift_gb3')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
+#    unittest2.main(module='test.test_xcamshift_gb3')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
     
