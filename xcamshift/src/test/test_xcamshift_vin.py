@@ -13,6 +13,8 @@ import sys
 import unittest2
 from segment_manager import Segment_Manager
 
+fast = False
+
 def almostEqual(first, second, places = 7):
     result  = False
     if round(abs(second-first), places) == 0:
@@ -38,8 +40,14 @@ class TestXcamshiftVIN(unittest2.TestCase):
         Segment_Manager.reset_segment_manager()
         Atom_utils.clear_cache()
         
+
+    def _get_xcamshift(self):
+        return Xcamshift()
+
     def test_vin_shifts(self):
-        xcamshift = Xcamshift()
+        global fast
+        xcamshift = self._get_xcamshift()
+        xcamshift.set_fast(fast)
         
         vin_shifts_copy = dict(vin_shifts)
         for key in vin_shifts:
@@ -55,7 +63,7 @@ class TestXcamshiftVIN(unittest2.TestCase):
         self.assertEmpty(vin_shifts_copy)
         
     def test_vin_component_shifts(self):
-        xcamshift = Xcamshift()
+        xcamshift = self._get_xcamshift()
         
         sub_potential_shifts = dict(vin_subpotential_shifts)
         for key in vin_subpotential_shifts:
