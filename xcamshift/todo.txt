@@ -21,7 +21,15 @@ speed:
 2. non bonded list - done
 3. distance forces - done
 4. dihedral forces -dome
-5. ring forces -dome
+5. ring forces -done
 6. flatten calc_shifts -done 
 7. add a factor calculator - done
 8. check non bonded implementation
+9. check caches are updated per round -calculated shifts and non bonded list
+10. check two different structures for forces
+11. look at energy anf forces for gb3 and ubi at minimum and away from minimum
+12. parameters used by kai?
+13 Useful in particular was his
+implementation of the method of finite differences that helped testing whether all forces were
+derived correctly.
+
