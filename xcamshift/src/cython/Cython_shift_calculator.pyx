@@ -46,6 +46,21 @@ cdef struct Ring_force_sub_terms:
     float dL6
     Vec3 ring_normal
 
+cdef class Python_ring_force_sub_terms:
+    cdef Ring_force_sub_terms _terms
+    
+#    def __cinit__(self):
+#        self._terms = NULL
+        
+    def __init__(self):
+        pass
+    
+    cdef setup(self, Ring_force_sub_terms& terms):
+        self._terms=terms
+        
+    cdef Ring_force_sub_terms get_terms(self):
+        return self._terms
+        
 cdef class Coef_components:
     cdef int num_components
     cdef Coef_component* _components
@@ -1134,21 +1149,29 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     #                coef_component, force_factor
             self._calculate_single_ring_forces(target_atom_id_type.target_atom_id, target_atom_id_type.atom_type_id, coef_component, force_factor, forces)
 
+    def _calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Python_ring_force_sub_terms python_sub_terms, object forces):
+        cdef Ring_force_sub_terms  terms  =  python_sub_terms.get_terms()
+        self._cython_calculate_ring_forces(atom_type_id, ring_id, force_factor, terms, forces)
+
     cdef _calculate_single_ring_forces(self, int target_atom_id, int atom_type_id, Coef_component* coef_component, float force_factor, object forces):
         
 #    print atom_type_id, ring_id, coefficient, self._get_component_list('RING').get_components_for_atom_id(ring_id)
-        cdef Ring_force_sub_terms force_terms = self._build_force_terms(target_atom_id, coef_component.ring_id)
+        cdef Ring_force_sub_terms force_terms = self._build_cython_force_terms(target_atom_id, coef_component.ring_id)
 #        print coef_component
-        force_terms = self._build_force_terms(target_atom_id, coef_component[0].ring_id)
         
 #        print vec3_as_tuple(force_terms.gradUQ), force_terms.dL3, force_terms.u, vec3_as_tuple(force_terms.gradVQ), force_terms.dL6
 #        print Atom_utils._get_atom_info_from_index(target_atom_id)
-        self._calc_target_atom_forces(target_atom_id, force_factor * coef_component.coefficient, force_terms, forces)
+        self._cython_calc_target_atom_forces(target_atom_id, force_factor * coef_component.coefficient, force_terms, forces)
 #        #            #TODO: this is not how camshift does it, it uses the sum of the two ring normals
-        self._calculate_ring_forces(atom_type_id, coef_component.ring_id, force_factor * coef_component.coefficient, force_terms, forces)
+        self._cython_calculate_ring_forces(atom_type_id, coef_component.ring_id, force_factor * coef_component.coefficient, force_terms, forces)
 
-
-    cdef Ring_force_sub_terms _build_force_terms(self, int target_atom_id, int ring_id):
+    def _build_force_terms(self, int target_atom_id, int ring_id):
+        cdef Ring_force_sub_terms terms  = self._build_cython_force_terms(target_atom_id, ring_id)
+        result  = Python_ring_force_sub_terms()
+        result.setup(terms)
+        return result
+        
+    cdef Ring_force_sub_terms _build_cython_force_terms(self, int target_atom_id, int ring_id):
         cdef Ring_force_sub_terms result
         cdef Vec3 target_atom_pos  = currentSimulation().atomPosArr().data(target_atom_id)
         
@@ -1208,7 +1231,11 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 #        return  dL3, u, dL6, ring_normal,  atom_type_id, coefficient, d, factor, dn, dL3nL3, dL, nL, dLnL
 ##    ---
 #
-    cdef _calc_target_atom_forces(self, int target_atom_id, float force_factor, Ring_force_sub_terms sub_terms, object forces):
+    def _calc_target_atom_forces(self, int target_atom_id, float force_factor, Python_ring_force_sub_terms python_sub_terms, object forces):
+        cdef Ring_force_sub_terms  terms  =  python_sub_terms.get_terms()
+        self._cython_calc_target_atom_forces(target_atom_id, force_factor, terms, forces)
+
+    cdef _cython_calc_target_atom_forces(self, int target_atom_id, float force_factor, Ring_force_sub_terms& sub_terms, object forces):
         cdef object target_force_triplet
         cdef int axis 
         target_force_triplet = self._get_or_make_target_force_triplet(forces, target_atom_id)
@@ -1224,7 +1251,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 #    #TODO: calculation of GradU and gradV are not consistent with force_terms for target atom correct
 #    #TODO: reduce number of parameters to method
 
-    cdef _calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Ring_force_sub_terms force_terms, object forces):
+    cdef _cython_calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Ring_force_sub_terms force_terms, object forces):
         cdef Vec3 temp_normal =  Vec3(force_terms.ring_normal)
         cdef Vec3 nSum = operator_times(temp_normal,2.0)  #            float_type g [3], ab [3], c [3]
         cdef ring_atom_ids ring_atoms = self._get_ring_atom_ids(ring_id)

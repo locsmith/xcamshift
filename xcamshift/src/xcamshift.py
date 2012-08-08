@@ -2246,30 +2246,6 @@ class Ring_Potential(Base_potential):
         return results[0]
     
     
-
-
-    
-    
-    
-
-    #To close? currently this is a direct port
-
-    def _calc_target_atom_forces(self, target_atom_id, ring_id, force_factor, sub_terms, forces):
-        
-        X = 0
-        Y = 1
-        Z = 2
-        AXES = X, Y, Z
-        target_force_triplet = self._get_or_make_target_force_triplet(forces, target_atom_id)
-    # update forces on query atom
-        for axis in AXES:
-            #               f.coor[pos1  ] += -fact * (gradUQx * v - u * gradVQx) / v2;
-            #print "terms",-force_factor, sub_terms.gradUQ[0], sub_terms.dL3, sub_terms.u, sub_terms.gradVQ[axis], sub_terms.dL6
-            target_force_triplet[axis] += -force_factor * (sub_terms.gradUQ[axis] * sub_terms.dL3 - sub_terms.u * sub_terms.gradVQ[axis]) / sub_terms.dL6
-        
-
-
-    
     def _build_ring_data_cache(self):
         #TODO: remove double normal calculation
         normals = self._get_cache_list('NORM')
@@ -2280,12 +2256,6 @@ class Ring_Potential(Base_potential):
         rings = self._get_component_list('RING')
         self._ring_data_calculator(rings, normals, centres)
     
-    
-
-
-
-
-
 #    def _calc_single_force_set(self, index, force_factor, forces):
 #        pass 
 

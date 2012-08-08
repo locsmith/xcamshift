@@ -220,7 +220,8 @@ class TestXcamshiftAFA(unittest2.TestCase):
                 
                 forces = self.make_result_array_forces()
                 force_terms = ring_potential._force_calculator._build_force_terms(target_atom_id, ring_id)
-                ring_potential._calc_target_atom_forces(target_atom_id, ring_id, force_factor, force_terms, forces)
+                
+                ring_potential._force_calculator._calc_target_atom_forces(target_atom_id, force_factor, force_terms, forces)
                 
                 target_atom_forces = forces[target_atom_id]
                 expected_forces = AFA.target_forces_harmonic[force_factor_key]
