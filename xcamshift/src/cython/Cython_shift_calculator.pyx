@@ -9,6 +9,22 @@ from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 
 
+    
+cdef class Vec3_container:
+    
+    cdef float[3] floats
+    
+    cdef set_vec3(self,Vec3& vec3):
+        self.floats[0] =  vec3.x()
+        self.floats[1] =  vec3.y()
+        self.floats[2] =  vec3.z()
+        
+        
+    cdef Vec3  get_vec3(self):
+        return Vec3(self.floats[0],self.floats[1],self.floats[2])
+    
+    
+    
 cdef struct target_distant_atom:
     int target_atom_id
     int distant_atom_id
@@ -362,14 +378,12 @@ cdef class Fast_ring_shift_calculator:
         return self._coef_components.get_components_for_atom_id(atom_type_id)
             
     cdef Vec3 _get_ring_normal(self, int ring_id):
-        cdef float x, y ,z 
-        x,y,z =  self._normal_cache.get_component(ring_id)[1]
-        return  Vec3(x,y,z)
+        cdef Vec3_container container =  self._normal_cache.get_component(ring_id)[1]
+        return  container.get_vec3()
     
     cdef Vec3 _get_ring_centre(self, int ring_id):
-        cdef float x, y ,z 
-        x,y,z = self._centre_cache.get_component(ring_id)[1]
-        return  Vec3(x,y,z)
+        cdef Vec3_container container =  self._centre_cache.get_component(ring_id)[1]
+        return  container.get_vec3()
     
     cpdef float  _calc_sub_component_shift(self, int target_atom_id, int ring_id, float coefficient):
         
@@ -431,19 +445,21 @@ cdef class Fast_ring_data_calculator:
     def __init__(self):
         pass
     
-    cdef Vec3 _calculate_one_ring_centre(self, ring_component):
+    cdef Vec3_container  _calculate_one_ring_centre(self, ring_component):
 
         atom_ids = ring_component[RING_ATOM_IDS]
         cdef float num_atom_ids = len(atom_ids)
-        cdef Vec3 total,result
+        cdef Vec3 total,average
 
         total=Vec3(0.0,0.0,0.0)
         for atom_id in atom_ids:
             total+=currentSimulation().atomPosArr().data(atom_id)
 
 #        TODO get operator / workin properly
-        result = Vec3(total.x()/num_atom_ids,total.y()/num_atom_ids,total.z()/num_atom_ids)
+        average = Vec3(total.x()/num_atom_ids,total.y()/num_atom_ids,total.z()/num_atom_ids)
         
+        cdef Vec3_container result = Vec3_container()
+        result.set_vec3(average)
         return result
     
     
@@ -473,7 +489,7 @@ cdef class Fast_ring_data_calculator:
         return cross(vec_1,vec_2)
    
     #TODO could try newells method http://www.opengl.org/wiki/Calculating_a_Surface_Normal
-    cdef Vec3 _calculate_one_ring_normal(self, ring_component):
+    cdef Vec3_container _calculate_one_ring_normal(self, ring_component):
 
         atom_ids = ring_component[RING_ATOM_IDS]
 #        self._check_ring_size_ok(atom_ids)
@@ -484,9 +500,13 @@ cdef class Fast_ring_data_calculator:
         self._build_atom_triplet(atom_ids[-3:], atom_triplet_2)
        
         
-        normal_1 = self._calculate_normal(atom_triplet_1)
-        normal_2 = self._calculate_normal(atom_triplet_2)
-        return self. _average_2_vec_3(normal_1, normal_2)
+        cdef Vec3 normal_1 = self._calculate_normal(atom_triplet_1)
+        cdef Vec3 normal_2 = self._calculate_normal(atom_triplet_2)
+        
+        cdef Vec3_container result = Vec3_container()
+        cdef Vec3 average  = self._average_2_vec_3(normal_1, normal_2)
+        result.set_vec3(average)
+        return result
        
     cdef inline  _build_atom_triplet(self,atom_ids, int[3]& result):
         for i in range(3):
@@ -494,7 +514,6 @@ cdef class Fast_ring_data_calculator:
         
         
     cdef inline Vec3 _average_2_vec_3(self, Vec3& vector_1, Vec3& vector_2):
-            
         cdef Vec3 sum
         
         sum =  vector_1 + vector_2
@@ -504,17 +523,19 @@ cdef class Fast_ring_data_calculator:
     
             
     def __call__(self, rings, normals, centres):
+        
+        cdef Vec3_container centre 
+        cdef Vec3_container normal
+            
         for ring_component in rings:
             ring_id = ring_component[0]
 
             centre = self._calculate_one_ring_centre(ring_component)
-            result_centre =  python_vec3(centre.x(),centre.y(),centre.z())
-            centre_component = ring_id, result_centre
+            centre_component = ring_id, centre
             centres.add_component(centre_component)
             
             normal = self._calculate_one_ring_normal(ring_component)
-            result_normal =  python_vec3(normal.x(),normal.y(),normal.z())
-            normal_component = ring_id, result_normal
+            normal_component = ring_id, normal
             normals.add_component(normal_component)
             
 
@@ -1084,14 +1105,12 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 #        return self._coef_components.get_components_for_atom_id(atom_type_id)
             
     cdef Vec3 _get_ring_normal(self, int ring_id):
-        cdef float x, y ,z 
-        x,y,z =  self._normal_cache.get_component(ring_id)[1]
-        return  Vec3(x,y,z)
+        cdef Vec3_container container =  self._normal_cache.get_component(ring_id)[1]
+        return  container.get_vec3()
     
     cdef Vec3 _get_ring_centre(self, int ring_id):
-        cdef float x, y ,z 
-        x,y,z = self._centre_cache.get_component(ring_id)[1]
-        return  Vec3(x,y,z)        
+        cdef Vec3_container container = self._centre_cache.get_component(ring_id)[1]
+        return  container.get_vec3()       
         
 
     
