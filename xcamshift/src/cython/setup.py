@@ -27,6 +27,17 @@ setup(
                              
                              include_dirs=['/home/garyt/programs/xplor-nih/2.31.0/common',
                                            '/home/garyt/programs/xplor-nih/2.31.0/CDSlib',
+                                           '/home/garyt/programs/xplor-nih/2.31.0/arch/Linux_i686/include']),
+      
+                   Extension("fast_segment_manager",  ["Cython_segment_manager.pyx"],
+                             define_macros = [('CPLUSPLUS', '1') ,
+                                              ('USE_CDS_NAMESPACE', '1')],
+                            
+                             language="c++",
+                             
+                             include_dirs=['/home/garyt/programs/xplor-nih/2.31.0/common',
+                                           '/home/garyt/programs/xplor-nih/2.31.0/CDSlib',
                                            '/home/garyt/programs/xplor-nih/2.31.0/arch/Linux_i686/include'])
                    ]
-      )
+)
+      

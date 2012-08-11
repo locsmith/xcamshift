@@ -3,14 +3,17 @@ Created on 31 Dec 2011
 
 @author: garyt
 '''
+fast = True
 from protocol import initStruct
 from pdbTool import PDBTool
-from segment_manager import Segment_Manager
 import unittest2
 from utils import Atom_utils
 
-
-#class testSegmentManager(object):
+if fast:
+    from cython.fast_segment_manager import Segment_Manager
+else:
+    from segment_manager import Segment_Manager
+    
 class Test_segment_manager(unittest2.TestCase):
 
 

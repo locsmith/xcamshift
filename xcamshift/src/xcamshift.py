@@ -14,7 +14,8 @@ from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from math import cos, tanh, cosh, sin
 from observed_chemical_shifts import Observed_shift_table
-from segment_manager import Segment_Manager
+#from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
 from table_manager import Table_manager
 from python_utils import tupleit
 from utils import Atom_utils, AXES, iter_residue_atoms,\
