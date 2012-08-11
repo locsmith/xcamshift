@@ -23,6 +23,13 @@ cdef class Vec3_container:
     cdef Vec3  get_vec3(self):
         return Vec3(self.floats[0],self.floats[1],self.floats[2])
     
+    def __getitem__(self, i):
+        if i > 2:
+            msg = "tried to access object at %i length is %i"
+            values = (i,3)
+            raise IndexError(msg % values)
+
+        return self.floats[i]
     
     
 cdef struct target_distant_atom:
@@ -923,7 +930,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
 #        TODO: this should be the non bonded distance cutoff
 #TODO class variable of self are not being looked up!
         if distance < 5.0:
-            Fast_distance_based_potential_force_calculator._cyhton_calc_single_force_set(self,index, factor, forces)
+            Fast_distance_based_potential_force_calculator._cython_calc_single_force_set(self,index, factor, forces)
 
 
     
@@ -1160,7 +1167,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         cdef object python_coef_components = self._coef_components.get_components_for_atom_id(atom_type_id)
         return Coef_components(python_coef_components)
         
-    cdef _calc_single_force_set(self, int index, float force_factor, object forces):
+    cpdef _calc_single_force_set(self, int index, float force_factor, object forces):
         cdef target_type target_atom_id_type =  self._get_target_and_type(index)
         #TODO: make array a union
         cdef Coef_components coef_components = self._get_coef_components(target_atom_id_type.atom_type_id)
