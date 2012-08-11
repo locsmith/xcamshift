@@ -9,7 +9,9 @@ from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  c
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 
-
+ 
+#cdef object vec3_as_tuple(Vec3& vec_3):
+#    return vec_3.x(), vec_3.y(), vec_3.z()
     
 cdef class Vec3_container:
     
@@ -194,9 +196,7 @@ cdef inline float calc_dihedral_angle(dihedral_ids dihedral_atom_ids):
     
     return Dihedral(atom_1,atom_2,atom_3,atom_4).value()
 
- 
-cdef object vec3_as_tuple(Vec3& vec_3):
-    return vec_3.x(), vec_3.y(), vec_3.z()
+
 
 cdef float DEFAULT_CUTOFF = 5.0
 cdef float DEFAULT_SMOOTHING_FACTOR = 1.0
