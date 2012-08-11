@@ -32,6 +32,7 @@ cdef extern from "atom.hh":
         const_char residueName()
         const_char atomName()
         int   residueNum()
+        int index()
         Vec3& pos()
         
 cdef extern from "dihedral.hh":
