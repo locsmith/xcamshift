@@ -10,7 +10,7 @@ from protocol import initStruct
 from pdbTool import PDBTool
 from test.ala_3 import ala_3_test_shifts_harmonic
 from utils import Atom_utils
-from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
 
 
 class TestObservedShiftTable(unittest2.TestCase):

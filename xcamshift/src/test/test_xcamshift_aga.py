@@ -11,7 +11,7 @@ from pdbTool import PDBTool
 from xcamshift import Xcamshift
 from utils import Atom_utils
 from common_constants import BACK_BONE
-from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
 import sys
 fast  = False
 

@@ -11,7 +11,7 @@ from utils import Atom_utils
 from xcamshift import Xcamshift
 import sys
 import unittest2
-from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
 
 fast = False
 

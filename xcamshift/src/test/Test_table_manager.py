@@ -9,7 +9,7 @@ from keys import Atom_key, Dihedral_key
 from protocol import initStruct
 from pdbTool import PDBTool
 from utils import Atom_utils
-from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
 
 
 

@@ -10,6 +10,7 @@ from textwrap import dedent
 class Segment_Manager():
 
     def __init__(self):
+        raise Exception("do not use")
         (self.__segments, self.__segment_info_map) =  self.__build_segments_and_residues()
     
     __default = None

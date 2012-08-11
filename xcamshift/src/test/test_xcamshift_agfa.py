@@ -11,7 +11,7 @@ from xcamshift import Ring_Potential, Xcamshift
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
-from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
 from test.sidechains import sidechains_ala_3
 from test.ala_3 import ala_3_total_shifts
 from test import sidechains, ala_3, AFA

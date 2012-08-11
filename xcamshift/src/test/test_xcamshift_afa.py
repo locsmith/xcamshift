@@ -10,7 +10,7 @@ from xcamshift import Ring_Potential
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
-from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
 from test.sidechains import sidechains_ala_3
 from test.ala_3 import ala_3_total_shifts
 from test import sidechains, ala_3, AFA
@@ -184,6 +184,9 @@ class TestXcamshiftAFA(unittest2.TestCase):
         #TODO: check difference why only 3 places consistent, different atom selections for normals?
         self.assertListVec3AlmostEqual(ring_normals, expected, self.DEFAULT_DECIMAL_PLACES)
     
+    def get_target_atom_ids(self, components):
+        return  []
+    
     def test_calc_component_shift(self):
         ring_potential = self.make_ring_potential()
         ring_potential._prepare()
@@ -220,6 +223,7 @@ class TestXcamshiftAFA(unittest2.TestCase):
                 
                 forces = self.make_result_array_forces()
                 force_terms = ring_potential._force_calculator._build_force_terms(target_atom_id, ring_id)
+                
                 
                 ring_potential._force_calculator._calc_target_atom_forces(target_atom_id, force_factor, force_terms, forces)
                 

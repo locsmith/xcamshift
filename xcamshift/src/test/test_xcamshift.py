@@ -12,7 +12,7 @@ from xcamshift import RandomCoilShifts, Distance_potential,  Extra_potential,\
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
-from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
 from test.sidechains import sidechains_ala_3
 from test.ala_3 import ala_3_total_shifts
 from test import sidechains, ala_3
@@ -773,26 +773,26 @@ class TestXcamshift(unittest2.TestCase):
         for item in ala_3.ala_3_test_shifts_tanh.items():
             print item
     
-    def test_fast_flag(self):
-        xcamshift = self._make_xcamshift(set_fast=False)
-        
-
-        xcamshift.calcEnergy()
-        for potential_name in xcamshift.get_sub_potential_names():
-            potential  = xcamshift.get_named_sub_potential(potential_name)
-            self.assertFalse(potential._fast, potential_name)
-        xcamshift.set_fast(True)
-        
-        xcamshift.calcEnergy()
-        for potential_name in xcamshift.get_sub_potential_names():
-            potential  = xcamshift.get_named_sub_potential(potential_name)
-            self.assertTrue(potential._fast, potential_name)        
+#    def test_fast_flag(self):
+#        xcamshift = self._make_xcamshift(set_fast=False)
+#        
+#
+#        xcamshift.calcEnergy()
+#        for potential_name in xcamshift.get_sub_potential_names():
+#            potential  = xcamshift.get_named_sub_potential(potential_name)
+#            self.assertFalse(potential._fast, potential_name)
+#        xcamshift.set_fast(True)
+#        
+#        xcamshift.calcEnergy()
+#        for potential_name in xcamshift.get_sub_potential_names():
+#            potential  = xcamshift.get_named_sub_potential(potential_name)
+#            self.assertTrue(potential._fast, potential_name)        
 
 def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshift.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift')
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDihedralPotentialSingleForceTanh')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetWell')
     
 if __name__ == "__main__":
     run_tests()

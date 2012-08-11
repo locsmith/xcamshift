@@ -11,7 +11,7 @@ from xcamshift import Xcamshift
 from utils import Atom_utils
 from common_constants import BACK_BONE
 import sys
-from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
 
 fast = False
 

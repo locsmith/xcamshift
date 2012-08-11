@@ -8,7 +8,7 @@ from protocol import initStruct
 from pdbTool import PDBTool
 from utils import Atom_utils, iter_residue_atoms, iter_residue_atom_ids
 import utils
-from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
 
 expected_residue_atom_ids  =  (
      (1,2,3,4,5,6,7,8,9,10,11,12),

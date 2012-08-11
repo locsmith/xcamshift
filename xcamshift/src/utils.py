@@ -8,7 +8,7 @@ from atom import Atom
 from atomSel import AtomSel
 from simulation import currentSimulation
 from vec3 import norm
-from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
 
 X = 0
 Y = 1

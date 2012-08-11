@@ -39,15 +39,15 @@ class Segment_info():
                 self.first_atom_index, self.last_atom_index)
         
         return template % data
-
+ 
 cdef object _default = None
 
 cdef class Segment_Manager:
     cdef int _num_atoms
     cdef object _segments, _segment_info_map
     def __init__(self):
+        self._num_atoms=0
         (self._segments, self._segment_info_map) =  self._build_segments_and_residues()
-        self._num_atoms = 0
     
     
     
@@ -65,7 +65,7 @@ cdef class Segment_Manager:
         
     
         
-    def get_number_atoms(self):
+    cpdef get_number_atoms(self):
         return self._num_atoms
     
     def _build_segments_and_residues(self):

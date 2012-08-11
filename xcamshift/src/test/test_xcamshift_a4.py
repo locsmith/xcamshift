@@ -12,7 +12,7 @@ from xcamshift import    Non_bonded_potential, Non_bonded_list, Xcamshift
 from atomSel import AtomSel
 #from test.xdists import xdists_ala_3
 #from test.dihedrals import dihedrals_ala_3
-#from segment_manager import Segment_Manager
+#from cython.fast_segment_manager import Segment_Manager
 #from test.sidechains import sidechains_ala_3
 #from test.ala_3 import ala_3_total_shifts
 #from test import sidechains, ala_3
@@ -22,7 +22,7 @@ import sys
 from table_manager import Table_manager
 from component_list import Component_list
 from test import ala_4
-from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
 
 fast = False
 
@@ -574,10 +574,10 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftA4.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift_a4')
+#    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testNonBondedForceFactorsNotSmoothed')
     
 if __name__ == "__main__":
     run_tests()
 #    TestXcamshift.list_test_shifts()
-#    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testComponentShiftsA4')
 #    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testNonBondedForces')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')

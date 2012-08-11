@@ -9,10 +9,8 @@ from pdbTool import PDBTool
 import unittest2
 from utils import Atom_utils
 
-if fast:
-    from cython.fast_segment_manager import Segment_Manager
-else:
-    from segment_manager import Segment_Manager
+from cython.fast_segment_manager import Segment_Manager
+
     
 class Test_segment_manager(unittest2.TestCase):
 
@@ -40,7 +38,11 @@ class Test_segment_manager(unittest2.TestCase):
         self.assertEqual(segment_info.last_atom_index, 32)
         
         self.assertEqual(segment_info.segment_length, 3)
-
+        
+    def test_num_atoms(self):
+        num_atoms = Segment_Manager.get_segment_manager().get_number_atoms()
+        self.assertEqual(num_atoms, 33)
+        
 
 if __name__ == "__main__":
     unittest2.main()
