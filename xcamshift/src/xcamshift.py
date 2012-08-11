@@ -1909,6 +1909,7 @@ class Ring_shift_calculator(Base_shift_calculator):
 class Ring_data_calculator:
     
     def __init__(self):
+        raise Exception ("not used!")
         self._verbose = False
     
     def set_verbose(self,on):
@@ -2532,6 +2533,7 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
 class Non_bonded_calculator():
     
     def __init__(self,min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
+#        raise Exception ("not used!")
         self._min_residue_seperation =  min_residue_seperation
         self._full_cutoff_distance =  cutoff_distance + jitter
         self._verbose=False
@@ -2595,10 +2597,10 @@ class Non_bonded_list(object):
         self._interaction_count = 0
 
     def _get_non_bonded_calculator(self):
-        if self._fast:
-            result = Fast_non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
-        else:
-            result  = Non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
+#        if self._fast:
+#        result = Fast_non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
+#        else:
+        result  = Non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
         return result
     
     def _get_cutoff_distance_2(self):
@@ -3111,6 +3113,7 @@ class Non_bonded_potential(Distance_based_potential):
 
 class Energy_calculator:
     def __init__(self):
+        raise Exception ("not used!")
         self._energy_term_cache =  None
         self._theory_shifts =   None
         self._observed_shifts =  None
@@ -3337,10 +3340,10 @@ class Xcamshift():
         return [potential.get_abbreviated_name() for potential in self.potential]
     
     def _get_energy_calculator(self):
-        if self._fast:
-            result  = Fast_energy_calculator()
-        else:
-            result  = Energy_calculator()
+#        if self._fast:
+        result  = Fast_energy_calculator()
+#        else:
+#            result  = Energy_calculator()
         result.set_verbose(self._verbose)
         
         return result
