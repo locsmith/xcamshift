@@ -384,11 +384,12 @@ class TestXcamshift(unittest2.TestCase):
         return self.assertEqual(len(expected_force_factors), 0)
 
     def testDistanceBasedPotentialSingleForceFactor(self):
-        
+        global fast
         # TODO make this a dummy distance based potential, 
         # _calc_single_force_factor is in distance based potential
         #TODO: test the force calculator not the potential
         distance_potential = Distance_potential()
+        distance_potential.set_fast(fast)
         distance_potential._force_calculator._set_components(distance_potential._get_component_list())
             
         expected_force_factors = dict(ala_3.ala_3_distance_forces_well)
@@ -524,7 +525,7 @@ class TestXcamshift(unittest2.TestCase):
             for elem in dihedral_atoms_key:
                 dihedral_atom_ids.extend(single_text_key_to_atom_ids(elem))
             test_factor = test_factors[target_atom_key]
-            potential._force_calculator._test_calc_single_force_set(i,test_factor,forces)
+            potential._force_calculator._calc_single_force_set(i,test_factor,forces)
             dihedral_forces = self._extract_dihedral_forces(dihedral_atom_ids,forces)
             
             for forces,expected in zip(dihedral_forces,expected_forces_dict[expected_key]):
@@ -537,21 +538,27 @@ class TestXcamshift(unittest2.TestCase):
         
     #TODO for completeness there ought to be tests that the well forces are zero here
     def testDistancePotentialSingleForceHarmonic(self):
+        global fast
         distance_potential = Distance_potential()
+        distance_potential.set_fast(fast)
         expected_forces = ala_3.ala_3_distance_real_forces_harmonic
         factors_harmonic = ala_3.ala_3_factors_harmonic
         
         self._test_distance_forces(factors_harmonic, distance_potential,expected_forces)
 
     def testExtraPotentialSingleForceHarmonic(self):
+        global fast
         extra_potential = Extra_potential()
+        extra_potential.set_fast(fast)
         expected_forces = ala_3.ala_3_extra_real_forces_harmonic
         factors_harmonic = ala_3.ala_3_factors_harmonic
         
         self._test_distance_forces(factors_harmonic, extra_potential ,expected_forces)
         
     def testSidechainPotentialSingleForceHarmonic(self):
+        global fast
         sidechain_potential = Sidechain_potential()
+        sidechain_potential.set_fast(fast)
         expected_forces = ala_3.ala_3_sidechain_real_forces_harmonic
         factors_harmonic = ala_3.ala_3_factors_harmonic
 

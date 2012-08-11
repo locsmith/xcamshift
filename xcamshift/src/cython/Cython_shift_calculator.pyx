@@ -745,7 +745,7 @@ cdef class Base_force_calculator:
         return target_forces
 
 #    TODO make abstract
-    cdef _calc_single_force_set(self,int index, float force_factor, object forces):
+    def _cython_calc_single_force_set(self,int index, float force_factor, object forces):
         raise Exception("unexpected! this method should be implemented")
 
 
@@ -879,7 +879,10 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
  
 
     
-    cdef object _calc_single_force_set(self, int index, float factor, object forces):
+    def _calc_single_force_set(self, int index, float factor, object forces):
+        self._cython_calc_single_force_set(index, factor, forces)
+        
+    cdef _cython_calc_single_force_set(self, int index, float factor, object forces):
         
         cdef target_distant_atom atom_ids
         cdef Vec3 xyz_distances, target_forces, distant_forces
@@ -911,14 +914,16 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         super(Fast_non_bonded_force_calculator, self).__init__(indices,smoothed)
         self._non_bonded_cutoff = DEFAULT_NB_CUTOFF
         
-
-    cpdef _calc_single_force_set(self, int index, float factor, object forces):
+    def _calc_single_force_set(self, int index, float factor, object forces):
+        self._cython_calc_single_force_set(index,  factor, forces)
+        
+    cdef _cython_calc_single_force_set(self, int index, float factor, object forces):
         cdef target_distant_atom atom_ids = Fast_distance_based_potential_force_calculator._get_target_and_distant_atom_ids(self,index)
         cdef float distance  = calc_distance(atom_ids.target_atom_id, atom_ids.distant_atom_id)
 #        TODO: this should be the non bonded distance cutoff
 #TODO class variable of self are not being looked up!
         if distance < 5.0:
-            Fast_distance_based_potential_force_calculator._calc_single_force_set(self,index, factor, forces)
+            Fast_distance_based_potential_force_calculator._cyhton_calc_single_force_set(self,index, factor, forces)
 
 
     
@@ -979,10 +984,10 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
 
     
     #TODO: is this too close?
-    def _test_calc_single_force_set(self, int index, float factor, object forces):
-        self._calc_single_force_set(index, factor, forces)
+    def _calc_single_force_set(self, int index, float factor, object forces):
+        self._cython_calc_single_force_set(index, factor, forces)
         
-    cdef _calc_single_force_set(self, int index, float factor, object forces):
+    cdef _cython_calc_single_force_set(self, int index, float factor, object forces):
         cdef Vec3 r1, r2, r3, r4, temp
         cdef Vec3 n1, n2
         cdef float weight
