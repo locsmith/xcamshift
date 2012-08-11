@@ -8,6 +8,7 @@ from vec3 import Vec3 as python_vec3
 from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
+from libc.string cimport strcmp
 
  
 #cdef object vec3_as_tuple(Vec3& vec_3):
@@ -598,7 +599,8 @@ cdef class Fast_non_bonded_calculator:
         cdef bint result
         
         result = False
-        if seg_1 == seg_2:
+        
+        if strcmp(seg_1, seg_2) == 0:
             sequence_distance =abs(residue_1-residue_2)
             if sequence_distance < self._min_residue_seperation:
                 result =True

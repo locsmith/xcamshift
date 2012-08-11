@@ -2533,7 +2533,7 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
 class Non_bonded_calculator():
     
     def __init__(self,min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
-#        raise Exception ("not used!")
+        raise Exception ("not used!")
         self._min_residue_seperation =  min_residue_seperation
         self._full_cutoff_distance =  cutoff_distance + jitter
         self._verbose=False
@@ -2598,9 +2598,9 @@ class Non_bonded_list(object):
 
     def _get_non_bonded_calculator(self):
 #        if self._fast:
-#        result = Fast_non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
+        result = Fast_non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
 #        else:
-        result  = Non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
+#        result  = Non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
         return result
     
     def _get_cutoff_distance_2(self):
