@@ -14,7 +14,7 @@ from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from math import cos, tanh, cosh, sin
 from observed_chemical_shifts import Observed_shift_table
-#from segment_manager import Segment_Manager
+#from cython.fast_segment_manager import Segment_Manager
 from cython.fast_segment_manager import Segment_Manager
 from table_manager import Table_manager
 from python_utils import tupleit
@@ -561,6 +561,12 @@ class Base_potential(object):
         self._cache_list_data = {}
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._fast = False
+        self._shift_calculator = None
+        
+        
+    
+        self._component_to_result = None
+        self._filtered_components = None
         self._verbose = False
         
         def set_verbose(self, on=True):
@@ -576,11 +582,11 @@ class Base_potential(object):
     
     def _filter_components(self, target_atom_ids):
         if target_atom_ids == None:
-            components = self._get_distance_components()
+            components = self._get_all_components()
         else:
             target_atom_ids = set()
             components = Component_list()
-            for component in self._get_distance_components():
+            for component in self._get_all_components():
                 if component[0] in target_atom_ids:
                     components.add(component)
         return components    
@@ -589,11 +595,25 @@ class Base_potential(object):
         components = Component_list()
         components.add_component(self._get_distance_components()[index])
         results = [0.0]
-        self._shift_calculator(components,results)
+        self._shift_calculator(components,results,[0])
         return results[0]
       
-    def _prepare(self):
-        pass
+    
+    def _build_component_to_target(self, target_atom_ids):
+        components = self._filter_components(target_atom_ids)
+        self._component_to_result =  [0] *len(components)
+        for i, component in enumerate(components):
+            out_atom_id = component[0]
+            out_index  =  target_atom_ids.index(out_atom_id)
+            self._component_to_result[i] += out_index
+            
+    def _prepare(self,target_atom_ids = None):
+        if target_atom_ids == None:
+            target_atom_ids = [component[0] for component in self._get_component_list()]
+
+        if self._component_to_result == None:
+            self._build_component_to_target(target_atom_ids)
+
     
     def get_component_table_names(self):
         result = []
@@ -798,7 +818,7 @@ class Distance_shift_calculator(Base_shift_calculator):
         
         return coefficient, exponent
     
-    def __call__(self, components, results):
+    def __call__(self, components, results, target_to_result):
         self._set_components(components)
         for index in range(len(components)):
             target_atom_index, sidechain_atom_index = self._get_target_and_distant_atom_ids(index)
@@ -812,7 +832,7 @@ class Distance_shift_calculator(Base_shift_calculator):
         #                ratio *= ratio
         #            print ratio2,ratio
                 smoothing_factor = 1.0 - ratio ** 8
-            results[index] = smoothing_factor * distance ** exponent * coefficient
+            results[target_to_result[index]] = smoothing_factor * distance ** exponent * coefficient
             
 class Distance_based_potential_force_calculator(Base_force_calculator):
     
@@ -919,7 +939,6 @@ class Distance_based_potential_force_calculator(Base_force_calculator):
         
 #       TODO: move to atom utils 
         OFFSETS_3 = (X_OFFSET,Y_OFFSET,Z_OFFSET)
-        
         target_forces = self._get_or_make_target_force_triplet(forces, target_offset)
         distant_forces  = self._get_or_make_target_force_triplet(forces, distant_offset)
         
@@ -948,10 +967,10 @@ class Distance_based_potential(Base_potential):
         
     #TODO: move to base potential
     def _get_shift_calculator(self):
-        if self._fast:
-            result  = self._shift_calculator = Fast_distance_shift_calculator(self._get_indices(), self._smoothed)
-        else:
-            result = self._shift_calculator = Distance_shift_calculator(self._get_indices(), self._smoothed)
+#        if self._fast:
+#        result  = self._shift_calculator = Fast_distance_shift_calculator(self._get_indices(), self._smoothed)
+#        else:
+        result = self._shift_calculator = Distance_shift_calculator(self._get_indices(), self._smoothed)
         return result
     
     def _get_force_calculator(self):
@@ -964,7 +983,7 @@ class Distance_based_potential(Base_potential):
 #    TODO: remove to base class
     def calc_shifts(self, target_atom_ids, results):
         components  = self._filter_components(target_atom_ids)
-        self._shift_calculator(components,results)
+        self._shift_calculator(components,results,[0])
                 
     class Indices(object):
         def __init__(self, target_atom_index,distance_atom_index_1,
@@ -1220,7 +1239,7 @@ class Dihedral_shift_calculator(Base_shift_calculator):
         parameter_0, parameter_1, parameter_2, parameter_3, parameter_4 = parameters
         return parameter_0, parameter_3, parameter_1, parameter_4, parameter_2
 
-    def __call__(self, components, results):
+    def __call__(self, components, results, target_to_result):
         self._set_components(components)
         for index in range(len(components)):
             dihedral_atom_ids= self._get_dihedral_atom_ids(index)
@@ -1240,7 +1259,7 @@ class Dihedral_shift_calculator(Base_shift_calculator):
             
             shift = coefficient * angle_term
     
-            results[index] = shift
+            results[target_to_result[index]] = shift
             
 class Dihedral_force_calculator(Base_force_calculator):
     
@@ -1393,7 +1412,7 @@ class Dihedral_potential(Base_potential):
         
     def calc_shifts(self, target_atom_ids, results):
         components  = self._filter_components(target_atom_ids)
-        self._shift_calculator(components,results)
+        self._shift_calculator(components,results,self._component_to_result)
         
     def get_abbreviated_name(self):
         return DIHEDRAL
@@ -1415,7 +1434,7 @@ class Dihedral_potential(Base_potential):
         components = Component_list()
         components.add_component(self._get_distance_components()[index])
         results = [0.0]
-        self._shift_calculator(components,results)
+        self._shift_calculator(components,results,[0])
         return results[0]
         
 
@@ -2210,10 +2229,10 @@ class Ring_Potential(Base_potential):
         
         
     def _get_ring_force_calculator(self):
-        if self._fast:
-            result = Fast_ring_force_calculator()
-        else:
-            result =  Ring_force_calculator()
+#        if self._fast:
+        result = Fast_ring_force_calculator()
+#        else:
+#            result =  Ring_force_calculator()
         result.set_verbose(self._verbose)
         return result
             
@@ -2234,10 +2253,10 @@ class Ring_Potential(Base_potential):
         calculator._set_centre_cache(self._get_cache_list('CENT'))
     
     def _get_ring_data_calculator(self):
-        if self._fast:
-            result = Fast_ring_data_calculator()
-        else:
-            result = Ring_data_calculator()
+#        if self._fast:
+        result = Fast_ring_data_calculator()
+#        else:
+#            result = Ring_data_calculator()
         result.set_verbose(self._verbose)
         return result
     
@@ -2253,10 +2272,10 @@ class Ring_Potential(Base_potential):
         return RING
 
     def _get_shift_calculator(self):
-        if self._fast:
-            result = Fast_ring_shift_calculator()
-        else:
-            result = Ring_shift_calculator()
+#        if self._fast:
+        result = Fast_ring_shift_calculator()
+#        else:
+#            result = Ring_shift_calculator()
         return result
     
         
@@ -2279,7 +2298,7 @@ class Ring_Potential(Base_potential):
         components.add_component(self._get_distance_components()[index])
         results = [0.0]
         self._setup_ring_calculator(self._shift_calculator)
-        self._shift_calculator(components,results)
+        self._shift_calculator(components,results,[0])
         return results[0]
     
     

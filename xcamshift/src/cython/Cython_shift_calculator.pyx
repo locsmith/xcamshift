@@ -213,7 +213,6 @@ cdef class Base_shift_calculator:
         return True
     
     def set_verbose(self,bint state):
-        print 'make verbose', self._name,state, id(self)
         self._verbose =  state
     
     cdef _do_verbose(self,object components, object targets):
@@ -278,7 +277,9 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         
         return result
 #    
-    def __call__(self, object components, object results):
+    def __call__(self, object components, object results, object component_to_target):
+        self._do_verbose(components, results)
+        
         self._set_components(components)
         cdef float smoothing_factor = self._smoothing_factor
         cdef float ratio
@@ -295,7 +296,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
             if self._smoothed:
                 ratio = distance / self._cutoff
                 smoothing_factor = 1.0 - ratio ** 8
-            results[index]  = smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
+            results[component_to_target[index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
             
     
 
@@ -348,7 +349,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
             
         return result
 
-    def __call__(self, object components, object results):
+    def __call__(self, object components, object results, object component_to_target):
         cdef float angle
         cdef float angle_term
         cdef float shift
@@ -373,7 +374,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
                          parameters.param_4
             shift = coefficient * angle_term
     
-            results[index] = shift
+            results[component_to_target[index]] += shift
  
 cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     cdef object _components
@@ -446,7 +447,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         return contrib * coefficient
 
     
-    def __call__(self, components, results):
+    def __call__(self, object components, object results, object component_to_target):
         cdef int target_atom_id
         cdef int ring_id
         cdef float coefficient
@@ -470,7 +471,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
                 coefficient = coef_component[2]
                 shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
             
-            results[index] = shift
+            results[component_to_target[index]] += shift
 #   
 cdef int RING_ATOM_IDS = 1
     
@@ -578,13 +579,20 @@ cdef class Fast_ring_data_calculator:
             
 
 cdef class Fast_non_bonded_calculator:
-    
+    cdef int _min_residue_seperation
+    cdef float _cutoff_distance
+    cdef float _jitter
+    cdef float _full_cutoff_distance
+    cdef bint _verbose 
     def __init__(self,min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
         self._min_residue_seperation =  min_residue_seperation
         self._cutoff_distance =  cutoff_distance
         self._jitter = jitter
         self._full_cutoff_distance =  self._cutoff_distance + self._jitter
-        
+        self._verbose =  False
+    
+    def set_verbose(self,on):
+        self._verbose=on
     cdef inline bint _filter_by_residue(self, char* seg_1, int residue_1, char* seg_2, int residue_2):
         cdef int sequence_distance
         cdef bint result
@@ -633,10 +641,19 @@ cdef class Fast_non_bonded_calculator:
 
 
 cdef class Fast_energy_calculator:
+    cdef object _energy_term_cache 
+    cdef object _theory_shifts
+    cdef object _observed_shifts
+    cdef bint _verbose 
+
     def __init__(self):
         self._energy_term_cache =  None
         self._theory_shifts =   None
         self._observed_shifts =  None
+        self._verbose = False
+    
+    def set_verbose(self,on):
+        self._verbose = on
         
     def set_observed_shifts(self, observed_shifts):
         self._observed_shifts =  observed_shifts
@@ -1009,7 +1026,7 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         return coefficient
     
 #    TODO make this consistent with the distance forces factor
-    cdef _calc_single_force_factor(self, int index):
+    cpdef _calc_single_force_factor(self, int index):
         
         cdef dihedral_ids dihedral_atom_ids
         cdef dihedral_parameters params
@@ -1228,6 +1245,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         
 #        print vec3_as_tuple(force_terms.gradUQ), force_terms.dL3, force_terms.u, vec3_as_tuple(force_terms.gradVQ), force_terms.dL6
 #        print Atom_utils._get_atom_info_from_index(target_atom_id)
+
         self._cython_calc_target_atom_forces(target_atom_id, force_factor * coef_component.coefficient, force_terms, forces)
 #        #            #TODO: this is not how camshift does it, it uses the sum of the two ring normals
         self._cython_calculate_ring_forces(atom_type_id, coef_component.ring_id, force_factor * coef_component.coefficient, force_terms, forces)
