@@ -1,3 +1,4 @@
+# cython: profile=True
 '''
 Created on 31 Jul 2012
 
