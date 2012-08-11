@@ -230,7 +230,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
             
             shift = sidechain_subpotential._calc_component_shift(component_index)
             
-            self.assertAlmostEqual(expected_sidechain_shifts[expected_key], shift, places=self.DEFAULT_DECIMAL_PLACES - 1, msg=`expected_key`)
+            self.assertAlmostEqual(expected_sidechain_shifts[expected_key], shift, places=self.DEFAULT_DECIMAL_PLACES - 2, msg=`expected_key`)
             
             del expected_sidechain_shifts[expected_key]
             

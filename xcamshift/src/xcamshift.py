@@ -778,6 +778,7 @@ class Distance_shift_calculator(Base_shift_calculator):
     DEFAULT_SMOOTHING_FACTOR = 1.0
     
     def __init__(self, indices, smoothed):
+        raise Exception("not used!")
         Base_shift_calculator.__init__(self)
         self._target_atom_index = indices.target_atom_index
         self._distance_atom_index_1 =  indices.distance_atom_index_1
@@ -968,9 +969,9 @@ class Distance_based_potential(Base_potential):
     #TODO: move to base potential
     def _get_shift_calculator(self):
 #        if self._fast:
-#        result  = self._shift_calculator = Fast_distance_shift_calculator(self._get_indices(), self._smoothed)
+        result  = self._shift_calculator = Fast_distance_shift_calculator(self._get_indices(), self._smoothed)
 #        else:
-        result = self._shift_calculator = Distance_shift_calculator(self._get_indices(), self._smoothed)
+#        result = self._shift_calculator = Distance_shift_calculator(self._get_indices(), self._smoothed)
         return result
     
     def _get_force_calculator(self):
@@ -1202,6 +1203,7 @@ class RandomCoilShifts(Base_potential):
 
 class Dihedral_shift_calculator(Base_shift_calculator):
     def __init__(self):
+        raise Exception("not used!")
         Base_shift_calculator.__init__(self)
         self._components = None
     
@@ -1418,10 +1420,10 @@ class Dihedral_potential(Base_potential):
         return DIHEDRAL
 
     def _get_shift_calculator(self):
-        if self._fast:
-            result = Fast_dihedral_shift_calculator()
-        else:
-            result = Dihedral_shift_calculator()
+#        if self._fast:
+        result = Fast_dihedral_shift_calculator()
+#        else:
+#            result = Dihedral_shift_calculator()
         return result
     
     def _get_table_source(self):
@@ -1836,6 +1838,7 @@ class Ring_coefficient_component_factory(Ring_sidechain_component_factory,Backbo
 class Ring_shift_calculator(Base_shift_calculator):
     
     def __init__(self):
+        raise Exception("not used!")
         Base_shift_calculator.__init__(self)
         self._components = None
         self._coef_components = None
