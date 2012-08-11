@@ -202,8 +202,27 @@ cdef float DEFAULT_CUTOFF = 5.0
 cdef float DEFAULT_SMOOTHING_FACTOR = 1.0
 cdef float DEFAULT_NB_CUTOFF = 5.0
     
+cdef class Base_shift_calculator:
+    cdef bint _verbose 
+    cdef str _name
+    def __init__(self, str name):
+            self._verbose = False
+            self._name = name
+            
+    def is_fast(self):
+        return True
     
-cdef class Fast_distance_shift_calculator:
+    def set_verbose(self,bint state):
+        print 'make verbose', self._name,state, id(self)
+        self._verbose =  state
+    
+    cdef _do_verbose(self,object components, object targets):
+        if self._verbose:
+            msg='%s calculating %i components for %s targets'
+            args =  (self._name, len(components), len(targets))
+            print msg % args   
+        
+cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 
     
     cdef int _target_atom_index
@@ -216,7 +235,8 @@ cdef class Fast_distance_shift_calculator:
     cdef float _smoothing_factor 
     cdef float _cutoff
     
-    def __init__(self, indices, smoothed):
+    def __init__(self, indices, smoothed, str name = "not set"):
+        Base_shift_calculator.__init__(self, name)
         self._target_atom_index = indices.target_atom_index
         self._distance_atom_index_1 =  indices.distance_atom_index_1
         self._distance_atom_index_2 =  indices .distance_atom_index_2
@@ -280,10 +300,11 @@ cdef class Fast_distance_shift_calculator:
     
 
     
-cdef class Fast_dihedral_shift_calculator:
+cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     cdef object _components
     
-    def __init__(self):
+    def __init__(self, str name = "not set"):
+        Base_shift_calculator.__init__(self,name)
         self._components = None
     
     cdef _set_components(self, object components):
@@ -335,6 +356,8 @@ cdef class Fast_dihedral_shift_calculator:
         cdef dihedral_parameters parameters
         cdef dihedral_ids dihedral_atom_ids  
         
+        self._do_verbose(components,results)
+        
         self._set_components(components)
         for index in range(len(components)):
             dihedral_atom_ids = self._get_dihedral_atom_ids(index)
@@ -352,7 +375,7 @@ cdef class Fast_dihedral_shift_calculator:
     
             results[index] = shift
  
-cdef class Fast_ring_shift_calculator:
+cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     cdef object _components
     cdef object _coef_components
     cdef object _ring_components
@@ -360,7 +383,8 @@ cdef class Fast_ring_shift_calculator:
     cdef object _normal_cache
     
     
-    def __init__(self):
+    def __init__(self, str name = "not set"):
+        Base_shift_calculator.__init__(self,name)
         self._components = None
         self._coef_components = None
         self._ring_components = None
@@ -427,6 +451,8 @@ cdef class Fast_ring_shift_calculator:
         cdef int ring_id
         cdef float coefficient
         
+        self._do_verbose(components,results)
+        
         self._set_components(components)
         
         for index in range(len(components)):
@@ -449,10 +475,14 @@ cdef class Fast_ring_shift_calculator:
 cdef int RING_ATOM_IDS = 1
     
 cdef class Fast_ring_data_calculator:
-
-    def __init__(self):
-        pass
+    cdef bint _verbose
     
+    def __init__(self): 
+        self._verbose = False
+    
+    def set_verbose(self,on):
+        self._verbose =  on
+        
     cdef Vec3_container  _calculate_one_ring_centre(self, ring_component):
 
         atom_ids = ring_component[RING_ATOM_IDS]
@@ -725,9 +755,14 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
 cdef class Base_force_calculator:
     
     cdef object _components
+    cdef bint _verbose 
     
     def __init__(self,potential=None):
         self._components =  None
+        self._verbose = False
+    
+    def set_verbose(self,on):
+        self._verbose = on
     
     def _set_components(self,components):
         self._components = components

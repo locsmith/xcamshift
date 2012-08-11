@@ -511,6 +511,10 @@ class Base_force_calculator(object):
     def __init__(self,potential=None):
         self._potential =  potential
         self._components =  None
+        self._verbose = False
+    
+    def set_verbose(self,on):
+        self._verbose = on
     
     def _set_components(self,components):
         self._components = components
@@ -519,6 +523,8 @@ class Base_force_calculator(object):
         return self._components.get_component(index)
     
     def __call__(self, components, target_atom_ids, force_factors, forces):
+        if self._verbose:
+            print 'force calculator %s [slow]' % self._name
         self._set_components(components)
         component_target_atom_ids = components.get_component_atom_ids()
         for i,target_atom_id in enumerate(target_atom_ids):
@@ -554,9 +560,12 @@ class Base_potential(object):
         self._cache_list_data = {}
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._fast = False
+        self._verbose = False
         
-        
-        
+        def set_verbose(self, on=True):
+            self._verbose = on
+            if self._shift_calculator != None:
+                self._shift_calculator.set_verbose(on)
     def _get_force_calculator(self):
         return Base_force_calculator(self)
 
@@ -733,11 +742,22 @@ class Base_potential(object):
             forces[target_offset] = target_forces
         return target_forces
 
-class Distance_shift_calculator:
+class Base_shift_calculator():
+    
+    def __init__(self,name="not_set"):
+        self._verbose = False
+        self._name =name
+
+    
+    def set_verbose(self,on):
+        self._verbose = on
+        
+class Distance_shift_calculator(Base_shift_calculator):
     DEFAULT_CUTOFF = 5.0
     DEFAULT_SMOOTHING_FACTOR = 1.0
     
     def __init__(self, indices, smoothed):
+        Base_shift_calculator.__init__(self)
         self._target_atom_index = indices.target_atom_index
         self._distance_atom_index_1 =  indices.distance_atom_index_1
         self._distance_atom_index_2 =  indices .distance_atom_index_2
@@ -938,7 +958,8 @@ class Distance_based_potential(Base_potential):
             result = Fast_distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
         else:
             result = Distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
-        return result
+        result.set_verbose(self._verbose)
+        return result 
 #    TODO: remove to base class
     def calc_shifts(self, target_atom_ids, results):
         components  = self._filter_components(target_atom_ids)
@@ -1159,8 +1180,9 @@ class RandomCoilShifts(Base_potential):
             result.append(string)
         return '\n'.join(result)
 
-class Dihedral_shift_calculator:
+class Dihedral_shift_calculator(Base_shift_calculator):
     def __init__(self):
+        Base_shift_calculator.__init__(self)
         self._components = None
     
     def _set_components(self,components):
@@ -1493,6 +1515,7 @@ class Dihedral_potential(Base_potential):
             result = Fast_dihedral_force_calculator()
         else:
             result  = Dihedral_force_calculator()
+        result.set_verbose(self._verbose)
         return result
 
     
@@ -1790,9 +1813,10 @@ class Ring_coefficient_component_factory(Ring_sidechain_component_factory,Backbo
                     for ring_id in ring_ids:
                         self.create_ring_components(component_list, table, segment, residue_number, ring_id)
 
-class Ring_shift_calculator:
+class Ring_shift_calculator(Base_shift_calculator):
     
     def __init__(self):
+        Base_shift_calculator.__init__(self)
         self._components = None
         self._coef_components = None
         self._ring_components = None
@@ -1862,8 +1886,12 @@ class Ring_shift_calculator:
 class Ring_data_calculator:
     
     def __init__(self):
-        pass
+        self._verbose = False
     
+    def set_verbose(self,on):
+        self._verbose = on
+        
+        
     def _average_vec3(self, positions):
         result = Vec3(0.0,0.0,0.0)
         for position in positions:
@@ -1914,6 +1942,8 @@ class Ring_data_calculator:
     
     
     def __call__(self, rings, normals, centres):
+        if self._verbose:
+            print 'ring data [slow]'
         for ring_component in rings:
             ring_id = ring_component[0]
             
@@ -1924,7 +1954,9 @@ class Ring_data_calculator:
             centre = self._calculate_one_ring_centre(ring_component)
             centre_component = ring_id, centre
             centres.add_component(centre_component)
-
+            
+        if self._verbose:
+            print 'calculated %i rings and normals' % rings.get_number_components()*2
 class Ring_force_calculator(Base_force_calculator):
     RING_ATOM_IDS = 1
         
@@ -2165,7 +2197,11 @@ class Ring_Potential(Base_potential):
         self._shift_calculator = self._get_shift_calculator()
         self._ring_data_calculator = self._get_ring_data_calculator()
         self._force_calculator = self._get_ring_force_calculator()
-        
+      
+    def set_verbose(self,on):
+        super(Ring_Potential, self).set_verbose(on)
+        self._ring_data_calculator.set_verbose(on)
+
     def calc_force_set(self,target_atom_ids,force_factors,forces):
         #TODO: is the right place for setup
         self._setup_ring_calculator(self._force_calculator)
@@ -2177,6 +2213,7 @@ class Ring_Potential(Base_potential):
             result = Fast_ring_force_calculator()
         else:
             result =  Ring_force_calculator()
+        result.set_verbose(self._verbose)
         return result
             
     def _prepare(self): 
@@ -2200,6 +2237,7 @@ class Ring_Potential(Base_potential):
             result = Fast_ring_data_calculator()
         else:
             result = Ring_data_calculator()
+        result.set_verbose(self._verbose)
         return result
     
     def calc_shifts(self, target_atom_ids, results):
@@ -2473,6 +2511,11 @@ class Non_bonded_calculator():
     def __init__(self,min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
         self._min_residue_seperation =  min_residue_seperation
         self._full_cutoff_distance =  cutoff_distance + jitter
+        self._verbose=False
+    
+    
+    def set_verbose(self,on):
+        self.verbose=on
         
     def _filter_by_residue(self, seg_1, residue_1, seg_2, residue_2):
         result = False
@@ -2497,6 +2540,8 @@ class Non_bonded_calculator():
         return is_non_bonded
     
     def __call__(self, atom_list_1, atom_list_2):
+        if self._verbose:
+            print 'non bonded list [slow]'
         non_bonded_lists = []
         for atom_id_1 in atom_list_1:
             non_bonded_list = []
@@ -2522,7 +2567,9 @@ class Non_bonded_list(object):
         self._pos_cache = {}
         
         self._fast = False
+        self._verbose = False 
         self._non_bonded_list_calculator = self._get_non_bonded_calculator()
+        self._interaction_count = 0
 
     def _get_non_bonded_calculator(self):
         if self._fast:
@@ -2535,16 +2582,25 @@ class Non_bonded_list(object):
         return (self._cutoff_distance+self._jitter)**2
     
 
+    def set_verbose(self,on):
+        self._verbose = on
+        self._non_bonded_list_calculator.set_verbose(on)
 
     
     def update(self):
         self._box_update_count +=1
         
     def get_boxes(self,component_list_1, component_list_2,target_component_list,coefficient_list):
-#        print self._box_update_count, self._update_frequency,self._box_update_count >= self._update_frequency
-        self._non_bonded_call_count += 1
-        
-        if self._box_update_count >= self._update_frequency:
+#        print self._box_update_count, se        if self._verbose:
+        if self._verbose:
+            print '  update, box_count= ',self._box_update_count
+
+        if self._box_update_count < self._update_frequency:
+            if self._verbose:
+                print '  skip boxes call count = ', self._box_update_count
+        else:
+            if self._verbose:
+                print '  update boxes call count = ', self._box_update_count
             target_component_list.clear()
             self._box_update_count = -1
             self._non_bonded_calculation_count += 1
@@ -2586,6 +2642,7 @@ class Non_bonded_list(object):
             component_1 = component_list_1[i]
             if len(non_bonded_list) > 0:
                 atom_id_1 = component_1[0]
+                self._interaction_count = 0
                 for j in non_bonded_list:#
                     component_2 = component_list_2[j]
                     atom_id_2 = component_2[0]
@@ -2610,11 +2667,13 @@ class Non_bonded_list(object):
                     
                         try:
                             result_component = atom_id_1,atom_id_2,coefficients[atom_1_coefficent_offset],exponent 
+                            self._interaction_count += 1
                         except:
                             print 'offset', atom_1_coefficent_offset
                         target_component_list.add_component(result_component)
 
-
+        if self._verbose:
+            print '  build boxes [slow]'
 class Null_component_factory(object):
    
     def __init__(self,name):
@@ -2742,8 +2801,13 @@ class Non_bonded_potential(Distance_based_potential):
             result = Fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
         else:
             result = Non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
+        result.set_verbose(self._verbose)
         return result
     
+    def set_verbose(self, on=True):
+        Distance_based_potential.set_verbose(self,on)
+        self._non_bonded_list.set_verbose(on)
+            
     def _get_table_source(self):
         return Table_manager.get_default_table_manager().get_non_bonded_table
         
@@ -3027,6 +3091,10 @@ class Energy_calculator:
         self._energy_term_cache =  None
         self._theory_shifts =   None
         self._observed_shifts =  None
+        self._verbose = False
+        
+    def set_verbose(self,on):
+        self._verbose = on
         
     def set_observed_shifts(self, observed_shifts):
         self._observed_shifts =  observed_shifts
@@ -3100,9 +3168,13 @@ class Force_factor_calculator:
         self._energy_term_cache =  None
         self._theory_shifts =   None
         self._observed_shifts =  None
+        self._verbose = False
         
     def set_observed_shifts(self, observed_shifts):
         self._observed_shifts =  observed_shifts
+    
+    def set_verbose(self,on):
+        self._verbose = on
         
     def set_calculated_shifts(self, calculated_shifts):
         self._theory_shifts =  calculated_shifts
@@ -3136,6 +3208,8 @@ class Force_factor_calculator:
         return result
 
     def __call__(self, target_atom_ids):
+        if self._verbose:
+            print 'energy calculator [slow]'
         result  = []
         for target_atom_id in target_atom_ids:
             factor  = 0.0
@@ -3185,7 +3259,8 @@ class Xcamshift():
     
             
             
-    def __init__(self):
+    def __init__(self, verbose=True):
+        self._verbose = verbose
         self.potential = [
                           RandomCoilShifts(),
                           Distance_potential(),
@@ -3195,6 +3270,7 @@ class Xcamshift():
                           Ring_Potential(),
                           Non_bonded_potential()
                           ]
+        self._verbose = False
         self._shift_table = Observed_shift_table()
         self._shift_cache = {}
         self._fast =  False
@@ -3206,6 +3282,15 @@ class Xcamshift():
 
         self.update_energy_calculator()
         self.update_force_factor_calculator()
+
+    
+    
+    
+
+    def set_verbose(self,on=True):
+        for potential in self.potential:
+            potential.set_verbose(on)
+        self._verbose=on
         
     def _update_calculator(self, calculator):
         calculator.set_calculated_shifts(self._shift_cache)
@@ -3230,12 +3315,12 @@ class Xcamshift():
     
     def _get_energy_calculator(self):
         if self._fast:
-            calculator  = Fast_energy_calculator()
+            result  = Fast_energy_calculator()
         else:
-            calculator  = Energy_calculator()
-
+            result  = Energy_calculator()
+        result.set_verbose(self._verbose)
         
-        return calculator
+        return result
     
     def get_named_sub_potential(self,name):
         result =  None
@@ -3325,6 +3410,8 @@ class Xcamshift():
             self._shift_cache[target_atom_id] =  result
         
     def calc_shifts(self, target_atom_ids, result):
+        if self._verbose:
+            print 'start calc shifts'
         self._prepare_potentials()
         for potential in self.potential:
             if hasattr(potential, 'calc_shifts'):
@@ -3335,7 +3422,9 @@ class Xcamshift():
                 for i,target_atom_id in enumerate(target_atom_ids):
                     shift = self._calc_single_atom_shift(target_atom_id)
                     result[i] = shift
-                    
+        if self._verbose:
+            print 'end calc shifts\n'
+                           
     #TODO: deprecated remove use calc_shifts
     def set_shifts(self, result):
         target_atom_ids =  self._get_target_atom_ids()
