@@ -50,12 +50,15 @@ class TestXcamshift(unittest2.TestCase):
         xcamshift = self._setup_xcamshift_with_shifts_table(shifts)
         if set_fast:
             xcamshift.set_fast(fast)
-            
-        xcamshift._calc_shift_cache()
-        xcamshift._prepare()
+        return xcamshift
+     
+    def _prepare_xcamshift(self, xcamshift):
+#            
+        xcamshift._prepare(xcamshift._get_active_target_atom_ids())
+        xcamshift._calc_shift_cache(xcamshift._get_active_target_atom_ids())
         xcamshift.update_force_factor_calculator()
         
-        return xcamshift
+       
 
 
     def assertLengthIs(self, components_0, length):
@@ -348,6 +351,7 @@ class TestXcamshift(unittest2.TestCase):
 
     def _test_single_factor_set(self, test_shifts, expected_factors):
         xcamshift = self._make_xcamshift(test_shifts)
+        self._prepare_xcamshift(xcamshift)
         shift_table = Observed_shift_table(test_shifts)
         for atom_index in shift_table.get_atom_indices():
             key = Atom_utils._get_atom_info_from_index(atom_index)[1:]
@@ -637,7 +641,8 @@ class TestXcamshift(unittest2.TestCase):
     
     def testCalcForceSetTanh(self):
         xcamshift = self._make_xcamshift(ala_3.ala_3_test_shifts_tanh)
-        xcamshift._prepare()
+
+#        xcamshift._prepare(self.)
         xcamshift.update_force_factor_calculator()
         expected_energy = ala_3.ala_3_energies_tanh[TOTAL_ENERGY]
         expected_forces =ala_3.ala_3_total_forces_tanh
@@ -792,7 +797,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshift.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift')
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetWell')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testXcamshift')
     
 if __name__ == "__main__":
     run_tests()
