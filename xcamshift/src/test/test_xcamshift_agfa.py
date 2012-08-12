@@ -297,22 +297,36 @@ class TestXcamshiftAGFA(unittest2.TestCase):
         
 
 
-    def _get_scamshift(self):
+    def _get_xcamshift(self):
         global fast
         xcamshift = Xcamshift()
         xcamshift.set_fast(fast)
         return xcamshift
+    
 
+    def _get_potential_target_atom_ids(self, ring_potential):
+        target_components = ring_potential._get_component_list('ATOM')
+        target_atom_ids = [component[0] for component in target_components]
+        return target_atom_ids
+    
+    def _prepare_potential(self, ring_potential):
+        target_atom_ids = self._get_potential_target_atom_ids(ring_potential)
+        ring_potential._prepare(target_atom_ids)
+        
+    def _get_potential_target_components(self, potential):
+        return potential._get_component_list('ATOM')
+    
     def test_component_shifts_ring(self):
         
-        xcamshift = self._get_scamshift()
+        xcamshift = self._get_xcamshift()
         ring_subpotential = xcamshift.get_named_sub_potential(RING)
+        self._prepare_potential(ring_subpotential)
         
         ring_subpotential._get_component_list('COEF')
         
         expected_ring_shifts = dict(agfa.agfa_component_shifts_ring)
         expected_component_keys = expected_ring_shifts.keys()
-        ring_subpotential._prepare()
+
         for component_index, component in enumerate(ring_subpotential._get_component_list()):
             from_atom_id, atom_type_id = component
             from_atom_info_list = ring_subpotential._get_component_list('COEF').get_components_for_atom_id(atom_type_id)
