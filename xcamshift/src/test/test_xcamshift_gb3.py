@@ -337,6 +337,37 @@ class TestXcamshiftGB3(unittest2.TestCase):
         #TODO: add the ability to test almost equals with significant figures instead
         self.assertAlmostEqual(total_energy,expected_total_energy, self.DEFAULT_DECIMAL_PLACES-5,)
         
+
+    def test_batch_shift_calculator(self):
+        xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        active_target_atoms_ids = xcamshift._get_active_target_atom_ids()
+
+        result  =  [0.0] * len(active_target_atoms_ids)
+        xcamshift.calc_shifts(active_target_atoms_ids, result)
+        
+        _check_shift_results(active_target_atoms_ids, result,gb3.gb3_shifts)
+            
+    def test_batch_shift_cache(self):
+        xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        active_target_atoms_ids = xcamshift._get_active_target_atom_ids()
+        xcamshift._calc_shift_cache(active_target_atoms_ids)
+
+        shift_cache_copy = dict(xcamshift._shift_cache)
+        result = []
+        for elem in active_target_atoms_ids:
+            result.append(shift_cache_copy[elem])
+            del shift_cache_copy[elem]
+         
+        self.assertEmpty(shift_cache_copy)
+        for i,target_atom_index in enumerate(active_target_atoms_ids):
+            key = get_key_for_atom_index(target_atom_index)
+            expected_shift_diff  = gb3.gb3_shift_diffs[key]
+
+            
+            
+
+            self.assertAlmostEqual(result[i], - expected_shift_diff, self.DEFAULT_DECIMAL_PLACES-2,key)
+
     def test_shift_differences(self):
         xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
         xcamshift._prepare()
