@@ -187,14 +187,30 @@ class TestXcamshiftAFA(unittest2.TestCase):
     def get_target_atom_ids(self, components):
         return  []
     
+
+
+    def _get_potential_target_atom_ids(self, ring_potential):
+        target_components = ring_potential._get_component_list('ATOM')
+        target_atom_ids = [component[0] for component in target_components]
+        return target_atom_ids
+
+    def _prepare_potential(self, ring_potential):
+        target_atom_ids = self._get_potential_target_atom_ids(ring_potential)
+        ring_potential._prepare(target_atom_ids)
+        
+    def _get_potential_target_components(self, potential):
+        return potential._get_component_list('ATOM')
+    
     def test_calc_component_shift(self):
         ring_potential = self.make_ring_potential()
-        ring_potential._prepare()
+        self._prepare_potential(ring_potential)
+        target_components = self._get_potential_target_components(ring_potential)
         
-        for i in range(len(ring_potential._get_component_list('ATOM'))):
+        
+        for i, component in enumerate(target_components):
             component_shift = ring_potential._calc_component_shift(i)
             #TODO: this looks inside the object too much
-            atom_id = ring_potential._get_component_list('ATOM')[i][0]
+            atom_id = component[0]
             atom_key = Atom_utils._get_atom_info_from_index(atom_id)
             expected_shift = AFA.expected_ring_shifts[atom_key]
             #TODO: is the difference in error down to coordinates?
