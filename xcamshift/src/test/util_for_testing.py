@@ -63,6 +63,5 @@ def _check_shift_results(active_target_atoms_ids, result, expected_shifts):
     for i, target_atom_index in enumerate(active_target_atoms_ids):
         key = get_key_for_atom_index(target_atom_index)
         expected_shift_diff = expected_shifts[key]
-        print key,result[i] - expected_shift_diff, result[i], expected_shifts[key]
         if abs(result[i] - expected_shift_diff) >  1.0**-(DEFAULT_DECIMAL_PLACES-2):
             raise AssertionError("diff too big %f - %f " % (result[i], expected_shift_diff))
