@@ -16,6 +16,8 @@ from utils import Atom_utils
 import common_constants
 import sys
 from cython.fast_segment_manager import Segment_Manager
+from test.util_for_testing import  _check_shift_results, _shift_cache_as_result,\
+    get_atom_index, get_key_for_atom_index
 TOTAL_ENERGY = 'total'
 fast = False
 
@@ -308,24 +310,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
             if predicate(k,v):
                 yield k, v    
     
-    translations = {('GLY','HA')  :'HA1',
-                    ('ILE','CD')  : 'CD1',
-                    ('ILE','HD1') : 'HD11',
-                    ('ILE','HD2') : 'HD12',
-                    ('ILE','HD3') : 'HD13'}
     
-    def get_atom_index(self, key):
-        residue_type = Atom_utils._get_residue_type(key[0], key[1])
-
-        atom_name = key[2]
-        
-        residue_key = list(key)
-        residue_key[2] =  self.translations.setdefault((residue_type,atom_name),atom_name)
-        residue_key = tuple(residue_key)
-        
-        target_atom_index = Atom_utils.find_atom(*residue_key)[0].index()
-        return target_atom_index
-
     def test_energies(self):
         xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
         xcamshift._prepare()
@@ -336,7 +321,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
             if key ==  'total':
                 continue
 
-            target_atom_index = self.get_atom_index(key)
+            target_atom_index = get_atom_index(key)
             
             expected_energy =  gb3.gb3_energies[key]
             energy = xcamshift._calc_single_atom_energy(target_atom_index)
@@ -360,7 +345,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         for key in sorted(gb3.gb3_shift_diffs):
             expected_shift_diff  = gb3.gb3_shift_diffs[key]
             
-            target_atom_index = self.get_atom_index(key)
+            target_atom_index = get_atom_index(key)
             
             shift_diff = xcamshift._calc_single_atom_shift(target_atom_index)
 
@@ -370,7 +355,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         shift_cache =  xcamshift._shift_cache
         
         for key in shift_list:
-            index = self.get_atom_index(key)
+            index = get_atom_index(key)
             shift_cache[index] = shift_list[key]
         
 
@@ -391,7 +376,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
     def make_total_forces_from_components(self):
         expected_total_result_forces = self.make_result_array_forces()
         for key in gb3.gb3_forces:
-            index = self.get_atom_index(key)
+            index = get_atom_index(key)
             expected_total_result_forces[index] = gb3.gb3_forces[key]
         
         return expected_total_result_forces
@@ -477,7 +462,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
             for raw_backbone_force_component_key in raw_backbone_force_components:
                 if target_atom_key == self.get_target_atom_key(raw_backbone_force_component_key):
                     force_atom_key = self.get_force_atom_key(raw_backbone_force_component_key)
-                    force_atom_index = self.get_atom_index(force_atom_key)
+                    force_atom_index = get_atom_index(force_atom_key)
                     expected_force_component = raw_backbone_force_components[raw_backbone_force_component_key]
                     self.add_forces_to_array(expected_forces, force_atom_index, expected_force_component)
         
@@ -502,7 +487,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         
                 expected_forces = build_expected_forces_for_potential(target_atom_key, raw_backbone_force_components)
 
-                target_atom_id = self.get_atom_index(target_atom_key)
+                target_atom_id = get_atom_index(target_atom_key)
                 result_forces = self.make_result_array_forces()
 
                 xcamshift._calc_single_atom_force_set_with_potentials(target_atom_id, result_forces, potentials_list)
@@ -519,8 +504,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
-    unittest2.main(module='test.test_xcamshift_gb3')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_energies')
+#    unittest2.main(module='test.test_xcamshift_gb3')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_energies')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
 
