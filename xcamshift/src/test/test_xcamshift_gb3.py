@@ -248,7 +248,6 @@ class TestXcamshiftGB3(unittest2.TestCase):
         ring_subpotential = xcamshift.get_named_sub_potential(RING)
         ring_subpotential._prepare(xcamshift._get_potential_target_atom_ids())
         
-        return
         expected_ring_shifts = dict(gb3_component_shifts_ring)
         expected_component_keys = expected_ring_shifts.keys()
         for component_index, component in enumerate(ring_subpotential._get_component_list()):
