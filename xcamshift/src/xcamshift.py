@@ -2244,7 +2244,8 @@ class Ring_Potential(Base_potential):
         result.set_verbose(self._verbose)
         return result
             
-    def _prepare(self): 
+    def _prepare(self, target_atom_ids): 
+        super(Ring_Potential, self)._prepare(target_atom_ids)
         self._build_ring_data_cache()
         self._setup_ring_calculator(self._shift_calculator)
          
@@ -3453,19 +3454,21 @@ class Xcamshift():
         result.sort()
         return result
     
-    def _calc_shift_cache(self):
+    def _calc_shift_cache(self,target_atom_ids):
         self._shift_cache = {}
-        target_atom_ids = self._get_active_target_atom_ids()
-        result = [0.0]*len(target_atom_ids)
-        self.calc_shifts(None, result)
-        
-        for target_atom_id, result in zip(target_atom_ids,result):
+        result_shifts = [0.0]*len(target_atom_ids)
+        self.calc_shifts(target_atom_ids, result_shifts)
+
+        for target_atom_id, result in zip(target_atom_ids,result_shifts):
             self._shift_cache[target_atom_id] =  result
         
+
+        
     def calc_shifts(self, target_atom_ids, result):
+        
         if self._verbose:
             print 'start calc shifts'
-        self._prepare_potentials()
+        self._prepare_potentials(target_atom_ids)
         for potential in self.potential:
             if hasattr(potential, 'calc_shifts'):
                 potential.calc_shifts(target_atom_ids, result)
@@ -3480,7 +3483,7 @@ class Xcamshift():
                            
     #TODO: deprecated remove use calc_shifts
     def set_shifts(self, result):
-        target_atom_ids =  self._get_target_atom_ids()
+        target_atom_ids =  self._get_potential_target_atom_ids()
         result_shifts  = [0.0] * len(target_atom_ids)
         self.calc_shifts(target_atom_ids, result_shifts)
         for target_atom_id, shift in zip(target_atom_ids,result_shifts):
@@ -3573,6 +3576,7 @@ class Xcamshift():
     def _calc_single_atom_energy(self, target_atom_index):
         
         target_atom_ids = [target_atom_index]
+        self._prepare(target_atom_ids)
         self._calc_single_atom_shift(target_atom_index)
         self.update_energy_calculator()
         return self._energy_calculator(target_atom_ids)
@@ -3669,15 +3673,15 @@ class Xcamshift():
         
         return potential
 
-    def _prepare_potentials(self):
+    def _prepare_potentials(self, target_atom_ids):
         self._set_sub_potetials_fast()
         
         for potential in self.potential:
-            potential._prepare()
+            potential._prepare(target_atom_ids)
 
-    def _prepare(self):
-        self._prepare_potentials()
-        self._calc_shift_cache()
+    def _prepare(self, target_atom_ids):
+        self._prepare_potentials(target_atom_ids)
+        
     
     class Constant_cache():
         def __init__(self, xcamshift, residue_type, atom_name):
@@ -3710,28 +3714,34 @@ class Xcamshift():
 
 
         
-    def calcEnergy(self, prepare =  True):
-        if prepare:
-            self._prepare()
+    def calcEnergy(self, prepare =  True, active_target_atom_ids = None):
+        if active_target_atom_ids == None:
+            active_target_atom_ids = self._get_active_target_atom_ids()
             
-        active_target_atom_ids = self._get_active_target_atom_ids()
+        if prepare:
+            self._prepare(active_target_atom_ids)
+            self._calc_shift_cache(active_target_atom_ids)
+            
+
         self.update_energy_calculator()
         return self._energy_calculator(active_target_atom_ids)
     
     
 
-    def _calc_derivs(self, derivs,potentials=None):
+    def _calc_derivs(self, derivs, active_target_atom_ids ,potentials=None):
         
-        active_target_atom_ids = self._get_active_target_atom_ids()
         self.update_force_factor_calculator()
         self._calc_force_set(active_target_atom_ids, derivs, potentials)
 
     def calcEnergyAndDerivs(self,derivs):
-        self._prepare()
-        energy = self.calcEnergy(prepare=False)
+        target_atom_ids = self._get_active_target_atom_ids()
+        self._prepare(target_atom_ids)
+        self._calc_shift_cache(target_atom_ids)
+
+        energy = self.calcEnergy( active_target_atom_ids=target_atom_ids, prepare=False)
         
         
-        self._calc_derivs(derivs)
+        self._calc_derivs(derivs, target_atom_ids)
         
         return energy
         
