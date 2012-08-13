@@ -1185,7 +1185,11 @@ class RandomCoilShifts(Base_potential):
     def _get_table_source(self):
         return self._table_manager.get_random_coil_table
 
-    
+    def calc_shifts(self, target_atom_ids, result):
+        components  = self._filter_components(target_atom_ids)
+        for i, component in enumerate(components):
+            result[self._component_to_result[i]] += component[1]
+            
     def _calc_component_shift(self,index):
         components = self._get_component_list()
         return components.get_component(index)[1]
