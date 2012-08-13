@@ -599,13 +599,14 @@ class Base_potential(object):
         return results[0]
       
     
-    def _build_component_to_target(self, target_atom_ids):
+    def _build_component_to_result(self, target_atom_ids):
         components = self._filter_components(target_atom_ids)
+        target_atom_ids =  target_atom_ids
         self._component_to_result =  [0] *len(components)
         for i, component in enumerate(components):
             out_atom_id = component[0]
             out_index  =  target_atom_ids.index(out_atom_id)
-            self._component_to_result[i] += out_index
+            self._component_to_result[i] = out_index
             
     def _prepare(self,target_atom_ids = None):
         if target_atom_ids == None:
