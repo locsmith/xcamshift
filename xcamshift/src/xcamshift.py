@@ -988,7 +988,7 @@ class Distance_based_potential(Base_potential):
 #    TODO: remove to base class
     def calc_shifts(self, target_atom_ids, results):
         components  = self._filter_components(target_atom_ids)
-        self._shift_calculator(components,results,[0])
+        self._shift_calculator(components,results,self._component_to_result)
                 
     class Indices(object):
         def __init__(self, target_atom_index,distance_atom_index_1,
@@ -2273,7 +2273,7 @@ class Ring_Potential(Base_potential):
         if len(components) > 0:
             #TODO: add as general method in base
             self._setup_ring_calculator(self._shift_calculator)
-            self._shift_calculator(components,results)
+            self._shift_calculator(components,results, self._component_to_result)
         
         
     def get_abbreviated_name(self):
