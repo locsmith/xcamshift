@@ -32,8 +32,9 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_distance_based_potential_force_calculator,                 \
                                      Fast_non_bonded_force_calculator,                               \
                                      Fast_dihedral_force_calculator,                                 \
-                                     Fast_ring_force_calculator,                                      \
-                                     Fast_force_factor_calculator
+                                     Fast_ring_force_calculator,                                     \
+                                     Fast_force_factor_calculator,                                   \
+                                     Fast_non_bonded_shift_calculator
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -2817,6 +2818,7 @@ class Non_bonded_force_calculator(Distance_based_potential_force_calculator):
 class Non_bonded_shift_calculator(Distance_shift_calculator):
     DEFAULT_NB_CUTOFF = 5.0
     def __init__(self,indices,smoothed):
+        raise Exception("not used!")
         super(Non_bonded_shift_calculator, self).__init__(indices,smoothed)
         self._cutoff = self.DEFAULT_NB_CUTOFF
     
@@ -2850,7 +2852,7 @@ class Non_bonded_potential(Distance_based_potential):
         self._non_bonded_list = Non_bonded_list()
     
     def _get_shift_calculator(self):
-        return Non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed) 
+        return Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed) 
     
     def _get_force_calculator(self):
 #        if self._fast:
