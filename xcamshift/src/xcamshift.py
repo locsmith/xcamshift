@@ -3445,7 +3445,7 @@ class Xcamshift():
             print ' '.join(values)
             
         
-    def _get_target_atom_ids(self):
+    def _get_all_component_target_atom_ids(self):
         result  = set()
         for potential in self.potential:
             for target_atom_id in potential.get_target_atom_ids():
@@ -3482,7 +3482,7 @@ class Xcamshift():
                            
     #TODO: deprecated remove use calc_shifts
     def set_shifts(self, result):
-        target_atom_ids =  self._get_potential_target_atom_ids()
+        target_atom_ids =  self._get_all_component_target_atom_ids()
         result_shifts  = [0.0] * len(target_atom_ids)
         self.calc_shifts(target_atom_ids, result_shifts)
         for target_atom_id, shift in zip(target_atom_ids,result_shifts):
@@ -3659,7 +3659,7 @@ class Xcamshift():
     
 
     def _get_active_target_atom_ids(self):
-        target_atom_ids = set(self._get_target_atom_ids())
+        target_atom_ids = set(self._get_all_component_target_atom_ids())
         observed_shift_atom_ids = self._shift_table.get_atom_indices()
         active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
         active_target_atom_ids = list(active_target_atom_ids)
