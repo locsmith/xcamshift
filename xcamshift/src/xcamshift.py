@@ -3222,6 +3222,7 @@ class Energy_calculator:
 
 class Force_factor_calculator:
     def __init__(self):
+        raise Exception("not used")
         self._energy_term_cache =  None
         self._theory_shifts =   None
         self._observed_shifts =  None
@@ -3308,10 +3309,10 @@ class Xcamshift():
 
 
     def _get_force_factor_calculator(self):
-        if self._fast:
-            result  =  Fast_force_factor_calculator()
-        else:
-            result = Force_factor_calculator()
+#        if self._fast:
+        result  =  Fast_force_factor_calculator()
+#        else:
+#            result = Force_factor_calculator()
         return result
     
             
