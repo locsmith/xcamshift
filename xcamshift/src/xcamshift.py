@@ -3496,16 +3496,14 @@ class Xcamshift():
         self._energy_term_cache =  self._create_energy_term_cache()
         self.update_energy_calculator()
         
-#TODO: recast to use self._calc_shift_cache()
-    def _calc_single_atom_shift(self,atom_index):
-        result  = 0.0
-        if atom_index in self._shift_cache:
-            result = self._shift_cache[atom_index]
-        else:
-            for potential in self.potential:
-                result += potential._calc_single_atom_shift(atom_index)
-            self._shift_cache[atom_index] = result
-        return result
+
+    def _calc_single_atom_shift(self,target_atom_id):
+        result  = [0.0]
+        self._prepare([target_atom_id,])
+        self.calc_shifts([target_atom_id], result)
+        self._shift_cache = {}
+        self._shift_cache[target_atom_id] = result[0]
+        return result[0]
     
     
     
