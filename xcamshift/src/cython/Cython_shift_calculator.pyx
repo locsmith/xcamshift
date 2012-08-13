@@ -314,11 +314,20 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         cdef float result
         cdef target_distant_atom atom_indices
         cdef coefficient_exponent coef_exp
+        cdef object component
+        cdef int target_atom_id
+        cdef int distant_atom_id
         for index in range(len(components)):
-            atom_indices = self._get_target_and_distant_atom_ids(index)
+            
+            component = components[index]
+
+            
+            target_atom_id = component[self._distance_atom_index_1]
+            distant_atom_id  = component[self._distance_atom_index_2]
+            
             
             coef_exp = self._get_coefficient_and_exponent(index)
-            distance =calc_distance(atom_indices.target_atom_id, atom_indices.distant_atom_id)
+            distance =calc_distance(target_atom_id, distant_atom_id)
     #        Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
 
             if self._smoothed:
