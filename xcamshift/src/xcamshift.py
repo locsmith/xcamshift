@@ -979,10 +979,10 @@ class Distance_based_potential(Base_potential):
         return result
     
     def _get_force_calculator(self):
-        if self._fast:
-            result = Fast_distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
-        else:
-            result = Distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
+#        if self._fast:
+#            result = Fast_distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
+#        else:
+        result = Distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
         result.set_verbose(self._verbose)
         return result 
 #    TODO: remove to base class
@@ -1537,10 +1537,10 @@ class Dihedral_potential(Base_potential):
         return self._get_parameters(index)[:-1]
     
     def _get_force_calculator(self):
-        if self._fast:
-            result = Fast_dihedral_force_calculator()
-        else:
-            result  = Dihedral_force_calculator()
+#        if self._fast:
+#            result = Fast_dihedral_force_calculator()
+#        else:
+        result  = Dihedral_force_calculator()
         result.set_verbose(self._verbose)
         return result
 
@@ -2849,10 +2849,10 @@ class Non_bonded_potential(Distance_based_potential):
         return Non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed) 
     
     def _get_force_calculator(self):
-        if self._fast:
-            result = Fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
-        else:
-            result = Non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
+#        if self._fast:
+#            result = Fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
+#        else:
+        result = Non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
         result.set_verbose(self._verbose)
         return result
     
