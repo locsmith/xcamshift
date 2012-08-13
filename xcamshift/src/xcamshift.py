@@ -3470,14 +3470,13 @@ class Xcamshift():
             print 'start calc shifts'
         self._prepare_potentials(target_atom_ids)
         for potential in self.potential:
-            if hasattr(potential, 'calc_shifts'):
-                potential.calc_shifts(target_atom_ids, result)
-            else:
-                if target_atom_ids == None:
-                    target_atom_ids =  self._get_active_target_atom_ids()
-                for i,target_atom_id in enumerate(target_atom_ids):
-                    shift = self._calc_single_atom_shift(target_atom_id)
-                    result[i] = shift
+
+            i_result  = [0.0] *len(result)
+            potential.calc_shifts(target_atom_ids, i_result)
+
+            for i,elem in enumerate(i_result):
+                result[i] += elem
+            
         if self._verbose:
             print 'end calc shifts\n'
                            
