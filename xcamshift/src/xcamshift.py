@@ -842,6 +842,7 @@ class Distance_based_potential_force_calculator(Base_force_calculator):
     DEFAULT_SMOOTHING_FACTOR = 1.0
     
     def __init__(self, indices, smoothed):
+        raise Exception("not used!")
         super(Distance_based_potential_force_calculator, self).__init__()
         self._target_atom_index = indices.target_atom_index
         self._distance_atom_index_1 =  indices.distance_atom_index_1
@@ -976,9 +977,9 @@ class Distance_based_potential(Base_potential):
     
     def _get_force_calculator(self):
 #        if self._fast:
-#            result = Fast_distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
+        result = Fast_distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
 #        else:
-        result = Distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
+#        result = Distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
         result.set_verbose(self._verbose)
         return result 
 #    TODO: remove to base class
@@ -1270,6 +1271,7 @@ class Dihedral_shift_calculator(Base_shift_calculator):
 class Dihedral_force_calculator(Base_force_calculator):
     
     def __init__(self):
+        raise Exception("not used")
         Base_force_calculator.__init__(self)
 
     def _get_dihedral_atom_ids(self, index):
@@ -1538,9 +1540,9 @@ class Dihedral_potential(Base_potential):
     
     def _get_force_calculator(self):
 #        if self._fast:
-#            result = Fast_dihedral_force_calculator()
+        result = Fast_dihedral_force_calculator()
 #        else:
-        result  = Dihedral_force_calculator()
+#        result  = Dihedral_force_calculator()
         result.set_verbose(self._verbose)
         return result
 
@@ -2800,6 +2802,7 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
 class Non_bonded_force_calculator(Distance_based_potential_force_calculator):
     DEFAULT_NB_CUTOFF = 5.0
     def __init__(self, indices, smoothed):
+        raise Exception("not used")
         Distance_based_potential_force_calculator.__init__(self,indices, smoothed)
         self._cutoff = self.DEFAULT_NB_CUTOFF
     
@@ -2851,9 +2854,9 @@ class Non_bonded_potential(Distance_based_potential):
     
     def _get_force_calculator(self):
 #        if self._fast:
-#            result = Fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
+        result = Fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
 #        else:
-        result = Non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
+#        result = Non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
         result.set_verbose(self._verbose)
         return result
     
