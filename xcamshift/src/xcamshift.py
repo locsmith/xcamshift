@@ -3471,11 +3471,9 @@ class Xcamshift():
         self._prepare_potentials(target_atom_ids)
         for potential in self.potential:
 
-            i_result  = [0.0] *len(result)
-            potential.calc_shifts(target_atom_ids, i_result)
+            potential.calc_shifts(target_atom_ids, result)
 
-            for i,elem in enumerate(i_result):
-                result[i] += elem
+            
             
         if self._verbose:
             print 'end calc shifts\n'
