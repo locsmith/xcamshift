@@ -26,7 +26,6 @@ def get_key_for_atom_index( atom_id):
     global inverted_translations
     if inverted_translations == None:
         inverted_translations = invert_translations(translations)
-        print inverted_translations
         
 
     atom_key = Atom_utils._get_atom_info_from_index(atom_id)
