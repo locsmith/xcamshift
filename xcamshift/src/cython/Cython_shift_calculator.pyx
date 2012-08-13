@@ -186,6 +186,33 @@ cdef inline float calc_distance(int atom_index_1, atom_index_2):
     cdef Vec3 result =  vec2 - vec1
     return norm(result)
 
+cdef inline bint distance_less_than(int atom_index_1, atom_index_2, float target):
+    cdef float total = 0.0
+    cdef float diff
+    cdef float target2  = target*target
+    
+    cdef Vec3 vec1 = currentSimulation().atomPosArr().data(atom_index_1)
+    cdef Vec3 vec2 = currentSimulation().atomPosArr().data(atom_index_2)
+    cdef bint result  =  True
+    for i in range(3):
+        diff = vec1[i] - vec2[i]
+        total += diff * diff
+        
+        if total > target2:
+            result = False
+            break
+    return result 
+        
+        
+    
+    
+cdef inline float calc_distance_nb(int atom_index_1, atom_index_2):
+
+    vec1 = currentSimulation().atomPosArr().data(atom_index_1)
+    vec2 = currentSimulation().atomPosArr().data(atom_index_2)
+    cdef Vec3 result =  vec2 - vec1
+    return norm(result)
+
 cdef inline float calc_dihedral_angle(dihedral_ids dihedral_atom_ids):
     
     
@@ -1445,3 +1472,48 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 #                print AXIS_NAMES[axis],sub_force,-force_factor, gradU[axis], force_terms.dL3, force_terms.u, gradV[axis],force_terms.dL6
 #            print
 ##        print 
+
+cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
+    
+    cdef float _nb_cutoff
+    
+    def __init__(self, object indices, bint smoothed):
+        super(Fast_non_bonded_shift_calculator, self).__init__(indices,smoothed)
+        global DEFAULT_NB_CUTOFF
+        self._nb_cutoff = DEFAULT_NB_CUTOFF
+        
+
+    
+    def __call__(self, object components, object results, object component_to_target):
+        self._components =  components
+        
+        cdef float smoothing_factor = self._smoothing_factor
+        cdef float ratio
+        cdef float result
+        cdef target_distant_atom atom_indices
+        cdef coefficient_exponent coef_exp
+        cdef object component
+        cdef int target_atom_id
+        cdef int distant_atom_id
+        for index in range(len(components)):
+            component = components[index]
+            target_atom_id = component[self._distance_atom_index_1]
+            distant_atom_id  = component[self._distance_atom_index_2]
+            if distance_less_than(target_atom_id, distant_atom_id, self._nb_cutoff):
+        
+  
+            
+
+    
+                
+                
+                
+                coef_exp = self._get_coefficient_and_exponent(index)
+                distance =calc_distance(target_atom_id, distant_atom_id)
+        #        Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
+    
+                if self._smoothed:
+                    ratio = distance / self._cutoff
+                    smoothing_factor = 1.0 - ratio ** 8
+                results[component_to_target[index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
+            
