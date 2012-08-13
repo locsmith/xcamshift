@@ -574,6 +574,7 @@ class Base_potential(object):
             if self._shift_calculator != None:
                 self._shift_calculator.set_verbose(on)
     def _get_force_calculator(self):
+        raise Exception("Not used!")
         return Base_force_calculator(self)
 
 
