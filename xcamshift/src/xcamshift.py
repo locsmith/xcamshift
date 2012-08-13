@@ -611,13 +611,9 @@ class Base_potential(object):
             out_atom_id = component[0]
             out_index  =  target_atom_ids.index(out_atom_id)
             self._component_to_result[i] = out_index
-            
-    def _prepare(self,target_atom_ids = None):
-        if target_atom_ids == None:
-            target_atom_ids = [component[0] for component in self._get_component_list()]
 
-        if self._component_to_result == None:
-            self._build_component_to_target(target_atom_ids)
+    def _prepare(self,target_atom_ids):
+        self._build_component_to_result(target_atom_ids)
 
     
     def get_component_table_names(self):
