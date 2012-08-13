@@ -783,7 +783,6 @@ class Distance_shift_calculator(Base_shift_calculator):
     DEFAULT_SMOOTHING_FACTOR = 1.0
     
     def __init__(self, indices, smoothed):
-        raise Exception("not used!")
         Base_shift_calculator.__init__(self)
         self._target_atom_index = indices.target_atom_index
         self._distance_atom_index_1 =  indices.distance_atom_index_1
@@ -838,7 +837,7 @@ class Distance_shift_calculator(Base_shift_calculator):
         #                ratio *= ratio
         #            print ratio2,ratio
                 smoothing_factor = 1.0 - ratio ** 8
-            results[target_to_result[index]] = smoothing_factor * distance ** exponent * coefficient
+            results[target_to_result[index]] += smoothing_factor * distance ** exponent * coefficient
             
 class Distance_based_potential_force_calculator(Base_force_calculator):
     
@@ -2811,6 +2810,26 @@ class Non_bonded_force_calculator(Distance_based_potential_force_calculator):
         if distance < Non_bonded_force_calculator.DEFAULT_NB_CUTOFF:
             super(Non_bonded_force_calculator, self)._calc_single_force_set(index, factor, forces)
 
+class Non_bonded_shift_calculator(Distance_shift_calculator):
+    DEFAULT_NB_CUTOFF = 5.0
+    def __init__(self,indices,smoothed):
+        super(Non_bonded_shift_calculator, self).__init__(indices,smoothed)
+        self._cutoff = self.DEFAULT_NB_CUTOFF
+    
+    def __call__(self, components, results, component_to_result):
+        self._components =  components
+        super_components = Component_list()
+        super_component_to_result = []
+        for i in range(len(components)):
+            target_atom_id, distant_atom_id = self._get_target_and_distant_atom_ids(i)
+            distance  = Atom_utils._calculate_distance(target_atom_id, distant_atom_id)
+
+            if distance < self._cutoff:
+                super_components.add_component(components[i])
+                super_component_to_result.append(component_to_result[i])
+        super(Non_bonded_shift_calculator, self).__call__(super_components,results, super_component_to_result)
+          
+            
 # target_atom_id, target_atom_type_id
 # remote_atom_id  remote_atom_type_id 
 # remote_atom_type_id exponent coefficient_by target_atom_id
@@ -2825,6 +2844,9 @@ class Non_bonded_potential(Distance_based_potential):
         self._add_component_factory(Null_component_factory('NBLT'))
         
         self._non_bonded_list = Non_bonded_list()
+    
+    def _get_shift_calculator(self):
+        return Non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed) 
     
     def _get_force_calculator(self):
         if self._fast:
