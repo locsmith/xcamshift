@@ -768,7 +768,7 @@ class Base_potential(object):
             forces[target_offset] = target_forces
         return target_forces
 
-class Base_shift_calculator():
+class Base_shift_calculator(object):
     
     def __init__(self,name="not_set"):
         self._verbose = False
