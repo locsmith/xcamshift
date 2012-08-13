@@ -581,15 +581,18 @@ class Base_potential(object):
         self._fast =  (on == True)
     
     def _filter_components(self, target_atom_ids):
+        components = self._get_all_components()
+        result = Component_list()
+        
         if target_atom_ids == None:
-            components = self._get_all_components()
-        else:
-            target_atom_ids = set()
-            components = Component_list()
-            for component in self._get_all_components():
+            result.add_components(components)
+        if target_atom_ids != None:
+            target_atom_ids = sorted(set(target_atom_ids))
+            for component in components:
                 if component[0] in target_atom_ids:
-                    components.add(component)
-        return components    
+                    result.add_component(component)
+#        print 'components',components[:]
+        return result    
     
     def _calc_component_shift(self, index):
         components = Component_list()
