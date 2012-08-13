@@ -7,7 +7,6 @@ import unittest2
 from python_utils import tupleit, IsMappingType, Dict_walker,\
     value_from_key_path, filter_dict, Hierarchical_dict
 from UserDict import UserDict
-from numpy.distutils.misc_util import dict_append
 from copy import deepcopy
 import collections
 import abc
