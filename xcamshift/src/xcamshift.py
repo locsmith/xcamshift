@@ -560,6 +560,9 @@ class Base_potential(object):
         self._component_list_data  = {}
         self._component_factories = {}
         self._cache_list_data = {}
+        self._freeze  = False
+        self._filtered_components =  None
+    
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._fast = False
         self._shift_calculator = None
@@ -570,10 +573,14 @@ class Base_potential(object):
         self._filtered_components = None
         self._verbose = False
         
-        def set_verbose(self, on=True):
-            self._verbose = on
-            if self._shift_calculator != None:
-                self._shift_calculator.set_verbose(on)
+    def set_frozen(self,on):
+        self._freeze =  (on == True)
+        
+    def set_verbose(self, on=True):
+        self._verbose = on
+        if self._shift_calculator != None:
+            self._shift_calculator.set_verbose(on)
+            
     def _get_force_calculator(self):
         raise Exception("Not used!")
         return Base_force_calculator(self)
@@ -583,17 +590,22 @@ class Base_potential(object):
         self._fast =  (on == True)
     
     def _filter_components(self, target_atom_ids):
-        components = self._get_all_components()
-        result = Component_list()
-        
-        if target_atom_ids == None:
-            result.add_components(components)
-        if target_atom_ids != None:
-            target_atom_ids = sorted(set(target_atom_ids))
-            for component in components:
-                if component[0] in target_atom_ids:
-                    result.add_component(component)
-#        print 'components',components[:]
+        if self._freeze:
+            result = self._filtered_components
+        else:
+            
+            components = self._get_all_components()
+            result = Component_list()
+            
+            if target_atom_ids == None:
+                result.add_components(components)
+            if target_atom_ids != None:
+                target_atom_ids = sorted(set(target_atom_ids))
+                for component in components:
+                    if component[0] in target_atom_ids:
+                        result.add_component(component)
+    #        print 'components',components[:]
+            self._filtered_components = result
         return result    
     
     def _calc_component_shift(self, index):
@@ -605,13 +617,14 @@ class Base_potential(object):
       
     
     def _build_component_to_result(self, target_atom_ids):
-        components = self._filter_components(target_atom_ids)
-        target_atom_ids =  target_atom_ids
-        self._component_to_result =  [0] *len(components)
-        for i, component in enumerate(components):
-            out_atom_id = component[0]
-            out_index  =  target_atom_ids.index(out_atom_id)
-            self._component_to_result[i] = out_index
+        if not self._freeze:
+            components = self._filter_components(target_atom_ids)
+            target_atom_ids =  target_atom_ids
+            self._component_to_result =  [0] *len(components)
+            for i, component in enumerate(components):
+                out_atom_id = component[0]
+                out_index  =  target_atom_ids.index(out_atom_id)
+                self._component_to_result[i] = out_index
 
     def _prepare(self,target_atom_ids):
         self._build_component_to_result(target_atom_ids)
@@ -3745,5 +3758,12 @@ class Xcamshift():
         self._calc_derivs(derivs, target_atom_ids)
         
         return energy
-        
+    
+    def _set_frozen(self,on=True):
+        for potential in self.potential:
+            potential.set_frozen(on)
+            
+    def setup(self):
+        self._prepare(self._get_active_target_atom_ids())
+        self._set_frozen()
 
