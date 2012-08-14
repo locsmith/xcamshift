@@ -1,0 +1,74 @@
+# backbone distance dependant chemical shift coefficients for non PRO and GLY residues from from camshift 1.35.0
+#
+# cs =  b * c[i,j,k] **d
+# 
+# d is given by the value exponent
+# cs is chemical shift / angstrom
+# b is given by the value scaling
+# c is the coefficient which is looked up by i and j for row and columns respect 
+# i is the offset to the previous, current, or subsequent residue and is one of [-1,0,1]  
+# j is the atom name of the atom in the current residue
+# k is the atom name of the atom in the previous, current, or subsequent residue 
+#
+# example
+#
+#                       cs =  b * c[i,j,k] **d
+#
+#                       d is given by the value exponent
+#                       cs is chemical shift (ppm) / angstrom
+#                       b is given by the value scaling
+#                       c is the coefficient which is looked up by i and j for row and columns respect
+#                       j is the offset to the previous, current, or subsequent residue and is one of -1,0,1
+#                       i is the atom name of the atom in the current residue
+#                       k is the atom name of the atom in the previous, current, or subsequent residue
+#
+#                       example
+#
+#                       for the effective of HA in the previous residue on an N in the current resiue
+#                          i = -1
+#                          j = HA
+#                          k = N
+#
+#                          the value is 1.0 * 0.10495380090732243 ** 1.0
+#
+# TODO needs final check
+---
+weight:      1.0
+exponent:    1.0
+type:        "base"
+scaling:     1.0
+to_atoms:    ["N","HN","CA","HA","C","O"]
+from_atoms:  ["HN","N","HA","CA","C","CB"]
+offsets:     [-1,0,1]
+#TODO check use of global translations of OT1 and HT1 (they seem to have no effect currently!!??
+#TODO check if GLY translations can be moved here...
+translations: {[-,OT1] : O, [-,HT1] : HN,[GLY,HA1]: HA}
+residue_type : BASE
+table_type : BACKBONE
+data:
+
+      -1:
+            N:    {HA  :   0.10495380, CA  :  -0.55144913, HN  :  -0.72200643, N   :  -0.98960879, C   :  -0.03352569, CB  :  -0.29543558}
+            HN:   {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
+            CA:   {HA  :   ,           CA  :  -0.31716524, HN  :   0.71842808, N   :   ,           C   :  -0.32287181, CB  :  -0.16511808}
+            HA:   {HA  :   0.08675461, CA  :  -2.29509578, HN  :  -1.24314885, N   :  -3.32873168, C   :  -0.35652045, CB  :   0.41374536}
+            C:    {HA  :   ,           CA  :   5.03891585, HN  :   ,           N   :  10.74798119, C   :   ,           CB  :  -1.20336692}
+            O:    {HA  :  -0.35325987, CA  :  -0.94860556, HN  :   ,           N   :  -1.63517348, C   :  -0.40079985, CB  :   0.98724231}
+
+      0:
+            N:    {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   3.60511174}
+            HN:   {HA  :  -0.23275377, CA  :   3.92039890, HN  :   ,           N   :  -3.53912681, C   :  -0.34221965, CB  :  -0.76756197}
+            CA:   {HA  :   ,           CA  :   ,           HN  :   ,           N   : -15.90545650, C   :   ,           CB  :   ,         }
+            HA:   {HA  :   ,           CA  :   7.88841004, HN  :   0.06477266, N   :  -2.18822008, C   :   ,           CB  :   1.52041077}
+            C:    {HA  :   ,           CA  :   6.21118245, HN  :   0.35616903, N   :   1.78597557, C   :   ,           CB  :  -5.79223552}
+            O:    {HA  :   0.17447584, CA  :   3.69658156, HN  :  -0.58204688, N   :   4.22624222, C   :   ,           CB  :   1.21206604}
+
+      1:
+            N:    {HA  :   ,           CA  :   0.89000452, HN  :  -0.43914257, N   :   1.05030176, C   :   ,           CB  :   1.14412989}
+            HN:   {HA  :   0.14871171, CA  :   1.05757982, HN  :   ,           N   :   4.16960255, C   :   ,           CB  :   0.94604629}
+            CA:   {HA  :  -0.05329675, CA  :   0.84317832, HN  :   0.31533333, N   :  -3.51511847, C   :  -1.49475252, CB  :  -2.43181958}
+            HA:   {HA  :   0.03882038, CA  :  -0.00684194, HN  :  -0.04764241, N   :   0.78412727, C   :  -0.19452342, CB  :   0.12905429}
+            C:    {HA  :   0.11174639, CA  :   0.55775056, HN  :  -0.03674563, N   :   0.04926912, C   :  -0.84479724, CB  :   0.11095702}
+            O:    {HA  :   ,           CA  :   ,           HN  :   ,           N   :   ,           C   :   ,           CB  :   ,         }
+
+

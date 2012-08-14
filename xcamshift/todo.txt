@@ -33,3 +33,9 @@ speed:
 implementation of the method of finite differences that helped testing whether all forces were
 derived correctly.
 14. cython non bonded doesn'y have a configurable nb cutoff
+
+correctness
+-----------
+correct the xamshift import from camshift program to trabslate ser HG1 and CYS hg
+
+correctly
