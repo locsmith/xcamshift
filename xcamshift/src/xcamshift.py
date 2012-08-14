@@ -2758,7 +2758,8 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
             
             self.coefficients = []
             
-            for table in non_bonded_tables:
+            
+            for table in self._sort_tables_by_index(non_bonded_tables):
                 for target_atom in table.get_target_atoms():
                     self.coefficients.append(table.get_non_bonded_coefficient(target_atom,sphere,*chem_type))
             
@@ -2766,7 +2767,17 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
         
             self.complete =  True
             
+        def _sort_tables_by_index(self,tables):
+            table_map = {}
             
+            for table in tables:
+                table_map[table.get_table_index()] =  table
+                
+            result = []
+            for key in sorted(table_map.keys()):
+                result.append(table_map[key])
+            return result
+    
     def is_residue_acceptable(self, segment, residue_number, segment_manager):
         return True
     
