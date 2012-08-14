@@ -35,6 +35,7 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_ring_force_calculator,                                     \
                                      Fast_force_factor_calculator,                                   \
                                      Fast_non_bonded_shift_calculator
+import time
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -3741,6 +3742,8 @@ class Xcamshift(PyPot):
 
         
     def calcEnergy(self, prepare =  True, active_target_atom_ids = None):
+        start_time = time.time()
+        print "calculate energy"
         if active_target_atom_ids == None:
             active_target_atom_ids = self._get_active_target_atom_ids()
             
@@ -3750,6 +3753,8 @@ class Xcamshift(PyPot):
             
 
         self.update_energy_calculator()
+        end_time =  time.time()
+        print 'completed in', end_time-start_time, "seconds"
         return self._energy_calculator(active_target_atom_ids)
     
     
@@ -3760,6 +3765,9 @@ class Xcamshift(PyPot):
         self._calc_force_set(active_target_atom_ids, derivs, potentials)
 
     def calcEnergyAndDerivs(self,derivs):
+        print "energy and derivatives"
+        start_time = time.time()
+        
         target_atom_ids = self._get_active_target_atom_ids()
         self._prepare(target_atom_ids)
         self._calc_shift_cache(target_atom_ids)
@@ -3769,6 +3777,8 @@ class Xcamshift(PyPot):
         
         self._calc_derivs(derivs, target_atom_ids)
         
+        end_time = time.time()
+        print "completed in", end_time-start_time,"seconds"
         return energy
     
     def _set_frozen(self,on=True):
