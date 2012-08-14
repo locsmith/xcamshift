@@ -984,7 +984,7 @@ class Distance_based_potential(Base_potential):
     #TODO: move to base potential
     def _get_shift_calculator(self):
 #        if self._fast:
-        result  = self._shift_calculator = Fast_distance_shift_calculator(self._get_indices(), self._smoothed)
+        result  = self._shift_calculator = Fast_distance_shift_calculator(self._get_indices(), self._smoothed, name=self.get_abbreviated_name())
 #        else:
 #        result = self._shift_calculator = Distance_shift_calculator(self._get_indices(), self._smoothed)
         return result
@@ -1441,7 +1441,7 @@ class Dihedral_potential(Base_potential):
 
     def _get_shift_calculator(self):
 #        if self._fast:
-        result = Fast_dihedral_shift_calculator()
+        result = Fast_dihedral_shift_calculator(name=self.get_abbreviated_name())
 #        else:
 #            result = Dihedral_shift_calculator()
         return result
@@ -2865,7 +2865,7 @@ class Non_bonded_potential(Distance_based_potential):
         self._non_bonded_list = Non_bonded_list()
     
     def _get_shift_calculator(self):
-        return Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed) 
+        return Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name()) 
     
     def _get_force_calculator(self):
 #        if self._fast:
