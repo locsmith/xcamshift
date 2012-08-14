@@ -3766,4 +3766,7 @@ class Xcamshift():
     def setup(self):
         self._prepare(self._get_active_target_atom_ids())
         self._set_frozen()
+    
+    def reset(self):
+        self.get_named_sub_potential(NON_BONDED)._non_bonded_list._box_update_count = -1
 
