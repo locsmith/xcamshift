@@ -3,12 +3,15 @@
 Created on 31 Jul 2012
 
 @author: garyt
+
 '''
 from vec3 import Vec3 as python_vec3
-from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross
+from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross,  Simulation
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
+from time import time
+
 
  
 #cdef object vec3_as_tuple(Vec3& vec_3):
@@ -179,48 +182,49 @@ cdef struct dihedral_parameters:
 cdef inline  Vec3 operator_times (Vec3& vec3, float scale):
     return Vec3(vec3.x() * scale, vec3.y() * scale, vec3.z() * scale)
 
-cdef inline float calc_distance(int atom_index_1, atom_index_2):
 
-    vec1 = currentSimulation().atomPosArr().data(atom_index_1)
-    vec2 = currentSimulation().atomPosArr().data(atom_index_2)
+
+cdef inline float calc_distance_simulation(Simulation* sim, int atom_index_1, atom_index_2):
+
+    cdef Vec3 vec1 = sim[0].atomPos(atom_index_1)
+    cdef Vec3 vec2 = sim[0].atomPos(atom_index_2)
     cdef Vec3 result =  vec2 - vec1
     return norm(result)
 
-cdef inline bint distance_less_than(int atom_index_1, atom_index_2, float target):
-    cdef float total = 0.0
-    cdef float diff
-    cdef float target2  = target*target
-    
-    cdef Vec3 vec1 = currentSimulation().atomPosArr().data(atom_index_1)
-    cdef Vec3 vec2 = currentSimulation().atomPosArr().data(atom_index_2)
-    cdef bint result  =  True
-    for i in range(3):
-        diff = vec1[i] - vec2[i]
-        total += diff * diff
-        
-        if total > target2:
-            result = False
-            break
-    return result 
-        
-        
-    
-    
-cdef inline float calc_distance_nb(int atom_index_1, atom_index_2):
 
-    vec1 = currentSimulation().atomPosArr().data(atom_index_1)
-    vec2 = currentSimulation().atomPosArr().data(atom_index_2)
-    cdef Vec3 result =  vec2 - vec1
-    return norm(result)
 
-cdef inline float calc_dihedral_angle(dihedral_ids dihedral_atom_ids):
+#
+#
+#cdef inline bint distance_less_than(int atom_index_1, atom_index_2, float target):
+#    cdef float total = 0.0
+#    cdef float diff
+#    cdef float target2  = target*target
+#    
+#    cdef Vec3 vec1 = currentSimulation().atomPosArr().data(atom_index_1)
+#    cdef Vec3 vec2 = currentSimulation().atomPosArr().data(atom_index_2)
+#    cdef bint result  =  True
+#    for i in range(3):
+#        diff = vec1[i] - vec2[i]
+#        total += diff * diff
+#        
+#        if total > target2:
+#            result = False
+#            break
+#    return result 
+        
+        
     
     
 
-    atom_1  = currentSimulation().atomByID(dihedral_atom_ids.atom_id_1)
-    atom_2  = currentSimulation().atomByID(dihedral_atom_ids.atom_id_2)
-    atom_3  = currentSimulation().atomByID(dihedral_atom_ids.atom_id_3)
-    atom_4  = currentSimulation().atomByID(dihedral_atom_ids.atom_id_4)
+#TODO how does currentSimulation().atomByID work inside
+cdef inline float calc_dihedral_angle_simulation(Simulation* simulation, dihedral_ids dihedral_atom_ids):
+    
+    
+
+    atom_1  = simulation[0].atomByID(dihedral_atom_ids.atom_id_1)
+    atom_2  = simulation[0].atomByID(dihedral_atom_ids.atom_id_2)
+    atom_3  = simulation[0].atomByID(dihedral_atom_ids.atom_id_3)
+    atom_4  = simulation[0].atomByID(dihedral_atom_ids.atom_id_4)
     
     return Dihedral(atom_1,atom_2,atom_3,atom_4).value()
 
@@ -233,16 +237,22 @@ cdef float DEFAULT_NB_CUTOFF = 5.0
 cdef class Base_shift_calculator:
     cdef bint _verbose 
     cdef str _name
+    cdef Simulation* _simulation
+
     def __init__(self, str name):
             self._verbose = False
             self._name = name
+            self._simulation =  currentSimulation()
             
     def is_fast(self):
         return True
     
     def set_verbose(self,bint state):
         self._verbose =  state
-    
+        
+    cdef set_simulation(self):
+        self._simulation = currentSimulation()
+        
     cdef _do_verbose(self,object components, object targets):
         if self._verbose:
             msg='%s calculating %i components for %s targets'
@@ -260,7 +270,8 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
     cdef bint _smoothed 
     cdef object _components
     cdef float _smoothing_factor 
-    cdef float _cutoff
+    cdef float _cutoff            
+    
     
     def __init__(self, indices, smoothed, str name = "not set"):
         Base_shift_calculator.__init__(self, name)
@@ -306,6 +317,11 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         return result
 #    
     def __call__(self, object components, object results, object component_to_target):
+        self.set_simulation()
+        cdef double start_time
+        cdef double end_time
+        
+        start_time=time()
         self._do_verbose(components, results)
         
         self._set_components(components)
@@ -317,6 +333,10 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         cdef object component
         cdef int target_atom_id
         cdef int distant_atom_id
+
+        
+
+        
         for index in range(len(components)):
             
             component = components[index]
@@ -327,14 +347,16 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
             
             
             coef_exp = self._get_coefficient_and_exponent(index)
-            distance =calc_distance(target_atom_id, distant_atom_id)
+            distance =calc_distance_simulation(self._simulation, target_atom_id, distant_atom_id)
     #        Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
 
             if self._smoothed:
                 ratio = distance / self._cutoff
                 smoothing_factor = 1.0 - ratio ** 8
             results[component_to_target[index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
-            
+        end_time = time()
+        print 'distance components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
+
     
 
     
@@ -387,13 +409,18 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         return result
 
     def __call__(self, object components, object results, object component_to_target):
+        self.set_simulation()
         cdef float angle
         cdef float angle_term
         cdef float shift
         cdef float coefficient
         cdef dihedral_parameters parameters
         cdef dihedral_ids dihedral_atom_ids  
+        cdef double start_time
+        cdef double end_time
+        print 'time', "%.17g" % time()
         
+        start_time = time()
         self._do_verbose(components,results)
         
         self._set_components(components)
@@ -404,7 +431,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
             
             parameters = self._get_parameters(index)
             
-            angle = calc_dihedral_angle(dihedral_atom_ids)
+            angle = calc_dihedral_angle_simulation(self._simulation, dihedral_atom_ids)
     
             angle_term = parameters.param_0 * cos(3.0 * angle + parameters.param_1) + \
                          parameters.param_2 * cos(angle +  parameters.param_3) +      \
@@ -412,7 +439,12 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
             shift = coefficient * angle_term
     
             results[component_to_target[index]] += shift
- 
+        end_time = time()
+        print 'time_end', "%.17g" % time()
+        print start_time
+        print end_time
+        print 'dihedral components ',len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
+
 cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     cdef object _components
     cdef object _coef_components
@@ -464,7 +496,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         cdef Vec3 direction_vector
         cdef float distance, distance3, angle, contrib
         
-        target_atom_pos =  currentSimulation().atomPosArr().data(target_atom_id)
+        target_atom_pos =  self._simulation[0].atomPos(target_atom_id)
         ring_centre = self._get_ring_centre(ring_id)
 
         #TODO add this to a cache the same way that camshift does
@@ -485,9 +517,13 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
 
     
     def __call__(self, object components, object results, object component_to_target):
+        self.set_simulation()
         cdef int target_atom_id
         cdef int ring_id
         cdef float coefficient
+        cdef double start_time
+        cdef double end_time
+        start_time = time()
         
         self._do_verbose(components,results)
         
@@ -509,15 +545,23 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
                 shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
             
             results[component_to_target[index]] += shift
+        end_time = time()
+        print 'ring components ' ,self._name,len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
+
 #   
 cdef int RING_ATOM_IDS = 1
     
 cdef class Fast_ring_data_calculator:
     cdef bint _verbose
-    
+    cdef Simulation* _simulation
+         
     def __init__(self): 
         self._verbose = False
+        self._simulation =  currentSimulation()
     
+    def set_simulation(self):
+        self._simulation  = currentSimulation()
+        
     def set_verbose(self,on):
         self._verbose =  on
         
@@ -529,7 +573,7 @@ cdef class Fast_ring_data_calculator:
 
         total=Vec3(0.0,0.0,0.0)
         for atom_id in atom_ids:
-            total+=currentSimulation().atomPosArr().data(atom_id)
+            total += self._simulation.atomPos(atom_id)
 
 #        TODO get operator / workin properly
         average = Vec3(total.x()/num_atom_ids,total.y()/num_atom_ids,total.z()/num_atom_ids)
@@ -547,7 +591,7 @@ cdef class Fast_ring_data_calculator:
 #            raise Exception(msg)
 #
 
-    cdef Vec3  _calculate_normal(self,int[3] atom_id_triplet):
+    cdef Vec3  _calculate_normal(self, int[3] atom_id_triplet):
     
         cdef Vec3 normal
         cdef Vec3 vec_1 
@@ -555,9 +599,9 @@ cdef class Fast_ring_data_calculator:
 
         cdef Vec3 atom_vector_1, atom_vector_2, atom_vector_3
         
-        atom_vector_1 = currentSimulation().atomPosArr().data(atom_id_triplet[0])
-        atom_vector_2 = currentSimulation().atomPosArr().data(atom_id_triplet[1])
-        atom_vector_3 = currentSimulation().atomPosArr().data(atom_id_triplet[2])
+        atom_vector_1 = self._simulation[0].atomPos(atom_id_triplet[0])
+        atom_vector_2 = self._simulation[0].atomPos(atom_id_triplet[1])
+        atom_vector_3 = self._simulation[0].atomPos(atom_id_triplet[2])
 
         vec_1 =  atom_vector_1 -atom_vector_2
         vec_2 =  atom_vector_3- atom_vector_2
@@ -599,9 +643,12 @@ cdef class Fast_ring_data_calculator:
     
             
     def __call__(self, rings, normals, centres):
-        
+        self.set_simulation()
         cdef Vec3_container centre 
         cdef Vec3_container normal
+        self.set_simulation()
+        
+
             
         for ring_component in rings:
             ring_id = ring_component[0]
@@ -612,7 +659,7 @@ cdef class Fast_ring_data_calculator:
             
             normal = self._calculate_one_ring_normal(ring_component)
             normal_component = ring_id, normal
-            normals.add_component(normal_component)
+            normals.add_component(normal_component) 
             
 
 cdef class Fast_non_bonded_calculator:
@@ -621,13 +668,17 @@ cdef class Fast_non_bonded_calculator:
     cdef float _jitter
     cdef float _full_cutoff_distance
     cdef bint _verbose 
+    cdef Simulation* _simulation
     def __init__(self,min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
         self._min_residue_seperation =  min_residue_seperation
         self._cutoff_distance =  cutoff_distance
         self._jitter = jitter
         self._full_cutoff_distance =  self._cutoff_distance + self._jitter
         self._verbose =  False
+        self._simulation =  currentSimulation()
     
+    def set_simulation(self):
+        self._simulation = currentSimulation()
     def set_verbose(self,on):
         self._verbose=on
     cdef inline bint _filter_by_residue(self, char* seg_1, int residue_1, char* seg_2, int residue_2):
@@ -668,6 +719,7 @@ cdef class Fast_non_bonded_calculator:
         return is_non_bonded
     
     def __call__(self, atom_list_1, atom_list_2):
+        self.set_simulation()
         non_bonded_lists = []
         for atom_id_1 in atom_list_1:
             non_bonded_list = []
@@ -683,13 +735,18 @@ cdef class Fast_energy_calculator:
     cdef object _theory_shifts
     cdef object _observed_shifts
     cdef bint _verbose 
+    cdef Simulation* _simulation
 
     def __init__(self):
         self._energy_term_cache =  None
         self._theory_shifts =   None
         self._observed_shifts =  None
         self._verbose = False
+        self._simulation = currentSimulation()
     
+    def set_simulation(self):
+        self._simulation = currentSimulation()
+        
     def set_verbose(self,on):
         self._verbose = on
         
@@ -729,7 +786,7 @@ cdef class Fast_energy_calculator:
         return result
         
     def __call__(self,target_atom_ids):
-        
+        self.set_simulation()
         cdef float energy
         cdef float flat_bottom_shift_limit
         cdef float adjusted_shift_diff
@@ -775,6 +832,7 @@ cdef class Fast_energy_calculator:
 cdef class Fast_force_factor_calculator(Fast_energy_calculator):
 
     def __call__(self, target_atom_ids):
+        self.set_simulation()
         result  = []
         for target_atom_id in target_atom_ids:
             factor  = 0.0
@@ -811,14 +869,20 @@ cdef class Base_force_calculator:
     
     cdef object _components
     cdef bint _verbose 
+    cdef Simulation* _simulation
+    
     
     def __init__(self,potential=None):
         self._components =  None
         self._verbose = False
+        self._simulation =  currentSimulation()
+        
     
     def set_verbose(self,on):
         self._verbose = on
     
+    def set_simulation(self):
+        self._simulation =  currentSimulation()
     def _set_components(self,components):
         self._components = components
     
@@ -828,12 +892,14 @@ cdef class Base_force_calculator:
 #    TODO should most probably be a fixed array
     def __call__(self, components, target_atom_ids, force_factors, forces):
         self._set_components(components)
+        self.set_simulation()
+        
         component_target_atom_ids = components.get_component_atom_ids()
         for i,target_atom_id in enumerate(target_atom_ids):
             if target_atom_id in component_target_atom_ids:
                 index_range = components.get_component_range(target_atom_id)
                 for index in range(*index_range):
-                    self._calc_single_force_set(index,force_factors[i],forces)
+                    self._cython_calc_single_force_set(index, force_factors[i],forces)
     
     cdef inline _get_or_make_target_force_triplet(self, object forces, object target_offset):
         target_forces = forces[target_offset]
@@ -843,7 +909,7 @@ cdef class Base_force_calculator:
         return target_forces
 
 #    TODO make abstract
-    def _cython_calc_single_force_set(self,int index, float force_factor, object forces):
+    cdef _cython_calc_single_force_set(self, int index, float force_factor, object forces):
         raise Exception("unexpected! this method should be implemented")
 
 
@@ -923,8 +989,8 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         cdef Vec3 target_pos, distant_pos
         
         
-        target_pos = currentSimulation().atomPosArr().data(target_atom)
-        distant_pos =  currentSimulation().atomPosArr().data(distance_atom)
+        target_pos = self._simulation[0].atomPos(target_atom)
+        distant_pos =   self._simulation[0].atomPos(distance_atom)
         
         return target_pos - distant_pos
         
@@ -932,8 +998,8 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         cdef Vec3 target_pos, distant_pos, distance
         cdef float result =0.0
         
-        target_pos = currentSimulation().atomPosArr().data(target_atom)
-        distant_pos =  currentSimulation().atomPosArr().data(distance_atom)
+        target_pos =   self._simulation[0].atomPos(target_atom)
+        distant_pos =  self._simulation[0].atomPos(distance_atom)
         
         distance = Vec3(target_pos - distant_pos)
         
@@ -942,8 +1008,10 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
             
         return result 
     
+    def _calc_single_force_factor(self, int index, float factor):
+        return self._cython_calc_single_force_factor(index, factor)
     
-    cpdef float _calc_single_force_factor(self, int index, float factor):
+    cdef inline float _cython_calc_single_force_factor(self, int index, float factor):
         cdef target_distant_atom atom_ids
         cdef coefficient_exponent coef_exp
         cdef float exponent 
@@ -980,7 +1048,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     def _calc_single_force_set(self, int index, float factor, object forces):
         self._cython_calc_single_force_set(index, factor, forces)
         
-    cdef _cython_calc_single_force_set(self, int index, float factor, object forces):
+    cdef _cython_calc_single_force_set(self,int index, float factor, object forces):
         
         cdef target_distant_atom atom_ids
         cdef Vec3 xyz_distances, target_forces, distant_forces
@@ -991,7 +1059,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
 #        print atom_ids.target_atom_id,atom_ids.distant_atom_id
         xyz_distances  = self._xyz_distances(atom_ids.target_atom_id,atom_ids.distant_atom_id)
         
-        force_factor  = self._calc_single_force_factor(index, factor)
+        force_factor  = self._cython_calc_single_force_factor(index, factor)
         
         
         python_target_forces = self._get_or_make_target_force_triplet(forces, atom_ids.target_atom_id)
@@ -1013,11 +1081,11 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         self._non_bonded_cutoff = DEFAULT_NB_CUTOFF
         
     def _calc_single_force_set(self, int index, float factor, object forces):
-        self._cython_calc_single_force_set(index,  factor, forces)
+        self._cython_calc_single_force_set(index, factor, forces)
         
     cdef _cython_calc_single_force_set(self, int index, float factor, object forces):
         cdef target_distant_atom atom_ids = Fast_distance_based_potential_force_calculator._get_target_and_distant_atom_ids(self,index)
-        cdef float distance  = calc_distance(atom_ids.target_atom_id, atom_ids.distant_atom_id)
+        cdef float distance  = calc_distance_simulation(self._simulation, atom_ids.target_atom_id, atom_ids.distant_atom_id)
 #        TODO: this should be the non bonded distance cutoff
 #TODO class variable of self are not being looked up!
         if distance < 5.0:
@@ -1064,7 +1132,10 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         return coefficient
     
 #    TODO make this consistent with the distance forces factor
-    cpdef _calc_single_force_factor(self, int index):
+    def _calc_single_force_factor(self, int index):
+        return self._cython_calc_single_force_factor(index)
+    
+    cdef inline _cython_calc_single_force_factor(self, int index):
         
         cdef dihedral_ids dihedral_atom_ids
         cdef dihedral_parameters params
@@ -1074,7 +1145,7 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         
         params = self._get_parameters(index)
         
-        angle = calc_dihedral_angle(dihedral_atom_ids)
+        angle = calc_dihedral_angle_simulation(self._simulation, dihedral_atom_ids)
         
         result = -3.0 * params.param_0 * sin(3.0 * angle + params.param_1) - \
                         params.param_2 * sin(angle + params.param_3)
@@ -1096,10 +1167,10 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         cdef float dihedral_factor = self._calc_single_force_factor(index)
         cdef dihedral_ids atom_ids = self._get_dihedral_atom_ids(index)
         
-        v1 = currentSimulation().atomPosArr().data(atom_ids.atom_id_1)
-        v2 = currentSimulation().atomPosArr().data(atom_ids.atom_id_2)
-        v3 = currentSimulation().atomPosArr().data(atom_ids.atom_id_3)
-        v4 = currentSimulation().atomPosArr().data(atom_ids.atom_id_4)
+        v1 = self._simulation[0].atomPos(atom_ids.atom_id_1)
+        v2 = self._simulation[0].atomPos(atom_ids.atom_id_2)
+        v3 = self._simulation[0].atomPos(atom_ids.atom_id_3)
+        v4 = self._simulation[0].atomPos(atom_ids.atom_id_4)
          
         r1 = v1 - v2
         r2 = v3 - v2
@@ -1114,7 +1185,7 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         # compute normal vector to plane containing v2, v3, and v4
         n2 = cross(r3, r4)
         
-        r2_length = calc_distance(atom_ids.atom_id_2,atom_ids.atom_id_3)
+        r2_length = calc_distance_simulation(self._simulation, atom_ids.atom_id_2,atom_ids.atom_id_3)
         r2_length_2 = r2_length*r2_length
         
 
@@ -1241,7 +1312,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         cdef Vec3* position = NULL
         for i in range(num_atoms):
             position = positions.get_vec(i)
-            position[0] = currentSimulation().atomPosArr().data(ring_atoms.atom_ids[i])
+            position[0] = self._simulation[0].atomPos(ring_atoms.atom_ids[i])
             
         return positions
 
@@ -1258,7 +1329,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         cdef object python_coef_components = self._coef_components.get_components_for_atom_id(atom_type_id)
         return Coef_components(python_coef_components)
         
-    cpdef _calc_single_force_set(self, int index, float force_factor, object forces):
+    cdef _cython_calc_single_force_set(self,  int index, float force_factor, object forces):
         cdef target_type target_atom_id_type =  self._get_target_and_type(index)
         #TODO: make array a union
         cdef Coef_components coef_components = self._get_coef_components(target_atom_id_type.atom_type_id)
@@ -1296,7 +1367,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         
     cdef Ring_force_sub_terms _build_cython_force_terms(self, int target_atom_id, int ring_id):
         cdef Ring_force_sub_terms result
-        cdef Vec3 target_atom_pos  = currentSimulation().atomPosArr().data(target_atom_id)
+        cdef Vec3 target_atom_pos  = self._simulation[0].atomPos(target_atom_id)
         
         cdef Vec3 ring_centre = self._get_ring_centre(ring_id)
         cdef Vec3 ring_normal = self._get_ring_normal(ring_id)
@@ -1486,8 +1557,8 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
     
     cdef float _nb_cutoff
     
-    def __init__(self, object indices, bint smoothed):
-        super(Fast_non_bonded_shift_calculator, self).__init__(indices,smoothed)
+    def __init__(self, object indices, bint smoothed, str name):
+        super(Fast_non_bonded_shift_calculator, self).__init__(indices,smoothed,name)
         global DEFAULT_NB_CUTOFF
         self._nb_cutoff = DEFAULT_NB_CUTOFF
         
@@ -1495,8 +1566,12 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
     
     def __call__(self, object components, object results, object component_to_target):
         self._components =  components
+        self.set_simulation()
         
-        cdef float smoothing_factor = self._smoothing_factor
+        cdef double start_time
+        cdef double end_time
+        cdef float default_smoothing_factor = self._smoothing_factor
+        cdef float smoothing_factor
         cdef float ratio
         cdef float result
         cdef target_distant_atom atom_indices
@@ -1504,11 +1579,16 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         cdef object component
         cdef int target_atom_id
         cdef int distant_atom_id
+        
+
+        start_time =  time()
         for index in range(len(components)):
             component = components[index]
             target_atom_id = component[self._distance_atom_index_1]
             distant_atom_id  = component[self._distance_atom_index_2]
-            if distance_less_than(target_atom_id, distant_atom_id, self._nb_cutoff):
+            
+            distance = calc_distance_simulation(self._simulation, target_atom_id, distant_atom_id)
+            if distance < self._nb_cutoff:
         
   
             
@@ -1518,11 +1598,12 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
                 
                 
                 coef_exp = self._get_coefficient_and_exponent(index)
-                distance =calc_distance(target_atom_id, distant_atom_id)
-        #        Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
-    
+                smoothing_factor = default_smoothing_factor
                 if self._smoothed:
                     ratio = distance / self._cutoff
                     smoothing_factor = 1.0 - ratio ** 8
                 results[component_to_target[index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
-            
+        end_time = time()
+        print 'distance components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
+
+

@@ -53,10 +53,17 @@ cdef extern from 'simulation.hh':
         int id()
         int numAtoms()
         Atom atomByID(int index)
-        CDSVector[Vec3] atomPosArr()
+#        CDSVector[Vec3] atomPosArr()
+        Vec3 atomPos(int index)
 
 cdef extern from "simulation.hh" namespace "Simulation":
     Simulation* currentSimulation()
     
+cdef extern from 'Coord_holder.hh':
+    cdef cppclass Coord_holder:
+        Coord_holder()
+        Coord_holder(Simulation& simulation)
+        Vec3& getPos(int index)
+
 
      
