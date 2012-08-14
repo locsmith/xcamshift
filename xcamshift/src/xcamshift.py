@@ -3316,7 +3316,9 @@ class Force_factor_calculator:
             result.append(factor)
         return  result
 
-class Xcamshift():
+from pyPot import PyPot
+
+class Xcamshift(PyPot):
 
     
     
@@ -3333,6 +3335,7 @@ class Xcamshift():
             
             
     def __init__(self, verbose=True):
+        super(Xcamshift, self).__init__("xcamshift")
         self._verbose = verbose
         self.potential = [
                           RandomCoilShifts(),
