@@ -2298,7 +2298,7 @@ class Ring_Potential(Base_potential):
 
     def _get_shift_calculator(self):
 #        if self._fast:
-        result = Fast_ring_shift_calculator()
+        result = Fast_ring_shift_calculator(name=self.get_abbreviated_name())
 #        else:
 #            result = Ring_shift_calculator()
         return result
