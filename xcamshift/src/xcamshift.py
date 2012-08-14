@@ -2711,12 +2711,10 @@ class Non_bonded_list(object):
                         chem_type_id, sphere_id, exponent = coefficient_data[:3]
         #                    print chem_type_id, sphere_id, exponent 
                     
-                        try:
-                            result_component = atom_id_1,atom_id_2,coefficients[atom_1_coefficent_offset],exponent 
-                            self._interaction_count += 1
-                        except:
-                            print 'offset', atom_1_coefficent_offset
+
+                        result_component = atom_id_1,atom_id_2,coefficients[atom_1_coefficent_offset],exponent 
                         target_component_list.add_component(result_component)
+                        self._interaction_count += 1
 
         if self._verbose:
             print '  build boxes [slow]'
