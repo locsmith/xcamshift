@@ -11,6 +11,7 @@ from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from time import time
+from utils import Atom_utils
 
 
  
@@ -897,7 +898,11 @@ cdef class Base_force_calculator:
         component_target_atom_ids = components.get_component_atom_ids()
         for i,target_atom_id in enumerate(target_atom_ids):
             if target_atom_id in component_target_atom_ids:
-                index_range = components.get_component_range(target_atom_id)
+                try
+                    index_range = components.get_component_range(target_atom_id)
+                except ValueError:
+                    print "warning atom is not in list", target_atom_id, Atom_utils._get_atom_info_from_index(target_atom_id),self._name
+                    index_range = []
                 for index in range(*index_range):
                     self._cython_calc_single_force_set(index, force_factors[i],forces)
     
