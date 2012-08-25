@@ -817,6 +817,7 @@ class Base_shift_calculator(object):
     def set_verbose(self,on):
         self._verbose = on
         self._shift_calculator.set_verbose()
+        
 class Distance_shift_calculator(Base_shift_calculator):
     DEFAULT_CUTOFF = 5.0
     DEFAULT_SMOOTHING_FACTOR = 1.0
@@ -2272,7 +2273,7 @@ class Ring_Potential(Base_potential):
         self._fast =False
         self._shift_calculator = self._get_shift_calculator()
         self._ring_data_calculator = self._get_ring_data_calculator()
-        self._force_calculator = self._get_ring_force_calculator()
+        self._force_calculator = self._get_force_calculator()
       
     def set_verbose(self,on):
         super(Ring_Potential, self).set_verbose(on)
@@ -2284,7 +2285,7 @@ class Ring_Potential(Base_potential):
         super(Ring_Potential, self).calc_force_set(target_atom_ids,force_factors,forces)
         
         
-    def _get_ring_force_calculator(self):
+    def _get_force_calculator(self):
 #        if self._fast:
         result = Fast_ring_force_calculator(name=self.get_abbreviated_name())
 #        else:
@@ -2301,7 +2302,7 @@ class Ring_Potential(Base_potential):
         self._fast = (on == True)
         self._shift_calculator = self._get_shift_calculator()
         self._ring_data_calculator =  self._get_ring_data_calculator()
-        self._force_calculator = self._get_ring_force_calculator()
+        self._force_calculator = self._get_force_calculator()
         
     def _setup_ring_calculator(self,calculator):
         calculator._set_coef_components(self._get_component_list('COEF'))
