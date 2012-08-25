@@ -596,14 +596,11 @@ class Base_potential(object):
         self._fast =  (on == True)
     
     def _filter_components(self, target_atom_ids):
-        if self._verbose:
-                print '   filtering components %s' % self.get_abbreviated_name(),
-            
-        if self._freeze:
+        if self._freeze  and not self._filtered_components == None:
             result = self._filtered_components
-            if self._verbose:
-                print '    nothing to filter using cache...'
         else:
+            if self._verbose:
+                print '   filtering components %s' % self.get_abbreviated_name(),
             components = self._get_all_components()
             result = Component_list()
             
@@ -710,6 +707,7 @@ class Base_potential(object):
     
     def clear_caches(self):
         self._cache_list_data = {}
+        self._filtered_components = None
 
 #    TODO put 'ATOM' in a constant and rename to BB_ATOM?
     def _get_component_list(self,name=None):
@@ -763,9 +761,28 @@ class Base_potential(object):
     
     def calc_force_set(self,target_atom_ids,force_factors,forces):
         if self._have_derivative():
-            components =  self._get_component_list()
-            self._force_calculator(components, target_atom_ids,force_factors,forces)
-
+#            TODO: some of this code could go with careful organisation and wrapping access to component_to result in a accessor
+            if self._filtered_components == None:
+                self._filtered_components = self._filter_components(target_atom_ids)
+                if self._component_to_result ==  None:
+                    print "*****WARNING unexpected build of component to result"
+                    self._build_component_to_result(target_atom_ids)
+            if self._component_to_result == None:
+                raise "component to target must be set"
+            elif len(self._component_to_result) != len(self._filtered_components):
+                if self._verbose:
+                    start_time = time()
+                self._build_component_to_result(target_atom_ids)
+                if self._verbose:
+                    end_time=time()
+                    print "updated component_to result complete in %.8g seconds." % (end_time-start_time)
+                    #print len(self._component_to_result),  len(self._filtered_components), self.get_abbreviated_name()
+            
+            
+            
+            self._force_calculator(self._filtered_components,self._component_to_result, force_factors, forces)
+            
+    
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
         target_atom_ids = [target_atom_id]
         force_factors = [force_factor]
@@ -1012,6 +1029,7 @@ class Distance_based_potential(Base_potential):
 #    TODO: remove to base class
     def calc_shifts(self, target_atom_ids, results):
         components  = self._filter_components(target_atom_ids)
+        self._filtered_components = components
         self._shift_calculator(components,results,self._component_to_result)
                 
     class Indices(object):
