@@ -34,7 +34,8 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_dihedral_force_calculator,                                 \
                                      Fast_ring_force_calculator,                                     \
                                      Fast_force_factor_calculator,                                   \
-                                     Fast_non_bonded_shift_calculator
+                                     Fast_non_bonded_shift_calculator,                               \
+                                     Out_array
 from time import time
 
 class Component_factory(object):
@@ -3371,6 +3372,7 @@ class Xcamshift(PyPot):
         self._shift_table = Observed_shift_table()
         self._shift_cache = {}
         self._fast =  False
+        self._out_array =  None
          
         self._energy_term_cache = self._create_energy_term_cache()
         self._energy_calculator = self._get_energy_calculator()
@@ -3760,6 +3762,15 @@ class Xcamshift(PyPot):
         return cache
     
 
+    def _get_out_array(self):
+        num_atoms = Segment_Manager.get_segment_manager().get_number_atoms()
+        result = self._out_array
+        if result == None:
+            result = Out_array(num_atoms)
+        else:
+            result.realloc(num_atoms)
+        return result
+        
 
 
         
@@ -3787,8 +3798,10 @@ class Xcamshift(PyPot):
 
     def _calc_derivs(self, derivs, active_target_atom_ids ,potentials=None):
         
+        out_array = self._get_out_array()
         self.update_force_factor_calculator()
-        self._calc_force_set(active_target_atom_ids, derivs, potentials)
+        self._calc_force_set(active_target_atom_ids, out_array, potentials)
+        out_array.add_forces_to_result(derivs,self._weight)
 
     def calcEnergyAndDerivs(self,derivs):
         if self._verbose:

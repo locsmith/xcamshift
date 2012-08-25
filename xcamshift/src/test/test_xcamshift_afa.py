@@ -20,6 +20,7 @@ import sys
 from table_manager import Table_manager
 from vec3 import Vec3
 TOTAL_ENERGY = 'total'
+from cython.shift_calculators import Out_array
 
 fast =  False
 
@@ -91,10 +92,10 @@ class TestXcamshiftAFA(unittest2.TestCase):
         Segment_Manager.reset_segment_manager()
         
 #TODO: shoulf be private
-    def make_result_array_forces(self):
+    def make_out_array(self):
 #        TODO: use segment manager
         num_atoms = len(AtomSel('(all)').indices())
-        result = [None] * num_atoms
+        result = Out_array(num_atoms)
         return result
     
     def make_result_array(self):
@@ -237,18 +238,20 @@ class TestXcamshiftAFA(unittest2.TestCase):
                 ring_potential._get_component_list('RING')
                 ring_potential._build_ring_data_cache()
                 
-                forces = self.make_result_array_forces()
+                out_array = self.make_out_array()
                 force_terms = ring_potential._force_calculator._build_force_terms(target_atom_id, ring_id)
                 
                 
-                ring_potential._force_calculator._calc_target_atom_forces(target_atom_id, force_factor, force_terms, forces)
+                ring_potential._force_calculator._calc_target_atom_forces(target_atom_id, force_factor, force_terms, out_array)
+                forces =out_array.add_forces_to_result()
                 
                 target_atom_forces = forces[target_atom_id]
                 expected_forces = AFA.target_forces_harmonic[force_factor_key]
                 self.assertSequenceAlmostEqual(target_atom_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES)
                 
-                forces = self.make_result_array_forces()
-                ring_potential._force_calculator._calculate_ring_forces(atom_type_id, ring_id, force_factor, force_terms, forces)
+                out_array = self.make_out_array()
+                ring_potential._force_calculator._calculate_ring_forces(atom_type_id, ring_id, force_factor, force_terms, out_array)
+                forces =out_array.add_forces_to_result()
                 
                 for ring_atom_id in ring_atom_ids:
                     ring_atom_key  = Atom_utils._get_atom_info_from_index(ring_atom_id)

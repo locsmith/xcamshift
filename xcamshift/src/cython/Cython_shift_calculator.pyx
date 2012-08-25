@@ -12,6 +12,207 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from time import time
 from utils import Atom_utils
+from component_list import Component_list
+
+ 
+cdef class Out_array:
+    cdef long _length
+    cdef double[60000] _data
+    cdef int[60000] _mask
+    
+    def __init__ (self, length):
+        self._length = length
+
+        
+    def __cinit__(self,  length):
+        self._length =  60000
+        
+        if length > 60000: 
+            raise MemoryError("couldn't allocate array beyond length %i" % 60000)
+#        self._data = <double *>malloc(length * sizeof(double))
+#        if not self._data:
+#            raise MemoryError("couldn't allocate array of length %i" % length)
+#        
+#        self._mask = <long *>malloc(length * sizeof(long))
+#        if not self._mask:
+#            raise MemoryError("couldn't allocate array of length %i" % length)
+#        
+#        if  self._data  and self._mask:
+#            self._clear(length)
+#        print 'allocated'
+            
+    
+    def __dealloc__(self):
+        pass
+#        free(self._data)
+#        self._data = NULL
+#        free(self._mask)
+#        self._mask = NULL
+
+    cdef inline bint _check_clear_length(self, long length) except -1:
+        if not length <= self._length:
+            raise IndexError("tried to clear to %i length is %i" % (length,self._length))
+        if self._data is NULL:
+            raise AttributeError("trying to access deallocated memory!")
+        
+    cdef inline bint _check_offset(self, long offset) except -1:
+        if not offset < self._length:
+            raise IndexError("tried to access object at %i length is %i" % (offset,self._length))
+        if self._data is NULL:
+            raise AttributeError("trying to access deallocated memory!")
+    
+    cpdef bint realloc(self,long length) except -1:
+        if length <60000:
+#            free(self._data)
+#            self._data = NULL
+#            self._data = <double *>malloc(3 *(length+1) * sizeof(double))
+#            if not self._data:
+#                raise MemoryError("couldn't allocate array of length %i" % length)
+#            if  self._data:
+#                self._length =length
+            self._clear(length)
+        else:
+            raise MemoryError("couldn't beyond of length %i" % 60000)
+#
+#            free(self._mask)
+#            self._mask = NULL                        
+#            self._mask = <int *>malloc((length+1) * sizeof(int))
+#            if not self._mask:
+#                raise MemoryError("couldn't allocate array of length %i" % length)
+#            if  self._mask:
+#                self._clear_mask(length)
+            
+    cdef inline bint _check_state(self) except -1:
+        if self._data is NULL:
+            raise MemoryError("couldn't reallocate array of length %i" % self._length)
+    
+    cdef _clear(self, length):
+        self._check_clear_length(length)
+        for i in range(length*3):
+            self._data[i] = 0.0
+        for i in range(length):
+            self._mask[i]=0
+    
+    def padd(self,offset,value):
+        cdef Vec3 cvalue  = Vec3(value[0],value[1],value[2])
+        self.add(offset, cvalue)
+        
+        
+    cdef add(self,long offset, Vec3& value):
+        self._check_offset(offset)
+        cdef long id3 = offset *3
+        
+        self._data[id3]   += value[0]
+        self._data[id3+1] += value[1]
+        self._data[id3+2] += value[2]
+        
+        self._mask[offset] = 1
+        
+    def clear_by_id(self,target_ids):
+        cdef long id3 = 0
+        for target_id in target_ids:
+            self._check_offset(target_id)
+            id3 = target_id *3
+        
+            self._data[id3]   = 0.0
+            self._data[id3+1] = 0.0
+            self._data[id3+2] = 0.0
+        
+            self._mask[target_id] = 0
+    def add_forces_to_result(self, result=None, weight=1.0):
+        if result ==  None:
+            result = [None] * self._length
+        
+        cdef double x = 0.0
+        cdef double y = 0.0
+        cdef double z = 0.0
+        cdef long id3
+        for i in range(self._length):
+            if self._mask[i] != 0:
+                if result[i] ==  None:
+                    result[i] = [0.0]*3
+                id3 = i * 3
+                x  = self._data[id3] * weight
+                y  = self._data[id3+1] *weight 
+                z  = self._data[id3+2] * weight  
+                result[i][0] += x
+                result[i][1] += y
+                result[i][2] += z
+
+                
+        return result
+    
+    def add_forces_to_result_by_id(self, list target_atom_ids, list result=None):
+        if result ==  None:
+            result = [None] * self._length
+        
+        cdef double x = 0.0
+        cdef double y = 0.0
+        cdef double z = 0.0
+        cdef long id3
+        for i in target_atom_ids:
+            if self._mask[i] != 0:
+                if result[i] ==  None:
+                    result[i] = [0.0]*3
+                id3 = i * 3
+                x  = self._data[id3]
+                y  = self._data[id3+1]
+                z  = self._data[id3+2]  
+                result[i][0] += x
+                result[i][1] += y
+                result[i][2] += z
+
+                
+        return result
+    
+    def __str__(self):
+        
+        cdef long id3 =0
+        result =  []
+        result.append('length = %i' % self._length)
+        for i in range(self._length):
+            if self._mask[i] ==0:
+                result.append("%5i ." % i)
+            else:
+                id3 = i * 3
+                result.append('%5i %4.7f,%4.7f,%4.7f' % (i,self._data[id3],self._data[id3+1],self._data[id3+2]))
+        return '\n'.join(result)
+
+
+#cdef float* out_array = null
+#cdef long out_array_length = -1
+#cdef bint allocate_out_array_for_forces(long length) except -1:
+#    global out_array
+#    global out_array_length
+#    cdef long required_length = length*3
+#    cdef bint allocate =  False
+#    if out_array ==  null:
+#        out_array = <float*> malloc*(required_length *sizeof(float))
+#        if out_array  == null:
+#            Raise
+#        allocate=True
+#        out_array_length = 
+#        elif  len(out_array) < required_length
+#    return allocate
+#    
+#def _clear_out_array_for_forces(self, length):
+#    
+#    
+#    is_new  = self.allocate_out_array_for_forces(length)
+#    
+#    if not is_new:
+#        length = length*3
+#        for i in range(length):
+#            self._out_array[i] =0.0
+#    return self._out_array
+#    
+#def _copy_back_forces(self, data_dict, data_array, target_atom_ids):
+#    for id in target_atom_ids:
+#        result =  dict.setdefault(id,[0.0,0.0,0.0])
+#        id3 = id*3
+#        result[0] = data_array[id3]
+#        result[1] = data_array[id3+1]
+#        result[2] = data_array[id3+2]
 
 
  
@@ -936,6 +1137,16 @@ cdef class Base_force_calculator:
     cdef inline object _get_component(self,int index):
         return self._components.get_component(index)
     
+    def _calc_single_force_set(self, int index, float factor, Out_array forces):
+        #TODO tidy this up a hack for the test suite
+        saved_component_list = self._components
+        component_list = Component_list()
+        component_list.add_component(self._components[index])
+        
+        self.__call__(component_list,[0], [factor], forces)
+        self._components =  saved_component_list
+        
+        
 #    TODO should most probably be a fixed array
     def __call__(self, object components, object component_to_result, object force_factors, Out_array forces):
 
@@ -1076,6 +1287,12 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     def _calc_single_force_factor(self, int index, float factor):
         return self._cython_calc_single_force_factor(index, factor)
     
+    cdef _do_calc_components(self, object component_to_result, object force_factors, object force):
+        for i in range(len(self._components)):
+            self._distance_calc_single_force_set(i,force_factors[component_to_result[i]],force)
+            
+    
+    
     cdef inline float _cython_calc_single_force_factor(self, int index, float factor):
         cdef target_distant_atom atom_ids
         cdef coefficient_exponent coef_exp
@@ -1113,29 +1330,25 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
 #    def _calc_single_force_set(self, int index, float factor, object forces):
 #        self._cython_calc_single_force_set(index, factor, forces)
         
-    cdef _cython_calc_single_force_set(self,int index, float factor, object forces):
+    cdef inline _distance_calc_single_force_set(self,int index, float factor, Out_array forces):
         
         cdef target_distant_atom atom_ids
         cdef Vec3 xyz_distances, target_forces, distant_forces
         cdef float force_factor, distance
+        cdef Vec3 result
 
         atom_ids =  self._get_target_and_distant_atom_ids(index)
-        
-#        print atom_ids.target_atom_id,atom_ids.distant_atom_id
+#        
+##        print atom_ids.target_atom_id,atom_ids.distant_atom_id
         xyz_distances  = self._xyz_distances(atom_ids.target_atom_id,atom_ids.distant_atom_id)
         
         force_factor  = self._cython_calc_single_force_factor(index, factor)
         
-        
-        python_target_forces = self._get_or_make_target_force_triplet(forces, atom_ids.target_atom_id)
-        python_distant_forces  = self._get_or_make_target_force_triplet(forces, atom_ids.distant_atom_id)
-        
         target_forces = operator_times(xyz_distances, -force_factor)
         distant_forces = operator_times(xyz_distances, force_factor)
-        
-        for i in range(3):
-            python_target_forces[i] += target_forces[i]
-            python_distant_forces [i] += distant_forces[i]
+#        
+        forces.add(atom_ids.target_atom_id,target_forces)
+        forces.add(atom_ids.distant_atom_id,distant_forces)
 
 cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_calculator):
     cdef float _non_bonded_cutoff
@@ -1145,16 +1358,19 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         super(Fast_non_bonded_force_calculator, self).__init__(indices,smoothed,name=name)
         self._non_bonded_cutoff = DEFAULT_NB_CUTOFF
         
-    def _calc_single_force_set(self, int index, float factor, object forces):
-        self._cython_calc_single_force_set(index, factor, forces)
-        
-    cdef _cython_calc_single_force_set(self, int index, float factor, object forces):
+#    def _calc_single_force_set(self, int index, float factor, object forces):
+#        self._cython_calc_single_force_set(index, factor, forces)
+    cdef _do_calc_components(self, object component_to_result, object force_factors, object force):
+        for i in range(len(self._components)):
+            self._non_bonded_calc_single_force_set(i,force_factors[component_to_result[i]],force)
+            
+    cdef inline  _non_bonded_calc_single_force_set(self, int index, float factor, object forces):
         cdef target_distant_atom atom_ids = Fast_distance_based_potential_force_calculator._get_target_and_distant_atom_ids(self,index)
         cdef float distance  = calc_distance_simulation(self._simulation, atom_ids.target_atom_id, atom_ids.distant_atom_id)
 #        TODO: this should be the non bonded distance cutoff
 #TODO class variable of self are not being looked up!
         if distance < 5.0:
-            Fast_distance_based_potential_force_calculator._cython_calc_single_force_set(self,index, factor, forces)
+            self._distance_calc_single_force_set(index, factor, forces)
 
 
     
@@ -1199,7 +1415,12 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
 #    TODO make this consistent with the distance forces factor
     def _calc_single_force_factor(self, int index):
         return self._cython_calc_single_force_factor(index)
-    
+
+    cdef _do_calc_components(self, object component_to_result, object force_factors, object force):
+        for i in range(len(self._components)):
+            self._dihedral_calc_single_force_set(i,force_factors[component_to_result[i]],force)
+            
+
     cdef inline _cython_calc_single_force_factor(self, int index):
         
         cdef dihedral_ids dihedral_atom_ids
@@ -1218,10 +1439,10 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
 
     
     #TODO: is this too close?
-    def _calc_single_force_set(self, int index, float factor, object forces):
-        self._cython_calc_single_force_set(index, factor, forces)
+#    def _calc_single_force_set(self, int index, float factor, object forces):
+#        self._cython_calc_single_force_set(index, factor, forces)
         
-    cdef _cython_calc_single_force_set(self, int index, float factor, object forces):
+    cdef inline _dihedral_calc_single_force_set(self, int index, float factor, Out_array forces):
         cdef Vec3 r1, r2, r3, r4, temp
         cdef Vec3 n1, n2
         cdef float weight
@@ -1286,23 +1507,25 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
 
 #        print vec3_as_tuple(F1), vec3_as_tuple(F2), vec3_as_tuple(F3), vec3_as_tuple(F4)
 #        // assign forces
-        force_triplet_1 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_1)
-        force_triplet_2 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_2)
-        force_triplet_3 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_3)
-        force_triplet_4 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_4)
+#        force_triplet_1 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_1)
+#        force_triplet_2 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_2)
+#        force_triplet_3 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_3)
+#        force_triplet_4 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_4)
         
-        self.set_force_triplet(weight,force_triplet_1,F1)
-        self.set_force_triplet(weight,force_triplet_2,F2)
-        self.set_force_triplet(weight,force_triplet_3,F3)
-        self.set_force_triplet(weight,force_triplet_4,F4)
+        temp =Vec3(F1)
+        F1 = operator_times(temp, weight) 
+        temp =Vec3(F2)
+        F2 = operator_times(temp, weight)
+        temp =Vec3(F3)
+        F3 = operator_times(temp, weight)
+        temp =Vec3(F4)
+        F4 = operator_times(temp, weight)
         
-        
-    
-    cdef set_force_triplet(self, float weight, object force_triplet, Vec3 vector):
-        for offset in range(3):
-            force_component = weight * vector[offset]
-            force_triplet[offset]+= force_component
-            
+        forces.add(atom_ids.atom_id_1,F1)
+        forces.add(atom_ids.atom_id_2,F2)
+        forces.add(atom_ids.atom_id_3,F3)
+        forces.add(atom_ids.atom_id_4,F4)
+
 
 
     
@@ -1393,8 +1616,12 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     cdef inline  Coef_components _get_coef_components(self, int atom_type_id):
         cdef object python_coef_components = self._coef_components.get_components_for_atom_id(atom_type_id)
         return Coef_components(python_coef_components)
-        
-    cdef _cython_calc_single_force_set(self,  int index, float force_factor, object forces):
+    
+    cdef _do_calc_components(self, object component_to_result,object force_factors, object force):
+        for i in range(len(self._components)):
+            self._ring_calc_single_force_set(i,force_factors[component_to_result[i]],force)
+            
+    cdef inline _ring_calc_single_force_set(self,  int index, float force_factor, object forces):
         cdef target_type target_atom_id_type =  self._get_target_and_type(index)
         #TODO: make array a union
         cdef Coef_components coef_components = self._get_coef_components(target_atom_id_type.atom_type_id)
@@ -1490,27 +1717,30 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 #        return  dL3, u, dL6, ring_normal,  atom_type_id, coefficient, d, factor, dn, dL3nL3, dL, nL, dLnL
 ##    ---
 #
-    def _calc_target_atom_forces(self, int target_atom_id, float force_factor, Python_ring_force_sub_terms python_sub_terms, object forces):
+    def _calc_target_atom_forces(self, int target_atom_id, float force_factor, Python_ring_force_sub_terms python_sub_terms, Out_array forces):
         cdef Ring_force_sub_terms  terms  =  python_sub_terms.get_terms()
         self._cython_calc_target_atom_forces(target_atom_id, force_factor, terms, forces)
 
-    cdef _cython_calc_target_atom_forces(self, int target_atom_id, float force_factor, Ring_force_sub_terms& sub_terms, object forces):
+    cdef inline _cython_calc_target_atom_forces(self, int target_atom_id, float force_factor, Ring_force_sub_terms& sub_terms, Out_array forces):
         cdef object target_force_triplet
         cdef int axis 
-        target_force_triplet = self._get_or_make_target_force_triplet(forces, target_atom_id)
+#        target_force_triplet = self._get_or_make_target_force_triplet(forces, target_atom_id)
 #    
 #        # update forces on query atom
         cdef float term1
+        cdef Vec3 result
         for axis in range(3):
             #TODO: report this as a bug it produces an un initialized reference 
             term1= (sub_terms.gradUQ[axis] * sub_terms.dL3 - sub_terms.u * sub_terms.gradVQ[axis])
-            target_force_triplet[axis] += -force_factor * term1 / sub_terms.dL6
+            result[axis] = -force_factor * term1 / sub_terms.dL6
+        
+        forces.add(target_atom_id, result)
 #             *  / sub_terms.dL6
 #
 #    #TODO: calculation of GradU and gradV are not consistent with force_terms for target atom correct
 #    #TODO: reduce number of parameters to method
 
-    cdef _cython_calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Ring_force_sub_terms force_terms, object forces):
+    cdef inline _cython_calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Ring_force_sub_terms force_terms, Out_array forces):
         cdef Vec3 temp_normal =  Vec3(force_terms.ring_normal)
         cdef Vec3 nSum = operator_times(temp_normal,2.0)  #            float_type g [3], ab [3], c [3]
         cdef ring_atom_ids ring_atoms = self._get_ring_atom_ids(ring_id)
@@ -1544,6 +1774,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         
         cdef Vec3 gradU
         cdef Vec3 gradV
+        cdef Vec3 result
         
         cdef int axis 
         cdef float sub_term
@@ -1609,11 +1840,13 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
             
 #TODO: rename force terms  sub_terms or vice versa
 
-            ring_target_force_triplet = self._get_or_make_target_force_triplet(forces, ring_atom_id)
+#            ring_target_force_triplet = self._get_or_make_target_force_triplet(forces, ring_atom_id)
+            
             for axis in range(3):
                 sub_term = (gradU[axis] * force_terms.dL3 - force_terms.u * gradV[axis])
                 sub_force = -force_factor * sub_term / force_terms.dL6
-                ring_target_force_triplet[axis] += sub_force
+                result[axis] = sub_force
+            forces.add(ring_atom_id,result)
 #                print AXIS_NAMES[axis],sub_force,-force_factor, gradU[axis], force_terms.dL3, force_terms.u, gradV[axis],force_terms.dL6
 #            print
 ##        print 

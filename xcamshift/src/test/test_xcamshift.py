@@ -22,6 +22,7 @@ import sys
 from table_manager import Table_manager
 from component_list import Component_list
 fast = False
+from cython.shift_calculators import Out_array
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -110,10 +111,10 @@ class TestXcamshift(unittest2.TestCase):
         Atom_utils.clear_cache()
         Table_manager.reset_default_table_manager()
 
-    def make_result_array_forces(self):
+    def make_out_array(self):
 #        TODO: use segment manager
         num_atoms = len(AtomSel('(all)').indices())
-        result = [None] * num_atoms
+        result = Out_array( num_atoms)
         return result
     
     def make_result_array(self):
@@ -449,10 +450,11 @@ class TestXcamshift(unittest2.TestCase):
             
             test_factor = test_factors[target_atom_key]
             
-            forces = self.make_result_array_forces()
+            out_array = self.make_out_array()
             
             #TODO: test the force calculator not the potential
-            distance_potential._force_calculator._calc_single_force_set(i, test_factor, forces)
+            distance_potential._force_calculator._calc_single_force_set(i, test_factor, out_array)
+            forces = out_array.add_forces_to_result()
             
             distant_atom_forces_1 = self.get_force_triplet(distant_atom_index_1, forces)
             distant_atom_forces_2 = self.get_force_triplet(distant_atom_index_2, forces)
@@ -517,7 +519,7 @@ class TestXcamshift(unittest2.TestCase):
         for i, data in enumerate(potential.dump()):
             
             
-            forces = self.make_result_array_forces()
+            out_array = self.make_out_array()
             #TODO imporve names and dihdedral atom lookup
             SELECTION_INDEX = 0
             TARGET_ATOM_INDEX = 0
@@ -529,11 +531,13 @@ class TestXcamshift(unittest2.TestCase):
             for elem in dihedral_atoms_key:
                 dihedral_atom_ids.extend(single_text_key_to_atom_ids(elem))
             test_factor = test_factors[target_atom_key]
-            potential._force_calculator._calc_single_force_set(i,test_factor,forces)
+            potential._force_calculator._calc_single_force_set(i,test_factor,out_array)
+            forces  =  out_array.add_forces_to_result()
             dihedral_forces = self._extract_dihedral_forces(dihedral_atom_ids,forces)
+
             
             for forces,expected in zip(dihedral_forces,expected_forces_dict[expected_key]):
-                self.assertSequenceAlmostEqual(forces, expected, self.DEFAULT_DECIMAL_PLACES)
+                self.assertSequenceAlmostEqual(forces, expected, self.DEFAULT_DECIMAL_PLACES,msg=`expected_key`)
 
             del expected_forces_dict[expected_key]
         del expected_forces_dict['name']

@@ -19,6 +19,7 @@ from cython.fast_segment_manager import Segment_Manager
 from test.util_for_testing import  _check_shift_results, _shift_cache_as_result,\
     get_atom_index, get_key_for_atom_index
 TOTAL_ENERGY = 'total'
+from cython.shift_calculators import Out_array
 fast = False
 
 
@@ -84,15 +85,15 @@ class TestXcamshiftGB3(unittest2.TestCase):
         Segment_Manager.reset_segment_manager()
 #
 ##TODO: shoulf be private
-    def make_result_array_forces(self):
+    def make_out_array(self):
 #        TODO: use segment manager
         num_atoms = len(AtomSel('(all)').indices())
-        result = [None] * num_atoms
+        result = Out_array( num_atoms)
         return result
     
-    def make_result_array(self):
+    def make_results_array(self):
         num_atoms = len(AtomSel('(all)').indices())
-        result = [0.0] * num_atoms
+        result = [None] * num_atoms
         return result
 
     def assertListVec3AlmostEqual(self, ring_centres, expecteds, places = DEFAULT_DECIMAL_PLACES, msg=''):
@@ -409,9 +410,9 @@ class TestXcamshiftGB3(unittest2.TestCase):
     def filter_force_components_by_potential(self, potential_name):
         return dict(self.filter_dict(gb3.gb3_component_forces, lambda k, v:k[-1] == potential_name))
 
-    def make_total_forces_from_components(self):
-        expected_total_result_forces = self.make_result_array_forces()
-        for key in gb3.gb3_forces:
+    def make_forces_from_map(self,forces_map):
+        expected_total_result_forces = self.make_results_array()
+        for key in forces_map:
             index = get_atom_index(key)
             expected_total_result_forces[index] = gb3.gb3_forces[key]
         
@@ -421,22 +422,24 @@ class TestXcamshiftGB3(unittest2.TestCase):
         xcamshift =  self.make_xcamshift(gb3.gb3_zero_shifts)
         xcamshift.setup()
         
-        total_result_forces = self.make_result_array_forces()
+        total_result_forces = self.make_results_array()
         energy = xcamshift.calcEnergyAndDerivs(total_result_forces)
 
-        expected_total_result_forces = self.make_total_forces_from_components()
+        expected_total_result_forces = self.make_forces_from_map(gb3.gb3_forces)
         
         self.assertListVec3AlmostEqual(total_result_forces, expected_total_result_forces, self.DEFAULT_DECIMAL_PLACES - 3)
+#        for elem in zip(total_result_forces,expected_total_result_forces):
+#            print elem
         
         self.assertAlmostEqual(energy, gb3.gb3_energies['total'],self.DEFAULT_DECIMAL_PLACES-5)
 
     def test_total_forces_and_energy(self):
         xcamshift =  self.make_xcamshift(gb3.gb3_zero_shifts)
         
-        total_result_forces = self.make_result_array_forces()
+        total_result_forces = self.make_results_array()
         energy = xcamshift.calcEnergyAndDerivs(total_result_forces)
 
-        expected_total_result_forces = self.make_total_forces_from_components()
+        expected_total_result_forces = self.make_forces_from_map( gb3.gb3_forces)
         
         self.assertListVec3AlmostEqual(total_result_forces, expected_total_result_forces, self.DEFAULT_DECIMAL_PLACES - 3)
         
@@ -505,9 +508,14 @@ class TestXcamshiftGB3(unittest2.TestCase):
         
             return target_atom_keys
 
+        def make_result_array_forces(self):
+#        TODO: use segment manager
+            num_atoms = len(AtomSel('(all)').indices())
+            result = [None] * num_atoms
+            return result
         def build_expected_forces_for_potential(target_atom_key, raw_backbone_force_components):
             
-            expected_forces = self.make_result_array_forces()
+            expected_forces = self.make_results_array()
             for raw_backbone_force_component_key in raw_backbone_force_components:
                 if target_atom_key == self.get_target_atom_key(raw_backbone_force_component_key):
                     force_atom_key = self.get_force_atom_key(raw_backbone_force_component_key)
@@ -537,9 +545,12 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 expected_forces = build_expected_forces_for_potential(target_atom_key, raw_backbone_force_components)
 
                 target_atom_id = get_atom_index(target_atom_key)
-                result_forces = self.make_result_array_forces()
-
-                xcamshift._calc_single_atom_force_set_with_potentials(target_atom_id, result_forces, potentials_list)
+                out_array = self.make_out_array()
+                
+                xcamshift.reset()
+                xcamshift._prepare([target_atom_id])
+                xcamshift._calc_single_atom_force_set_with_potentials(target_atom_id, out_array, potentials_list)
+                result_forces = out_array.add_forces_to_result()
                 self.assertListVec3AlmostEqual(result_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES-3, msg='%s -  %s' % (potential_name,target_atom_key))
 
                 # to list differences as well as check them uncomment this! 

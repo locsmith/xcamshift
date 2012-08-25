@@ -23,6 +23,8 @@ from table_manager import Table_manager
 from component_list import Component_list
 from test import ala_4
 from cython.fast_segment_manager import Segment_Manager
+from cython.shift_calculators import Out_array
+
 
 fast = False
 
@@ -99,10 +101,10 @@ class TestXcamshiftA4(unittest2.TestCase):
         Segment_Manager.reset_segment_manager()
         Atom_utils.clear_cache()
 
-    def make_result_array_forces(self):
+    def make_out_array(self):
 #        TODO: use segment manager
         num_atoms = len(AtomSel('(all)').indices())
-        result = [None] * num_atoms
+        result = Out_array(num_atoms)
         return result
     
     def make_result_array(self):
@@ -452,9 +454,10 @@ class TestXcamshiftA4(unittest2.TestCase):
             expected_key = target_atom_key, remote_atom_key, int(exponent)
             factor = factors[target_atom_key]
     #            print expected_key,factor
-            forces = self.make_result_array_forces()
-            potential._force_calculator._calc_single_force_set(i, factor,forces)
+            out_array = self.make_out_array()
+            potential._force_calculator._calc_single_force_set(i, factor,out_array)
             
+            forces = out_array.add_forces_to_result()
             target_force_triplet = forces[target_atom_id]
             remote_force_triplet  = forces[remote_atom_id]
             
