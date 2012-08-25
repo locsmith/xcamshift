@@ -3843,6 +3843,8 @@ class Xcamshift(PyPot):
             print 'prepare completed in %.17g seconds' %(prepare_end_time-prepare_start_time)
 
         energy = self.calcEnergy( active_target_atom_ids=target_atom_ids, prepare=False)
+
+        self._calc_derivs(derivs, target_atom_ids)
         
         
         if self._verbose:
