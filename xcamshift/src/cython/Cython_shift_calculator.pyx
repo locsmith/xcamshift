@@ -621,8 +621,6 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         cdef double end_time = 0.0
         
         
-        start_time = time()
-        self._do_verbose(components,results)
         
         if self._verbose:
             start_time = time()
