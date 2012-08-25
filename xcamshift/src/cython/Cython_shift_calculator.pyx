@@ -254,11 +254,6 @@ cdef class Base_shift_calculator:
     cdef set_simulation(self):
         self._simulation = currentSimulation()
         
-    cdef _do_verbose(self,object components, object targets):
-        if self._verbose:
-            msg='%s calculating %i components for %s targets'
-            args =  (self._name, len(components), len(targets))
-            print msg % args   
         
 cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 
@@ -319,11 +314,11 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 #    
     def __call__(self, object components, object results, object component_to_target):
         self.set_simulation()
-        cdef double start_time
-        cdef double end_time
+        cdef double start_time = 0.0
+        cdef double end_time = 0.0
         
-        start_time=time()
-        self._do_verbose(components, results)
+        if self._verbose:
+            start_time=time()
         
         self._set_components(components)
         cdef float smoothing_factor = self._smoothing_factor
@@ -337,7 +332,9 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 
         
 
-        
+        if self._verbose:
+            start_time = time()
+            
         for index in range(len(components)):
             
             component = components[index]
@@ -355,8 +352,10 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
                 ratio = distance / self._cutoff
                 smoothing_factor = 1.0 - ratio ** 8
             results[component_to_target[index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
-        end_time = time()
-        print 'distance components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
+
+        if self._verbose:
+            end_time = time()
+            print '   distance shift components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
 
     
 
@@ -417,13 +416,16 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         cdef float coefficient
         cdef dihedral_parameters parameters
         cdef dihedral_ids dihedral_atom_ids  
-        cdef double start_time
-        cdef double end_time
-        print 'time', "%.17g" % time()
+        cdef double start_time = 0.0 
+        cdef double end_time = 0.0
+        
         
         start_time = time()
         self._do_verbose(components,results)
         
+        if self._verbose:
+            start_time = time()
+            
         self._set_components(components)
         for index in range(len(components)):
             dihedral_atom_ids = self._get_dihedral_atom_ids(index)
@@ -440,11 +442,10 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
             shift = coefficient * angle_term
     
             results[component_to_target[index]] += shift
-        end_time = time()
-        print 'time_end', "%.17g" % time()
-        print start_time
-        print end_time
-        print 'dihedral components ',len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
+            
+        if self._verbose:
+            end_time = time()
+            print '   dihedral shift components ',len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
 
 cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     cdef object _components
@@ -522,11 +523,13 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         cdef int target_atom_id
         cdef int ring_id
         cdef float coefficient
-        cdef double start_time
-        cdef double end_time
-        start_time = time()
+        cdef double start_time = 0.0 
+        cdef double end_time =0.0
         
-        self._do_verbose(components,results)
+        if self._verbose:
+            start_time = time()
+        
+        
         
         self._set_components(components)
         
@@ -546,8 +549,10 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
                 shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
             
             results[component_to_target[index]] += shift
-        end_time = time()
-        print 'ring components ' ,self._name,len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
+        
+        if self._verbose:
+            end_time = time()
+            print '   ring shift components ' ,self._name,len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
 
 #   
 cdef int RING_ATOM_IDS = 1
@@ -647,8 +652,13 @@ cdef class Fast_ring_data_calculator:
         self.set_simulation()
         cdef Vec3_container centre 
         cdef Vec3_container normal
+        cdef double start_time = 0.0 
+        cdef double end_time = 0.0
         self.set_simulation()
         
+        if self._verbose:
+            start_time = time()
+
 
             
         for ring_component in rings:
@@ -662,6 +672,9 @@ cdef class Fast_ring_data_calculator:
             normal_component = ring_id, normal
             normals.add_component(normal_component) 
             
+        if self._verbose:
+            end_time = time()
+            print '   ring data centres: ',len(rings), ' normals ', len(normals), 'in', "%.17g" %  (end_time-start_time), "seconds"
 
 cdef class Fast_non_bonded_calculator:
     cdef int _min_residue_seperation
@@ -680,8 +693,10 @@ cdef class Fast_non_bonded_calculator:
     
     def set_simulation(self):
         self._simulation = currentSimulation()
+        
     def set_verbose(self,on):
         self._verbose=on
+        
     cdef inline bint _filter_by_residue(self, char* seg_1, int residue_1, char* seg_2, int residue_2):
         cdef int sequence_distance
         cdef bint result
@@ -720,6 +735,12 @@ cdef class Fast_non_bonded_calculator:
         return is_non_bonded
     
     def __call__(self, atom_list_1, atom_list_2):
+        cdef double start_time = 0.0 
+        cdef double end_time = 0.0
+        if self._verbose:
+            start_time = time()
+
+
         self.set_simulation()
         non_bonded_lists = []
         for atom_id_1 in atom_list_1:
@@ -728,6 +749,9 @@ cdef class Fast_non_bonded_calculator:
             for i, atom_id_2 in enumerate(atom_list_2):
                 if self._is_non_bonded(atom_id_1, atom_id_2):
                     non_bonded_list.append(i)
+        if self._verbose:
+            end_time = time()
+            print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"
         return  non_bonded_lists
 
 
@@ -799,6 +823,11 @@ cdef class Fast_energy_calculator:
         cdef float tanh_y_offset
         cdef float tanh_argument
         
+        cdef double start_time = 0.0
+        cdef double end_time = 0.0 
+        if self._verbose:
+            start_time = time()
+            
         energy = 0.0
         
         for target_atom_index in target_atom_ids:
@@ -828,11 +857,21 @@ cdef class Fast_energy_calculator:
                     energy_component = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset;
 
                 energy += energy_component
+
+        if self._verbose:
+            end_time = time()
+            print '   energy calculator: ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
+            
         return energy
 
 cdef class Fast_force_factor_calculator(Fast_energy_calculator):
 
     def __call__(self, target_atom_ids):
+        cdef double start_time =0.0
+        cdef double end_time =0.0
+        if self._verbose:
+            start_time = time()
+
         self.set_simulation()
         result  = []
         for target_atom_id in target_atom_ids:
@@ -865,19 +904,26 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
                     factor = weight * tanh_amplitude * tanh_elongation / (cosh(tanh_elongation * (adjusted_shift_diff - end_harmonic)))**2.0 * fact;
 
             result.append(factor)
+            
+        if self._verbose:
+            end_time = time()
+            print '   force factors : ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
+
+        
         return  result
 cdef class Base_force_calculator:
     
     cdef object _components
     cdef bint _verbose 
     cdef Simulation* _simulation
+    cdef str _name
     
-    
-    def __init__(self,potential=None):
+    def __init__(self,potential=None, name= "not set"):
         self._components =  None
         self._verbose = False
         self._simulation =  currentSimulation()
         
+        self._name = name
     
     def set_verbose(self,on):
         self._verbose = on
@@ -891,20 +937,34 @@ cdef class Base_force_calculator:
         return self._components.get_component(index)
     
 #    TODO should most probably be a fixed array
-    def __call__(self, components, target_atom_ids, force_factors, forces):
+    def __call__(self, object components, object component_to_result, object force_factors, Out_array forces):
+
+        cdef double start_time =0.0
+        cdef double end_time =0.0
+        if self._verbose:
+            start_time = time()
+
         self._set_components(components)
         self.set_simulation()
-        
-        component_target_atom_ids = components.get_component_atom_ids()
-        for i,target_atom_id in enumerate(target_atom_ids):
-            if target_atom_id in component_target_atom_ids:
-                try
-                    index_range = components.get_component_range(target_atom_id)
-                except ValueError:
-                    print "warning atom is not in list", target_atom_id, Atom_utils._get_atom_info_from_index(target_atom_id),self._name
-                    index_range = []
-                for index in range(*index_range):
-                    self._cython_calc_single_force_set(index, force_factors[i],forces)
+#        TODO rename component to result to something better
+        self._do_calc_components(component_to_result, force_factors, forces)
+
+#        component_target_atom_ids = components.get_component_atom_ids()
+#        for i,target_atom_id in enumerate(target_atom_ids):
+#            if target_atom_id in component_target_atom_ids:
+#                try:
+#                    index_range = components.get_component_range(target_atom_id)
+#                except ValueError:
+#                    print "warning atom is not in list", target_atom_id, Atom_utils._get_atom_info_from_index(target_atom_id),self._name
+#                    index_range = []
+#                for index in range(*index_range):
+                    
+        if self._verbose:
+            end_time = time()
+            print '   force calculator: ', self._name ,' ',len(components), ' in', "%.17g" %  (end_time-start_time), "seconds"
+
+    cdef _do_calc_components(self, object component_to_result,  object force_factors, object force):
+        raise Exception("this should not be called!")
     
     cdef inline _get_or_make_target_force_triplet(self, object forces, object target_offset):
         target_forces = forces[target_offset]
@@ -914,8 +974,8 @@ cdef class Base_force_calculator:
         return target_forces
 
 #    TODO make abstract
-    cdef _cython_calc_single_force_set(self, int index, float force_factor, object forces):
-        raise Exception("unexpected! this method should be implemented")
+#    cdef _cython_calc_single_force_set(self, int index, float force_factor, object forces):
+#        raise Exception("unexpected! this method should be implemented")
 
 
 
@@ -932,8 +992,8 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     cdef float _smoothing_factor
     cdef float _cutoff
     
-    def __init__(self, object indices, bint smoothed):
-        super(Fast_distance_based_potential_force_calculator, self).__init__()
+    def __init__(self, object indices, bint smoothed, name="Not set"):
+        super(Fast_distance_based_potential_force_calculator, self).__init__(name=name)
         self._target_atom_index = indices.target_atom_index
         self._distance_atom_index_1 =  indices.distance_atom_index_1
         self._distance_atom_index_2 =  indices .distance_atom_index_2
@@ -1050,8 +1110,8 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
  
 
     
-    def _calc_single_force_set(self, int index, float factor, object forces):
-        self._cython_calc_single_force_set(index, factor, forces)
+#    def _calc_single_force_set(self, int index, float factor, object forces):
+#        self._cython_calc_single_force_set(index, factor, forces)
         
     cdef _cython_calc_single_force_set(self,int index, float factor, object forces):
         
@@ -1080,9 +1140,9 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
 cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_calculator):
     cdef float _non_bonded_cutoff
     
-    def __init__(self, object indices, bint smoothed):
+    def __init__(self, object indices, bint smoothed, name = "not set"):
         global DEFAULT_NB_CUTOFF
-        super(Fast_non_bonded_force_calculator, self).__init__(indices,smoothed)
+        super(Fast_non_bonded_force_calculator, self).__init__(indices,smoothed,name=name)
         self._non_bonded_cutoff = DEFAULT_NB_CUTOFF
         
     def _calc_single_force_set(self, int index, float factor, object forces):
@@ -1100,8 +1160,8 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
     
 cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     
-    def __init__(self):
-        Base_force_calculator.__init__(self)
+    def __init__(self,name="not set"):
+        Base_force_calculator.__init__(self,name=name)
 
     cdef inline dihedral_ids _get_dihedral_atom_ids(self, int index):
         cdef dihedral_ids result
@@ -1257,8 +1317,8 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     cdef object _normal_cache
     
     
-    def __init__(self):
-        super(Fast_ring_force_calculator, self).__init__()
+    def __init__(self,name="not set"):
+        super(Fast_ring_force_calculator, self).__init__(name=name)
         self._components = None
         self._coef_components = None
         self._ring_components = None
@@ -1567,14 +1627,13 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         global DEFAULT_NB_CUTOFF
         self._nb_cutoff = DEFAULT_NB_CUTOFF
         
-
+    def set_verbose(self,on):
+        self._verbose = on
     
     def __call__(self, object components, object results, object component_to_target):
         self._components =  components
         self.set_simulation()
         
-        cdef double start_time
-        cdef double end_time
         cdef float default_smoothing_factor = self._smoothing_factor
         cdef float smoothing_factor
         cdef float ratio
@@ -1585,8 +1644,11 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         cdef int target_atom_id
         cdef int distant_atom_id
         
-
-        start_time =  time()
+        cdef double start_time =0.0
+        cdef double end_time =0.0
+        if self._verbose:
+            start_time = time()
+            
         for index in range(len(components)):
             component = components[index]
             target_atom_id = component[self._distance_atom_index_1]
@@ -1608,7 +1670,9 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
                     ratio = distance / self._cutoff
                     smoothing_factor = 1.0 - ratio ** 8
                 results[component_to_target[index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
-        end_time = time()
-        print 'distance components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
+        
+        if self._verbose:
+            end_time = time()
+            print '   distance shift components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
 
 

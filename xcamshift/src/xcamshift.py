@@ -35,7 +35,7 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_ring_force_calculator,                                     \
                                      Fast_force_factor_calculator,                                   \
                                      Fast_non_bonded_shift_calculator
-import time
+from time import time
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -591,10 +591,14 @@ class Base_potential(object):
         self._fast =  (on == True)
     
     def _filter_components(self, target_atom_ids):
+        if self._verbose:
+                print '   filtering components %s' % self.get_abbreviated_name(),
+            
         if self._freeze:
             result = self._filtered_components
+            if self._verbose:
+                print '    nothing to filter using cache...'
         else:
-            
             components = self._get_all_components()
             result = Component_list()
             
@@ -607,6 +611,8 @@ class Base_potential(object):
                         result.add_component(component)
     #        print 'components',components[:]
             self._filtered_components = result
+            if self._verbose:
+                print ' %i reduced to %i' % (len(components),len(self._filtered_components))
         return result    
     
     def _calc_component_shift(self, index):
@@ -788,7 +794,7 @@ class Base_shift_calculator(object):
     
     def set_verbose(self,on):
         self._verbose = on
-        
+        self._shift_calculator.set_verbose()
 class Distance_shift_calculator(Base_shift_calculator):
     DEFAULT_CUTOFF = 5.0
     DEFAULT_SMOOTHING_FACTOR = 1.0
@@ -985,14 +991,15 @@ class Distance_based_potential(Base_potential):
     #TODO: move to base potential
     def _get_shift_calculator(self):
 #        if self._fast:
-        result  = self._shift_calculator = Fast_distance_shift_calculator(self._get_indices(), self._smoothed, name=self.get_abbreviated_name())
-#        else:
+        result  = Fast_distance_shift_calculator(self._get_indices(), self._smoothed, name=self.get_abbreviated_name())
+        result.set_verbose(self._verbose)
+#       else:
 #        result = self._shift_calculator = Distance_shift_calculator(self._get_indices(), self._smoothed)
         return result
     
     def _get_force_calculator(self):
 #        if self._fast:
-        result = Fast_distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
+        result = Fast_distance_based_potential_force_calculator(self._get_indices(), self._smoothed, name=self.get_abbreviated_name())
 #        else:
 #        result = Distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
         result.set_verbose(self._verbose)
@@ -1443,6 +1450,7 @@ class Dihedral_potential(Base_potential):
     def _get_shift_calculator(self):
 #        if self._fast:
         result = Fast_dihedral_shift_calculator(name=self.get_abbreviated_name())
+        result.set_verbose(self._verbose)
 #        else:
 #            result = Dihedral_shift_calculator()
         return result
@@ -1555,7 +1563,7 @@ class Dihedral_potential(Base_potential):
     
     def _get_force_calculator(self):
 #        if self._fast:
-        result = Fast_dihedral_force_calculator()
+        result = Fast_dihedral_force_calculator(name=self.get_abbreviated_name())
 #        else:
 #        result  = Dihedral_force_calculator()
         result.set_verbose(self._verbose)
@@ -2255,7 +2263,7 @@ class Ring_Potential(Base_potential):
         
     def _get_ring_force_calculator(self):
 #        if self._fast:
-        result = Fast_ring_force_calculator()
+        result = Fast_ring_force_calculator(name=self.get_abbreviated_name())
 #        else:
 #            result =  Ring_force_calculator()
         result.set_verbose(self._verbose)
@@ -2300,6 +2308,7 @@ class Ring_Potential(Base_potential):
     def _get_shift_calculator(self):
 #        if self._fast:
         result = Fast_ring_shift_calculator(name=self.get_abbreviated_name())
+        result.set_verbose(self._verbose)
 #        else:
 #            result = Ring_shift_calculator()
         return result
@@ -2875,11 +2884,13 @@ class Non_bonded_potential(Distance_based_potential):
         self._non_bonded_list = Non_bonded_list()
     
     def _get_shift_calculator(self):
-        return Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name()) 
+        result  =Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name()) 
+        result.set_verbose(self._verbose)
+        return result
     
     def _get_force_calculator(self):
 #        if self._fast:
-        result = Fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
+        result = Fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed, name=self.get_abbreviated_name())
 #        else:
 #        result = Non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
         result.set_verbose(self._verbose)
@@ -3376,6 +3387,8 @@ class Xcamshift(PyPot):
     def set_verbose(self,on=True):
         for potential in self.potential:
             potential.set_verbose(on)
+        self._force_factor_calculator.set_verbose(on)
+        self._energy_calculator.set_verbose(on)
         self._verbose=on
         
     def _update_calculator(self, calculator):
@@ -3487,6 +3500,9 @@ class Xcamshift(PyPot):
         return result
     
     def _calc_shift_cache(self,target_atom_ids):
+        if self._verbose:
+            start_time =  time()
+            
         self._shift_cache = {}
         result_shifts = [0.0]*len(target_atom_ids)
         self.calc_shifts(target_atom_ids, result_shifts)
@@ -3494,11 +3510,16 @@ class Xcamshift(PyPot):
         for target_atom_id, result in zip(target_atom_ids,result_shifts):
             self._shift_cache[target_atom_id] =  result
         
+        if self._verbose:
+            end_time = time()
+            
+            print "shifts completed in ", "%.17g " %  (end_time-start_time),"seconds"
 
         
     def calc_shifts(self, target_atom_ids, result):
         
         if self._verbose:
+            start_time =  time()
             print 'start calc shifts'
         self._prepare_potentials(target_atom_ids)
         for potential in self.potential:
@@ -3508,7 +3529,8 @@ class Xcamshift(PyPot):
             
             
         if self._verbose:
-            print 'end calc shifts\n'
+            end_time =  time()
+            print 'end calc shifts (calculated shifts in  %.17g seconds) \n' % (end_time-start_time)
                            
     #TODO: deprecated remove use calc_shifts
     def set_shifts(self, result):
@@ -3742,8 +3764,9 @@ class Xcamshift(PyPot):
 
         
     def calcEnergy(self, prepare =  True, active_target_atom_ids = None):
-        start_time = time.time()
-        print "calculate energy"
+        if self._verbose:
+            start_time = time()
+
         if active_target_atom_ids == None:
             active_target_atom_ids = self._get_active_target_atom_ids()
             
@@ -3753,9 +3776,12 @@ class Xcamshift(PyPot):
             
 
         self.update_energy_calculator()
-        end_time =  time.time()
-        print 'completed in', end_time-start_time, "seconds"
-        return self._energy_calculator(active_target_atom_ids)
+        
+        if self._verbose:
+            end_time =  time()
+            print 'energy calculation completed in %.17g seconds ' % (end_time-start_time), "seconds"
+            
+        return self._weight * self._energy_calculator(active_target_atom_ids)
     
     
 
@@ -3765,20 +3791,28 @@ class Xcamshift(PyPot):
         self._calc_force_set(active_target_atom_ids, derivs, potentials)
 
     def calcEnergyAndDerivs(self,derivs):
-        print "energy and derivatives"
-        start_time = time.time()
+        if self._verbose:
+            print "start energy and derivatives"
+            start_time = time()
         
+        if self._verbose:
+            print 'start_prepare'
+            prepare_start_time =  time()
+            
         target_atom_ids = self._get_active_target_atom_ids()
         self._prepare(target_atom_ids)
         self._calc_shift_cache(target_atom_ids)
+        if self._verbose:
+            prepare_end_time = time()
+            print 'prepare completed in %.17g seconds' %(prepare_end_time-prepare_start_time)
 
         energy = self.calcEnergy( active_target_atom_ids=target_atom_ids, prepare=False)
         
         
-        self._calc_derivs(derivs, target_atom_ids)
+        if self._verbose:
+            end_time = time()
         
-        end_time = time.time()
-        print "completed in", end_time-start_time,"seconds"
+            print "energy and derivatives completed in %.17g " %  (end_time-start_time)," second\ns"
         return energy
     
     def _set_frozen(self,on=True):
