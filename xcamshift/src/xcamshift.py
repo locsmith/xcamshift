@@ -455,14 +455,18 @@ class Sidechain_context():
         sidechain_residue_number = from_atom.residueNum()
         sidechain_atom = Atom_utils._select_atom_with_translation(segment, sidechain_residue_number, sidechain_atom_selection)
         
-        self.sidechain_atom_index = sidechain_atom[0].index()
-        
-        if self.sidechain_atom_index != from_atom_index:
-        
-            self.residue_type = residue_type
-            self.sidechain_atom_name = sidechain_atom[0].atomName()
+        if len(sidechain_atom) > 0:
+            self.sidechain_atom_index = sidechain_atom[0].index()
+            if self.sidechain_atom_index != from_atom_index:
             
-            self.complete = True
+                self.residue_type = residue_type
+                self.sidechain_atom_name = sidechain_atom[0].atomName()
+                
+                self.complete = True
+        else:
+            message = "NOTICE: couldn't find the atom %s:%i@%s"
+            data = segment, sidechain_residue_number, sidechain_atom_selection
+            print >> sys.stderr, message % data
 
 class Sidechain_component_factory(Atom_component_factory):
 
