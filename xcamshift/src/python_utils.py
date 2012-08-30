@@ -139,6 +139,24 @@ class Hierarchical_dict(object,DictMixin):
     def set_parent(self,parent):
         self._parent = parent
         
+    def get_parent(self):
+        return self._parent
+    
+    def get_hierarchy(self, result =  None):
+        if result == None:
+            result  = []
+            
+        
+        parent = self.get_parent()
+        if parent != None:
+            try:
+                parent.get_hierarchy(result)
+            except:
+                result.insert(0,parent)
+        result.insert(0,self)
+            
+        return result
+        
     def __setitem__(self, key, value):
         self._data[key]=value
         

@@ -109,7 +109,19 @@ class Test_python_utils(unittest2.TestCase):
         del hdict_2[3]
         self.assertEqual(hdict_2[3], -30)
         
+    def test_hier_dict_hierachy(self):
+        dict_list = self.build_test_hier_dict()
+        hdict_2, hdict_1, dict_0 =  dict_list
         
+        result = hdict_2.get_hierarchy()
+        self.assertSequenceEqual(result, dict_list)
+        
+    def test_hier_dict_get_parent(self):
+        hdict_2, hdict_1, dict_0 =  self.build_test_hier_dict()
+        
+        
+        self.assertEqual(hdict_1.get_parent(), dict_0)
+        self.assertEqual(hdict_2.get_parent(), hdict_1)
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test_python_utils.testName']
