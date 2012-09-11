@@ -10,6 +10,7 @@ from simulation import currentSimulation
 from vec3 import norm
 from cython.fast_segment_manager import Segment_Manager
 
+
 X = 0
 Y = 1
 Z = 2
@@ -20,6 +21,7 @@ AXES = X,Y,Z
 #TODO: 
 cache = {}
 atom_by_index_cache = {}
+_residue_type_cache = None
 class Atom_utils(object):
     @staticmethod
     def _calculate_distance(distance_atom_id_1, distance_atom_id_2):
@@ -36,10 +38,11 @@ class Atom_utils(object):
     @staticmethod
     def clear_cache():
         global cache
-        global seen_residue_types
-        seen_residue_types =  None
+        global _residue_type_cache
+        _residue_type_cache =  None
         cache = {}
         atom_by_index_cache = {}
+
         
     @staticmethod  
     def find_all_atoms():
@@ -78,8 +81,17 @@ class Atom_utils(object):
 
     @staticmethod
     def _get_residue_type(segment, residue_number):
-        residue_atoms = Atom_utils._select_atom_with_translation(segment, residue_number)
-        return residue_atoms[0].residueName()
+        _residue_type_cache = _get_residue_type_cache()
+        
+        
+        if residue_number in _residue_type_cache:
+            result = _residue_type_cache[residue_number]
+        else:
+            residue_atoms = Atom_utils._select_atom_with_translation(segment, residue_number)
+            result = residue_atoms[0].residueName()
+            _residue_type_cache[residue_number] = result
+            
+        return result
     
     @staticmethod
     def _get_residue_type_from_atom_id(atom_index):
@@ -152,19 +164,26 @@ def iter_atom_ids(predicate=return_true):
         
 
 
-seen_residue_types = None
-def iter_residue_types(predicate=return_true):
-    global seen_residue_types
-    if seen_residue_types ==  None:
-        seen_residue_types = set()
+
+
+def _get_residue_type_cache():
+    global _residue_type_cache
+    
+    if _residue_type_cache == None:
+        _residue_type_cache = {}
         for atom_id in iter_atom_ids():
             residue_type = Atom_utils._get_residue_type_from_atom_id(atom_id)
-            not_seen = not residue_type in seen_residue_types
-            if not_seen and predicate(residue_type):
-                seen_residue_types.add(residue_type)
-                yield residue_type
-    else:
-        for residue_type in seen_residue_types:
+            residue_number = Atom_utils._get_atom_info_from_index(atom_id)[1]
+            _residue_type_cache[residue_number] = residue_type
+    return _residue_type_cache
+
+
+def iter_residue_types(predicate=return_true):
+    _residue_type_cache = _get_residue_type_cache()
+    residue_types = list(set(_residue_type_cache.values()))
+    residue_types.sort()
+    for residue_type in residue_types:
+        if predicate(residue_type):
             yield residue_type
             
 
