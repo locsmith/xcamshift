@@ -2950,6 +2950,7 @@ class Non_bonded_potential(Distance_based_potential):
         return non_bonded_list
      
     def get_target_atom_ids(self):
+        #TODO: this  call is required check why....
         self.update_non_bonded_list()
         return super(Non_bonded_potential, self).get_target_atom_ids()
 
