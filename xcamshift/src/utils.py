@@ -9,6 +9,7 @@ from atomSel import AtomSel
 from simulation import currentSimulation
 from vec3 import norm
 from cython.fast_segment_manager import Segment_Manager
+from table_manager import Table_manager
 
 
 X = 0
@@ -42,7 +43,7 @@ class Atom_utils(object):
         _residue_type_cache =  None
         cache = {}
         atom_by_index_cache = {}
-
+        Table_manager.get_default_table_manager().reset_default_table_manager()
         
     @staticmethod  
     def find_all_atoms():
