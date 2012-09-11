@@ -20,7 +20,6 @@ AXES = X,Y,Z
 #TODO: 
 cache = {}
 atom_by_index_cache = {}
-residue_type_cache = {}
 class Atom_utils(object):
     @staticmethod
     def _calculate_distance(distance_atom_id_1, distance_atom_id_2):
@@ -38,11 +37,9 @@ class Atom_utils(object):
     def clear_cache():
         global cache
         global seen_residue_types
-        global residue_type_cache
         seen_residue_types =  None
         cache = {}
         atom_by_index_cache = {}
-        residue_type_cache = {}
         
     @staticmethod  
     def find_all_atoms():
@@ -81,16 +78,8 @@ class Atom_utils(object):
 
     @staticmethod
     def _get_residue_type(segment, residue_number):
-        global residue_type_cache
-        
-        if residue_number in residue_type_cache:
-            result = residue_type_cache[residue_number]
-        else:
-            residue_atoms = Atom_utils._select_atom_with_translation(segment, residue_number)
-            result = residue_atoms[0].residueName()
-            residue_type_cache[residue_number] = result
-            
-        return result
+        residue_atoms = Atom_utils._select_atom_with_translation(segment, residue_number)
+        return residue_atoms[0].residueName()
     
     @staticmethod
     def _get_residue_type_from_atom_id(atom_index):
@@ -173,9 +162,10 @@ def iter_residue_types(predicate=return_true):
             not_seen = not residue_type in seen_residue_types
             if not_seen and predicate(residue_type):
                 seen_residue_types.add(residue_type)
-                
-    for residue_type in seen_residue_types:
-        yield residue_type
+                yield residue_type
+    else:
+        for residue_type in seen_residue_types:
+            yield residue_type
             
 
 def iter_residue_atoms(residue_predicate = return_true):
