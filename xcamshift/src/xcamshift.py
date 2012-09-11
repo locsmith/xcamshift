@@ -3002,6 +3002,10 @@ class Non_bonded_potential(Distance_based_potential):
         def iter_keys(self,table):
             pass
         
+        @abstractmethod
+        def get_name(self):
+            pass
+        
         def _get_tables_by_index(self, table_manager):
             table_index_map = {}
             
@@ -3064,7 +3068,8 @@ class Non_bonded_potential(Distance_based_potential):
         def __str__(self):
             result  = []
             
-            result.append('non bonded chem_type index (%i entries)' % (self.get_max_index() +1))
+            name = self.get_name()
+            result.append('%s index (%i entries)' % (name,self.get_max_index()))
             result.append('')
             keys = self._inverted_index.keys()
             keys.sort()
@@ -3082,6 +3087,9 @@ class Non_bonded_potential(Distance_based_potential):
         def iter_keys(self,table):
             for sphere in table.get_spheres():
                 yield sphere           
+                
+        def get_name(self):
+            return 'sphere'
         
         
     class Chem_type_indexer(Base_indexer):
@@ -3089,7 +3097,8 @@ class Non_bonded_potential(Distance_based_potential):
         def __init__(self,table_manager):
             super(Non_bonded_potential.Chem_type_indexer, self).__init__(table_manager)
             
-            
+        def get_name(self):
+            return 'chem type'
           
         def iter_keys(self, table):
             i = 0
