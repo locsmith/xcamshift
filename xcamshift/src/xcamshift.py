@@ -3825,7 +3825,7 @@ class Xcamshift(PyPot):
             end_time =  time()
             print 'energy calculation completed in %.17g seconds ' % (end_time-start_time), "seconds"
             
-        return self._weight * self._energy_calculator(active_target_atom_ids)
+        return self._energy_calculator(active_target_atom_ids)
     
     
 
@@ -3834,7 +3834,7 @@ class Xcamshift(PyPot):
         out_array = self._get_out_array()
         self.update_force_factor_calculator()
         self._calc_force_set(active_target_atom_ids, out_array, potentials)
-        out_array.add_forces_to_result(derivs,self._weight)
+        out_array.add_forces_to_result(derivs)
 
     def calcEnergyAndDerivs(self,derivs):
         if self._verbose:
