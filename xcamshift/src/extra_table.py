@@ -31,6 +31,13 @@ class Extra_table(Table_base):
     def get_target_atoms(self):
         return self._table[self.TARGET_ATOMS]
     
+    def get_offsets_and_target_atoms(self):
+        result  = []
+        for target_atom_offset_1 in self._table[self.DATA].keys():
+            for target_atom_offset_2 in self._table[self.DATA] [target_atom_offset_1]:
+                result.append((target_atom_offset_1, target_atom_offset_2))
+        return result
+    
     def get_exponent(self):
         return self._table[self.EXPONENT]
 

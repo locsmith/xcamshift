@@ -406,15 +406,12 @@ class Extra_component_factory(Atom_component_factory):
     
     def _build_contexts(self, atom, table):
         contexts = []
-        for offset_1 in table.get_offsets(table.ATOM_1):
-            for offset_2 in table.get_offsets(table.ATOM_2):
-                for distance_atom_1 in table.get_distance_atoms(table.ATOM_1):
-                    for distance_atom_2 in table.get_distance_atoms(table.ATOM_2):
-                        key_1 = Atom_key(offset_1,distance_atom_1)
-                        key_2 = Atom_key(offset_2,distance_atom_2)
-                        context = ExtraContext(atom,key_1,key_2,table)
-                        if context.complete:
-                            contexts.append(context)
+        for (distance_atom_1,offset_1), (distance_atom_2,offset_2)in table.get_offsets_and_target_atoms():
+            key_1 = Atom_key(offset_1,distance_atom_1)
+            key_2 = Atom_key(offset_2,distance_atom_2)
+            context = ExtraContext(atom,key_1,key_2,table)
+            if context.complete:
+                contexts.append(context)
         return contexts
     
     def  _get_component_for_atom(self, atom, context):
