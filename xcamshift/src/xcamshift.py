@@ -3528,8 +3528,7 @@ class Xcamshift(PyPot):
     def _get_all_component_target_atom_ids(self):
         result  = set()
         for potential in self.potential:
-            for target_atom_id in potential.get_target_atom_ids():
-                result.add(target_atom_id)
+            result.update(potential.get_target_atom_ids())
         result = list(result)
         result.sort()
         return result
