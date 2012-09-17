@@ -9,6 +9,7 @@ TRANSLATIONS = 'translations'
 TABLE_TYPE = 'table_type'
 RESIDUE_TYPE = 'residue_type'
 TABLE_INDEX = 'index'
+TABLE_LOADED =  'table_loaded'
 
 class Table_base(object):
     __metaclass__ = ABCMeta
