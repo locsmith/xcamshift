@@ -20,6 +20,7 @@ from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 import utils
 from table_base import RESIDUE_TYPE, TABLE_TYPE, TABLE_INDEX, TABLE_LOADED
 
+ROOT_TABLE = 'base'
 
 #TODO: cleanup internal structure, caching needs a better implementation
 #TODO: remove specific functions to load tables?
@@ -49,7 +50,7 @@ class Table_manager(object):
     and then a table name
     '''
 
-    BASE_TABLE =  'base'
+    BASE_TABLE =  ROOT_TABLE
     TEMPLATE_3 = '%s_%s_%s_%s.yaml'
     TYPE = 'cams'
     VERSION = '1_35_0'
@@ -72,7 +73,7 @@ class Table_manager(object):
         
         self.search_paths = paths + ['.',self.DEFAULT_DIRECTORY]
         self.tables ={}
-        self.searched_for_tables = set()
+        self._known_table_types = set()
         self._table_index = {}
         
         add_access_to_yaml_list_based_keys()
@@ -146,13 +147,6 @@ class Table_manager(object):
         raise IOError("ERROR: couldn't load %s because %s" % (table_name, detail))
 
 
-    def __get_residue_types(self, residue_type):
-        if residue_type != None:
-            residue_types = residue_type, self.BASE_TABLE
-        else:
-            residue_types = (self.BASE_TABLE,)
-        return residue_types
-
     #TODO: this could come from the file itself...
     def _find_parent_table(self, table_type, residue_type):
         result = None 
@@ -164,7 +158,14 @@ class Table_manager(object):
     
 
     def _register_new_table(self, new_table, key):
-        self.tables[key] = new_table
+        table_type =  key[0]
+        if new_table != None:
+            self.tables[key] = new_table
+        else:
+            self.tables[key]= self.tables[table_type,ROOT_TABLE]
+            
+        self._known_table_types.add(table_type)
+
 
 
     def _ornament_table(self, new_table, table_type, residue_type):
@@ -179,48 +180,44 @@ class Table_manager(object):
             new_table.update(ornaments)
             self._table_index[table_type]+=1
     
-    
-    def __load_table(self, table_type, residue_type=None):
+    #TODO: make this take a key instead
+    def __load_table(self, table_type, residue_type=ROOT_TABLE):
         
-        residue_types = self.__get_residue_types(residue_type)
+#        residue_types = self.__get_residue_types(residue_type)
         
         new_table = None
-        for residue_type in residue_types:
-            table_search_key = table_type,residue_type
+#        for residue_type in residue_types:
+        table_search_key = table_type,residue_type
 #            print 'search for ', table_search_key
-            if table_search_key in self.searched_for_tables:
-                continue
 #            print residue_type
-            table_name = self.__get_table_name(table_type,residue_type)
-            
-            for search_path in self.search_paths:
-                path = os.path.join(search_path, table_name)
-                
-                if os.path.exists(path):
-                    key = (table_type,residue_type)
-                    
-                    try:
-                        table_fp = open(path)
-                        new_table = load(table_fp)
-                        if new_table != None:
-                            break
-                    except Exception as detail:
-                        self.__raise_table_load_error(table_name, detail)
-            self.searched_for_tables.add(table_search_key)
-            
-            if new_table != None:
-                break
+        table_name = self.__get_table_name(table_type,residue_type)
         
+        for search_path in self.search_paths:
+            path = os.path.join(search_path, table_name)
+            
+            if os.path.exists(path):
+                key = (table_type,residue_type)
+                
+                try:
+                    table_fp = open(path)
+                    new_table = load(table_fp)
+                    if new_table != None:
+                        break
+                except Exception as detail:
+                    self.__raise_table_load_error(table_name, detail)
+#                    
+#        if new_table != None:
+#            break
+
 
         if new_table != None:
             parent  = self._find_parent_table(table_type,residue_type)
+            self._ornament_table(new_table,table_type,residue_type)
             new_table = Hierarchical_dict(new_table, parent=parent)
                 
-            self._register_new_table(new_table, key)
-            self._ornament_table(new_table,table_type,residue_type)
             
 #        print self.tables.keys()
-        
+        return new_table       
     
 
     def __get_seach_keys(self,table_type, residue_type):
@@ -259,33 +256,52 @@ class Table_manager(object):
     def _force_residue_type_lowercase(self, residue_type):
         if residue_type != None:
             residue_type = residue_type.lower()
+        else:
+            residue_type =  ROOT_TABLE.lower()
         return residue_type
 
     def iter_residue_types(self):
-        yield('base')
+        yield(ROOT_TABLE)
         
         for residue_type in utils.iter_residue_types():
             yield residue_type
             
-    def load_tables_for_know_residues(self, table_type):
+    def load_tables_for_known_residues(self, table_type):
         # add sequence lookup delegate to allow testing (currently we need a real molecule)
         for residue_type in self.iter_residue_types():
+            
             residue_type = self._force_residue_type_lowercase(residue_type)
-            if not (table_type,residue_type) in self.searched_for_tables:
-                self.__load_table(table_type, residue_type)
+            key =  table_type,residue_type
+            new_table  = self.__load_table(table_type, residue_type)
+            
+            self._register_new_table(new_table, key)
+            
+            
+        self._known_table_types.add(table_type)
 
 
     #TODO: this is a really inefficient method it will do lots of disk accesses, why not load all residue type tables on first call
     def _get_table(self,table_type,residue_type=None):
-        
         residue_type = self._force_residue_type_lowercase(residue_type)
-
-        result = self._seach_for_loaded_table(table_type,residue_type)
         
-        if result == None:
-            self.load_tables_for_know_residues(table_type)
+        if table_type not in self._known_table_types:
+            self.load_tables_for_known_residues(table_type)
             
-        result = self.__search_for_table(table_type,residue_type)
+
+        
+        key= table_type,residue_type
+        if key in self.tables:
+            result = self.tables[key]
+        else:
+            result = self._seach_for_loaded_table(table_type,residue_type)
+            if result == None:
+                self.__raise_table_load_error(table_type, "couldn't find table for residue type %s" % residue_type)
+            self.tables[key]=result
+        
+#        self.tables.keys()
+            
+
+        
         return result
             
     def get_BB_Distance_Table(self,residue_type):
