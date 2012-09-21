@@ -20,7 +20,7 @@ from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 import utils
 from table_base import RESIDUE_TYPE, TABLE_TYPE, TABLE_INDEX, TABLE_LOADED
 
-ROOT_TABLE = 'base'
+BASE_TABLE = 'base'
 
 #TODO: cleanup internal structure, caching needs a better implementation
 #TODO: remove specific functions to load tables?
@@ -50,7 +50,6 @@ class Table_manager(object):
     and then a table name
     '''
 
-    BASE_TABLE =  ROOT_TABLE
     TEMPLATE_3 = '%s_%s_%s_%s.yaml'
     TYPE = 'cams'
     VERSION = '1_35_0'
@@ -150,7 +149,7 @@ class Table_manager(object):
     #TODO: this could come from the file itself...
     def _find_parent_table(self, table_type, residue_type):
         result = None 
-        if residue_type != self.BASE_TABLE:
+        if residue_type != BASE_TABLE:
             result = self._get_table(table_type,None)
         return result
 #    
@@ -162,7 +161,7 @@ class Table_manager(object):
         if new_table != None:
             self.tables[key] = new_table
         else:
-            self.tables[key]= self.tables[table_type,ROOT_TABLE]
+            self.tables[key]= self.tables[table_type,BASE_TABLE]
             
         self._known_table_types.add(table_type)
 
@@ -181,7 +180,7 @@ class Table_manager(object):
             self._table_index[table_type]+=1
     
     #TODO: make this take a key instead
-    def __load_table(self, table_type, residue_type=ROOT_TABLE):
+    def __load_table(self, table_type, residue_type=BASE_TABLE):
         
 #        residue_types = self.__get_residue_types(residue_type)
         
@@ -257,11 +256,11 @@ class Table_manager(object):
         if residue_type != None:
             residue_type = residue_type.lower()
         else:
-            residue_type =  ROOT_TABLE.lower()
+            residue_type =  BASE_TABLE.lower()
         return residue_type
 
     def iter_residue_types(self):
-        yield(ROOT_TABLE)
+        yield(BASE_TABLE)
         
         for residue_type in utils.iter_residue_types():
             yield residue_type
