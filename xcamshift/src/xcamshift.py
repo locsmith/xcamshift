@@ -2947,6 +2947,7 @@ class Non_bonded_potential(Distance_based_potential):
         return non_bonded_list
     
     def _prepare(self, target_atom_ids):
+        super(Non_bonded_potential, self)._prepare(target_atom_ids)
         self.update_non_bonded_list()
         
     def get_target_atom_ids(self):
