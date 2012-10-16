@@ -2679,7 +2679,7 @@ class Non_bonded_list(object):
             if self._verbose:
                 print '  update boxes call count = ', self._box_update_count
             target_component_list.clear()
-            self._box_update_count = -1
+            self._box_update_count = 0
             self._non_bonded_calculation_count += 1
             self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list)
             
@@ -2945,15 +2945,19 @@ class Non_bonded_potential(Distance_based_potential):
         self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
         
         return non_bonded_list
-     
+    
+    def _prepare(self, target_atom_ids):
+        self.update_non_bonded_list()
+        
     def get_target_atom_ids(self):
         #TODO: this  call is required check why....
-        self.update_non_bonded_list()
+        self.update_non_bonded_list(increment=False)
         return super(Non_bonded_potential, self).get_target_atom_ids()
 
-    def update_non_bonded_list(self):
+    def update_non_bonded_list(self, increment=True):
         self._get_non_bonded_list()
-        self._non_bonded_list.update()
+        if increment:
+            self._non_bonded_list.update()
         
 #    TODO add a with prepare construct
     def _calc_single_atom_shift(self, target_atom_id):
