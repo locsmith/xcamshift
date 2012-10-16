@@ -765,7 +765,7 @@ class Base_potential(object):
                     print "*****WARNING unexpected build of component to result"
                     self._build_component_to_result(target_atom_ids)
             if self._component_to_result == None:
-                raise "component to target must be set"
+                raise Exception("component to target must be set")
             elif len(self._component_to_result) != len(self._filtered_components):
                 if self._verbose:
                     start_time = time()
