@@ -3121,7 +3121,7 @@ class Non_bonded_potential(Distance_based_potential):
         
         indexer  = Backbone_atom_indexer()
         table_manager = self._table_manager
-        residue_types = table_manager.get_all_known_residue_types()   
+        residue_types = table_manager.get_all_known_table_residue_types()   
         
         offset_names = {}
         
