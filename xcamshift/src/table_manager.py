@@ -116,7 +116,6 @@ class Table_manager(object):
             self._get_table(table_type, residue_type)
             
     
-    
     def get_residue_types_for_table(self,table_type):
         self._load_tables(table_type)
         residues = set([key[1] for key in self.tables.keys() if key[0] == table_type])
@@ -125,6 +124,8 @@ class Table_manager(object):
         return residues
     
     #TODO: note this only works for loaded potentials
+    #TODO: note the above statement is wrong and maybe should be corrected?
+    #TODO: in actual fact it could just be replaced by a call to the segment manager!
     def get_all_known_residue_types(self):
         
         result = set()
@@ -134,6 +135,13 @@ class Table_manager(object):
         
         
         return self._make_presorted_tuple(result)
+    
+    def get_all_known_table_residue_types(self):
+        
+        result  =  set(self.tables[key][RESIDUE_TYPE] for key in self.tables)
+        
+        return self._make_presorted_tuple(result)
+    
     
     def __get_table_name(self, table_type, residue_type):
         return self.TEMPLATE_3 % (self.TYPE,self.VERSION,table_type,residue_type)
