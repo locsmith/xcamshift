@@ -45,8 +45,11 @@ translations : {[GLY,HA1] : HA}
 # sp3 side chain chemical types: NC2 NH2 S NH3 CP NA OH 
 #
 
+# Note ~ converts to None which we use for any
 chem_type_conversions: {
-   [TRP,NE1] :  N 
+   [TRP,NE1]  :   N,
+   [~  ,OT1] :  OH,
+   [~  ,OT2] :  OH 
 }
 
 chem_type_translations: {

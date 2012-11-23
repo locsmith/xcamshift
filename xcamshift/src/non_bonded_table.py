@@ -92,9 +92,12 @@ class Non_bonded_table(Table_base):
     
     def get_chem_type_conversion(self, residue_type, atom_name, chem_type):
         
-        chem_type_key =  residue_type,atom_name
-        if chem_type_key in self._table[self.CHEM_TYPE_CONVERSIONS]:
-            chem_type = self._table[self.CHEM_TYPE_CONVERSIONS][chem_type_key]
+        old_chem_type = chem_type
+        chem_type_keys =  ((residue_type,atom_name),(None,atom_name))
+        for chem_type_key in chem_type_keys:
+            if chem_type_key in self._table[self.CHEM_TYPE_CONVERSIONS]:
+                chem_type = self._table[self.CHEM_TYPE_CONVERSIONS][chem_type_key]
+
         return chem_type
     
     def get_non_bonded_coefficient(self,target_atom,sphere,remote_atom_type,hybridisation):
