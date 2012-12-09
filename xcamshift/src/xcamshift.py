@@ -3225,6 +3225,33 @@ class Non_bonded_potential(Distance_based_potential):
                 line = line.replace('+',' ')
                 line = line.replace('nan','   ')
                 result.append(line)
+                
+        if self._verbose:
+            result.append(self._non_bonded_list.__str__())
+            _
+            result.append('')
+            
+            non_bonded_list = self._get_component_list('NBLT')
+            result.append('distances (%i)' %  (len(non_bonded_list)/2))
+            result.append('')
+            
+            seen_distances  = set()
+            for i,elem in enumerate(non_bonded_list):
+                
+                target_atom_id = elem[0]
+                remote_atom_id = elem[1]
+                
+                distance_key =  target_atom_id,remote_atom_id
+                if distance_key not in seen_distances:
+                    distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
+                    active = ' ' 
+                    #TODO add a getter for private variable
+                    if distance < self._non_bonded_list.get_cutoff_distance():
+                        active = 'A'
+                    data = i, Atom_utils._get_atom_info_from_index(target_atom_id), Atom_utils._get_atom_info_from_index(remote_atom_id),distance, active
+                    result.append('%6i %-17s - %-17s %- 7.3f  %s' % data)
+                    seen_distances.add(distance_key)
+            
         return '\n'.join(result)
 
 
