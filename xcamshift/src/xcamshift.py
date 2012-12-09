@@ -2748,6 +2748,21 @@ class Non_bonded_list(object):
 
         if self._verbose:
             print '  build boxes [slow]'
+            
+    def __str__(self):
+        result  = []
+        
+        result.append('non_bonded_list (%i elements)' % len(self._non_bonded))
+        result.append('')
+        result.append('cutoff: %4.2f jitter: %4.2f')
+        result.append('')
+        result.append('update frequency: %i ' % self._update_frequency)
+        result.append('current update: %i ' % self._box_update_count)
+        result.append('calculation count: %7.4f call count: %7.4f' % (self._non_bonded_calculation_count, self._non_bonded_call_count))
+            
+        return '\n'.join(result)
+        
+        
 class Null_component_factory(object):
    
     def __init__(self,name):
