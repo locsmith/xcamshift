@@ -625,7 +625,6 @@ class Base_potential(object):
     def _build_component_to_result(self, target_atom_ids):
         if not self._freeze:
             components = self._filter_components(target_atom_ids)
-            target_atom_ids =  target_atom_ids
             self._component_to_result =  [0] *len(components)
             for i, component in enumerate(components):
                 out_atom_id = component[0]
