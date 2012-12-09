@@ -694,7 +694,7 @@ class TestXcamshift(unittest2.TestCase):
         for i, elem in enumerate(remote_chem_type_ids_first_half):
             self.assertEqual(elem, remote_component_chem_type_ids[i+num_chem_types]-8)
             
-        self.assertEqual(remote_chem_type_ids_first_half, [0,1,2,4,5])
+        self.assertEqual(remote_chem_type_ids_first_half, [0,1,2,4,5,6])
             
         
         non_bonded_1, non_bonded_2 = self._split_tuple_pair_to_column_sets(ala_3.ala3_putative_non_bonded_pairs)
