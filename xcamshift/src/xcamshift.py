@@ -23,7 +23,8 @@ from utils import Atom_utils, AXES, iter_residue_atoms,\
 from vec3 import Vec3, norm, cross, dot
 import abc
 import sys
-from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED
+from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED,\
+    TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
 import itertools
 from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
@@ -631,8 +632,9 @@ class Base_potential(object):
                 out_index  =  target_atom_ids.index(out_atom_id)
                 self._component_to_result[i] = out_index
 
-    def _prepare(self,target_atom_ids):
-        self._build_component_to_result(target_atom_ids)
+    def _prepare(self,change, data):
+        if change == TARGET_ATOM_IDS_CHANGED:
+            self._build_component_to_result(data)
 
     
     def get_component_table_names(self):
@@ -2289,10 +2291,13 @@ class Ring_Potential(Base_potential):
         result.set_verbose(self._verbose)
         return result
             
-    def _prepare(self, target_atom_ids): 
-        super(Ring_Potential, self)._prepare(target_atom_ids)
-        self._build_ring_data_cache()
-        self._setup_ring_calculator(self._shift_calculator)
+    def _prepare(self, change, target_atom_ids): 
+        if change == TARGET_ATOM_IDS_CHANGED:
+            super(Ring_Potential, self)._prepare(change, target_atom_ids)
+            
+        if change == ROUND_CHANGED:
+            self._build_ring_data_cache()
+            self._setup_ring_calculator(self._shift_calculator)
          
     def set_fast(self, on):
         self._fast = (on == True)
@@ -2960,9 +2965,12 @@ class Non_bonded_potential(Distance_based_potential):
         
         return non_bonded_list
     
-    def _prepare(self, target_atom_ids):
-        super(Non_bonded_potential, self)._prepare(target_atom_ids)
-        self.update_non_bonded_list()
+    def _prepare(self, change, target_atom_ids):
+        if TARGET_ATOM_IDS_CHANGED:
+            super(Non_bonded_potential, self)._prepare(change, target_atom_ids)
+            
+        if ROUND_CHANGED:
+            self.update_non_bonded_list()
         
     def get_target_atom_ids(self):
         #TODO: this  call is required check why....
@@ -3598,7 +3606,10 @@ class Xcamshift(PyPot):
         if self._verbose:
             start_time =  time()
             print 'start calc shifts'
-        self._prepare_potentials(target_atom_ids)
+            
+        self._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
+        self._prepare(ROUND_CHANGED,None)
+        
         for potential in self.potential:
 
             potential.calc_shifts(target_atom_ids, result)
@@ -3609,9 +3620,10 @@ class Xcamshift(PyPot):
             end_time =  time()
             print 'end calc shifts (calculated shifts in  %.17g seconds) \n' % (end_time-start_time)
                            
-    #TODO: deprecated remove use calc_shifts
     def set_shifts(self, result):
+        print 'deprecated remove use calc_shifts'
         target_atom_ids =  self._get_all_component_target_atom_ids()
+        self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
         result_shifts  = [0.0] * len(target_atom_ids)
         self.calc_shifts(target_atom_ids, result_shifts)
         for target_atom_id, shift in zip(target_atom_ids,result_shifts):
@@ -3628,7 +3640,7 @@ class Xcamshift(PyPot):
 
     def _calc_single_atom_shift(self,target_atom_id):
         result  = [0.0]
-        self._prepare([target_atom_id,])
+        self._prepare(TARGET_ATOM_IDS_CHANGED,[ target_atom_id,])
         self.calc_shifts([target_atom_id], result)
         self._shift_cache = {}
         self._shift_cache[target_atom_id] = result[0]
@@ -3702,7 +3714,7 @@ class Xcamshift(PyPot):
     def _calc_single_atom_energy(self, target_atom_index):
         
         target_atom_ids = [target_atom_index]
-        self._prepare(target_atom_ids)
+        self._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
         self._calc_single_atom_shift(target_atom_index)
         self.update_energy_calculator()
         return self._energy_calculator(target_atom_ids)
@@ -3799,14 +3811,21 @@ class Xcamshift(PyPot):
         
         return potential
 
-    def _prepare_potentials(self, target_atom_ids):
+    def _prepare_potentials(self, change, data):
         self._set_sub_potetials_fast()
         
         for potential in self.potential:
-            potential._prepare(target_atom_ids)
+            potential._prepare(change, data)
 
-    def _prepare(self, target_atom_ids):
-        self._prepare_potentials(target_atom_ids)
+    def _prepare(self, change, data):
+        
+        if change == TARGET_ATOM_IDS_CHANGED:
+            if data ==  None:
+                data  = self._get_active_target_atom_ids()
+        
+            
+        self._prepare_potentials(change, data)
+         
         
     
     class Constant_cache():
@@ -3853,13 +3872,13 @@ class Xcamshift(PyPot):
         if self._verbose:
             start_time = time()
 
-        if active_target_atom_ids == None:
-            active_target_atom_ids = self._get_active_target_atom_ids()
+
             
         if prepare:
-            self._prepare(active_target_atom_ids)
-            self._calc_shift_cache(active_target_atom_ids)
-            
+            self._prepare(TARGET_ATOM_IDS_CHANGED,None)
+            self._prepare(ROUND_CHANGED,None)
+            self._calc_shift_cache(self._get_active_target_atom_ids())
+           
 
         self.update_energy_calculator()
         
@@ -3867,7 +3886,7 @@ class Xcamshift(PyPot):
             end_time =  time()
             print 'energy calculation completed in %.17g seconds ' % (end_time-start_time), "seconds"
             
-        return self._energy_calculator(active_target_atom_ids)
+        return self._energy_calculator(self._get_active_target_atom_ids())
     
     
 
@@ -3888,7 +3907,8 @@ class Xcamshift(PyPot):
             prepare_start_time =  time()
             
         target_atom_ids = self._get_active_target_atom_ids()
-        self._prepare(target_atom_ids)
+        self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
+        self._prepare(ROUND_CHANGED, None)
         self._calc_shift_cache(target_atom_ids)
         if self._verbose:
             prepare_end_time = time()
@@ -3910,7 +3930,7 @@ class Xcamshift(PyPot):
             potential.set_frozen(on)
             
     def setup(self):
-        self._prepare(self._get_active_target_atom_ids())
+        self._prepare(TARGET_ATOM_IDS_CHANGED, self._get_active_target_atom_ids())
         self._set_frozen()
     
     def reset(self):

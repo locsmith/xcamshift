@@ -21,6 +21,7 @@ from utils import Atom_utils
 import sys
 from table_manager import Table_manager
 from component_list import Component_list
+from common_constants import TARGET_ATOM_IDS_CHANGED
 fast = False
 from cython.shift_calculators import Out_array
 
@@ -55,7 +56,7 @@ class TestXcamshift(unittest2.TestCase):
      
     def _prepare_xcamshift(self, xcamshift):
 #            
-        xcamshift._prepare(xcamshift._get_active_target_atom_ids())
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, xcamshift._get_active_target_atom_ids())
         xcamshift._calc_shift_cache(xcamshift._get_active_target_atom_ids())
         xcamshift.update_force_factor_calculator()
         

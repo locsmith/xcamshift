@@ -10,7 +10,8 @@ from xcamshift import  Xcamshift
 from atomSel import AtomSel
 from test import gb3
 from observed_chemical_shifts import Observed_shift_table
-from common_constants import  SIDE_CHAIN, NON_BONDED, RING
+from common_constants import  SIDE_CHAIN, NON_BONDED, RING,\
+    TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
 from test.gb3 import gb3_component_shifts_sc, gb3_component_shifts_ring
 from utils import Atom_utils
 import common_constants
@@ -131,7 +132,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
             atom_ids  =  Atom_utils.find_atom_ids(segment, residue_number, atom)
             if len(atom_ids) > 0:
-                xcamshift._prepare([atom_ids[0]])
+                xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, [atom_ids[0]])
+                xcamshift._prepare(ROUND_CHANGED,None)
                 shift  = sub_potential._calc_single_atom_shift(atom_ids[0])
                 expected_shift = gb3.gb3_subpotential_shifts[key]
                 residue_type = Atom_utils._get_residue_type_from_atom_id(atom_ids[0])
@@ -151,7 +153,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         sub_potential = xcamshift.get_named_sub_potential(NON_BONDED)
         components = sub_potential._get_component_list('NBLT')
         target_atom_ids = [component[0] for component in components]
-        xcamshift._prepare(target_atom_ids)
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
 
         
         non_bonded_components =  dict(gb3.gb3_component_shifts_non_bonded)
@@ -247,7 +249,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
         
         xcamshift = Xcamshift()
         ring_subpotential = xcamshift.get_named_sub_potential(RING)
-        ring_subpotential._prepare(xcamshift._get_all_component_target_atom_ids())
+        ring_subpotential._prepare(TARGET_ATOM_IDS_CHANGED, xcamshift._get_all_component_target_atom_ids())
+        ring_subpotential._prepare(ROUND_CHANGED,None)
         
         expected_ring_shifts = dict(gb3_component_shifts_ring)
         expected_component_keys = expected_ring_shifts.keys()
@@ -315,7 +318,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
     
     def test_energies(self):
         xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
-        xcamshift._prepare(xcamshift._get_active_target_atom_ids())
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED,xcamshift._get_active_target_atom_ids())
         
         
         total_component_energies = 0.0
@@ -376,7 +379,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
     def test_shift_differences(self):
         xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
-        xcamshift._prepare(xcamshift._get_active_target_atom_ids())
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, xcamshift._get_active_target_atom_ids())
         
         
         for key in sorted(gb3.gb3_shift_diffs):
@@ -548,7 +551,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 out_array = self.make_out_array()
                 
                 xcamshift.reset()
-                xcamshift._prepare([target_atom_id])
+                xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, [target_atom_id])
+                xcamshift._prepare(ROUND_CHANGED,None)
                 xcamshift._calc_single_atom_force_set_with_potentials(target_atom_id, out_array, potentials_list)
                 result_forces = out_array.add_forces_to_result()
                 self.assertListVec3AlmostEqual(result_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES-3, msg='%s -  %s' % (potential_name,target_atom_key))

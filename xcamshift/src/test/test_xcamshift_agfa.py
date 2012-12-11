@@ -21,7 +21,7 @@ import sys
 from table_manager import Table_manager
 from vec3 import Vec3
 from common_constants import BACK_BONE, RANDOM_COIL, XTRA, DIHEDRAL, SIDE_CHAIN,\
-    NON_BONDED, RING
+    NON_BONDED, RING, TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
 TOTAL_ENERGY = 'total'
 
 fast = False
@@ -311,7 +311,8 @@ class TestXcamshiftAGFA(unittest2.TestCase):
     
     def _prepare_potential(self, ring_potential):
         target_atom_ids = self._get_potential_target_atom_ids(ring_potential)
-        ring_potential._prepare(target_atom_ids)
+        ring_potential._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
+        ring_potential._prepare(ROUND_CHANGED, None)
         
     def _get_potential_target_components(self, potential):
         return potential._get_component_list('ATOM')
