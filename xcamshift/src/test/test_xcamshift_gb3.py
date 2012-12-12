@@ -8,7 +8,7 @@ from pdbTool import PDBTool
 import unittest2
 from xcamshift import  Xcamshift
 from atomSel import AtomSel
-from test import gb3
+from test import gb3, gb3_10_steps
 from observed_chemical_shifts import Observed_shift_table
 from common_constants import  SIDE_CHAIN, NON_BONDED, RING,\
     TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
@@ -79,11 +79,15 @@ class TestXcamshiftGB3(unittest2.TestCase):
             if self.check_almost_equal(ZEROS_3, value):
                 del expected_forces_dict[key]         
 
-    def setUp(self):
-        initStruct("test_data/gb3/gb3.psf")
-        PDBTool("test_data/gb3/gb3_refined_II.pdb").read()
+
+    def _clear_caches(self):
         Atom_utils.clear_cache()
         Segment_Manager.reset_segment_manager()
+
+    def setUp(self):
+        initStruct("test_data/gb3/gb3.psf")
+        PDBTool("test_data/gb3_10_steps/gb3_refined_II_xplor_swapped.pdb").read()
+        self._clear_caches()
 #
 ##TODO: shoulf be private
     def make_out_array(self):
