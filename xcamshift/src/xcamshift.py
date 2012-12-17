@@ -3239,7 +3239,6 @@ class Non_bonded_potential(Distance_based_potential):
                 
         if self._verbose:
             result.append(self._non_bonded_list.__str__())
-            _
             result.append('')
             
             non_bonded_list = self._get_component_list('NBLT')
