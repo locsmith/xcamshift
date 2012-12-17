@@ -2362,12 +2362,17 @@ class Ring_Potential(Base_potential):
         return results[0]
     
     
-    def _build_ring_data_cache(self):
-        #TODO: remove double normal calculation
+
+    def _clear_ring_cache(self):
         normals = self._get_cache_list('NORM')
         normals.clear()
-        centres =  self._get_cache_list('CENT')
+        centres = self._get_cache_list('CENT')
         centres.clear()
+        return normals, centres
+
+    def _build_ring_data_cache(self):
+        #TODO: remove double normal calculation
+        normals, centres = self._clear_ring_cache()
         
         rings = self._get_component_list('RING')
         self._ring_data_calculator(rings, normals, centres)
