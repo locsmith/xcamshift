@@ -2651,6 +2651,9 @@ class Non_bonded_list(object):
         self._verbose = False 
         self._non_bonded_list_calculator = self._get_non_bonded_calculator()
         self._interaction_count = 0
+    
+    def get_cutoff_distance(self):
+        return self._cutoff_distance
 
     def _get_non_bonded_calculator(self):
 #        if self._fast:
