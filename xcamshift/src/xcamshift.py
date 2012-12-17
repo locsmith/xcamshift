@@ -24,7 +24,7 @@ from vec3 import Vec3, norm, cross, dot
 import abc
 import sys
 from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED,\
-    TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
+    TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, STRUCTURE_CHANGED
 import itertools
 from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
@@ -633,6 +633,9 @@ class Base_potential(object):
                 self._component_to_result[i] = out_index
 
     def _prepare(self,change, data):
+        if change == STRUCTURE_CHANGED:
+            self.clear_caches()
+            
         if change == TARGET_ATOM_IDS_CHANGED:
             self._build_component_to_result(data)
 
@@ -2292,10 +2295,15 @@ class Ring_Potential(Base_potential):
         return result
             
     def _prepare(self, change, target_atom_ids): 
-        if change == TARGET_ATOM_IDS_CHANGED:
-            super(Ring_Potential, self)._prepare(change, target_atom_ids)
+        super(Ring_Potential, self)._prepare(change, target_atom_ids)
+        
+        if change == STRUCTURE_CHANGED:
+            self._clear_ring_cache()
             
-        if change == ROUND_CHANGED:
+        if change  == ROUND_CHANGED:
+            if self._verbose:
+                print "update ring cache"
+                
             self._build_ring_data_cache()
             self._setup_ring_calculator(self._shift_calculator)
          
@@ -2372,9 +2380,12 @@ class Ring_Potential(Base_potential):
 
     def _build_ring_data_cache(self):
         #TODO: remove double normal calculation
-        normals, centres = self._clear_ring_cache()
+        self._clear_ring_cache()
         
+        normals = self._get_cache_list('NORM')
+        centres = self._get_cache_list('CENT')
         rings = self._get_component_list('RING')
+
         self._ring_data_calculator(rings, normals, centres)
     
 #    def _calc_single_force_set(self, index, force_factor, forces):
@@ -2977,17 +2988,22 @@ class Non_bonded_potential(Distance_based_potential):
         return non_bonded_list
     
     def _prepare(self, change, target_atom_ids):
-        if TARGET_ATOM_IDS_CHANGED:
-            super(Non_bonded_potential, self)._prepare(change, target_atom_ids)
-            
-        if ROUND_CHANGED:
+        super(Non_bonded_potential, self)._prepare(change, target_atom_ids)
+        
+        if change == STRUCTURE_CHANGED:
+            self._reset_non_bonded_list()
+        
+        if change == ROUND_CHANGED:
             self.update_non_bonded_list()
         
     def get_target_atom_ids(self):
         #TODO: this  call is required check why....
         self.update_non_bonded_list(increment=False)
         return super(Non_bonded_potential, self).get_target_atom_ids()
-
+    
+    def _reset_non_bonded_list(self, increment=True):
+        self._non_bonded_list._reset()
+            
     def update_non_bonded_list(self, increment=True):
         self._get_non_bonded_list()
         if increment:
@@ -3828,7 +3844,12 @@ class Xcamshift(PyPot):
             potential._prepare(change, data)
 
     def _prepare(self, change, data):
-        
+        if self._verbose:
+            print 'prepare %s' % change
+            
+        if change == STRUCTURE_CHANGED:
+            self.clear_shift_cache()
+            
         if change == TARGET_ATOM_IDS_CHANGED:
             if data ==  None:
                 data  = self._get_active_target_atom_ids()
@@ -3944,9 +3965,9 @@ class Xcamshift(PyPot):
         self._set_frozen()
     
     def reset(self):
-        self.get_named_sub_potential(NON_BONDED)._non_bonded_list._box_update_count = -1
-        for potential in self.potential:
-            potential.clear_caches()
+        self._prepare(STRUCTURE_CHANGED, None)
+        self._prepare(TARGET_ATOM_IDS_CHANGED, None)
+
     
 
 
