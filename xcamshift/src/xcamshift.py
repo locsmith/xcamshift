@@ -2643,20 +2643,23 @@ class Non_bonded_list(object):
         self._cutoff_distance = cutoff_distance
         self._jitter = jitter
         self._update_frequency =update_frequency
-        
-        self._box_update_count = update_frequency
-        self._non_bonded = []
-        self._non_bonded_calculation_count = 0
-        self._non_bonded_call_count = 0
-
         self._min_residue_seperation = min_residue_separation
-        self._pos_cache = {}
         
+        self._reset()
+        
+
         self._fast = False
         self._verbose = False 
         self._non_bonded_list_calculator = self._get_non_bonded_calculator()
+        
+    def _reset(self):
+        self._box_update_count = self._update_frequency
+        self._non_bonded = []
+        self._non_bonded_calculation_count = 0
+        self._non_bonded_call_count = 0
         self._interaction_count = 0
-    
+        self._pos_cache = {}
+        
     def get_cutoff_distance(self):
         return self._cutoff_distance
 
