@@ -86,7 +86,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
     def setUp(self):
         initStruct("test_data/gb3/gb3.psf")
-        PDBTool("test_data/gb3_10_steps/gb3_refined_II_xplor_swapped.pdb").read()
+        PDBTool("test_data/gb3_10_steps/gb3_refined_II.pdb").read()
         self._clear_caches()
 #
 ##TODO: shoulf be private
@@ -123,25 +123,37 @@ class TestXcamshiftGB3(unittest2.TestCase):
         delta  = 10**-places
         return self.are_almost_equal_sequences(sequence, zeros, delta)
 
+    def _get_target_atom_ids(self,component_shifts):
+        result  = []
+        component_shifts_keys = component_shifts.keys()
+        for key in component_shifts_keys:
+            segment, residue_number, atom= key[:3]
+            atom_ids = Atom_utils.find_atom_ids(segment, residue_number, atom)
+            if len(atom_ids) > 0:
+                result.extend(atom_ids)
+        return result
+        
+    def _do_test_component_shifts(self, xcamshift, component_shifts):
+        xcamshift._prepare(ROUND_CHANGED, None)
+        component_shifts_keys = component_shifts.keys()
+        component_shifts_keys.sort()
+        for i, key in enumerate(component_shifts_keys):
+            segment, residue_number, atom, sub_potential = key
+            sub_potential = xcamshift.get_named_sub_potential(sub_potential)
+            atom_ids = Atom_utils.find_atom_ids(segment, residue_number, atom)
+            if len(atom_ids) > 0:
+                
+                xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, atom_ids)
+                shift = sub_potential._calc_single_atom_shift(atom_ids[0])
+                expected_shift = component_shifts[key]
+                residue_type = Atom_utils._get_residue_type_from_atom_id(atom_ids[0])
+                self.assertAlmostEqual(shift, expected_shift, self.DEFAULT_DECIMAL_PLACES - 2, msg=`key` + " " + residue_type)
+
     def test_component_chemical_shifts(self):
         xcamshift  = Xcamshift()
         
-        bad_residues =  set()
-        component_shifts_keys = gb3.gb3_subpotential_shifts.keys()
-        component_shifts_keys.sort()
-
-        for i,key in enumerate(component_shifts_keys):
-            segment, residue_number,atom,sub_potential = key
-            sub_potential = xcamshift.get_named_sub_potential(sub_potential)
-
-            atom_ids  =  Atom_utils.find_atom_ids(segment, residue_number, atom)
-            if len(atom_ids) > 0:
-                xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, [atom_ids[0]])
-                xcamshift._prepare(ROUND_CHANGED,None)
-                shift  = sub_potential._calc_single_atom_shift(atom_ids[0])
-                expected_shift = gb3.gb3_subpotential_shifts[key]
-                residue_type = Atom_utils._get_residue_type_from_atom_id(atom_ids[0])
-                self.assertAlmostEqual(shift, expected_shift, self.DEFAULT_DECIMAL_PLACES-2, msg=`key` + " " + residue_type)
+        component_shifts = gb3.gb3_subpotential_shifts
+        self._do_test_component_shifts(xcamshift, component_shifts)
 
 
         
@@ -567,6 +579,18 @@ class TestXcamshiftGB3(unittest2.TestCase):
 #    def compare_shift_diffs_and_expected(self):
 #        for elem in sorted(gb3.gb3_shifts):
 #            self.assertAlmostEqual(gb3.gb3_shifts[elem], -gb3.gb3_shift_diffs[elem], self.DEFAULT_DECIMAL_PLACES-3,  elem)
+
+
+    def test_component_chemical_shifts_10_step(self):
+        xcamshift  = Xcamshift(verbose=False)
+        for i,file_name in enumerate(gb3_10_steps.gb3_files):
+            PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
+            if i == 0:
+                xcamshift.reset()
+                self._clear_caches()
+        
+            component_shifts = gb3_10_steps.gb3_subpotential_shifts[i]
+            self._do_test_component_shifts(xcamshift, component_shifts)
 
 
 def run_tests():
