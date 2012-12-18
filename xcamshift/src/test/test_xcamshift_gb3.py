@@ -11,7 +11,7 @@ from atomSel import AtomSel
 from test import gb3, gb3_10_steps
 from observed_chemical_shifts import Observed_shift_table
 from common_constants import  SIDE_CHAIN, NON_BONDED, RING,\
-    TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
+    TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, CAMSHIFT_SUB_POTENTIALS
 from test.gb3 import gb3_component_shifts_sc, gb3_component_shifts_ring
 from utils import Atom_utils
 import common_constants
@@ -426,8 +426,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
         return target_array
 
 
-    def filter_force_components_by_potential(self, potential_name):
-        return dict(self.filter_dict(gb3.gb3_component_forces, lambda k, v:k[-1] == potential_name))
+    def filter_force_components_by_potential(self, force_components, potential_name):
+        return dict(self.filter_dict(force_components, lambda k, v:k[-1] == potential_name))
 
     def make_forces_from_map(self,forces_map):
         expected_total_result_forces = self.make_results_array()
@@ -517,6 +517,15 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
         
     def test_force_components(self):
+        xcamshift =  self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+            
+        
+        expected_force_components = gb3.gb3_component_forces
+        shifts =  gb3.gb3_shifts
+        
+        self._do_test_force_components(xcamshift, shifts, expected_force_components)
+
+    def _do_test_force_components(self, xcamshift, shifts, expected_force_components):
 
         
         def get_target_atom_keys_for_potential(raw_backbone_force_components):
@@ -532,8 +541,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
             num_atoms = len(AtomSel('(all)').indices())
             result = [None] * num_atoms
             return result
+        
         def build_expected_forces_for_potential(target_atom_key, raw_backbone_force_components):
-            
             expected_forces = self.make_results_array()
             for raw_backbone_force_component_key in raw_backbone_force_components:
                 if target_atom_key == self.get_target_atom_key(raw_backbone_force_component_key):
@@ -546,18 +555,18 @@ class TestXcamshiftGB3(unittest2.TestCase):
         
         
 #       TODO: xcamshift should be created anew  for each passage through the loop but the non bonded list is too slow
-        xcamshift = self.make_xcamshift(gb3.gb3_zero_shifts)
-        self.set_cache_shifts(xcamshift, gb3.gb3_shifts)
-        xcamshift.update_energy_calculator()
+        self.set_cache_shifts(xcamshift, shifts)
+        xcamshift._prepare(ROUND_CHANGED, None)
         xcamshift.update_force_factor_calculator()
         
         for potential_name in common_constants.CAMSHIFT_SUB_POTENTIALS:
             
-            raw_backbone_force_components = self.filter_force_components_by_potential(potential_name)
+            raw_backbone_force_components = self.filter_force_components_by_potential(expected_force_components, potential_name)
             
             target_atom_keys =  get_target_atom_keys_for_potential(raw_backbone_force_components)
             
             potentials_list = [xcamshift.get_named_sub_potential(potential_name)]
+            
             for target_atom_key in reversed(sorted(target_atom_keys)):
                 
         
@@ -566,20 +575,25 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 target_atom_id = get_atom_index(target_atom_key)
                 out_array = self.make_out_array()
                 
-                xcamshift.reset()
-                xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, [target_atom_id])
-                xcamshift._prepare(ROUND_CHANGED,None)
+                atom_ids = [target_atom_id]
+                xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, atom_ids)
                 xcamshift._calc_single_atom_force_set_with_potentials(target_atom_id, out_array, potentials_list)
                 result_forces = out_array.add_forces_to_result()
+                
                 self.assertListVec3AlmostEqual(result_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES-3, msg='%s -  %s' % (potential_name,target_atom_key))
 
-                # to list differences as well as check them uncomment this! 
-                # self.print_force_component_diffs(potential_name,target_atom_key, expected_forces, result_forces)
-    
-#    def compare_shift_diffs_and_expected(self):
-#        for elem in sorted(gb3.gb3_shifts):
-#            self.assertAlmostEqual(gb3.gb3_shifts[elem], -gb3.gb3_shift_diffs[elem], self.DEFAULT_DECIMAL_PLACES-3,  elem)
-
+    def test_force_components_10_step(self):
+        xcamshift =  self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        for i,file in enumerate(gb3_10_steps.gb3_files):
+            PDBTool("test_data/gb3_10_steps/%s" % file).read()
+            if i == 0:
+                xcamshift.reset()
+                self._clear_caches()
+            
+            expected_force_components = gb3_10_steps.gb3_component_forces[i]
+            shifts =  gb3_10_steps.gb3_shifts[i]
+            
+            self._do_test_force_components(xcamshift, shifts, expected_force_components)
 
     def test_component_chemical_shifts_10_step(self):
         xcamshift  = Xcamshift(verbose=False)
