@@ -9,6 +9,7 @@ from pdbTool import PDBTool
 from utils import Atom_utils, iter_residue_atoms, iter_residue_atom_ids
 import utils
 from cython.fast_segment_manager import Segment_Manager
+from test.util_for_testing import Virtual_list, Empty_loader
 
 expected_residue_atom_ids  =  (
      (1,2,3,4,5,6,7,8,9,10,11,12),
@@ -111,7 +112,13 @@ class TestXcamshiftUtils(unittest2.TestCase):
         self.assertEqual(len(all_atoms),47)
         for i,atom in enumerate(all_atoms):
             self.assertEqual(atom.index(), i)
+            
+    def test_virtual_list_empty_loader(self):
+        test_list = Virtual_list(Empty_loader())
+
+        self.assertEmpty(test_list)
         
+
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'TestXcamshifAGA.testName']
     unittest2.main()
