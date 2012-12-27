@@ -117,7 +117,8 @@ class TestXcamshiftUtils(unittest2.TestCase):
         test_list = Virtual_list(Empty_loader())
 
         self.assertEmpty(test_list)
-        
+        with self.assertRaises(IndexError):
+            test_list[0]
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'TestXcamshifAGA.testName']

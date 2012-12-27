@@ -92,6 +92,6 @@ class Virtual_list(object):
     def __len__(self):
         return self._loader.length()
     
-    def ____getitem__(self, key):
+    def __getitem__(self, key):
         return self._loader.get_item(key)
     
