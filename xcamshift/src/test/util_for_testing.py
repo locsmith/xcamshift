@@ -65,15 +65,33 @@ def _check_shift_results(active_target_atoms_ids, result, expected_shifts):
         if abs(result[i] - expected_shift_diff) >  1.0**-(DEFAULT_DECIMAL_PLACES-2):
             raise AssertionError("diff too big %f - %f " % (result[i], expected_shift_diff))
 
-class Function_loader(object):
-    def __init__(self, functions):
-        self._functions = functions
+class Yaml_loader(object):
+    def __init__(self, files):
+        self._files = files
     
     def length(self):
-        return len(self._functions)
+        return len(self._files)
     
     def get_item(self, key):
-        return self._functions[key]()
+        return self._load(self._files[key])
+    
+
+    def _open_stream(self, file):
+        return  open(file, "r")
+
+
+    def  _load(self, file):
+        from yaml import load, dump
+        try:
+           from yaml import CLoader as Loader, CDumper as Dumper
+        except ImportError:
+           from yaml import Loader, Dumper
+
+        stream = self._open_stream(file)
+        result = load(stream, Loader=Loader)
+        stream.close()
+
+        return result 
     
 class Empty_loader(object):
     def __init__(self):
