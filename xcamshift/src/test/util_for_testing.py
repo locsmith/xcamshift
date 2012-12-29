@@ -66,15 +66,25 @@ def _check_shift_results(active_target_atoms_ids, result, expected_shifts):
             raise AssertionError("diff too big %f - %f " % (result[i], expected_shift_diff))
 
 class Yaml_loader(object):
-    def __init__(self, files):
+    def __init__(self, files, root=None):
         self._files = files
+        self._root = root
     
     def length(self):
         return len(self._files)
     
+
     def get_item(self, key):
-        return self._load(self._files[key])
+        path = self._add_root_path_to_key(key)
+       
+        return self._load(path)
     
+    #TODO: isolate an test
+    def _add_root_path_to_key(self, key):
+        path = self._files[key]
+        if self._root != None:
+            path = os.path.join(self._root, path)
+        return path
 
     def _open_stream(self, file):
         return  open(file, "r")
