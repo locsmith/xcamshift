@@ -131,26 +131,34 @@ class TestXcamshiftUtils(unittest2.TestCase):
         with self.assertRaises(IndexError):
             test_list[0]
             
+    class Test_yaml_loader(Yaml_loader):
+        
+        def __init__(self):
+            super(TestXcamshiftUtils.Test_yaml_loader, self).__init__(['a','b'])
+            
+        def _open_stream(self,file):
+            if file == "a":
+                result = YAML_FILE_1
+            elif file == "b":
+                result = YAML_FILE_2
+            return  StringIO(result)
+        
+        def length(self):
+            return 2
+                        
     def test_virtual_list_yaml_loader(self):
        
-            
-        class Test_yaml_loader(Yaml_loader):
-            def __init__(self):
-                super(Test_yaml_loader, self).__init__(['a','b'])
-            def _open_stream(self,file):
-                if file == "a":
-                    result = YAML_FILE_1
-                elif file == "b":
-                    result = YAML_FILE_2
-                return  StringIO(result)
-            def length(self):
-                return 2
-            
-        test_list = Virtual_list(Test_yaml_loader())
+        test_list = Virtual_list(TestXcamshiftUtils.Test_yaml_loader())
 
         self.assertEqual(len(test_list),2)
         self.assertSequenceEqual([YAML_DICT_1, YAML_DICT_2], test_list)
-
+        self.assertIsNot(test_list[0], test_list[0])
+        
+    def test_virtual_list_yaml_loader_makes_new_objects(self):
+        
+        test_list = Virtual_list(TestXcamshiftUtils.Test_yaml_loader())
+        self.assertIsNot(test_list[0], test_list[0])
+        
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'TestXcamshifAGA.testName']
     unittest2.main()
