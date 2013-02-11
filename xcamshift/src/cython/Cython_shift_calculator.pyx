@@ -44,6 +44,13 @@ cdef class Out_array:
     cpdef get_length(self): 
         return self._length 
     
+    cpdef add_all(self, Out_array target_array):
+        cdef Vec3 value
+        for i in range(target_array._length):
+            if i < self._length and target_array._mask[i]:
+                value = Vec3(target_array._data[i*3+0],target_array._data[i*3+1],target_array._data[i*3+2])
+                self.add(i, value)
+             
     def __dealloc__(self):
         pass
 #        free(self._data)
