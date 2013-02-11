@@ -41,6 +41,8 @@ cdef class Out_array:
 #            self._clear(length)
 #        print 'allocated'
             
+    cpdef get_length(self): 
+        return self._length 
     
     def __dealloc__(self):
         pass
@@ -960,6 +962,7 @@ cdef class Fast_energy_calculator:
     cdef object _observed_shifts
     cdef bint _verbose 
     cdef Simulation* _simulation
+    cdef int calls
 
     def __init__(self):
         self._energy_term_cache =  None
@@ -967,6 +970,7 @@ cdef class Fast_energy_calculator:
         self._observed_shifts =  None
         self._verbose = False
         self._simulation = currentSimulation()
+        self.calls = 0
     
     def set_simulation(self):
         self._simulation = currentSimulation()
@@ -1060,7 +1064,8 @@ cdef class Fast_energy_calculator:
         if self._verbose:
             end_time = time()
             print '   energy calculator: ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
-            
+        
+        self.calls += 1    
         return energy
 
 cdef class Fast_force_factor_calculator(Fast_energy_calculator):
