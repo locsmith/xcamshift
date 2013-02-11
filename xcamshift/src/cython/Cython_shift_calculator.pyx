@@ -128,6 +128,7 @@ cdef class Out_array:
             self._data[id3+2] = 0.0
         
             self._mask[target_id] = 0
+            
     def add_forces_to_result(self, result=None, weight=1.0):
         if result ==  None:
             result = [None] * self._length
