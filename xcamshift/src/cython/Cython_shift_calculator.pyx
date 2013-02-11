@@ -226,8 +226,8 @@ cdef class Out_array:
 
 
  
-#cdef object vec3_as_tuple(Vec3& vec_3):
-#    return vec_3.x(), vec_3.y(), vec_3.z()
+cdef object vec3_as_tuple(Vec3& vec_3):
+    return vec_3.x(), vec_3.y(), vec_3.z()
     
 cdef class Vec3_container:
     
