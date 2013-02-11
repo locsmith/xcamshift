@@ -944,6 +944,10 @@ cdef class Fast_non_bonded_calculator:
         return is_non_bonded
     
     def __call__(self, atom_list_1, atom_list_2):
+        
+        if self._verbose:
+            print '***** BUILD NON BONDED ******'
+            
         cdef double start_time = 0.0 
         cdef double end_time = 0.0
         if self._verbose:
