@@ -3447,7 +3447,6 @@ class Xcamshift(PyPot):
             
     def __init__(self, verbose=False):
         super(Xcamshift, self).__init__("xcamshift")
-        self._verbose = verbose
         self.potential = [
                           RandomCoilShifts(),
                           Distance_potential(),
@@ -3457,7 +3456,7 @@ class Xcamshift(PyPot):
                           Ring_Potential(),
                           Non_bonded_potential()
                           ]
-        self._verbose = False
+        self._verbose=verbose
         self._shift_table = Observed_shift_table()
         self._shift_cache = {}
         self._fast =  False
@@ -3467,7 +3466,7 @@ class Xcamshift(PyPot):
         self._energy_calculator = self._get_energy_calculator()
         self._force_factor_calculator =  self._get_force_factor_calculator()
 
-
+        self.set_verbose(verbose)
         self.update_energy_calculator()
         self.update_force_factor_calculator()
 
