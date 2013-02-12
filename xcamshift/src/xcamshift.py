@@ -2984,9 +2984,9 @@ class Non_bonded_potential(Distance_based_potential):
         return super(Non_bonded_potential, self).get_target_atom_ids()
 
     def update_non_bonded_list(self, increment=True):
-        self._get_non_bonded_list()
         if increment:
             self._non_bonded_list.update()
+        self._get_non_bonded_list()
         
 #    TODO add a with prepare construct
     def _calc_single_atom_shift(self, target_atom_id):
