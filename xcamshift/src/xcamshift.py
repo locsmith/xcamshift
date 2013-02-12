@@ -3832,14 +3832,26 @@ class Xcamshift(PyPot):
         
         return potential
 
-    def _prepare_potentials(self, target_atom_ids):
+    def _prepare_potentials(self, change, data):
         self._set_sub_potetials_fast()
         
         for potential in self.potential:
-            potential._prepare(target_atom_ids)
+            potential._prepare(change, data)
 
-    def _prepare(self, target_atom_ids):
-        self._prepare_potentials(target_atom_ids)
+    def _prepare(self, change, data):
+        if self._verbose:
+            print 'do prepare %s' % change
+            
+        if change == STRUCTURE_CHANGED:
+            self.clear_shift_cache()
+            
+        if change == TARGET_ATOM_IDS_CHANGED:
+            if data ==  None:
+                data  = self._get_active_target_atom_ids()
+        
+            
+        self._prepare_potentials(change, data)
+         
         
     
     class Constant_cache():
