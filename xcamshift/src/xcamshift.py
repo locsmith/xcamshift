@@ -2294,10 +2294,18 @@ class Ring_Potential(Base_potential):
         result.set_verbose(self._verbose)
         return result
             
-    def _prepare(self, target_atom_ids): 
-        super(Ring_Potential, self)._prepare(target_atom_ids)
-        self._build_ring_data_cache()
-        self._setup_ring_calculator(self._shift_calculator)
+    def _prepare(self, change, target_atom_ids): 
+        super(Ring_Potential, self)._prepare(change, target_atom_ids)
+        
+        if change == STRUCTURE_CHANGED:
+            self._clear_ring_cache()
+            
+        if change  == ROUND_CHANGED:
+            if self._verbose:
+                print "update ring cache"
+                
+            self._build_ring_data_cache()
+            self._setup_ring_calculator(self._shift_calculator)
          
     def set_fast(self, on):
         self._fast = (on == True)
