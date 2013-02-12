@@ -10,7 +10,18 @@ from utils import Atom_utils, iter_residue_atoms, iter_residue_atom_ids
 import utils
 from cython.fast_segment_manager import Segment_Manager
 from test.util_for_testing import Virtual_list, Empty_loader
+from test.util_for_testing import Yaml_loader
+from StringIO import  StringIO
 
+YAML_FILE_1 = '''a:
+               l: {m : 'n'}
+         '''
+YAML_DICT_1 = {'a':{'l' :{'m':'n'}}}
+YAML_FILE_2 = '''b:
+               x: {y : 1}
+         '''
+YAML_DICT_2 = {'b':{'x' :{'y':1}}}
+                             
 expected_residue_atom_ids  =  (
      (1,2,3,4,5,6,7,8,9,10,11,12),
      (13,14,15,16,17,18,19),
@@ -120,7 +131,33 @@ class TestXcamshiftUtils(unittest2.TestCase):
         with self.assertRaises(IndexError):
             test_list[0]
             
+    class Test_yaml_loader(Yaml_loader):
+        
+        def __init__(self):
+            super(TestXcamshiftUtils.Test_yaml_loader, self).__init__(['a','b'])
+            
+        def _open_stream(self,file):
+            if file == "a":
+                result = YAML_FILE_1
+            elif file == "b":
+                result = YAML_FILE_2
+            return  StringIO(result)
+        
+        def length(self):
+            return 2
+                        
+    def test_virtual_list_yaml_loader(self):
+       
+        test_list = Virtual_list(TestXcamshiftUtils.Test_yaml_loader())
 
+        self.assertEqual(len(test_list),2)
+        self.assertSequenceEqual([YAML_DICT_1, YAML_DICT_2], test_list)
+        self.assertIsNot(test_list[0], test_list[0])
+        
+    def test_virtual_list_yaml_loader_makes_new_objects(self):
+        
+        test_list = Virtual_list(TestXcamshiftUtils.Test_yaml_loader())
+        self.assertIsNot(test_list[0], test_list[0])
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'TestXcamshifAGA.testName']
