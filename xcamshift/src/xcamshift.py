@@ -23,7 +23,8 @@ from utils import Atom_utils, AXES, iter_residue_atoms,\
 from vec3 import Vec3, norm, cross, dot
 import abc
 import sys
-from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED
+from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED,\
+    TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, STRUCTURE_CHANGED
 import itertools
 from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
@@ -631,8 +632,12 @@ class Base_potential(object):
                 out_index  =  target_atom_ids.index(out_atom_id)
                 self._component_to_result[i] = out_index
 
-    def _prepare(self,target_atom_ids):
-        self._build_component_to_result(target_atom_ids)
+    def _prepare(self,change, data):
+        if change == STRUCTURE_CHANGED:
+            self.clear_caches()
+            
+        if change == TARGET_ATOM_IDS_CHANGED:
+            self._build_component_to_result(data)
 
     
     def get_component_table_names(self):
