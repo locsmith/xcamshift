@@ -2679,6 +2679,8 @@ class Non_bonded_list(object):
     
     def update(self):
         self._box_update_count +=1
+        if self._verbose:
+             print "  BOX COUNT UPDATED TO: ", self._box_update_count
         
     def get_boxes(self,component_list_1, component_list_2,target_component_list,coefficient_list):
 #        print self._box_update_count, se        if self._verbose:
