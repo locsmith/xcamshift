@@ -2692,7 +2692,7 @@ class Non_bonded_list(object):
             if self._verbose:
                 print '  update boxes call count = ', self._box_update_count
             target_component_list.clear()
-            self._box_update_count = 0
+            self._box_update_count = -1
             self._non_bonded_calculation_count += 1
             self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list)
             
