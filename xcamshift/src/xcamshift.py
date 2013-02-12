@@ -3639,12 +3639,10 @@ class Xcamshift(PyPot):
         
 
     def _calc_single_atom_shift(self,target_atom_id):
-        result  = [0.0]
-        self._prepare([target_atom_id,])
-        self.calc_shifts([target_atom_id], result)
+        self._prepare([ target_atom_id,])
         self._shift_cache = {}
-        self._shift_cache[target_atom_id] = result[0]
-        return result[0]
+        self._calc_shift_cache([target_atom_id,])
+        return  self._shift_cache [target_atom_id]
     
     
     
