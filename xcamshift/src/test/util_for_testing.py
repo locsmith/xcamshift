@@ -64,3 +64,23 @@ def _check_shift_results(active_target_atoms_ids, result, expected_shifts):
         expected_shift_diff = expected_shifts[key]
         if abs(result[i] - expected_shift_diff) >  1.0**-(DEFAULT_DECIMAL_PLACES-2):
             raise AssertionError("diff too big %f - %f " % (result[i], expected_shift_diff))
+
+class Empty_loader(object):
+    def __init__(self):
+        pass
+    def length(self):
+        return 0
+    
+    def get_item(self, key):
+        raise IndexError("index out of range; this sequence is always empty")
+    
+
+class Virtual_list(object):
+    def __init__(self, loader):
+        self._loader = loader
+        
+    def __len__(self):
+        return self._loader.length()
+    
+    def __getitem__(self, key):
+        return self._loader.get_item(key)
