@@ -3445,7 +3445,7 @@ class Xcamshift(PyPot):
     
             
             
-    def __init__(self, verbose=True):
+    def __init__(self, verbose=False):
         super(Xcamshift, self).__init__("xcamshift")
         self._verbose = verbose
         self.potential = [
