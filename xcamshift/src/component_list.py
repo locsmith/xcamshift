@@ -108,6 +108,7 @@ class Component_list():
     
     def clear(self):
         self._components =[]
+        self._component_ids = set()
 #TODO: not a useful string
 #    def __str__(self):
 #        result = []
