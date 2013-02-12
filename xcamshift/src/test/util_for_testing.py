@@ -5,6 +5,7 @@ Created on 12 Aug 2012
 '''
 from utils import Atom_utils
 from unittest2.case import TestCase
+from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 
 translations = {('GLY','HA')  :'HA1',
                 ('ILE','CD')  : 'CD1',
@@ -97,6 +98,7 @@ class Yaml_loader(object):
         except ImportError:
            print 'warning: using slow native python yaml loader'
            from yaml import Loader, Dumper
+        add_access_to_yaml_list_based_keys(Loader)
 
         stream = self._open_stream(file)
         result = load(stream, Loader=Loader)

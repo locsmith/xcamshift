@@ -13,8 +13,11 @@ from yaml.dumper import Dumper
 from python_utils import tupleit
 
 # TODO hide functions which are not parts of public interfaces and add tests 
-def add_access_to_yaml_list_based_keys():
-    return yaml.add_constructor(u'tag:yaml.org,2002:map', _construct_yaml_map)
+def add_access_to_yaml_list_based_keys(loader=None):
+    if loader ==  None:
+        return yaml.add_constructor(u'tag:yaml.org,2002:map', _construct_yaml_map)
+    else:
+        return yaml.add_constructor(u'tag:yaml.org,2002:map', _construct_yaml_map,loader)
     
 def _construct_yaml_map(loader, node):
     pairs = [(tupleit(key) if isinstance(key, list) else key, value)
