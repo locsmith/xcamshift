@@ -2989,15 +2989,23 @@ class Non_bonded_potential(Distance_based_potential):
         
         return non_bonded_list
     
-    def _prepare(self, target_atom_ids):
-        super(Non_bonded_potential, self)._prepare(target_atom_ids)
-        self.update_non_bonded_list()
+    def _prepare(self, change, target_atom_ids):
+        super(Non_bonded_potential, self)._prepare(change, target_atom_ids)
+        
+        if change == STRUCTURE_CHANGED:
+            self._reset_non_bonded_list()
+        
+        if change == ROUND_CHANGED:
+            self.update_non_bonded_list()
         
     def get_target_atom_ids(self):
         #TODO: this  call is required check why....
         self.update_non_bonded_list(increment=False)
         return super(Non_bonded_potential, self).get_target_atom_ids()
-
+    
+    def _reset_non_bonded_list(self, increment=True):
+        self._non_bonded_list._reset()
+            
     def update_non_bonded_list(self, increment=True):
         if increment:
             self._non_bonded_list.update()
