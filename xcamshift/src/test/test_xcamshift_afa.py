@@ -19,6 +19,7 @@ from utils import Atom_utils
 import sys
 from table_manager import Table_manager
 from vec3 import Vec3
+from common_constants import TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
 TOTAL_ENERGY = 'total'
 from cython.shift_calculators import Out_array
 
@@ -197,7 +198,9 @@ class TestXcamshiftAFA(unittest2.TestCase):
 
     def _prepare_potential(self, ring_potential):
         target_atom_ids = self._get_potential_target_atom_ids(ring_potential)
-        ring_potential._prepare(target_atom_ids)
+        ring_potential._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
+        ring_potential._prepare(ROUND_CHANGED, None)
+        
         
     def _get_potential_target_components(self, potential):
         return potential._get_component_list('ATOM')
