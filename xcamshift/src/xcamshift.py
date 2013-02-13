@@ -3646,6 +3646,7 @@ class Xcamshift(PyPot):
                            
     #TODO: deprecated remove use calc_shifts
     def set_shifts(self, result):
+        print 'deprecated remove use calc_shifts'
         target_atom_ids =  self._get_all_component_target_atom_ids()
         result_shifts  = [0.0] * len(target_atom_ids)
         self.calc_shifts(target_atom_ids, result_shifts)
