@@ -3484,7 +3484,7 @@ class Xcamshift(PyPot):
         self._shift_cache = {}
         self._fast =  False
         self._out_array =  None
-         
+        self._selected_atoms = None
         self._energy_term_cache = self._create_energy_term_cache()
         self._energy_calculator = self._get_energy_calculator()
         self._force_factor_calculator =  self._get_force_factor_calculator()
@@ -3633,13 +3633,32 @@ class Xcamshift(PyPot):
         if self._verbose:
             start_time =  time()
             print 'start calc shifts'
+            
+        if target_atom_ids  == None:
+            target_atom_ids = self._get_all_component_target_atom_ids() 
+            
+        #todo this could be more elegant
+        reset_selected_atoms = False
+        if self._selected_atoms == None:
+            self._selected_atoms = target_atom_ids
+            reset_selected_atoms =  True
+            
+        if result == None or len(result) < len(target_atom_ids):
+            result = [0.0] *len(target_atom_ids)
+
+#        self._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
+#        self._prepare(ROUND_CHANGED,None)
+        
+#        self.set_shifts(result)
         self._prepare_potentials(target_atom_ids)
         for potential in self.potential:
 
             potential.calc_shifts(target_atom_ids, result)
 
-            
-            
+        if self._selected_atoms == None:
+            if reset_selected_atoms:
+                self._selected_atoms = target_atom_ids    
+       
         if self._verbose:
             end_time =  time()
             print 'end calc shifts (calculated shifts in  %.17g seconds) \n' % (end_time-start_time)
@@ -3820,9 +3839,17 @@ class Xcamshift(PyPot):
         return factor
     
 
+
+    def get_selected_atom_ids(self):
+        if self._selected_atoms == None:
+            observed_shift_atom_ids = self._shift_table.get_atom_indices()
+        else:
+            observed_shift_atom_ids =  self._selected_atoms
+        return observed_shift_atom_ids
+
     def _get_active_target_atom_ids(self):
         target_atom_ids = set(self._get_all_component_target_atom_ids())
-        observed_shift_atom_ids = self._shift_table.get_atom_indices()
+        observed_shift_atom_ids = self.get_selected_atom_ids()
         active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
         active_target_atom_ids = list(active_target_atom_ids)
         return active_target_atom_ids
