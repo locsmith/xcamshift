@@ -3962,9 +3962,9 @@ class Xcamshift(PyPot):
         self._set_frozen()
     
     def reset(self):
-        self.get_named_sub_potential(NON_BONDED)._non_bonded_list._box_update_count = -1
-        for potential in self.potential:
-            potential.clear_caches()
+        self._prepare(STRUCTURE_CHANGED, None)
+        self._prepare(TARGET_ATOM_IDS_CHANGED, None)
+
     
 
 
