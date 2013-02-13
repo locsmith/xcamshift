@@ -3650,7 +3650,7 @@ class Xcamshift(PyPot):
 #        self._prepare(ROUND_CHANGED,None)
         
 #        self.set_shifts(result)
-        self._prepare_potentials(target_atom_ids)
+        self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
         for potential in self.potential:
 
             potential.calc_shifts(target_atom_ids, result)
