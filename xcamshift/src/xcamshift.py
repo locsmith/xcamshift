@@ -3628,8 +3628,13 @@ class Xcamshift(PyPot):
             print "shifts completed in ", "%.17g " %  (end_time-start_time),"seconds"
 
         
-    def calc_shifts(self, target_atom_ids, result):
-        
+    def calc_shifts(self, target_atom_ids=None, result=None):
+        def target_atom_ids_as_selection_strings(target_atom_ids):
+            result  = []
+            for target_atom_id in target_atom_ids:
+                result.append(Atom_utils._get_atom_info_from_index(target_atom_id))
+            return tuple(result)
+                
         if self._verbose:
             start_time =  time()
             print 'start calc shifts'
@@ -3662,6 +3667,9 @@ class Xcamshift(PyPot):
         if self._verbose:
             end_time =  time()
             print 'end calc shifts (calculated shifts in  %.17g seconds) \n' % (end_time-start_time)
+        
+        #TODO review whole funtion and resturn types
+        return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(result))
                            
     #TODO: deprecated remove use calc_shifts
     def set_shifts(self, result):
