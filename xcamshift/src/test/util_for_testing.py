@@ -23,19 +23,25 @@ def invert_translations(translations):
         result[new_key] =  key[1]
     return result
 
-def get_key_for_atom_index( atom_id):
+
+def translate_atom_key(atom_key):
     global inverted_translations
     if inverted_translations == None:
         inverted_translations = invert_translations(translations)
-        
-
-    atom_key = Atom_utils._get_atom_info_from_index(atom_id)
-    res_type = Atom_utils._get_residue_type_from_atom_id(atom_id)
-    key = res_type,atom_key[2]
+    res_type = Atom_utils._get_residue_type(*atom_key[:2])
+    key = res_type, atom_key[2]
     if key in inverted_translations:
         atom_key = list(atom_key)
         atom_key[2] = inverted_translations[key]
-        atom_key =  tuple(atom_key)
+        atom_key = tuple(atom_key)
+    return atom_key
+
+def get_key_for_atom_index(atom_id):
+
+        
+
+    atom_key = Atom_utils._get_atom_info_from_index(atom_id)
+    atom_key = translate_atom_key(atom_key)
     return atom_key
 
 
