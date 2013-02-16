@@ -327,7 +327,34 @@ class TestXcamshiftGB3(unittest2.TestCase):
         for k, v in the_dict.iteritems():
             if predicate(k,v):
                 yield k, v    
-    
+
+    def test_atom_energies(self):
+        xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        
+        
+        expected_energies = gb3.gb3_energies
+        
+        self._do_test_atom_energies(xcamshift, expected_energies)    
+
+    def _do_test_atom_energies(self, xcamshift, expected_energies):
+        expected_energies = dict(expected_energies)
+        xcamshift._prepare(ROUND_CHANGED, None)
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, xcamshift._get_active_target_atom_ids())
+        total_component_energies = 0.0
+
+        for key in sorted(expected_energies): 
+            if key ==  'total':
+                continue
+            target_atom_index = get_atom_index(key)
+            expected_energy = expected_energies[key]
+
+            energy = xcamshift._calc_single_atom_energy(target_atom_index)
+            
+            self.assertAlmostEqual(energy, expected_energy, self.DEFAULT_DECIMAL_PLACES - 5, key)
+            
+
+        
+        
     
     def test_energies(self):
         xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
@@ -638,7 +665,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
 #    unittest2.main(module='test.test_xcamshift_gb3')
-    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_chemical_shifts_10_step')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_atom_energies')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
 
