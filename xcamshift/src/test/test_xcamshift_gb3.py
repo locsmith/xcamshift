@@ -113,7 +113,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 message = "only one item is None at %i [%s,%s] %s"
                 raise AssertionError(message % (i,`result`,`expected`,msg))
             else:
-                self.assertSequenceAlmostEqual(result, expected, places,msg=msg)
+                self.assertSequenceAlmostEqual(result, expected, places,msg=("pos %i " % i) +msg)
 
     def is_almost_zero_sequence(self,sequence,places = DEFAULT_DECIMAL_PLACES):
         len_sequence = len(sequence)
