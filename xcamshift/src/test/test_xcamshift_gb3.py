@@ -300,28 +300,39 @@ class TestXcamshiftGB3(unittest2.TestCase):
         self.remove_zero_valued_keys(expected_ring_shifts)
         self.assertEmpty(expected_ring_shifts)
 
-    def test_force_components_add_up(self):
-        summary = {}
-        gb3_forces_copy  = dict(gb3.gb3_forces)
-        
-        
-        for elem in gb3.gb3_component_forces:
-            key =  self.get_force_atom_key(elem)
-            summary_forces = summary.setdefault(key,[0.0,]*3)
-            for i, value in enumerate(gb3.gb3_component_forces[elem]):
-                summary_forces[i] += value
-        
-        for i,elem in enumerate(sorted(summary)):
 
+        
+    def test_force_components_add_up(self):
+        forces  =  gb3.gb3_forces
+        component_forces =  gb3.gb3_component_forces 
+        self._do_test_force_componenets_add_up(forces, component_forces)
+
+    def _do_test_force_componenets_add_up(self, forces, component_forces):
+        gb3_forces_copy = dict(forces)
+        summary = self._build_component_force_summary(component_forces)
+
+
+        for i, elem in enumerate(sorted(summary)):
+            
             self.assertSequenceAlmostEqual(summary[elem], gb3_forces_copy[elem], 2, `elem`)
 
             del gb3_forces_copy[elem]
         
+        
         self.remove_almost_zero_force_elems(gb3_forces_copy)
-        
-        self.assertEmpty(gb3_forces_copy)
-        
 
+        self.assertEmpty(gb3_forces_copy)
+
+    def _build_component_force_summary(self, component_forces):
+        summary = {}
+        for elem in component_forces:
+            key = self.get_force_atom_key(elem)
+            summary_forces = summary.setdefault(key, [0.0] * 3)
+            for i, value in enumerate(component_forces[elem]):
+                summary_forces[i] += value
+        
+        return summary
+    
     @staticmethod
     def filter_dict(the_dict, predicate=lambda k, v: True):
         for k, v in the_dict.iteritems():
@@ -678,7 +689,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
 #    unittest2.main(module='test.test_xcamshift_gb3')
-    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_energy_10_step')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components_add_up')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
 
