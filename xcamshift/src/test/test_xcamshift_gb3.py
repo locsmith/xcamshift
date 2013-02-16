@@ -124,24 +124,30 @@ class TestXcamshiftGB3(unittest2.TestCase):
         delta  = 10**-places
         return self.are_almost_equal_sequences(sequence, zeros, delta)
 
+
+        
+    def _do_test_component_shifts(self, xcamshift, component_shifts):
+        xcamshift._prepare(ROUND_CHANGED, None)
+        component_shifts_keys = component_shifts.keys()
+        component_shifts_keys.sort()
+        for i, key in enumerate(component_shifts_keys):
+            segment, residue_number, atom, sub_potential = key
+            sub_potential = xcamshift.get_named_sub_potential(sub_potential)
+            atom_ids = Atom_utils.find_atom_ids(segment, residue_number, atom)
+            if len(atom_ids) > 0:
+                
+                xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, atom_ids)
+                shift = sub_potential._calc_single_atom_shift(atom_ids[0])
+                expected_shift = component_shifts[key]
+                residue_type = Atom_utils._get_residue_type_from_atom_id(atom_ids[0])
+                self.assertAlmostEqual(shift, expected_shift, self.DEFAULT_DECIMAL_PLACES - 2, msg=`key` + " " + residue_type)
+    
+    #TODO check all tests correct
     def test_component_chemical_shifts(self):
         xcamshift  = Xcamshift()
         
-        bad_residues =  set()
-        component_shifts_keys = gb3.gb3_subpotential_shifts.keys()
-        component_shifts_keys.sort()
-
-        for i,key in enumerate(component_shifts_keys):
-            segment, residue_number,atom,sub_potential = key
-            sub_potential = xcamshift.get_named_sub_potential(sub_potential)
-
-            atom_ids  =  Atom_utils.find_atom_ids(segment, residue_number, atom)
-            if len(atom_ids) > 0:
-                xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, atom_ids)
-                shift  = sub_potential._calc_single_atom_shift(atom_ids[0])
-                expected_shift = gb3.gb3_subpotential_shifts[key]
-                residue_type = Atom_utils._get_residue_type_from_atom_id(atom_ids[0])
-                self.assertAlmostEqual(shift, expected_shift, self.DEFAULT_DECIMAL_PLACES-2, msg=`key` + " " + residue_type)
+        component_shifts = gb3.gb3_subpotential_shifts
+        self._do_test_component_shifts(xcamshift, component_shifts)
 
 
         
@@ -573,8 +579,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
-    unittest2.main(module='test.test_xcamshift_gb3')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_frozen')
+#    unittest2.main(module='test.test_xcamshift_gb3')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_component_chemical_shifts')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
 
