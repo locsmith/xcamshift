@@ -371,36 +371,18 @@ class TestXcamshiftGB3(unittest2.TestCase):
         
         
     
-    def test_energies(self):
+    def test_total_energy(self):
         xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
-        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, xcamshift._get_active_target_atom_ids())
         
-        
-        total_component_energies = 0.0
-        for key in sorted(gb3.gb3_energies):
-            if key ==  'total':
-                continue
-
-            target_atom_index = get_atom_index(key)
+        expected_energies = gb3.gb3_energies
             
-            expected_energy =  gb3.gb3_energies[key]
-            energy = xcamshift._calc_single_atom_energy(target_atom_index)
+        self._do_test_total_energy(xcamshift, expected_energies)
             
-            total_component_energies += energy
-            
-            self.assertAlmostEqual(energy,expected_energy, self.DEFAULT_DECIMAL_PLACES-3,key)
-        
+    def _do_test_total_energy(self, xcamshift, expected_energies):
+        expected_total_energy = expected_energies['total']
         total_energy = xcamshift.calcEnergy()
-        target_atom_ids = xcamshift._get_active_target_atom_ids()
-        shift_cache_result = _shift_cache_as_result(xcamshift._shift_cache, target_atom_ids)
-        _check_shift_results(target_atom_ids, shift_cache_result,gb3.gb3_shifts)
-        
-        expected_total_energy = gb3.gb3_energies['total']
-        
-        self.assertAlmostEqual(total_component_energies, total_energy, self.DEFAULT_DECIMAL_PLACES-5)
-        #TODO: add the ability to test almost equals with significant figures instead
-        self.assertAlmostEqual(total_energy,expected_total_energy, self.DEFAULT_DECIMAL_PLACES-5,)
-        
+        self.assertAlmostEqual(total_energy, expected_total_energy, self.DEFAULT_DECIMAL_PLACES - 5)
+
 
     def test_batch_shift_calculator(self):
         xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
@@ -680,7 +662,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
 #    unittest2.main(module='test.test_xcamshift_gb3')
-    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_atom_energies_10_step')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_energy')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
 
