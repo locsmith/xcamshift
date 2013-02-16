@@ -648,10 +648,27 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 result_forces = out_array.add_forces_to_result()
                 
                 self.assertListVec3AlmostEqual(result_forces, expected_forces, self.DEFAULT_DECIMAL_PLACES-3, msg='%s -  %s' % (potential_name,target_atom_key))
-
+                
+            print "100%"
+        print
+                
+    def test_force_components_10_step(self):
+        xcamshift =  self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        for i,file in enumerate(gb3_10_steps.gb3_files):
+            PDBTool("test_data/gb3_10_steps/%s" % file).read()
+            print '%i/%i' % (i+1,len(gb3_10_steps.gb3_files)), file
+            if i == 0:
+                xcamshift.reset()
+                self._clear_caches()
+#            print gb3_10_steps.gb3_component_forces[i]
+            expected_force_components = gb3_10_steps.gb3_component_forces[i]['forces']
+            shifts =  gb3_10_steps.gb3_shifts[i]
+            
+            self._do_test_force_components(xcamshift, shifts, expected_force_components)
+            
                 # to list differences as well as check them uncomment this! 
                 # self.print_force_component_diffs(potential_name,target_atom_key, expected_forces, result_forces)
-            print '100%'
+
 #    def compare_shift_diffs_and_expected(self):
 #        for elem in sorted(gb3.gb3_shifts):
 #            self.assertAlmostEqual(gb3.gb3_shifts[elem], -gb3.gb3_shift_diffs[elem], self.DEFAULT_DECIMAL_PLACES-3,  elem)
@@ -718,7 +735,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
 #    unittest2.main(module='test.test_xcamshift_gb3')
-    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components_10_step')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
 
