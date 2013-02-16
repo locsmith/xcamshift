@@ -594,6 +594,18 @@ class TestXcamshiftGB3(unittest2.TestCase):
             component_shifts = gb3.gb3_subpotential_shifts
             self._do_test_shifts(xcamshift, component_shifts)
 
+    def test_total_chemical_shifts_10_step(self):
+            xcamshift  = Xcamshift(verbose=False)
+            for i,file_name in enumerate(gb3_10_steps.gb3_files):
+                PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
+                print 'coord file',file_name
+                if i == 0:
+                    xcamshift.reset()
+                    self._clear_caches()
+                component_shifts = gb3_10_steps.gb3_subpotential_shifts[i]
+                self._do_test_shifts(xcamshift, component_shifts)
+    
+
     def _do_test_shifts(self, xcamshift, expected_component_shifts):
         xcamshift._prepare(ROUND_CHANGED, None)
         component_shifts_keys = expected_component_shifts.keys()
@@ -625,8 +637,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
-    unittest2.main(module='test.test_xcamshift_gb3')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_frozen')
+#    unittest2.main(module='test.test_xcamshift_gb3')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_chemical_shifts_10_step')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
 
