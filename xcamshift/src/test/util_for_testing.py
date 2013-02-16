@@ -7,6 +7,12 @@ import os
 from utils import Atom_utils
 from unittest2.case import TestCase
 from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
+from marshal import load,dump
+#try:
+#    from cPickle import load,dump
+#except:
+#    from pickle import load,dump
+#    print >> sys.stderr, "WARNING using muck slower interpreted pickle module"
 
 translations = {('GLY','HA')  :'HA1',
                 ('ILE','CD')  : 'CD1',
@@ -72,7 +78,8 @@ def _check_shift_results(active_target_atoms_ids, result, expected_shifts):
         expected_shift_diff = expected_shifts[key]
         if abs(result[i] - expected_shift_diff) >  1.0**-(DEFAULT_DECIMAL_PLACES-2):
             raise AssertionError("diff too big %f - %f " % (result[i], expected_shift_diff))
-
+        
+    
 class Yaml_loader(object):
     def __init__(self, files, root=None):
         self._files = files
@@ -112,6 +119,36 @@ class Yaml_loader(object):
         stream.close()
 
         return result 
+
+#TODO: needs some tests!
+class Caching_yaml_loader(Yaml_loader):
+    
+    def  _load(self, file):
+        root, extension = os.path.splitext(file)
+        pickle_file = os.path.join("%s.%s" % (root,'marshal'))
+        
+        if self._check_pickle_file_exists(pickle_file):
+            with self._open_cache_for_reading(pickle_file) as f:
+                result =  load(f)
+        else:
+            result =  super(Caching_yaml_loader, self)._load(file)
+            cacheable_file_name = os.path.basename(file)
+            print "     note: marshal cache for %s doesn't exist, creating it!" % cacheable_file_name
+            with self._open_cache_for_writing(pickle_file) as f:
+                dump(result, f)
+
+        return result 
+        
+    def _open_cache_for_reading(self, pickle_file):
+        return open(pickle_file, 'rb')
+    
+    
+    def _open_cache_for_writing(self, pickle_file):
+        return open(pickle_file, 'wb')
+    
+    
+    def _check_pickle_file_exists(self, pickle_file):
+        return os.path.isfile(pickle_file)
     
 class Empty_loader(object):
     def __init__(self):
