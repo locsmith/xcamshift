@@ -489,7 +489,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         expected_total_result_forces = self.make_results_array()
         for key in forces_map:
             index = get_atom_index(key)
-            expected_total_result_forces[index] = gb3.gb3_forces[key]
+            expected_total_result_forces[index] = forces_map[key]
         
         return expected_total_result_forces
     
@@ -518,6 +518,21 @@ class TestXcamshiftGB3(unittest2.TestCase):
         xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, None)
         
         self._do_test_total_forces_and_energy(xcamshift, energy, forces)
+
+    def test_total_forces_and_energy_10_step(self):
+        xcamshift =  self.make_xcamshift(gb3.gb3_zero_shifts)
+        
+        for i,file_name in enumerate(gb3_10_steps.gb3_files):
+                PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
+                print 'coord file',file_name
+                if i == 0:
+                    xcamshift.reset()
+                    self._clear_caches()
+                    
+                energy = gb3_10_steps.gb3_energies[i]['total']
+                force_components =  gb3_10_steps.gb3_forces[i]
+                
+                self._do_test_total_forces_and_energy(xcamshift, energy, force_components)
  
     def _do_test_total_forces_and_energy(self, xcamshift, expected_energy,  force_components):
         
@@ -745,7 +760,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
 #    unittest2.main(module='test.test_xcamshift_gb3')
-    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
 
