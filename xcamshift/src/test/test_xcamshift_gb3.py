@@ -9,6 +9,7 @@ import unittest2
 from xcamshift import  Xcamshift
 from atomSel import AtomSel
 from test import gb3, gb3_10_steps
+from test import  util_for_testing
 from observed_chemical_shifts import Observed_shift_table
 from common_constants import  SIDE_CHAIN, NON_BONDED, RING
 from common_constants import TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
@@ -586,7 +587,41 @@ class TestXcamshiftGB3(unittest2.TestCase):
         
             component_shifts = gb3_10_steps.gb3_subpotential_shifts[i]
             self._do_test_component_shifts(xcamshift, component_shifts)
+            
+    def test_total_chemical_shifts(self):
+            xcamshift  = Xcamshift(verbose=False)
 
+            component_shifts = gb3.gb3_subpotential_shifts
+            self._do_test_shifts(xcamshift, component_shifts)
+
+    def _do_test_shifts(self, xcamshift, expected_component_shifts):
+        xcamshift._prepare(ROUND_CHANGED, None)
+        component_shifts_keys = expected_component_shifts.keys()
+        component_shifts_keys.sort()
+        
+        target_atom_selections, calculated_shifts = xcamshift.calc_shifts()
+        
+        self._check_shifts(target_atom_selections, expected_component_shifts, calculated_shifts)
+
+    def _sum_sub_potential_shifts(self,component_shifts):
+        result = {}
+        for i, key in enumerate(component_shifts.keys()):
+            segment, residue_number, atom, sub_potential = key
+            new_key = (segment, residue_number, atom)
+            value = result.setdefault(new_key,0.0)
+            value+=component_shifts[key]
+            result[new_key] = value
+        return result
+    
+    def _check_shifts(self, target_atom_selections, expected_component_shifts, calculated_shifts):
+        
+        expected_shifts = self._sum_sub_potential_shifts(expected_component_shifts)
+        shift_diffs = []
+        for target_atom_selection, shift in zip(target_atom_selections, calculated_shifts):
+            target_atom_selection = util_for_testing.translate_atom_key(target_atom_selection)
+            shift_diffs.append(expected_shifts[target_atom_selection]-shift)
+            self.assertAlmostEqual(expected_shifts[target_atom_selection], shift, self.DEFAULT_DECIMAL_PLACES - 2, target_atom_selection)
+        
 def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
