@@ -3,6 +3,7 @@ Created on 12 Aug 2012
 
 @author: garyt
 '''
+import os
 from utils import Atom_utils
 from unittest2.case import TestCase
 from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
