@@ -5,7 +5,7 @@ Created on 29 Mar 2012
 '''
  
 from common_constants import BACK_BONE, DIHEDRAL, NON_BONDED, SIDE_CHAIN, XTRA, RANDOM_COIL, RING
-from test.util_for_testing import Virtual_list, Yaml_loader
+from test.util_for_testing import Virtual_list, Caching_yaml_loader
 from table_builders.yaml_patches import apply_tuple_patch
 apply_tuple_patch()
 
@@ -7492,7 +7492,7 @@ gb3_energies=(
 
 import os
 path =  os.path.dirname(os.path.realpath(__file__))
-gb3_component_forces = Virtual_list(Yaml_loader(
+gb3_component_forces = Virtual_list(Caching_yaml_loader(
     ["forces_gb3_refined_II_xplor_camshift.yaml",
     "forces_gb3_step_1_mod.yaml",
     "forces_gb3_step_2_mod.yaml",
