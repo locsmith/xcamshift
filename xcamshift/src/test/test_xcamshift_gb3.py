@@ -508,17 +508,27 @@ class TestXcamshiftGB3(unittest2.TestCase):
         
         self.assertAlmostEqual(energy, gb3.gb3_energies['total'],self.DEFAULT_DECIMAL_PLACES-5)
 
+
     def test_total_forces_and_energy(self):
         xcamshift =  self.make_xcamshift(gb3.gb3_zero_shifts)
         
+        forces = gb3.gb3_forces
+        energy = gb3.gb3_energies['total']
+        
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, None)
+        
+        self._do_test_total_forces_and_energy(xcamshift, energy, forces)
+ 
+    def _do_test_total_forces_and_energy(self, xcamshift, expected_energy,  force_components):
+        
         total_result_forces = self.make_results_array()
         energy = xcamshift.calcEnergyAndDerivs(total_result_forces)
-
-        expected_total_result_forces = self.make_forces_from_map( gb3.gb3_forces)
+        
+        expected_total_result_forces = self.make_forces_from_map(force_components)
         
         self.assertListVec3AlmostEqual(total_result_forces, expected_total_result_forces, self.DEFAULT_DECIMAL_PLACES - 3)
-        
-        self.assertAlmostEqual(energy, gb3.gb3_energies['total'],self.DEFAULT_DECIMAL_PLACES-5)
+        self.assertAlmostEqual(energy, expected_energy, self.DEFAULT_DECIMAL_PLACES - 5)
+
 
 
         
@@ -735,7 +745,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
 #    unittest2.main(module='test.test_xcamshift_gb3')
-    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components_10_step')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
 
