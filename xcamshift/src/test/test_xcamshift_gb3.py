@@ -377,6 +377,22 @@ class TestXcamshiftGB3(unittest2.TestCase):
         expected_energies = gb3.gb3_energies
             
         self._do_test_total_energy(xcamshift, expected_energies)
+
+    def test_total_energy_10_step(self):
+        xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        for i,file_name in enumerate(gb3_10_steps.gb3_files):
+            PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
+            print file_name
+            if i == 0:
+                xcamshift.reset()
+                self._clear_caches()
+        
+        
+            expected_energies = gb3_10_steps.gb3_energies[i]
+            shifts = gb3_10_steps.gb3_shifts[i]
+            
+            self._do_test_total_energy(xcamshift, expected_energies)
+
             
     def _do_test_total_energy(self, xcamshift, expected_energies):
         expected_total_energy = expected_energies['total']
@@ -662,7 +678,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
 #    unittest2.main(module='test.test_xcamshift_gb3')
-    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_energy')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_energy_10_step')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
 
