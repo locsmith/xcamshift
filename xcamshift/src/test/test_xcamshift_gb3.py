@@ -307,6 +307,14 @@ class TestXcamshiftGB3(unittest2.TestCase):
         component_forces =  gb3.gb3_component_forces 
         self._do_test_force_componenets_add_up(forces, component_forces)
 
+    def test_force_components_add_up_10_step(self):
+        for i,file_name in enumerate(gb3_10_steps.gb3_files):
+            print file_name
+            forces  =  gb3_10_steps.gb3_forces[i]
+            component_forces =  gb3_10_steps.gb3_component_forces[i]['forces'] 
+            self._do_test_force_componenets_add_up(forces, component_forces)
+
+
     def _do_test_force_componenets_add_up(self, forces, component_forces):
         gb3_forces_copy = dict(forces)
         summary = self._build_component_force_summary(component_forces)
@@ -689,7 +697,7 @@ def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
 #    unittest2.main(module='test.test_xcamshift_gb3')
-    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components_add_up')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components_add_up_10_step')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
 
