@@ -8,7 +8,7 @@ from pdbTool import PDBTool
 import unittest2
 from xcamshift import  Xcamshift
 from atomSel import AtomSel
-from test import gb3
+from test import gb3, gb3_10_steps
 from observed_chemical_shifts import Observed_shift_table
 from common_constants import  SIDE_CHAIN, NON_BONDED, RING
 from common_constants import TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
@@ -575,12 +575,23 @@ class TestXcamshiftGB3(unittest2.TestCase):
 #        for elem in sorted(gb3.gb3_shifts):
 #            self.assertAlmostEqual(gb3.gb3_shifts[elem], -gb3.gb3_shift_diffs[elem], self.DEFAULT_DECIMAL_PLACES-3,  elem)
 
+    def test_component_chemical_shifts_10_step(self):
+        xcamshift  = Xcamshift(verbose=False)
+        for i,file_name in enumerate(gb3_10_steps.gb3_files):
+            PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
+            print file_name
+            if i == 0:
+                xcamshift.reset()
+                self._clear_caches()
+        
+            component_shifts = gb3_10_steps.gb3_subpotential_shifts[i]
+            self._do_test_component_shifts(xcamshift, component_shifts)
 
 def run_tests():
     if fast:
         print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
-#    unittest2.main(module='test.test_xcamshift_gb3')
-    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_component_chemical_shifts')
+    unittest2.main(module='test.test_xcamshift_gb3')
+#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_frozen')
 #    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
 
