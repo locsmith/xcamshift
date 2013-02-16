@@ -252,8 +252,11 @@ class TestXcamshiftGB3(unittest2.TestCase):
     def test_component_shifts_ring(self):
         
         xcamshift = Xcamshift()
+        
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, xcamshift._get_all_component_target_atom_ids())
+        xcamshift._prepare(ROUND_CHANGED,None)
+
         ring_subpotential = xcamshift.get_named_sub_potential(RING)
-        ring_subpotential._prepare(TARGET_ATOM_IDS_CHANGED, xcamshift._get_all_component_target_atom_ids())
         
         expected_ring_shifts = dict(gb3_component_shifts_ring)
         expected_component_keys = expected_ring_shifts.keys()
