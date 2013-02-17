@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Copyright (c) 2013 gary thompson.
+# Copyright (c) 2013 Gary Thompson & The University of Leeds.
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the GNU Lesser Public License v3.0
 # which accompanies this distribution, and is available at
