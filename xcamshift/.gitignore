@@ -16,5 +16,6 @@ test_data_old
 /xcamshift_dictionary.txt
 ._*
 test_data
+test_data_old
 *.c
 *.tgz
