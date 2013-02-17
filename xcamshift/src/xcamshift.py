@@ -3939,7 +3939,7 @@ class Xcamshift(PyPot):
             active_target_atom_ids = self._get_active_target_atom_ids()
             
         if prepare:
-            self._prepare(TARGET_ATOM_IDS_CHANGED,None)
+            self._prepare(TARGET_ATOM_IDS_CHANGED,active_target_atom_ids)
             self._prepare(ROUND_CHANGED,None)
             self._calc_shift_cache(active_target_atom_ids)
             
