@@ -1,3 +1,13 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013 gary thompson.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v2.1
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
 data:
            [[C,  -1], [N,   0], [CA,  0], [C,   0]] : {HA:    0.41067086, CA:    0.48193903, HN:   ,           N:    ,           C:   -0.01417464, CB:    0.54967657}
            [[N,   0], [CA,  0], [C,   0], [N,   1]] : {HA:    0.22426776, CA:    0.43819894, HN:   ,           N:    ,           C:    0.10178633, CB:    0.78984453}

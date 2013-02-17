@@ -1,3 +1,13 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013 gary thompson.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v2.1
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
 data:
         [PHE, '6'] : {HA:  0.01870965, CA:  0.01098487, HN: 0.02356277, N: -0.00951914, C:  0.03671133, CB:  ,         }
         [TYR, '6'] : {HA:  0.01905723, CA:  0.00683504, HN: 0.01525770, N: -0.03450502, C:  0.02911185, CB:  ,         }
