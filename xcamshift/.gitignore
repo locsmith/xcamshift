@@ -1,6 +1,10 @@
 /lib
 *.pickle
 *.marschal
+/documentation
+/literature
+/.externalToolBuilders
+/conference
 *.pyc
 *.pyo
 test_data_old
