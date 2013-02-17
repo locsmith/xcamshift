@@ -1,6 +1,6 @@
 /lib
 *.pickle
-*.marschal
+*.marshal
 /documentation
 /literature
 /.externalToolBuilders
