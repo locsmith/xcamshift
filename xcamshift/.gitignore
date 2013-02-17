@@ -1,0 +1,14 @@
+/lib
+*.pickle
+*.marschal
+*.pyc
+*.pyo
+test_data_old
+/old
+.DS_Store
+.project
+.pydevproject
+/xcamshift_dictionary.txt
+._*
+test_data
+*.c
