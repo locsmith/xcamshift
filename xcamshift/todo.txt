@@ -1,16 +1,16 @@
 1. add smoothed distance potentials and shifts?? - maybe not needed always false in original camshift, maybe just need to implement beyond harmonic term
 2. non harmonic potential positions - done
 3. well potential positions -done 
-4. non bonded interactions
-5. aromatic potential and forces
-6. glycine an proline tables
-7. test data generation scripts for comprehensive tests suite
-8. code force and energy routines in C
+4. non bonded interactions -done
+5. aromatic potential and forces -done
+6. glycine an proline tables -partially done
+7. test data generation scripts for comprehensive tests suite -done
+8. code force and energy routines in C -partially complete, suing cython
 9. rename factors scalings??
 10. add parameter class to hand down  parameters from xcamshift to
 11. add factor and lambda to give fact in xcamshift._calc_single_factor
 12. check ala tanh  forces and energy components (effectively already checked by 
-check other forces and the factors in the tanh regime) 
+check other forces and the factors in the tanh regime)  -done
 13. add derivatives for torsion angles - done
 14 add code to read chemical shifts
 
@@ -24,18 +24,31 @@ speed:
 5. ring forces -done
 6. flatten calc_shifts -done 
 7. add a factor calculator - done
-8. check non bonded implementation
+8. check non bonded implementation -done
 9. check caches are updated per round -calculated shifts and non bonded list
-10. check two different structures for forces
-11. look at energy anf forces for gb3 and ubi at minimum and away from minimum
+10. check two different structures for forces -done
+11. look at energy anf forces for gb3 and ubi at minimum and away from minimum -done
 12. parameters used by kai?
-13 Useful in particular was his
-implementation of the method of finite differences that helped testing whether all forces were
-derived correctly.
-14. cython non bonded doesn'y have a configurable nb cutoff
+13 Useful in particular was his implementation of the method of finite differences that helped testing whether all forces were derived correctly.
+14. cython non bonded doesn'y have a configurable nb cutoff 
 
 correctness
 -----------
-correct the xamshift import from camshift program to trabslate ser HG1 and CYS hg
+correct the xcamshift import from camshift program to trabslate ser HG1 and CYS hg correctly -done
+make a check of APA
+add a chemical shift calculator for CYS
+add a chemical shift calculator for HBONDS
 
-correctly
+testing
+-------
+unify test suite
+add code for building test suite classes
+correct test suite to use Virtual list for Gb3
+add more tests for virtual list
+add with round and with atom selection
+
+
+release 
+-------
+add licenses to headers 
+move to a code repository, github or google code?
