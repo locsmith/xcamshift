@@ -1,3 +1,13 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013 gary thompson.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v2.1
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
 dihedrals_ala_3 = {
           (( 2, "HA"), ((( 1,  "C"), ( 2,  "N")), (( 2, "CA"), ( 2,  "C")))) : ( 0.3960650, ( 0.3000000,  0.4000000,  0.0000000,  0.1000000,  3.0000000), -1.5647000,  0.0073783),
           (( 2, "HA"), ((( 2,  "N"), ( 2, "CA")), (( 2,  "C"), ( 3,  "N")))) : ( 0.1769540, (-0.1702870,  0.2786180,  0.0609298,  2.4869200, -3.0702500), -0.8247570, -0.0553080),

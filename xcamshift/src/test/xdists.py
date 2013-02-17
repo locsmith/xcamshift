@@ -1,3 +1,13 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013 gary thompson.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v2.1
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
 xdists_ala_3 = {
           (('',2, "HA"), ('',2, "HN"), ('',2, "HA")) : (-0.2327540, 2.9206600, -0.6797960),
           (('',2, "HA"), ('',2, "HN"), ('',2, "C" )) : ( 0.4706840, 2.9855700,  1.4052600),
