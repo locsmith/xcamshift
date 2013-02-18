@@ -1463,7 +1463,7 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         return result
 
     
-    #TODO: is this too close?
+
 #    def _calc_single_force_set(self, int index, float factor, object forces):
 #        self._cython_calc_single_force_set(index, factor, forces)
         
