@@ -29,7 +29,6 @@ AXES = X,Y,Z
 
 
 #TODO: add more general caching mechanism IMPORTANT and add as part of force field
-#TODO: 
 cache = {}
 atom_by_index_cache = {}
 _residue_type_cache = None
