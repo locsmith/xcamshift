@@ -19,3 +19,4 @@ test_data
 test_data_old
 *.c
 *.tgz
+src/tools
