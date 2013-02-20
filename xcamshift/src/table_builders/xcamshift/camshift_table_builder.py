@@ -348,38 +348,39 @@ if __name__ == '__main__':
         extractor = extractor_class(reader.data)
         
         for residue_type in residue_types:
-            file_type_name  = _get_file_type_name(residue_type)
-            
-            sub_potential_name  = extractor.get_name()
-            
-            output_data = extractor.extract(residue_type)
-            
-            template = _read_template(table_dir, sub_potential_name, residue_type, camshift_version,path=args.template)
-            template_filename = _get_template_filename(sub_potential_name, residue_type, camshift_version,)
-            
-            if template != None:
-                output_data = template % output_data            
-
-            if args.output == STDOUT:
-                title = _build_output_name(sub_potential_name, residue_type, camshift_version, 
-                                          template='camshift %s - %s - %s', version_template='%s.%s.%s')
-                print '----- %s ------' % title
-                print output_data
+            if extractor.is_table_required(residue_type):
+                file_type_name  = _get_file_type_name(residue_type)
                 
-            else:
-                output_filename = _build_output_name(sub_potential_name, residue_type, camshift_version)
+                sub_potential_name  = extractor.get_name()
                 
-                if args.verbose:
-                    print >> sys.stderr, '%i of %i. %s' % (count, files_to_output,  output_filename), 
-                    if template != None:
-                        print >> sys.stderr, '(with template %s)'  % template_filename
-                    else:
-                        print >> sys.stderr
+                output_data = extractor.extract(residue_type)
+                
+                template = _read_template(table_dir, sub_potential_name, residue_type, camshift_version,path=args.template)
+                template_filename = _get_template_filename(sub_potential_name, residue_type, camshift_version,)
+                
+                if template != None:
+                    output_data = template % output_data            
+    
+                if args.output == STDOUT:
+                    title = _build_output_name(sub_potential_name, residue_type, camshift_version, 
+                                              template='camshift %s - %s - %s', version_template='%s.%s.%s')
+                    print '----- %s ------' % title
+                    print output_data
                     
-                output_path = _build_filename_path(table_dir, args.output, output_filename)
-                
-                _write_file(output_data, output_path)
-                count += 1
+                else:
+                    output_filename = _build_output_name(sub_potential_name, residue_type, camshift_version)
+                    
+                    if args.verbose:
+                        print >> sys.stderr, '%i of %i. %s' % (count, files_to_output,  output_filename), 
+                        if template != None:
+                            print >> sys.stderr, '(with template %s)'  % template_filename
+                        else:
+                            print >> sys.stderr
+                        
+                    output_path = _build_filename_path(table_dir, args.output, output_filename)
+                    
+                    _write_file(output_data, output_path)
+                    count += 1
     if args.verbose:
         print >> sys.stderr, ''
         print >> sys.stderr, 'done.'

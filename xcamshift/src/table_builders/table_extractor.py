@@ -21,7 +21,10 @@ DEFAULT_INDENT = 6
 class Table_extractor(object):
     
     __metaclass__ = ABCMeta
-         
+    
+    def is_table_required(self,table_residue_type):
+        return True
+    
     def extract(self,file_type=''):
         data =  self._data[file_type]
         
