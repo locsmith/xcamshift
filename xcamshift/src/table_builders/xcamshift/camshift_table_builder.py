@@ -197,7 +197,7 @@ def _build_args_list():
     parser.add_argument('--verbose', action="store_true", default=False)
     parser.add_argument('-o', '--output', default="-", help="where to put the files either a file system path or - for stdout") 
     parser.add_argument('-t', '--template', default='../xcamshift_templates', help='directory where template files are kept: %(default)s}')
-    
+    parser.add_argument('-s', '--sub-potential', default=None, help='select the sub potential to output (default = ALL)')
     return  parser.parse_args()
 
 
@@ -297,7 +297,47 @@ def _read_template(dir_path,sub_potential,residue_type,version, path='../xcamshi
     return template
              
         
+#def _filter_table_type_names(table_type_names, sub_potential):
+#    result =  table_type_names
+#    
+#    if sub_potential != None:
+#        if sub_potential in table_type_names:
+#            result = [sub_potential]
+#        else:
+#            table_type_names_string = ', '.join(table_type_names)
+#            msg = "sub_potential '%s' doesn't exist, it should be one of: %s"
+#            
+#            print >> sys.stderr, msg % (sub_potential, table_type_names_string)
+#            print >> sys.stderr, "exiting..."
+#            
+#            sys.exit(-1)
+#    return result
 
+
+def _extractor_name_filter(extractor_classes):
+    return {extractor.get_name():extractor for extractor in extractor_classes}
+
+def _string_list_name_filter(strings):
+    return {string:string for string in strings}
+
+def  _filter_by_subpotential(extractor_classes, sub_potential, value_to_name  = _string_list_name_filter):
+    result = extractor_classes
+    
+    named_extractors = value_to_name(extractor_classes)
+    
+    if sub_potential != None:
+        if sub_potential in named_extractors:
+            result = [named_extractors[sub_potential]]
+        else:
+            table_type_names_string = ', '.join(sorted(named_extractors.keys()))
+            msg = "sub_potential '%s' doesn't exist, it should be one of: %s"
+            
+            print >> sys.stderr, msg % (sub_potential, table_type_names_string)
+            print >> sys.stderr, "exiting..."
+            
+            sys.exit(-1)
+    return result
+    
 if __name__ == '__main__':
 
     
@@ -322,9 +362,12 @@ if __name__ == '__main__':
     
     table_types = CAMSHIFT_SUB_POTENTIALS
     
-    table_type_names = [table_type.strip().upper() for table_type in table_types]
-    files_to_output = len(table_type_names) * len(residue_types)
+    table_types =  _filter_by_subpotential(table_types, args.sub_potential, _string_list_name_filter)
     
+    table_type_names = [table_type.strip().upper() for table_type in table_types]
+    
+    files_to_output = len(table_type_names) * len(residue_types)
+
     if args.verbose:
         print >> sys.stderr, '  read %i files' % reader.get_number_files()
         print >> sys.stderr, '  camshift version %s (source: %s)' % (camshift_version_string,camshift_source)
@@ -342,6 +385,8 @@ if __name__ == '__main__':
     
     #TODO use extract function here
     extractor_classes = _get_extractor_classes()
+    
+    extractor_classes =  _filter_by_subpotential(extractor_classes, args.sub_potential, _extractor_name_filter)
 
     count = 1
     for extractor_class, table_type in zip(extractor_classes,table_types):
