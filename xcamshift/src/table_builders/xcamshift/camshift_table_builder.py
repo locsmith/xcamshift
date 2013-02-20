@@ -27,6 +27,7 @@ from table_builders.xcamshift.Sidechain_distance_extractor import SC_table_extra
 from table_builders.xcamshift.Dihdedral_distance_extractor import DIHEDRALS_table_extractor
 from table_builders.xcamshift.Ring_table_extractor import RING_table_extractor
 from table_builders.xcamshift.Nonbonded_table_extractor import Nonbonded_table_extractor
+from table_builders.xcamshift.Disulphide_data_extractor import  DISU_table_extractor
 from common_constants import CAMSHIFT_SUB_POTENTIALS
 import argparse
 from yaml import load
@@ -144,7 +145,8 @@ def _get_extractor_classes(sub_potential = None):
                   SC_table_extractor, 
                   DIHEDRALS_table_extractor, 
                   RING_table_extractor,
-                  Nonbonded_table_extractor
+                  Nonbonded_table_extractor,
+                  DISU_table_extractor
                   )
     result  = []
     

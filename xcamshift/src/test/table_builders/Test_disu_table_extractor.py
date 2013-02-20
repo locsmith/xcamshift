@@ -13,7 +13,7 @@ class Test(unittest.TestCase):
     def assertDictHasKey(self,dict,key,msg=''):
         msg = '%s not in dict' % `key`
         self.assertTrue(key in dict, msg = msg)
-        
+      
     def setUp(self):
         XTRADISTS = 'XTRADISTS' 
         test_values=  {'HA' : 0.0115552, 'CA' : -2.851700383944911, 'H' : -0.106055, 'N': -1.41314, 'C' :  -0.370881, 'CB' : 11.3616}
@@ -48,7 +48,12 @@ class Test(unittest.TestCase):
         
         result  = self.data_extractor.serialize(self.test_data) 
         self.assertAlmostEqual(result[DATA][('DISU','CYS')]['CA'], -2.851700383944911)   
-
-
+    
+    def test_extractor_only_accepts_base_tables(self):
+        
+        self.assertTrue(self.data_extractor.is_table_required(''), 'base tables should be accepted')
+        self.assertTrue(self.data_extractor.is_table_required('pro'), 'gly tables should be rejected')
+        self.assertTrue(self.data_extractor.is_table_required('gly'), 'pro tables should be rejected')
+        
 if __name__ == "__main__":
     unittest.main()

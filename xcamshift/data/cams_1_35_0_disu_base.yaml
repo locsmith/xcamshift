@@ -1,0 +1,19 @@
+----- camshift 1.35.0 - disu - base ------
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013 Gary Thompson & The University of Leeds.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v3.0
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-3.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
+# camshift 1.35.0 extra distance table
+---
+target_atoms: ["HA", "CA", "HN", "N", "C", "CB"]
+
+data:  
+        [DISU, CYS] :   {HA:    0.01155515, CA:   -2.85170038, HN:  -0.10605545, N:   -1.41314415, C:   -0.37088135, CB:   11.36163737}
+
+
