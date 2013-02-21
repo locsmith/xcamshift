@@ -18,17 +18,7 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
  
 
-ext_modules = [Extension("test_distance",  ["test_distance.pyx"],
-                         define_macros = [('CPLUSPLUS', '1') ,
-                                          ('USE_CDS_NAMESPACE', '1')],
-                        
-                         language="c++",
-                         
-                         include_dirs=['/home/garyt/programs/xplor-nih/2.31.0/common',
-                                       '/home/garyt/programs/xplor-nih/2.31.0/CDSlib',
-                                       '/home/garyt/programs/xplor-nih/2.31.0/arch/Linux_i686/include']),
-               
-               Extension("shift_calculators",  ["Cython_shift_calculator.pyx"],
+ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx"],
                          define_macros = [('CPLUSPLUS', '1') ,
                                           ('USE_CDS_NAMESPACE', '1')],
                         
@@ -47,7 +37,7 @@ ext_modules = [Extension("test_distance",  ["test_distance.pyx"],
                          include_dirs=['/home/garyt/programs/xplor-nih/2.31.0/common',
                                        '/home/garyt/programs/xplor-nih/2.31.0/CDSlib',
                                        '/home/garyt/programs/xplor-nih/2.31.0/arch/Linux_i686/include'])
-               ]
+              ]
 
 if False:
     for e in ext_modules:
