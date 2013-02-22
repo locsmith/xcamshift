@@ -1,4 +1,3 @@
------ camshift 1.35.0 - disu - base ------
 #-------------------------------------------------------------------------------
 # Copyright (c) 2013 Gary Thompson & The University of Leeds.
 # All rights reserved. This program and the accompanying materials
@@ -11,6 +10,9 @@
 #-------------------------------------------------------------------------------
 # camshift 1.35.0  disu table
 ---
+residue_type : BASE
+table_type : DISU
+
 target_atoms: ["HA", "CA", "HN", "N", "C", "CB"]
 
 data:  
