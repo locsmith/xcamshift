@@ -19,19 +19,48 @@ from atomSel import AtomSel
 from simulation import currentSimulation
 from vec3 import norm
 from cython.fast_segment_manager import Segment_Manager
-from table_manager import Table_manager
-
+from cache_manager import Cache_manager
 
 X = 0
 Y = 1
 Z = 2
 AXES = X,Y,Z
 
+#TODO: look at replacing caching with cython code
+#TODO: add SegmentManager to cache infractrusture 
 
-#TODO: add more general caching mechanism IMPORTANT and add as part of force field
-cache = {}
-atom_by_index_cache = {}
-_residue_type_cache = None
+RESIDUE_TYPE =  'RESIDUE_TYPE'
+def _build_residue_type_cache():
+    result = {}
+    for atom_id in iter_atom_ids():
+        residue_type = Atom_utils._get_residue_type_from_atom_id(atom_id)
+        residue_number = Atom_utils._get_atom_info_from_index(atom_id)[1]
+        result[residue_number] = residue_type
+    return result
+
+Cache_manager.get_cache_manager().add_cache_builder(RESIDUE_TYPE,_build_residue_type_cache)
+
+def _get_residue_type_cache():
+    return  Cache_manager.get_cache_manager().get_cache(RESIDUE_TYPE)
+
+
+ATOM_SELECTION =  'ATOM_SELECTION'
+ATOM_ID = 'ATOM_ID'
+def _build_empty_cache():
+    return {}
+
+Cache_manager.get_cache_manager().add_cache_builder(ATOM_SELECTION,_build_empty_cache)
+
+def _get_atom_selection_cache():
+    return  Cache_manager.get_cache_manager().get_cache(ATOM_SELECTION)
+
+Cache_manager.get_cache_manager().add_cache_builder(ATOM_ID,_build_empty_cache)
+
+def _get_atom_id_cache():
+    return  Cache_manager.get_cache_manager().get_cache(ATOM_ID)
+
+
+
 class Atom_utils(object):
     @staticmethod
     def _calculate_distance(distance_atom_id_1, distance_atom_id_2):
@@ -47,16 +76,11 @@ class Atom_utils(object):
     
     @staticmethod
     def clear_cache():
-        global cache
-        global _residue_type_cache
-        _residue_type_cache =  None
-        cache = {}
-        atom_by_index_cache = {}
-        Table_manager.get_default_table_manager().reset_default_table_manager()
+        Cache_manager.get_cache_manager().clear_cache()
         
     @staticmethod  
     def find_all_atoms():
-        global cache
+        cache = _get_atom_selection_cache()
         result = None
         key = "(all)"
         if key in cache:
@@ -68,7 +92,7 @@ class Atom_utils(object):
         
     @staticmethod
     def find_atom(segment='*', residue_number='#', atom='*'):
-        global cache
+        cache = _get_atom_selection_cache()
         result = None
         key = segment, residue_number, atom
         if key in cache:
@@ -110,6 +134,7 @@ class Atom_utils(object):
 
     @staticmethod
     def _get_atom_by_index(atom_index):
+        atom_by_index_cache = _get_atom_id_cache()
         if atom_index in atom_by_index_cache:
             result = atom_by_index_cache[atom_index]
         else:
@@ -175,17 +200,6 @@ def iter_atom_ids(predicate=return_true):
 
 
 
-
-def _get_residue_type_cache():
-    global _residue_type_cache
-    
-    if _residue_type_cache == None:
-        _residue_type_cache = {}
-        for atom_id in iter_atom_ids():
-            residue_type = Atom_utils._get_residue_type_from_atom_id(atom_id)
-            residue_number = Atom_utils._get_atom_info_from_index(atom_id)[1]
-            _residue_type_cache[residue_number] = residue_type
-    return _residue_type_cache
 
 
 def iter_residue_types(predicate=return_true):

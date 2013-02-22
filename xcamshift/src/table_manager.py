@@ -29,9 +29,18 @@ from non_bonded_table import Non_bonded_table
 from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 import utils
 from table_base import RESIDUE_TYPE, TABLE_TYPE, TABLE_INDEX, TABLE_LOADED
+from cache_manager import Cache_manager
 
 BASE_TABLE = 'base'
 
+TABLE_MANAGER = 'TABLE_MANAGER'
+def _build_table_manager():
+    return Table_manager()
+
+Cache_manager.get_cache_manager().add_cache_builder(TABLE_MANAGER,_build_table_manager)
+
+def _get_residue_type_cache():
+    return  Cache_manager.get_cache(RESIDUE_TYPE)
 #TODO: cleanup internal structure, caching needs a better implementation
 #TODO: remove specific functions to load tables?
 #TODO: needs composite table support and hierachical item integration
@@ -40,19 +49,11 @@ class Table_manager(object):
 
     NON_BONDED = "nb"
     
-
         
-    __default = None
-    
     @staticmethod
     def get_default_table_manager():
-        if Table_manager.__default == None:
-            Table_manager.__default = Table_manager()
-        return Table_manager.__default
+        return Cache_manager.get_cache_manager().get_cache(TABLE_MANAGER)
     
-    @staticmethod
-    def reset_default_table_manager():
-        Table_manager.__default = None
         
     '''
     class to load and store a set of yaml tables for the camshift forcefield, 
