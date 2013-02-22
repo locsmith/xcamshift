@@ -317,10 +317,16 @@ def _read_template(dir_path,sub_potential,residue_type,version, path='../xcamshi
 
 
 def _extractor_name_filter(extractor_classes):
-    return {extractor.get_name():extractor for extractor in extractor_classes}
+    result  = {}
+    for extractor in extractor_classes:
+        result[extractor.get_name()] = extractor 
+    return result
 
 def _string_list_name_filter(strings):
-    return {string:string for string in strings}
+    result  = {}
+    for string in strings:
+        resu;t[string] = string
+    return result
 
 def  _filter_by_subpotential(extractor_classes, sub_potential, value_to_name  = _string_list_name_filter):
     result = extractor_classes
