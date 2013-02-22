@@ -325,7 +325,7 @@ def _extractor_name_filter(extractor_classes):
 def _string_list_name_filter(strings):
     result  = {}
     for string in strings:
-        resu;t[string] = string
+        result[string] = string
     return result
 
 def  _filter_by_subpotential(extractor_classes, sub_potential, value_to_name  = _string_list_name_filter):
