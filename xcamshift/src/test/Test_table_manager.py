@@ -8,13 +8,14 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
+from cache_manager import Cache_manager
 '''
 Created on 30 Dec 2011
 
 @author: garyt
 '''
 import unittest2
-from table_manager import Table_manager
+from table_manager import Table_manager, TABLE_MANAGER
 from keys import Atom_key, Dihedral_key
 from protocol import initStruct
 from pdbTool import PDBTool
@@ -32,10 +33,10 @@ class Test_table_manager(unittest2.TestCase):
     def setUp(self):
         # TODO add a delegate to get a sequence to the table manager and remove dependance on a psf file
         initStruct("test_data/gb3/gb3.psf")
-        Atom_utils.clear_cache()        
         Segment_Manager.reset_segment_manager()
-        Table_manager.reset_default_table_manager()
-        self.table_manager = Table_manager()
+        cache_manager = Cache_manager.get_cache_manager()
+        cache_manager.clear_cache()
+        self.table_manager = cache_manager.get_cache(TABLE_MANAGER)
         self.table_manager.add_search_path('../../data')
 
     def testLoadTable(self):
