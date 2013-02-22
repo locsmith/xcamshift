@@ -8,7 +8,7 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
-# camshift 1.35.0 extra distance table
+# camshift 1.35.0  disu table
 ---
 target_atoms: ["HA", "CA", "HN", "N", "C", "CB"]
 
