@@ -26,6 +26,7 @@ from sidechain_table import Sidechain_table
 from constants_table import Constants_table
 from ring_table import Ring_table
 from non_bonded_table import Non_bonded_table
+from disulphide_table import Disulphide_table
 from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 import utils
 from table_base import RESIDUE_TYPE, TABLE_TYPE, TABLE_INDEX, TABLE_LOADED
@@ -47,7 +48,6 @@ def _get_residue_type_cache():
 #TODO: caching should work on the wrapper object not the internal _table object
 class Table_manager(object):
 
-    NON_BONDED = "nb"
     
         
     @staticmethod
@@ -75,6 +75,9 @@ class Table_manager(object):
     SIDECHAIN="sidechain"
     CONSTANTS="constants"
     RING="ring"
+    NON_BONDED = "nb"
+    DISULPHIDE = 'disu'
+
     
     def __init__(self,paths=[]):
         '''
@@ -353,4 +356,7 @@ class Table_manager(object):
     
     def get_non_bonded_table(self,residue_type):
         return Non_bonded_table(self._get_table(self.NON_BONDED,residue_type))
+    
+    def get_diulphide_table(self,residue_type):
+        return Disulphide_table(self._get_table(self.DISULPHIDE,residue_type))
             
