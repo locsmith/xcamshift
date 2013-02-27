@@ -27,6 +27,7 @@ from python_utils import IsMappingType, Dict_walker, value_from_key_path,\
     filter_dict
 from numbers import Number
 from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
+from itertools import chain
 
 
 
@@ -70,11 +71,23 @@ class Test_table_importers(unittest2.TestCase):
     
     
     def test_tables_against_original(self):
+        
+        class Testable_table_manager(Table_manager):
+            def __init__(self,paths,input_residues=['ALA']):
+                super(Testable_table_manager, self).__init__(paths)
+                self._input_residues = input_residues
+                
+            def iter_residue_types(self):
+                super_gen = super(Testable_table_manager, self).iter_residue_types()
+                for residue in chain(super_gen,self._input_residues):
+#                    print residue
+                    yield residue
+                    
         for sub_potential in common_constants.CAMSHIFT_SUB_POTENTIALS:
 
             sub_potential_file_id = sub_potential.lower().strip()
             
-            table_manager  = Table_manager(paths=['src/test/data/handcrafted_xcamshift_data_files'])
+            table_manager  = Testable_table_manager(paths=['src/test/data/handcrafted_xcamshift_data_files'])
             expected_table_data = table_manager._get_table(sub_potential_file_id, 'ALA')
             
             read_table = extract(CAMSHIFT_DATA_FILES,sub_potential,'')
@@ -195,6 +208,6 @@ class Test_table_importers(unittest2.TestCase):
 
         
         
-#if __name__ == "__main__":
-#    #import sys;sys.argv = ['', 'Test.testName']
-#    unittest2.main()
+if __name__ == "__main__":
+    #import sys;sys.argv = ['', 'Test.testName']
+    unittest2.main()
