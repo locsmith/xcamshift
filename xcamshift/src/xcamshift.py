@@ -330,6 +330,21 @@ class Random_coil_context :
         
         self.complete = True
 
+class Disulphide_context :
+    def __init__(self,atom,table):
+        self.complete = False
+        
+        self._table = table
+        
+        segment = atom.segmentName()
+        
+        from_residue_number = atom.residueNum()
+        from_residue_type = Atom_utils._get_residue_type(segment, from_residue_number )
+        if from_residue_type ==  'CYS':
+            self.complete = True
+        
+
+
 class Random_coil_component_factory(Atom_component_factory):
     
     #TODO: push to base
@@ -1263,6 +1278,20 @@ class RandomCoilShifts(Base_potential):
             result.append(string)
         return '\n'.join(result)
 
+class Disulphide_shift_calculator(Base_potential):
+    
+
+    def __init__(self):
+        super(Disulphide_shift_calculator, self).__init__()
+        
+        self._add_component_factory(Disulphide_shift_component_factory())
+
+    def get_abbreviated_name(self):
+        return DISULPHIDE
+    
+    def _get_table_source(self):
+        return self._table_manager.get_disulphide_table 
+    
 class Dihedral_shift_calculator(Base_shift_calculator):
     def __init__(self):
         raise Exception("not used!")
@@ -1740,6 +1769,39 @@ class Ring_factory_base():
                         result = True
                         break
         return result
+
+class Disulphide_shift_component_factory(Atom_component_factory, Ring_factory_base):
+    
+    #TODO: push to base
+    #TODO should random coil have a translation table
+    def _translate_atom_name(self, residue_type, atom_name,table):
+        
+        return  table.get_translation(residue_type,atom_name)
+        
+        
+
+    def _get_component_for_atom(self, atom, context):
+        result = None
+        
+        atom_name = atom.atomName()
+        residue_type = atom.residueName()
+        table  =  context._table
+        atom_name = self._translate_atom_name(residue_type,atom_name,table)
+        
+        if atom_name in context._table.get_atoms():
+            value = context._table.get_disulphide_shift(atom_name)
+            if value != None:
+                result = atom.index(), value
+        return result
+    
+
+    def _build_contexts(self, atom, table):
+        contexts = [Disulphide_context(atom, table)]
+        return contexts
+
+    def get_table_name(self):
+        return 'ATOM'
+
     
 class Ring_backbone_component_factory (Atom_component_factory, Ring_factory_base):
     

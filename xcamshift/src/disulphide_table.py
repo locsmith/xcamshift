@@ -30,7 +30,10 @@ class Disulphide_table(Table_base):
 
     def get_target_atoms(self):
         return self._table[TARGET_ATOMS]
-    
+
+    def get_atoms(self):
+        return self.get_target_atoms()
+        
     def get_residue_types(self):
         return [entry[RESIDUE_TYPE_OFFSET] for entry in self._table[DATA]]
 #        
@@ -53,4 +56,5 @@ class Disulphide_table(Table_base):
             message = "atom %s not in disulphide_shift_table atoms %s" % (atom,', '.join(self.get_target_atoms()))
             raise KeyError(message)
     
-
+    def get_translation(self,residue,atom):
+        return atom
