@@ -357,6 +357,6 @@ class Table_manager(object):
     def get_non_bonded_table(self,residue_type):
         return Non_bonded_table(self._get_table(self.NON_BONDED,residue_type))
     
-    def get_diulphide_table(self,residue_type):
+    def get_disulphide_table(self,residue_type):
         return Disulphide_table(self._get_table(self.DISULPHIDE,residue_type))
             

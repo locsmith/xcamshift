@@ -22,6 +22,7 @@ CYS = 'CYS'
 
 DATA = 'data'
 TARGET_ATOMS = 'target_atoms'        
+RESIDUE_TYPE_OFFSET = 1
 class Disulphide_table(Table_base):
     
     def __init__(self, table):
@@ -29,6 +30,9 @@ class Disulphide_table(Table_base):
 
     def get_target_atoms(self):
         return self._table[TARGET_ATOMS]
+    
+    def get_residue_types(self):
+        return [entry[RESIDUE_TYPE_OFFSET] for entry in self._table[DATA]]
 #        
     def get_disulphide_shift(self, atom):
         self.__check_keys(atom)

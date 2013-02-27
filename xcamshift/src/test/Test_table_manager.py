@@ -249,11 +249,13 @@ class Test_table_manager(unittest2.TestCase):
         translation = table.get_chem_type_translation("NH1")
         self.assertEqual(translation, ('N','SP3'))
         
-    def testGetDisuTable(self):
+    def testGetDisulphideTable(self):
         initStruct("test_data/acaggaca/acaggaca.psf")
-        table = self.table_manager.get_diulphide_table('CYS')
+        table = self.table_manager.get_disulphide_table('CYS')
         
         self.assertAlmostEqual(table.get_disulphide_shift('HA'),0.01155515)
+        
+        self.assertSequenceEqual(table.get_residue_types(), ['CYS'])
 
         
     def test_table_hierachy(self):
