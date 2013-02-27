@@ -1286,11 +1286,37 @@ class Disulphide_shift_calculator(Base_potential):
         
         self._add_component_factory(Disulphide_shift_component_factory())
 
+    
     def get_abbreviated_name(self):
         return DISULPHIDE
     
+    def _have_derivative(self):
+        False
+         
+    
     def _get_table_source(self):
-        return self._table_manager.get_disulphide_table 
+        return self._table_manager.get_disulphide_table
+
+    def calc_shifts(self, target_atom_ids, result):
+        components  = self._filter_components(target_atom_ids)
+        for i, component in enumerate(components):
+            result[self._component_to_result[i]] += component[1]
+            
+    def _calc_component_shift(self,index):
+        components = self._get_component_list()
+        return components.get_component(index)[1]
+
+
+    def __str__(self): 
+        result = []
+        for i,elem in enumerate(self._get_component_list()):
+            template = "%-5i  %15s % 8.3f"
+            atom_index,shift = elem
+            atom_name =  Atom_utils._get_atom_name(atom_index)
+            string = template % (i, atom_name,shift)
+            result.append(string)
+        return '\n'.join(result)
+    
     
 class Dihedral_shift_calculator(Base_shift_calculator):
     def __init__(self):
