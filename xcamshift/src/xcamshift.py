@@ -33,8 +33,8 @@ from utils import Atom_utils, AXES, iter_residue_atoms,\
 from vec3 import Vec3, norm, cross, dot
 import abc
 import sys
-from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED,\
-    TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, STRUCTURE_CHANGED
+from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED, DISULPHIDE
+from common_constants import  TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, STRUCTURE_CHANGED
 import itertools
 from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
@@ -3575,7 +3575,8 @@ class Xcamshift(PyPot):
                           Dihedral_potential(),
                           Sidechain_potential(),
                           Ring_Potential(),
-                          Non_bonded_potential()
+                          Non_bonded_potential(),
+                          Disulphide_shift_calculator()
                           ]
         self._verbose=verbose
         self._shift_table = Observed_shift_table()

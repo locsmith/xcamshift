@@ -18,8 +18,9 @@ from protocol import initStruct
 from pdbTool import PDBTool
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
-from xcamshift import Disulphide_shift_calculator
-from test.acaggaca import acaggaca_ss_shifts
+from xcamshift import Disulphide_shift_calculator, Xcamshift
+from test.acaggaca import acaggaca_ss_shifts, acaggaca_ss_nbond_corrections, acaggaca_shifts, acaggaca_hbond_shifts, acaggaca_ss_sidechain_corrections
+from test import util_for_testing
 
 class  TestXcamshiftAcaggaca(unittest2.TestCase):
 
@@ -85,9 +86,37 @@ class  TestXcamshiftAcaggaca(unittest2.TestCase):
         for elem in acaggaca_ss_shifts:
             index = Atom_utils.find_atom_ids(*elem)[0]
             expected[index] += acaggaca_ss_shifts[elem]
+        
+        for elem in acaggaca_ss_sidechain_corrections:
+            index = Atom_utils.find_atom_ids(*elem)[0]
+            expected[index] -= acaggaca_ss_shifts[elem]
 
         disulphide_calculator.set_shifts(result)
         self.assertSequenceAlmostEqual(expected, result, self.DEFAULT_DECIMAL_PLACES)
+
+    def testDisulphideComplete(self):
+        initStruct("test_data/acaggaca/acaggaca.psf") 
+        PDBTool("test_data/acaggaca/acaggaca.pdb").read()
+        
+        xcamshift = Xcamshift()
+        shifts = xcamshift.calc_shifts()
+        
+        selections = list(shifts[0])
+        selected_shifts = list(shifts[1])
+        
+        # correct for chemical shifts which occur from the protons camshift add back to the structure
+        # (camshift  doesn't treat disulphides explicitly and just assumes a disulphide is present if two
+        # protonated cystines are close enough together
+        for target_selection,to_selection, exp in acaggaca_ss_nbond_corrections:
+            offset = selections.index(target_selection)
+            selected_shifts[offset] += acaggaca_ss_nbond_corrections[target_selection,to_selection,exp]
+        
+        shifts = selections,selected_shifts 
+        for selection,shift in zip(*shifts):
+            selection = util_for_testing.translate_atom_key(selection)
+            self.assertAlmostEqual(acaggaca_shifts[selection], shift+ acaggaca_hbond_shifts[selection], self.DEFAULT_DECIMAL_PLACES-3) 
+            
+                        
 
 
 if __name__ == "__main__":
