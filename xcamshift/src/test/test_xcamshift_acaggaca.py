@@ -22,7 +22,7 @@ from xcamshift import Disulphide_shift_calculator, Xcamshift
 from test.acaggaca import acaggaca_ss_shifts, acaggaca_ss_nbond_corrections, acaggaca_shifts, acaggaca_hbond_shifts, acaggaca_ss_sidechain_corrections
 from test import util_for_testing
 
-class  TestXcamshiftAcaggaca(unittest2.TestCase):
+class  TestXcamshiftACAGGACA(unittest2.TestCase):
 
     # TODO add extra places
     DEFAULT_DECIMAL_PLACES = 5
