@@ -20,7 +20,7 @@ from table_builders.xcamshift import Backbone_distance_extractor
 from table_builders.xcamshift.camshift_table_builder import extract
 from common_constants import BACK_BONE, SIDE_CHAIN, BASE, GLY, PRO, C, CA, DATA,\
     N, HN, XTRA, DIHEDRAL, RING, NON_BONDED, CB, SPHERE_1, SP3, HA, SP2, O,\
-    SPHERE_2, CG, CAMSHIFT_RESIDUE_TYPES
+    SPHERE_2, CG, CAMSHIFT_RESIDUE_TYPES, RANDOM_COIL, DISULPHIDE, CAMSHIFT_SUB_POTENTIALS
 from yaml import Loader, load
 import common_constants
 from python_utils import IsMappingType, Dict_walker, value_from_key_path,\
@@ -82,8 +82,11 @@ class Test_table_importers(unittest2.TestCase):
                 for residue in chain(super_gen,self._input_residues):
 #                    print residue
                     yield residue
-                    
-        for sub_potential in common_constants.CAMSHIFT_SUB_POTENTIALS:
+                
+        sub_potential_subset = list(CAMSHIFT_SUB_POTENTIALS)
+        sub_potential_subset.remove(DISULPHIDE)    # there is no original data for the disulphide subpotential
+        sub_potential_subset.remove(RANDOM_COIL)   # there is no extractor for the random coil subpotential
+        for sub_potential in sub_potential_subset:
 
             sub_potential_file_id = sub_potential.lower().strip()
             
@@ -190,7 +193,12 @@ class Test_table_importers(unittest2.TestCase):
                     },
                     
         }
-        for sub_potential in common_constants.CAMSHIFT_SUB_POTENTIALS:
+        
+        sub_potential_subset = list(CAMSHIFT_SUB_POTENTIALS)
+        sub_potential_subset.remove(DISULPHIDE)    # TODO: add test
+        sub_potential_subset.remove(RANDOM_COIL)   # there is no extractor for the random coil subpotential
+        
+        for sub_potential in sub_potential_subset:
             for residue_type in CAMSHIFT_RESIDUE_TYPES:
                 read_table = extract(CAMSHIFT_DATA_FILES,sub_potential,residue_type)
                 
