@@ -25,7 +25,8 @@ from table_builders.formatters import fixup_null_values,\
     fixup_tuple_key_spacing, fixup_put_lonely_keys_on_new_line,\
     fixup_complex_key_question_mark,\
     global_fixup_colons_on_same_line_as_tuple_key,\
-    global_fixup_data_dicts_on_same_line_as_key, fixup_spaces_after_colons
+    global_fixup_data_dicts_on_same_line_as_key, fixup_spaces_after_colons,\
+    fixup_add_after
 from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls, \
     apply_tuple_patch
 
@@ -87,5 +88,6 @@ class HBOND_table_extractor(Table_extractor):
             line = fixup_decimal_spacing(line)
             line = fixup_replace_plus_with_space(line)
             line = fixup_convert_H_to_HN(line)
+            line = fixup_add_after(line,'ANG2','\n')
             result.append(line)
         return result
