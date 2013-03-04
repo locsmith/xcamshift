@@ -89,9 +89,8 @@ class Table_modifier(object):
         value =  expression[2]
         
         target =  self._get_path_or_raise(table, path)
-        print 'tab targ',table,target
         target[name]=value
-        print 'tab',table
+
         return table
         
         
