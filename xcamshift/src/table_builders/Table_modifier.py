@@ -51,7 +51,27 @@ class Table_modifier(object):
         target[name]=value
     
         return table
-
+        
+    def _process_prepend_to(self,expression,table):
+        path= expression[1]
+        name,value=expression[2]
+        
+        target =  self._get_path_or_raise(table, path)
+        
+        temp  = OrderedDict()
+        for key in target:
+            temp[key] = target[key]
+            
+        for key in target:
+            del target[key]
+        
+        target[name]=value
+        for key in temp:
+            target[key]=temp[key]
+        
+        return table
+        
+        
     def _get_path_or_raise(self,table,path):
         current = table
         for elem in path:
