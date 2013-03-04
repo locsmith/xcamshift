@@ -75,14 +75,25 @@ class Test(unittest.TestCase):
         modifier = Table_modifier(program)
         result = modifier.run(self.test_target_data)
         
-        expected_resuly_contents = deepcopy(TEST_DATA)
-        
         EXPECTED_RESULT = OrderedDict()
         EXPECTED_RESULT['D'] = '3'
         EXPECTED_RESULT['A'] = TEST_DATA['A']
         EXPECTED_RESULT['C'] = TEST_DATA['C']
         
         self.assertEqual(result,EXPECTED_RESULT) 
+        
+    def test_replace(self):
+        program = (
+                   ('replace', ('A','B'), '3'),
+                   )
+
+        modifier = Table_modifier(program)
+        result = modifier.run(self.test_target_data)
+        
+        EXPECTED_RESULT = deepcopy(TEST_DATA)
+        EXPECTED_RESULT['A']['B'] =  '3'
+        
+        self.assertEqual(result, EXPECTED_RESULT)
 
 
 if __name__ == "__main__":

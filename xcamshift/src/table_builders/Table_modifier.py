@@ -5,6 +5,7 @@ Created on 1 Mar 2013
 '''
 
 from collection_backport import OrderedDict
+from docutils.nodes import target
 
 class Table_modifier(object):
     '''
@@ -80,6 +81,17 @@ class Table_modifier(object):
         
         self._do_prepend_to_dict(table, name, value)
         
+        return table
+    
+    def _process_replace(self,expression,table):
+        path =  expression[1][:-1]
+        name = expression[1][-1]
+        value =  expression[2]
+        
+        target =  self._get_path_or_raise(table, path)
+        print 'tab targ',table,target
+        target[name]=value
+        print 'tab',table
         return table
         
         
