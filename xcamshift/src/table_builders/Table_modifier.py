@@ -92,7 +92,16 @@ class Table_modifier(object):
         target[name]=value
 
         return table
+
+    def _process_add(self,expression,table):
+        path =  expression[1][:-1]
+        name = expression[1][-1]
+        value =  expression[2]
         
+        target =  self._get_path_or_raise(table, path)
+        target[name]+=value
+
+        return table        
         
     def _get_path_or_raise(self,table,path):
         current = table

@@ -94,6 +94,19 @@ class Test(unittest.TestCase):
         EXPECTED_RESULT['A']['B'] =  '3'
         
         self.assertEqual(result, EXPECTED_RESULT)
+        
+    def test_add(self):
+        program = (
+                   ('add', ('A','B'), '4'),
+                   )
+
+        modifier = Table_modifier(program)
+        result = modifier.run(self.test_target_data)
+        
+        EXPECTED_RESULT = deepcopy(TEST_DATA)
+        EXPECTED_RESULT['A']['B'] =  '14'
+        
+        self.assertEqual(result, EXPECTED_RESULT)        
 
 
 if __name__ == "__main__":
