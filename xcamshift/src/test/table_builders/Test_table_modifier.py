@@ -37,6 +37,20 @@ class Test(unittest.TestCase):
         EXPECTED_RESULT = deepcopy(TEST_DATA)
         EXPECTED_RESULT['D']='3'
         self.assertEqual(result,EXPECTED_RESULT)
+        
+    def test_append_to_operation(self):
+        program = (
+                   ('append_to', ('A',),('D','3')),
+                   )
+        
+        modifier = Table_modifier(program)
+        
+        result = modifier.run(self.test_target_data)
+        
+        EXPECTED_RESULT = deepcopy(TEST_DATA)
+        EXPECTED_RESULT['A']['D']='3'
+        
+
 
 
 

@@ -42,4 +42,21 @@ class Table_modifier(object):
         
         return table
     
+    def _process_append_to(self,expression,table):
+        path= expression[1]
+        name,value=expression[2]
         
+        target =  self._get_path_or_raise(table, path)
+        
+        target[name]=value
+    
+        return table
+
+    def _get_path_or_raise(self,table,path):
+        current = table
+        for elem in path:
+            current = current[elem]
+        return current        
+
+        
+     
