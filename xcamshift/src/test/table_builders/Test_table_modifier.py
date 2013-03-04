@@ -67,7 +67,22 @@ class Test(unittest.TestCase):
         self.assertEqual(result,EXPECTED_RESULT)        
 
 
-
+    def test_prepend_operation(self):
+        program = (
+                   ('prepend', ('D','3')),
+                   )
+        
+        modifier = Table_modifier(program)
+        result = modifier.run(self.test_target_data)
+        
+        expected_resuly_contents = deepcopy(TEST_DATA)
+        
+        EXPECTED_RESULT = OrderedDict()
+        EXPECTED_RESULT['D'] = '3'
+        EXPECTED_RESULT['A'] = TEST_DATA['A']
+        EXPECTED_RESULT['C'] = TEST_DATA['C']
+        
+        self.assertEqual(result,EXPECTED_RESULT) 
 
 
 if __name__ == "__main__":

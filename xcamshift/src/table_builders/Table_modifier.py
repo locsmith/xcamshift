@@ -52,22 +52,33 @@ class Table_modifier(object):
     
         return table
         
+
+    def _do_prepend_to_dict(self, target, name, value):
+        temp = OrderedDict()
+        for key in target:
+            temp[key] = target[key]
+        
+        for key in target:
+            del target[key]
+        
+        target[name] = value
+        for key in temp:
+            target[key] = temp[key]
+
     def _process_prepend_to(self,expression,table):
         path= expression[1]
         name,value=expression[2]
         
         target =  self._get_path_or_raise(table, path)
         
-        temp  = OrderedDict()
-        for key in target:
-            temp[key] = target[key]
-            
-        for key in target:
-            del target[key]
+        self._do_prepend_to_dict(target, name, value)
         
-        target[name]=value
-        for key in temp:
-            target[key]=temp[key]
+        return table
+    
+    def _process_prepend(self,expression,table):
+        name,value=expression[1]
+        
+        self._do_prepend_to_dict(table, name, value)
         
         return table
         
