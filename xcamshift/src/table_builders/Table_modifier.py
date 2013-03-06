@@ -36,19 +36,19 @@ class Table_modifier(object):
             
         
     def _process_append(self,expression,table):
-        name,value  = expression[1]
-        
-        table[name]=value
+        for name,value  in expression[1:]:
+            
+            table[name]=value
         
         return table
     
     def _process_append_to(self,expression,table):
         path= expression[1]
-        name,value=expression[2]
         
         target =  self._get_path_or_raise(table, path)
         
-        target[name]=value
+        for name,value  in expression[2:]: 
+            target[name]=value
     
         return table
         

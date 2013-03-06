@@ -24,8 +24,23 @@ class Test(unittest.TestCase):
         TEST_DATA['A'] = OrderedDict()
         TEST_DATA['A']['B']='1'
         TEST_DATA['C']='2'
-            
+
     def test_append_operation(self):
+        program = (
+                   ('append', ('D','3'), ('E','4')),
+                   )
+        
+        modifier = Table_modifier(program)
+        
+        result = modifier.run(self.test_target_data)
+        
+        EXPECTED_RESULT = deepcopy(TEST_DATA)
+        EXPECTED_RESULT['D']='3'
+        EXPECTED_RESULT['E']='4'
+        self.assertEqual(result,EXPECTED_RESULT)
+        
+                    
+    def test_append_multiple_operation(self):
         program = (
                    ('append', ('D','3')),
                    )
@@ -49,6 +64,19 @@ class Test(unittest.TestCase):
         
         EXPECTED_RESULT = deepcopy(TEST_DATA)
         EXPECTED_RESULT['A']['D']='3'
+        
+    def test_append_to_multiple_operation(self):
+        program = (
+                   ('append_to', ('A',),('D','3'),('E','4')),
+                   )
+        
+        modifier = Table_modifier(program)
+        
+        result = modifier.run(self.test_target_data)
+        
+        EXPECTED_RESULT = deepcopy(TEST_DATA)
+        EXPECTED_RESULT['A']['D']='3'
+        EXPECTED_RESULT['A']['E']='4'
         
     def test_prepend_to_operation(self):
         program = (
