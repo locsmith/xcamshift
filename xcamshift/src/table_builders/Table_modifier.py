@@ -5,7 +5,6 @@ Created on 1 Mar 2013
 '''
 
 from collection_backport import OrderedDict
-from docutils.nodes import target
 
 class Table_modifier(object):
     '''
@@ -53,6 +52,19 @@ class Table_modifier(object):
     
         return table
         
+    def _do_prepend_to_dict_multiple(self, target, name_values):
+        temp = OrderedDict()
+        for key in target:
+            temp[key] = target[key]
+        
+        for key in target:
+            del target[key]
+            
+        for name,value in name_values:
+            target[name] = value
+            
+        for key in temp:
+            target[key] = temp[key]
 
     def _do_prepend_to_dict(self, target, name, value):
         temp = OrderedDict()
@@ -68,11 +80,9 @@ class Table_modifier(object):
 
     def _process_prepend_to(self,expression,table):
         path= expression[1]
-        name,value=expression[2]
-        
         target =  self._get_path_or_raise(table, path)
         
-        self._do_prepend_to_dict(target, name, value)
+        self._do_prepend_to_dict_multiple(target, expression[2:])
         
         return table
     

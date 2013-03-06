@@ -66,6 +66,22 @@ class Test(unittest.TestCase):
         
         self.assertEqual(result,EXPECTED_RESULT)        
 
+    def test_multiple_prepend_to_operation(self):
+        program = (
+                   ('prepend_to', ('A',),('D','3'),('E','4')),
+                   )
+        
+        modifier = Table_modifier(program)
+        
+        result = modifier.run(self.test_target_data)
+        
+        EXPECTED_RESULT = deepcopy(TEST_DATA)
+        EXPECTED_RESULT['A']=OrderedDict()
+        EXPECTED_RESULT['A']['D']='3'
+        EXPECTED_RESULT['A']['E']='4'
+        EXPECTED_RESULT['A']['B']=TEST_DATA['A']['B']
+        
+        self.assertEqual(result,EXPECTED_RESULT) 
 
     def test_prepend_operation(self):
         program = (
