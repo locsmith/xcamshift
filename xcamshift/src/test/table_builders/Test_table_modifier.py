@@ -97,6 +97,22 @@ class Test(unittest.TestCase):
         EXPECTED_RESULT['C'] = TEST_DATA['C']
         
         self.assertEqual(result,EXPECTED_RESULT) 
+
+    def test_prepend_multiple_operation(self):
+        program = (
+                   ('prepend', ('D','3'),('E','4')),
+                   )
+        
+        modifier = Table_modifier(program)
+        result = modifier.run(self.test_target_data)
+        
+        EXPECTED_RESULT = OrderedDict()
+        EXPECTED_RESULT['D'] = '3'
+        EXPECTED_RESULT['E'] = '4'
+        EXPECTED_RESULT['A'] = TEST_DATA['A']
+        EXPECTED_RESULT['C'] = TEST_DATA['C']
+        
+        self.assertEqual(result,EXPECTED_RESULT) 
         
     def test_replace(self):
         program = (

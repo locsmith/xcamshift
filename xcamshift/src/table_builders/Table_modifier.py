@@ -87,9 +87,8 @@ class Table_modifier(object):
         return table
     
     def _process_prepend(self,expression,table):
-        name,value=expression[1]
         
-        self._do_prepend_to_dict(table, name, value)
+        self._do_prepend_to_dict_multiple(table, expression[1:])
         
         return table
     
