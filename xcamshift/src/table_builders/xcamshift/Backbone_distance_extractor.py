@@ -22,7 +22,6 @@ from collection_backport import OrderedDict
 from table_builders.formatters import fixup_convert_H_to_HN,fixup_decimal_spacing, \
      fixup_data_key_spacing, fixup_null_values, fixup_replace_plus_with_space,\
     fixup_put_lonely_keys_on_new_line, fixup_line_data_key_spacing
-from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls
 
 from table_builders.table_extractor import Table_extractor
 
@@ -59,29 +58,13 @@ class BB_table_extractor(Table_extractor):
     
     
     def __init__(self,data):
-
-        self._data = data
+        super(BB_table_extractor, self).__init__(data)
         
-        apply_patch_float_format_with_nulls()
-        apply_ordered_dict_patch()
         
     @classmethod
     def get_name(self):
         return BACK_BONE
-    
-        
-    def extract(self, file_type  = ''):
-        
-        data =  self._data[file_type]
-        
-        serialized_data = self.serialize(data)
-        
-        lines = self.build_output_lines(serialized_data)
-        
-        lines =  self.format_lines(lines)
-        
-        return "\n".join(lines)
-        
+            
 
     def add_missing_keys_to_copy_of_data(self, data):
         data = dict(data)
