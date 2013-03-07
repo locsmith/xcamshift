@@ -8,6 +8,8 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
+from table_builders.Table_modifier import Table_modifier
+from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 '''
 Created on 30 Mar 2012
 
@@ -68,6 +70,7 @@ class Camshift_table_reader(object):
         self.files_by_type = {}
         self.data = {}
         self.file_types = set()
+        add_access_to_yaml_list_based_keys()
 
     def read(self):
         self._find_files(self.table_dir)
@@ -201,6 +204,7 @@ def _build_args_list():
     parser.add_argument('--verbose', action="store_true", default=False)
     parser.add_argument('-o', '--output', default="-", help="where to put the files either a file system path or - for stdout") 
     parser.add_argument('-t', '--template', default='../xcamshift_templates', help='directory where template files are kept: %(default)s}')
+    parser.add_argument('-p', '--patch', default='../xcamshift_patches', help='directory where patch files are kept: %(default)s}')
     parser.add_argument('-s', '--sub-potential', default=None, help='select the sub potential to output (default = ALL)')
     return  parser.parse_args()
 
@@ -261,12 +265,12 @@ def _read_version(table_dir):
     return version_info
 
 
-def _get_template_filename(sub_potential, residue_type,version):
+def _get_template_filename(sub_potential, residue_type, version, file_name_template='cams_%s_%s_%s_template.txt'):
     if residue_type == '':
         residue_type = 'base'
     sub_potential_name = sub_potential.strip().lower()
     version_string = '%i_%i_%i' % version
-    file_name = 'cams_%s_%s_%s_template.txt' % (version_string, sub_potential_name, residue_type)
+    file_name = file_name_template % (version_string, sub_potential_name, residue_type)
     return file_name
 
 
@@ -299,8 +303,20 @@ def _read_template(dir_path,sub_potential,residue_type,version, path='../xcamshi
             template  = ''.join(template)
 
     return template
-             
-        
+
+ 
+def _read_patch(dir_path,sub_potential,residue_type,version, path='../xcamshift_patches'):
+    file_name = _get_template_filename(sub_potential, residue_type, version, file_name_template='cams_%s_%s_%s_patch.yaml')            
+
+    file_path = _build_filename_path(dir_path, path, file_name)
+
+    patch = {}
+    print file_path
+    if os.path.isfile(file_path):
+        with  open(file_path) as patch_h:
+            patch = load(patch_h)
+
+    return patch        
 #def _filter_table_type_names(table_type_names, sub_potential):
 #    result =  table_type_names
 #    
@@ -407,6 +423,10 @@ if __name__ == '__main__':
                 file_type_name  = _get_file_type_name(residue_type)
                 
                 sub_potential_name  = extractor.get_name()
+                
+                patch = _read_patch(table_dir, sub_potential_name, residue_type, camshift_version,path=args.patch)
+                modifier = Table_modifier(patch)
+                extractor.set_modifier(modifier)
                 
                 output_data = extractor.extract(residue_type)
                 
