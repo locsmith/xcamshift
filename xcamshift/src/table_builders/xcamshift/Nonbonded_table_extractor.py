@@ -75,12 +75,7 @@ SPHERE_2_EXPONENT =  1.0
 class Nonbonded_table_extractor(Table_extractor):
     
     def __init__(self,data):
-        self._data =  data
-        
-        apply_patch_float_format_with_nulls()
-        apply_tuple_patch()
-        apply_ordered_dict_patch()
-        apply_no_aliases_patch()
+        super(Nonbonded_table_extractor, self).__init__(data)
     
     @classmethod
     def get_name(self):
@@ -130,7 +125,7 @@ class Nonbonded_table_extractor(Table_extractor):
         return out_data
 
     
-
+    #TODO: merge with other fixups if possible
     def fixup_CA_values(self,line):
         return re.sub("CA:([ \-0-9]{3,3}?)\.","CA: \g<1>.",line)
     
