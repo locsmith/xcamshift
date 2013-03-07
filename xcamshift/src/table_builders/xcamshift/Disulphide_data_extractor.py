@@ -15,8 +15,6 @@ Created on 13 Feb 2013
 '''
 
 from common_constants import DATA, h_keys#, HA,CA,H,N,C,CB,O, h_keys,  XTRA
-from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls, \
-     apply_tuple_patch
 from collection_backport import OrderedDict
 from table_builders.formatters import fixup_null_values,\
     fixup_decimal_spacing, fixup_convert_H_to_HN, fixup_replace_plus_with_space,\
@@ -33,11 +31,8 @@ DISU = 'DISU'
 class DISU_table_extractor(Table_extractor):
     
     def __init__(self,data):
-        self._data =  data
+        super(DISU_table_extractor, self).__init__(data)
         
-        apply_patch_float_format_with_nulls()
-        apply_tuple_patch()
-        apply_ordered_dict_patch()
     
     @classmethod
     def get_name(self):

@@ -27,8 +27,6 @@ from table_builders.formatters import fixup_null_values,\
     global_fixup_colons_on_same_line_as_tuple_key,\
     global_fixup_data_dicts_on_same_line_as_key, fixup_spaces_after_colons,\
     fixup_add_after
-from ..yaml_patches import apply_ordered_dict_patch, apply_patch_float_format_with_nulls, \
-    apply_tuple_patch
 
 from table_builders.table_extractor import Table_extractor
 
@@ -40,28 +38,13 @@ class HBOND_table_extractor(Table_extractor):
     
     
     def __init__(self,data):
+        Table_extractor.__init__(self,data)
 
-        self._data = data
-        
-        apply_patch_float_format_with_nulls()
-        apply_tuple_patch()
-        apply_ordered_dict_patch()
 
     @classmethod
     def get_name(self):
         return HBOND
 
-    def extract(self, file_type  = ''):
-        
-        data =  self._data[file_type]
-        
-        serialized_data = self.serialize(data)
-        
-        lines = self.build_output_lines(serialized_data)
-        
-        lines =  self.format_lines(lines)
-        
-        return "\n".join(lines)
 
     def serialize(self,data):
         out_data = OrderedDict()
