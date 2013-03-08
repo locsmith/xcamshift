@@ -20,8 +20,9 @@ class Table_modifier(object):
     
     
     def run(self,table):
-        for expression in self._program:
-            table  = self._execute_expression_or_raise(expression,table)
+        if self._program != None:
+            for expression in self._program:
+                table  = self._execute_expression_or_raise(expression,table)
         
         return table
     
