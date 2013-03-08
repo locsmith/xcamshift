@@ -311,7 +311,6 @@ def _read_patch(dir_path,sub_potential,residue_type,version, path='../xcamshift_
     file_path = _build_filename_path(dir_path, path, file_name)
 
     patch = {}
-    print file_path
     if os.path.isfile(file_path):
         with  open(file_path) as patch_h:
             patch = load(patch_h)
