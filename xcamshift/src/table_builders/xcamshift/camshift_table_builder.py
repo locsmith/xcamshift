@@ -265,7 +265,8 @@ def _read_version(table_dir):
     return version_info
 
 
-def _get_template_filename(sub_potential, residue_type, version, file_name_template='cams_%s_%s_%s_template.txt'):
+def _get_template_filename(table_selector, file_name_template='cams_%s_%s_%s_template.txt'):
+    sub_potential, residue_type, version =  table_selector
     if residue_type == '':
         residue_type = 'base'
     sub_potential_name = sub_potential.strip().lower()
@@ -291,8 +292,11 @@ def _build_filename_path(dir_path, relative_path, file_name):
     
     return file_path
 
-def _read_template(dir_path,sub_potential,residue_type,version, path='../xcamshift_templates'):
-    file_name = _get_template_filename(sub_potential, residue_type, version)
+#TODO: merge patch and template reading code
+def _read_template(table_selector, table_path):
+    dir_path, path, template = table_path 
+    
+    file_name = _get_template_filename(table_selector, template)
     
     file_path = _build_filename_path(dir_path, path, file_name)
 
@@ -305,8 +309,9 @@ def _read_template(dir_path,sub_potential,residue_type,version, path='../xcamshi
     return template
 
  
-def _read_patch(dir_path,sub_potential,residue_type,version, path='../xcamshift_patches'):
-    file_name = _get_template_filename(sub_potential, residue_type, version, file_name_template='cams_%s_%s_%s_patch.yaml')            
+def _read_patch(table_selector, patch_path):
+    dir_path, path, template = patch_path
+    file_name = _get_template_filename(table_selector,template)            
 
     file_path = _build_filename_path(dir_path, path, file_name)
 
@@ -423,14 +428,20 @@ if __name__ == '__main__':
                 
                 sub_potential_name  = extractor.get_name()
                 
-                patch = _read_patch(table_dir, sub_potential_name, residue_type, camshift_version,path=args.patch)
+                patch_path = table_dir, args.patch, 'cams_%s_%s_%s_patch.txt'
+                table_selector = sub_potential_name, residue_type, camshift_version
+                
+                patch = _read_patch(table_selector, patch_path)
+                
                 modifier = Table_modifier(patch)
                 extractor.set_modifier(modifier)
                 
                 output_data = extractor.extract(residue_type)
                 
-                template = _read_template(table_dir, sub_potential_name, residue_type, camshift_version,path=args.template)
-                template_filename = _get_template_filename(sub_potential_name, residue_type, camshift_version,)
+                table_path =  table_dir, args.template, 'cams_%s_%s_%s_template.txt' 
+                
+                template = _read_template(table_selector, table_path)
+                template_filename = _get_template_filename(table_selector)
                 
                 if template != None:
                     output_data = template % output_data            
