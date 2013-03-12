@@ -441,7 +441,6 @@ if __name__ == '__main__':
                 table_path =  table_dir, args.template, 'cams_%s_%s_%s_template.txt' 
                 
                 template = _read_template(table_selector, table_path)
-                template_filename = _get_template_filename(table_selector)
                 
                 if template != None:
                     output_data = template % output_data            
