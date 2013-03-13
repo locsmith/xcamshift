@@ -13,6 +13,7 @@ Created on Apr 10, 2012
 
 @author: garyt
 '''
+import sys
 import unittest2
 from table_manager import Table_manager
 from table_builders.table_extractor import Table_extractor
@@ -20,7 +21,7 @@ from table_builders.xcamshift import Backbone_distance_extractor
 from table_builders.xcamshift.camshift_table_builder import extract
 from common_constants import BACK_BONE, SIDE_CHAIN, BASE, GLY, PRO, C, CA, DATA,\
     N, HN, XTRA, DIHEDRAL, RING, NON_BONDED, CB, SPHERE_1, SP3, HA, SP2, O,\
-    SPHERE_2, CG, CAMSHIFT_RESIDUE_TYPES, RANDOM_COIL, DISULPHIDE, CAMSHIFT_SUB_POTENTIALS
+    SPHERE_2, CG, CAMSHIFT_RESIDUE_TYPES, RANDOM_COIL, DISULPHIDE, CAMSHIFT_SUB_POTENTIALS, HBOND
 from yaml import Loader, load
 import common_constants
 from python_utils import IsMappingType, Dict_walker, value_from_key_path,\
@@ -84,8 +85,10 @@ class Test_table_importers(unittest2.TestCase):
                     yield residue
                 
         sub_potential_subset = list(CAMSHIFT_SUB_POTENTIALS)
-        sub_potential_subset.remove(DISULPHIDE)    # there is no original data for the disulphide subpotential
-        sub_potential_subset.remove(RANDOM_COIL)   # there is no extractor for the random coil subpotential
+        # there is no original data for theses subpotentials
+        for potential_name in DISULPHIDE,RANDOM_COIL,HBOND:
+            sub_potential_subset.remove(potential_name)   
+        
         for sub_potential in sub_potential_subset:
 
             sub_potential_file_id = sub_potential.lower().strip()
@@ -195,9 +198,12 @@ class Test_table_importers(unittest2.TestCase):
         }
         
         sub_potential_subset = list(CAMSHIFT_SUB_POTENTIALS)
-        sub_potential_subset.remove(DISULPHIDE)    # TODO: add test
-        sub_potential_subset.remove(RANDOM_COIL)   # there is no extractor for the random coil subpotential
-        
+        # TODO: add test
+        # there is no extractor for the random coil subpotential
+        for potential_name in RANDOM_COIL,HBOND,DISULPHIDE:
+            sub_potential_subset.remove(potential_name)
+            print >> sys.stderr, 'warning sub potential %s not tested!' % potential_name
+            
         for sub_potential in sub_potential_subset:
             for residue_type in CAMSHIFT_RESIDUE_TYPES:
                 read_table = extract(CAMSHIFT_DATA_FILES,sub_potential,residue_type)
