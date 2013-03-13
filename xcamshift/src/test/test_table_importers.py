@@ -124,6 +124,8 @@ class Test_table_importers(unittest2.TestCase):
         #  2. hydrogen bonds
         #  3. disulphide cystines
         
+        DISU='DISU'
+        CYS='CYS'
         expected = {
                     BACK_BONE : {
                           BASE : {(DATA,-1,N,HA) :  0.1049538,
@@ -195,17 +197,28 @@ class Test_table_importers(unittest2.TestCase):
                                   (DATA, (CA, -1), (CA, 1), CB) :  0.3278771 }   # note this is different from the bpaper value (0.3274878)
                     },
                     
+                    DISULPHIDE : {
+                          BASE : {(DATA, (DISU, CYS), HA)   :      0.01155515,
+                                  (DATA, (DISU, CYS), CA)   :     -2.85170038,
+                                  (DATA, (DISU, CYS), HN)   :     -0.10605545,
+                                  (DATA, (DISU, CYS), N )   :     -1.41314415,
+                                  (DATA, (DISU, CYS), C )   :     -0.37088135,
+                                  (DATA, (DISU, CYS), CB)   :     11.36163737}
+                    }    
         }
         
         sub_potential_subset = list(CAMSHIFT_SUB_POTENTIALS)
         # TODO: add test
         # there is no extractor for the random coil subpotential
-        for potential_name in RANDOM_COIL,HBOND,DISULPHIDE:
+        for potential_name in RANDOM_COIL,HBOND:
             sub_potential_subset.remove(potential_name)
             print >> sys.stderr, 'warning sub potential %s not tested!' % potential_name
             
         for sub_potential in sub_potential_subset:
             for residue_type in CAMSHIFT_RESIDUE_TYPES:
+                if sub_potential == DISULPHIDE and residue_type != CYS:
+                    continue
+                
                 read_table = extract(CAMSHIFT_DATA_FILES,sub_potential,residue_type)
                 
                 read_table_data = load(read_table[sub_potential, residue_type])
