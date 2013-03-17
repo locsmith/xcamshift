@@ -404,10 +404,15 @@ cdef struct dihedral_parameters:
 #cdef float sum(Vec3 vec3):
 #    return vec3.x()+vec3.y()+vec3.z()
 @cython.profile(False)
-cdef inline  Vec3 operator_times (Vec3& vec3, float scale):
+cdef inline  Vec3 old_operator_times (Vec3& vec3, float scale):
     return Vec3(vec3.x() * scale, vec3.y() * scale, vec3.z() * scale)
 
-
+@cython.profile(False)
+cdef inline void operator_times (Vec3& vec3, float scale):
+     vec3[0] =  vec3[0] * scale
+     vec3[1] =  vec3[1] * scale
+     vec3[2] =  vec3[2] * scale
+     
 @cython.profile(False)
 cdef inline float calc_distance_simulation(Simulation* sim, int atom_index_1, atom_index_2):
 
@@ -1370,8 +1375,8 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     @cython.profile(False)
     cdef inline _distance_calc_single_force_set(self,int index, float factor, Out_array forces):
         
-        cdef target_distant_atom atom_ids
-        cdef Vec3 xyz_distances, target_forces, distant_forces
+#        cdef target_distant_atom atom_ids
+        cdef Vec3 xyz_distances
         cdef float force_factor, distance
         cdef Vec3 result
 
@@ -1381,9 +1386,12 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         xyz_distances  = self._xyz_distances(atom_ids.target_atom_id,atom_ids.distant_atom_id)
         
         force_factor  = self._cython_calc_single_force_factor(index, factor)
+
+        cdef Vec3 target_forces = xyz_distances
+        operator_times(target_forces, -force_factor)
         
-        target_forces = operator_times(xyz_distances, -force_factor)
-        distant_forces = operator_times(xyz_distances, force_factor)
+        cdef Vec3 distant_forces = xyz_distances
+        operator_times(distant_forces, force_factor)
 #        
         forces.add(atom_ids.target_atom_id,target_forces)
         forces.add(atom_ids.distant_atom_id,distant_forces)
@@ -1484,12 +1492,12 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
 #        self._cython_calc_single_force_set(index, factor, forces)
         
     cdef inline _dihedral_calc_single_force_set(self, int index, float factor, Out_array forces):
-        cdef Vec3 r1, r2, r3, r4, temp
+        cdef Vec3 r1, r2, r4, temp
         cdef Vec3 n1, n2
         cdef float weight
         cdef float factor_1, factor_2, factor_3
-        cdef Vec3 F1, F2, F3, F4
-        cdef Vec3 T1, T2, T3, T4
+        cdef Vec3 F2, F3, 
+        cdef Vec3 T3, T4
         
         cdef float dihedral_factor = self._calc_single_force_factor(index)
         cdef dihedral_ids atom_ids = self._get_dihedral_atom_ids(index)
@@ -1501,8 +1509,10 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
          
         r1 = v1 - v2
         r2 = v3 - v2
-        temp = Vec3(r2)
-        r3 = operator_times(temp, -1)
+        
+        cdef Vec3 r3 = r2
+        operator_times(r3, -1)
+        
         r4 = v4 - v3
 
 #        print vec3_as_tuple(r1), vec3_as_tuple(r2), vec3_as_tuple(r3), vec3_as_tuple(r4)
@@ -1524,25 +1534,29 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
 #        // Journal of Computational Chemistry 16, pp. 527-533:
 ##        // Force and virial of torsional-angle-dependent potentials.
         factor_1 = dihedral_factor * r2_length
-        temp=Vec3(n1)
-        F1 = operator_times(temp, (-factor_1 / norm(n1)**2))
-        temp = Vec3(n2)
-        F4 = operator_times(temp, ( factor_1 / norm(n2)**2))
+
+        cdef Vec3 F1 = n1
+        operator_times(F1, (-factor_1 / norm(n1)**2))
+        
+        cdef Vec3 F4 = n2 
+        operator_times(F4, ( factor_1 / norm(n2)**2))
         
         factor_2 = dot(r1, r2) / r2_length_2
         factor_3 = dot(r3, r4) / r2_length_2
 
-        temp = Vec3(F1)
-        T1 = operator_times(temp,  (factor_2-1))
-        temp = Vec3(F4)
-        T2 = operator_times(temp,  -factor_3)
+        cdef Vec3 T1 = F1
+        operator_times(T1,  (factor_2-1))
+        
+        cdef Vec3 T2 = F4
+        operator_times(T2,  -factor_3)
         
         F2 = T1 + T2
         
-        temp = Vec3(F1)
-        T1 = operator_times(temp,  -factor_2)
-        temp =Vec3(F4)
-        T2 = operator_times(temp, (factor_3 -1))
+        T1 = F1
+        operator_times(T1,  -factor_2)
+        
+        T2 = F4
+        operator_times(T2, (factor_3 -1))
 
         F3 = T1 + T2
 
@@ -1553,14 +1567,10 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
 #        force_triplet_3 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_3)
 #        force_triplet_4 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_4)
         
-        temp =Vec3(F1)
-        F1 = operator_times(temp, weight) 
-        temp =Vec3(F2)
-        F2 = operator_times(temp, weight)
-        temp =Vec3(F3)
-        F3 = operator_times(temp, weight)
-        temp =Vec3(F4)
-        F4 = operator_times(temp, weight)
+        operator_times(F1, weight) 
+        operator_times(F2, weight)
+        operator_times(F3, weight)
+        operator_times(F4, weight)
         
         forces.add(atom_ids.atom_id_1,F1)
         forces.add(atom_ids.atom_id_2,F2)
@@ -1736,15 +1746,15 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         
         #TODO: remove temporarys and operator_mu;t#
         cdef Vec3 temp_d =  Vec3(d)
-        cdef Vec3 scaled_d = operator_times(temp_d,dn)
+        cdef Vec3 scaled_d = old_operator_times(temp_d,dn)
         cdef Vec3 temp_normal = Vec3(ring_normal)
-        cdef Vec3 scaled_normal = operator_times(temp_normal,dL2)
+        cdef Vec3 scaled_normal = old_operator_times(temp_normal,dL2)
         cdef Vec3 temp_normal_distance = Vec3(scaled_normal - scaled_d)
-        gradUQ = operator_times(temp_normal_distance,gradUQ_factor)
+        gradUQ = old_operator_times(temp_normal_distance,gradUQ_factor)
             
         
         cdef float gradVQ_factor = 3.0 * dL
-        cdef Vec3 gradVQ= operator_times(d,gradVQ_factor)
+        cdef Vec3 gradVQ= old_operator_times(d,gradVQ_factor)
         
         result.dL3nL3 = dL3nL3
         result.dLnL =dLnL
@@ -1788,7 +1798,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 
     cdef inline _cython_calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Ring_force_sub_terms force_terms, Out_array forces):
         cdef Vec3 temp_normal =  Vec3(force_terms.ring_normal)
-        cdef Vec3 nSum = operator_times(temp_normal,2.0)  #            float_type g [3], ab [3], c [3]
+        cdef Vec3 nSum = old_operator_times(temp_normal,2.0)  #            float_type g [3], ab [3], c [3]
         cdef ring_atom_ids ring_atoms = self._get_ring_atom_ids(ring_id)
         cdef Ring_atom_positions ring_atom_positions = self._get_ring_atom_positions(ring_id)
     #// 2 for a 5-membered ring, 3 for a 6-membered ring
