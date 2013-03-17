@@ -388,8 +388,9 @@ cdef class Ring_atom_positions:
     cdef set_vec(self,int offset, Vec3& vec):
         self._check_offset(offset)
         self._vecs[offset] = vec
-
-    cdef Vec3* get_vec(self,int offset):
+        
+    @cython.profile(False)
+    cdef inline Vec3* get_vec(self,int offset):
         self._check_offset(offset)
         return &self._vecs[offset] 
 
