@@ -1293,7 +1293,20 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
             else:
                 raise Exception("bad distance component length %i should be either 4 or 5 " % len(component))
             
-            
+    def _calc_single_force_set(self, int index, float factor, Out_array forces):
+        #TODO tidy this up a hack for the test suite
+        saved_component_list = self._components
+        component_list = Component_list()
+        component_list.add_component(self._components[index])
+        self._compiled_components = NULL
+        self._set_components(component_list)
+        
+        
+        self.__call__(component_list,[0], [factor], forces)
+        self._components =  saved_component_list
+        self._compiled_components =  NULL
+        self._set_components(saved_component_list)
+                    
         
     @cython.profile(False)
     cdef inline target_distant_atom _get_target_and_distant_atom_ids(self, int index):
