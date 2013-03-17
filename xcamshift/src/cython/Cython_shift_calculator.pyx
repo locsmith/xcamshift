@@ -1607,7 +1607,9 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         forces.add(atom_ids.atom_id_4,F4)
 
 
-
+cdef struct Ring_component:
+      int target_atom_id
+      int atom_type_id
     
     
 #cdef int RING_ATOM_IDS = 1
@@ -1618,18 +1620,32 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     cdef object _ring_components
     cdef object _centre_cache
     cdef object _normal_cache
+    cdef Ring_component* _compiled_components 
+    cdef int _num_components
     
     
     def __init__(self,name="not set"):
         super(Fast_ring_force_calculator, self).__init__(name=name)
-        self._components = None
         self._coef_components = None
         self._ring_components = None
         self._centre_cache = None
         self._normal_cache = None
+        self._compiled_components = NULL
+        self._num_components = 0
         
     def _set_components(self,components):
-        self._components = components
+        super(Fast_ring_force_calculator, self)._set_components(components)
+        if  self._compiled_components ==  NULL:
+            self._compile_components(components)
+            
+    def _compile_components(self,components): 
+        self._compiled_components = <Ring_component*>malloc(len(components) * sizeof(Ring_component))
+        self._num_components = len(components)
+        for i,component in enumerate(components):
+            self._compiled_components[i].target_atom_id = components[i][0]
+            self._compiled_components[i].atom_type_id = components[i][1]
+            
+                
         
     def _set_coef_components(self,coef_components):
         self._coef_components =  coef_components
@@ -1687,15 +1703,15 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
             
         return positions
 
-    @cython.profile(False)
-    cdef inline target_type _get_target_and_type(self,int index):
-        component = self._get_component(index)
-#        TODO: this needs to contain better names a union?
-        cdef target_type result
-        result.target_atom_id = component[0]
-        result.atom_type_id = component[1]
-        
-        return result#
+#    @cython.profile(False)
+#    cdef inline target_type _get_target_and_type(self,int index):
+#        component = self._get_component(index)
+##        TODO: this needs to contain better names a union?
+#        cdef target_type result
+#        result.target_atom_id = component[0]
+#        result.atom_type_id = component[1]
+#        
+#        return result#
     
     @cython.profile(False)
     cdef inline  Coef_components _get_coef_components(self, int atom_type_id):
@@ -1703,13 +1719,12 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         return Coef_components(python_coef_components)
     
     cdef _do_calc_components(self, object component_to_result,object force_factors, Out_array force):
-        for i in range(len(self._components)):
+        for i in range(self._num_components):
             self._ring_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
-    cdef inline _ring_calc_single_force_set(self,  int index, float force_factor, object forces):
-        cdef target_type target_atom_id_type =  self._get_target_and_type(index)
+    cdef inline _ring_calc_single_force_set(self,  int index, float force_factor, object forces): 
         #TODO: make array a union
-        cdef Coef_components coef_components = self._get_coef_components(target_atom_id_type.atom_type_id)
+        cdef Coef_components coef_components = self._get_coef_components(self._compiled_components[index].atom_type_id)
         cdef Coef_component* coef_component
         for i in range(coef_components.num_components):
             coef_component = coef_components.get_component(i)
@@ -1717,7 +1732,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     #                print 'coef_component', i, coef_component
     #                 print 'here', target_atom_id, atom_type_id,
     #                coef_component, force_factor
-            self._calculate_single_ring_forces(target_atom_id_type.target_atom_id, target_atom_id_type.atom_type_id, coef_component, force_factor, forces)
+            self._calculate_single_ring_forces(self._compiled_components[index].target_atom_id, self._compiled_components[index].atom_type_id, coef_component, force_factor, forces)
 
     def _calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Python_ring_force_sub_terms python_sub_terms, object forces):
         cdef Ring_force_sub_terms  terms  =  python_sub_terms.get_terms()
@@ -1741,7 +1756,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         result  = Python_ring_force_sub_terms()
         result.setup(terms)
         return result
-        
+    
     cdef Ring_force_sub_terms _build_cython_force_terms(self, int target_atom_id, int ring_id):
         cdef Ring_force_sub_terms result
         cdef Vec3 target_atom_pos  = self._simulation[0].atomPos(target_atom_id)
