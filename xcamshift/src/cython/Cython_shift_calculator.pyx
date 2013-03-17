@@ -1745,16 +1745,18 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         cdef float gradUQ_factor = -6.0 * dn / (dL4 * nL2)
         
         #TODO: remove temporarys and operator_mu;t#
-        cdef Vec3 temp_d =  Vec3(d)
-        cdef Vec3 scaled_d = old_operator_times(temp_d,dn)
-        cdef Vec3 temp_normal = Vec3(ring_normal)
-        cdef Vec3 scaled_normal = old_operator_times(temp_normal,dL2)
-        cdef Vec3 temp_normal_distance = Vec3(scaled_normal - scaled_d)
-        gradUQ = old_operator_times(temp_normal_distance,gradUQ_factor)
+        cdef Vec3 scaled_d =  d
+        operator_times(scaled_d,dn)
+        cdef Vec3 scaled_normal = ring_normal
+        operator_times(scaled_normal,dL2)
+        
+        cdef Vec3 gradUQ = scaled_normal - scaled_d
+        operator_times(gradUQ,gradUQ_factor)
             
         
         cdef float gradVQ_factor = 3.0 * dL
-        cdef Vec3 gradVQ= old_operator_times(d,gradVQ_factor)
+        cdef Vec3 gradVQ = d
+        operator_times(gradVQ,gradVQ_factor)
         
         result.dL3nL3 = dL3nL3
         result.dLnL =dLnL
@@ -1798,7 +1800,8 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 
     cdef inline _cython_calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Ring_force_sub_terms force_terms, Out_array forces):
         cdef Vec3 temp_normal =  Vec3(force_terms.ring_normal)
-        cdef Vec3 nSum = old_operator_times(temp_normal,2.0)  #            float_type g [3], ab [3], c [3]
+        cdef Vec3 nSum = temp_normal
+        operator_times(nSum,2.0)  #            float_type g [3], ab [3], c [3]
         cdef ring_atom_ids ring_atoms = self._get_ring_atom_ids(ring_id)
         cdef Ring_atom_positions ring_atom_positions = self._get_ring_atom_positions(ring_id)
     #// 2 for a 5-membered ring, 3 for a 6-membered ring
