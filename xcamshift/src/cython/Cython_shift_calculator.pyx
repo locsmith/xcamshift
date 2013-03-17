@@ -1226,6 +1226,12 @@ cdef class Base_force_calculator:
 #    cdef _cython_calc_single_force_set(self, int index, float force_factor, object forces):
 #        raise Exception("unexpected! this method should be implemented")
 
+cdef struct Distance_component:
+      int target_atom
+      int remote_atom_1
+      int remote_atom_2
+      float coefficient
+      float exponent
 
 
 cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator):
@@ -1240,6 +1246,8 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     cdef bint  _smoothed 
     cdef float _smoothing_factor
     cdef float _cutoff
+    cdef Distance_component* _compiled_components 
+    cdef int _num_components
     
     def __init__(self, object indices, bint smoothed, name="Not set"):
         super(Fast_distance_based_potential_force_calculator, self).__init__(name=name)
@@ -1252,7 +1260,9 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         self._smoothed =  smoothed
         self._smoothing_factor =  DEFAULT_SMOOTHING_FACTOR
         self._cutoff =  DEFAULT_CUTOFF
-        
+        self._compiled_components  
+        self._num_components
+
     def set_cutoff(self, cutoff):
         self._cutoff =  cutoff
     
@@ -1261,7 +1271,31 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         
     def _set_components(self,components):
         self._components = components
-    
+        if  self._compiled_components ==  NULL:
+            print 'compile components....', id(self)
+            self._compile_components(components) 
+
+    cdef _compile_components(self,components):
+        self._compiled_components = <Distance_component*>malloc(len(components) * sizeof(Distance_component))
+        self._num_components = len(components)
+        for i,component in enumerate(components):
+            self._compiled_components[i].target_atom = components[i][0]
+            if len(component) == 4:
+                self._compiled_components[i].remote_atom_1 = components[i][0]
+                self._compiled_components[i].remote_atom_2 = components[i][1]
+                self._compiled_components[i].coefficient   = components[i][2]
+                self._compiled_components[i].exponent      = components[i][3]
+            elif len(component) == 5:
+                self._compiled_components[i].remote_atom_1 = components[i][1]
+                self._compiled_components[i].remote_atom_1 = components[i][2]
+                self._compiled_components[i].coefficient   = components[i][3]
+                self._compiled_components[i].exponent      = components[i][4]
+            else:
+                raise Exception("bad distance component length %i should be either 4 or 5 " % len(component))
+            
+            
+        
+    @cython.profile(False)
     cdef inline target_distant_atom _get_target_and_distant_atom_ids(self, int index):
         
         cdef object values
