@@ -107,8 +107,7 @@ def value_from_key_path(target_dict,key_path):
     
     result  =  target_dict
     for key in key_path:
-        if key in result:
-            result = result[key]
+        result = result[key]
 
     return result
 
