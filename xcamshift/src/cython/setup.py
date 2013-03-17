@@ -17,6 +17,8 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
  
+import Cython.Compiler.Options
+Cython.Compiler.Options.annotate = True
 
 ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx"],
                          define_macros = [('CPLUSPLUS', '1') ,
