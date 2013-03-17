@@ -1271,7 +1271,6 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     def _set_components(self,components):
         self._components = components
         if  self._compiled_components ==  NULL:
-            print 'compile components....', id(self)
             self._compile_components(components) 
         
     cdef _compile_components(self,components):
