@@ -1363,7 +1363,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         return self._cython_calc_single_force_factor(index, factor)
     
     cdef _do_calc_components(self, object component_to_result, object force_factors, Out_array force):
-        for i in range(len(self._components)):
+        for i in range(self._num_components):
             self._distance_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
     
@@ -1425,7 +1425,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         operator_times(distant_forces, force_factor)
 #        
         forces.add(self._compiled_components[index].remote_atom_1,target_forces)
-        forces.add(self._compiled_components[index].remote_atom_2,distant_forces)
+        forces.add(self._compiled_components[index].remote_atom_2,distant_forces) 
         
 
 cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_calculator):
