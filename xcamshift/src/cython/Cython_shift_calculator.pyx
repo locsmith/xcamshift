@@ -1607,10 +1607,14 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         forces.add(atom_ids.atom_id_4,F4)
 
 
-cdef struct Ring_component:
+cdef struct Ring_target_component:
       int target_atom_id
       int atom_type_id
     
+cdef struct Ring_component:
+    int ring_id
+    int num_atoms
+    int[6] atom_ids
     
 #cdef int RING_ATOM_IDS = 1
 cdef class Fast_ring_force_calculator(Base_force_calculator):
@@ -1620,8 +1624,12 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     cdef object _ring_components
     cdef object _centre_cache
     cdef object _normal_cache
-    cdef Ring_component* _compiled_components 
+    
+    cdef Ring_target_component* _compiled_components 
     cdef int _num_components
+    
+    cdef Ring_component* _compiled_ring_components
+    cdef int _num_ring_components
     
     
     def __init__(self,name="not set"):
@@ -1630,16 +1638,20 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         self._ring_components = None
         self._centre_cache = None
         self._normal_cache = None
+        
         self._compiled_components = NULL
         self._num_components = 0
         
+        self._compiled_ring_components = NULL
+        self._num_ring_components = 0
+         
     def _set_components(self,components):
         super(Fast_ring_force_calculator, self)._set_components(components)
         if  self._compiled_components ==  NULL:
             self._compile_components(components)
             
     def _compile_components(self,components): 
-        self._compiled_components = <Ring_component*>malloc(len(components) * sizeof(Ring_component))
+        self._compiled_components = <Ring_target_component*>malloc(len(components) * sizeof(Ring_target_component))
         self._num_components = len(components)
         for i,component in enumerate(components):
             self._compiled_components[i].target_atom_id = components[i][0]
@@ -1650,8 +1662,19 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     def _set_coef_components(self,coef_components):
         self._coef_components =  coef_components
             
-    def _set_ring_components(self,coef_components):
-        self._ring_components =  coef_components
+    def _set_ring_components(self,ring_components):
+        self._ring_components =  ring_components
+        if  self._compiled_ring_components ==  NULL:
+            self._compile_ring_components(ring_components)
+            
+    def _compile_ring_components(self,ring_components): 
+        self._compiled_ring_components = <Ring_component*>malloc(len(ring_components) * sizeof(Ring_component))
+        self._num_ring_components = len(ring_components)
+        for i,ring_component in enumerate(ring_components):
+            self._compiled_ring_components[i].ring_id  = ring_components[i][0]
+            self._compiled_ring_components[i].num_atoms  = len(ring_component[1])
+            for j in range(len(ring_component[1])):
+                self._compiled_ring_components[i].atom_ids[j] =ring_component[1][j]
     
     def _set_normal_cache(self,normals):
         self._normal_cache = normals
@@ -1693,13 +1716,13 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     @cython.profile(False)
     cdef inline Ring_atom_positions _get_ring_atom_positions(self, int ring_id):
         cdef ring_atom_ids ring_atoms =  self._get_ring_atom_ids(ring_id)
-        cdef int num_atoms = ring_atoms.num_atoms
+        cdef int num_atoms = self._compiled_ring_components[ring_id].num_atoms
         cdef Ring_atom_positions  positions  = Ring_atom_positions(num_atoms) 
         
         cdef Vec3* position = NULL
         for i in range(num_atoms):
             position = positions.get_vec(i)
-            position[0] = self._simulation[0].atomPos(ring_atoms.atom_ids[i])
+            position[0] = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[i])
             
         return positions
 
