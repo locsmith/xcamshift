@@ -1269,7 +1269,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         self._smoothing_factor = smoothing_factor
         
     def _set_components(self,components):
-        self._components = components
+        super(Fast_distance_based_potential_force_calculator, self)._set_components(components)
         if  self._compiled_components ==  NULL:
             self._compile_components(components) 
         
