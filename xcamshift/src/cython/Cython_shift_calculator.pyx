@@ -1323,20 +1323,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         
         return result
     
-    @cython.profile(False)
-    cdef inline coefficient_exponent _get_coefficient_and_exponent(self, int index):
-        cdef object values
-        cdef float coefficient
-        cdef float exponent
-        cdef coefficient_exponent result
-        values = self._components.get_component(index)
-        
 
-
-        result.coefficient = values[self._coefficient_index]
-        result.exponent = values[self._exponent_index]
-        
-        return result
  
 #    cdef inline float _distance(self, int target_atom, int distance_atom):
 #        cdef Vec3 target_pos, distant_pos, distance
