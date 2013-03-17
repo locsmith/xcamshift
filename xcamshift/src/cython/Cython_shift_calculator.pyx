@@ -616,6 +616,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         
         return result
 
+    @cython.profile(False)
     cdef inline float _get_coefficient(self, int index):
         component = self._get_component(index)
         coefficient = component[5]
