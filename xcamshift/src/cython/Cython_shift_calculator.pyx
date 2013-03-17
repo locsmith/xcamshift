@@ -403,9 +403,7 @@ cdef struct dihedral_parameters:
     
 #cdef float sum(Vec3 vec3):
 #    return vec3.x()+vec3.y()+vec3.z()
-@cython.profile(False)
-cdef inline  Vec3 old_operator_times (Vec3& vec3, float scale):
-    return Vec3(vec3.x() * scale, vec3.y() * scale, vec3.z() * scale)
+
 
 @cython.profile(False)
 cdef inline void operator_times (Vec3& vec3, float scale):
