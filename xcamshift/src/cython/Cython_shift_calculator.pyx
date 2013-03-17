@@ -378,20 +378,20 @@ cdef class Ring_atom_positions:
         free(self._vecs)
         self._vecs = NULL
     
-    cdef inline int _check_offset(self, int offset) except -1:
-        if not offset < self.num_vecs:
-            raise IndexError("tried to access object at %i length is %i" % (offset,self._num_vecs))
-        if self._vecs is NULL:
-            raise AttributeError("trying to access deallocated memory!")
+#    cdef inline int _check_offset(self, int offset) except -1:
+#        if not offset < self.num_vecs:
+#            raise IndexError("tried to access object at %i length is %i" % (offset,self._num_vecs))
+#        if self._vecs is NULL:
+#            raise AttributeError("trying to access deallocated memory!")
 
     
     cdef set_vec(self,int offset, Vec3& vec):
-        self._check_offset(offset)
+#        self._check_offset(offset)
         self._vecs[offset] = vec
         
     @cython.profile(False)
     cdef inline Vec3* get_vec(self,int offset):
-        self._check_offset(offset)
+#        self._check_offset(offset)
         return &self._vecs[offset] 
 
 cdef struct dihedral_parameters:
