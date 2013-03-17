@@ -1383,21 +1383,19 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     @cython.profile(False)
     cdef inline float _cython_calc_single_force_factor(self, int index, float factor):
         cdef target_distant_atom atom_ids
-        cdef coefficient_exponent coef_exp
+#        cdef coefficient_exponent coef_exp
         cdef float exponent 
         
-        cdef float full_factor
+        cdef float full_factor, force_factor
         cdef float ratio, pre_exponent, reduced_exponent, sum_xyz_distances_2
         
-        atom_ids = self._get_target_and_distant_atom_ids(index)
+#        atom_ids = self._get_target_and_distant_atom_ids(index)
         
-        coef_exp = self._get_coefficient_and_exponent(index)
-        
-        sum_xyz_distances_2 = self._sum_xyz_distances_2(atom_ids.target_atom_id, atom_ids.distant_atom_id)
+        sum_xyz_distances_2 = self._sum_xyz_distances_2(self._compiled_components[index].remote_atom_1, self._compiled_components[index].remote_atom_2)
 #
-        full_factor= factor * coef_exp.coefficient
+        full_factor= factor *  self._compiled_components[index].coefficient
         
-        exponent = coef_exp.exponent
+        exponent =  self._compiled_components[index].exponent
         if self._smoothed:
             ratio = sum_xyz_distances_2 / (self._cutoff**2)
             ratio =  ratio**4
