@@ -15,6 +15,8 @@ Created on 31 Jul 2012
 @author: garyt
 
 '''
+
+cimport cython
 from vec3 import Vec3 as python_vec3
 from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross,  Simulation
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
@@ -116,9 +118,9 @@ cdef class Out_array:
         cdef Vec3 cvalue  = Vec3(value[0],value[1],value[2])
         self.add(offset, cvalue)
         
-        
-    cdef add(self,long offset, Vec3& value):
-        self._check_offset(offset)
+    @cython.profile(False)
+    cdef inline void  add(self,long offset, Vec3& value):
+#        self._check_offset(offset)
         cdef long id3 = offset *3
         
         self._data[id3]   += value[0]
@@ -346,6 +348,7 @@ cdef class Coef_components:
 #        self._check_offset(offset)
 #        self._components[offset] = component
 
+    @cython.profile(False)
     cdef inline Coef_component* get_component(self,int offset):
         self._check_offset(offset)
         return &self._components[offset] 
@@ -400,12 +403,12 @@ cdef struct dihedral_parameters:
     
 #cdef float sum(Vec3 vec3):
 #    return vec3.x()+vec3.y()+vec3.z()
-
+@cython.profile(False)
 cdef inline  Vec3 operator_times (Vec3& vec3, float scale):
     return Vec3(vec3.x() * scale, vec3.y() * scale, vec3.z() * scale)
 
 
-
+@cython.profile(False)
 cdef inline float calc_distance_simulation(Simulation* sim, int atom_index_1, atom_index_2):
 
     cdef Vec3 vec1 = sim[0].atomPos(atom_index_1)
@@ -439,6 +442,7 @@ cdef inline float calc_distance_simulation(Simulation* sim, int atom_index_1, at
     
 
 #TODO how does currentSimulation().atomByID work inside
+@cython.profile(False)
 cdef inline float calc_dihedral_angle_simulation(Simulation* simulation, dihedral_ids dihedral_atom_ids):
     
     
@@ -513,7 +517,8 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 #    TODO: this needs to be removed
     cdef _set_components(self,components):
         self._components = components
-    
+        
+    @cython.profile(False)
     cdef inline target_distant_atom _get_target_and_distant_atom_ids(self, int index):
         cdef object values 
         cdef target_distant_atom result 
@@ -523,6 +528,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         result.distant_atom_id  = values[self._distance_atom_index_2]
         return result
     
+    @cython.profile(False)
     cdef inline coefficient_exponent _get_coefficient_and_exponent(self, int index):
         cdef object values
         cdef coefficient_exponent result
@@ -594,7 +600,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     cdef inline _get_component(self,int index):
         return self._components[index]
     
-
+    @cython.profile(False)
     cdef inline dihedral_ids _get_dihedral_atom_ids(self, int index):
         cdef dihedral_ids result
         
@@ -612,7 +618,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         coefficient = component[5]
         return coefficient
 
-
+    @cython.profile(False)
     cdef inline dihedral_parameters _get_parameters(self, int index):
         component = self._get_component(index)
         
@@ -697,13 +703,16 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     def _set_centre_cache(self,centres):
         self._centre_cache = centres
 
+    @cython.profile(False)
     cdef _get_coef_components(self, int atom_type_id):
         return self._coef_components.get_components_for_atom_id(atom_type_id)
-            
+
+    @cython.profile(False)
     cdef Vec3 _get_ring_normal(self, int ring_id):
         cdef Vec3_container container =  self._normal_cache.get_component(ring_id)[1]
         return  container.get_vec3()
     
+    @cython.profile(False)
     cdef Vec3 _get_ring_centre(self, int ring_id):
         cdef Vec3_container container =  self._centre_cache.get_component(ring_id)[1]
         return  container.get_vec3()
@@ -1263,6 +1272,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         
         return result
     
+    @cython.profile(False)
     cdef inline coefficient_exponent _get_coefficient_and_exponent(self, int index):
         cdef object values
         cdef float coefficient
@@ -1285,7 +1295,8 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
 #        distant_pos =  currentSimulation().atomPosArr().data(distance_atom)
 #        
 #        return  norm(target_pos - distant_pos)
-        
+    
+    @cython.profile(False)    
     cdef inline Vec3 _xyz_distances(self, int target_atom, int distance_atom):
         cdef Vec3 target_pos, distant_pos
         
@@ -1294,7 +1305,8 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         distant_pos =   self._simulation[0].atomPos(distance_atom)
         
         return target_pos - distant_pos
-        
+    
+    @cython.profile(False)    
     cdef inline float _sum_xyz_distances_2(self, int target_atom, int distance_atom):
         cdef Vec3 target_pos, distant_pos, distance
         cdef float result =0.0
@@ -1317,7 +1329,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
             self._distance_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
     
-    
+    @cython.profile(False)
     cdef inline float _cython_calc_single_force_factor(self, int index, float factor):
         cdef target_distant_atom atom_ids
         cdef coefficient_exponent coef_exp
@@ -1355,6 +1367,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
 #    def _calc_single_force_set(self, int index, float factor, object forces):
 #        self._cython_calc_single_force_set(index, factor, forces)
         
+    @cython.profile(False)
     cdef inline _distance_calc_single_force_set(self,int index, float factor, Out_array forces):
         
         cdef target_distant_atom atom_ids
@@ -1403,7 +1416,8 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     
     def __init__(self,name="not set"):
         Base_force_calculator.__init__(self,name=name)
-
+    
+    @cython.profile(False)
     cdef inline dihedral_ids _get_dihedral_atom_ids(self, int index):
         cdef dihedral_ids result
         
@@ -1416,6 +1430,7 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         
         return result
     
+    @cython.profile(False)
     cdef inline dihedral_parameters _get_parameters(self, int index):
         component = self._get_component(index)
         
@@ -1432,6 +1447,7 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
             
         return result
     
+    @cython.profile(False)
     cdef inline float _get_coefficient(self, int index):
         component = self._get_component(index)
         coefficient = component[5]
@@ -1590,11 +1606,13 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 
 #    cdef _get_coef_components(self, int atom_type_id):
 #        return self._coef_components.get_components_for_atom_id(atom_type_id)
-            
+    
+    @cython.profile(False)        
     cdef Vec3 _get_ring_normal(self, int ring_id):
         cdef Vec3_container container =  self._normal_cache.get_component(ring_id)[1]
         return  container.get_vec3()
     
+    @cython.profile(False)
     cdef Vec3 _get_ring_centre(self, int ring_id):
         cdef Vec3_container container = self._centre_cache.get_component(ring_id)[1]
         return  container.get_vec3()       
@@ -1603,6 +1621,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     
 
     #TODO: use this more places
+    @cython.profile(False)
     cdef inline ring_atom_ids _get_ring_atom_ids(self, int ring_id):
         cdef object ring_component = self._ring_components.get_component(ring_id)
         cdef object python_ring_atom_ids = ring_component[RING_ATOM_IDS]
@@ -1616,7 +1635,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
        
     
 
-    
+    @cython.profile(False)
     cdef inline Ring_atom_positions _get_ring_atom_positions(self, int ring_id):
         cdef ring_atom_ids ring_atoms =  self._get_ring_atom_ids(ring_id)
         cdef int num_atoms = ring_atoms.num_atoms
@@ -1629,6 +1648,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
             
         return positions
 
+    @cython.profile(False)
     cdef inline target_type _get_target_and_type(self,int index):
         component = self._get_component(index)
 #        TODO: this needs to contain better names a union?
@@ -1638,6 +1658,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         
         return result#
     
+    @cython.profile(False)
     cdef inline  Coef_components _get_coef_components(self, int atom_type_id):
         cdef object python_coef_components = self._coef_components.get_components_for_atom_id(atom_type_id)
         return Coef_components(python_coef_components)
