@@ -1441,8 +1441,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
             self._non_bonded_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
     cdef inline  _non_bonded_calc_single_force_set(self, int index, float factor, Out_array forces):
-        cdef target_distant_atom atom_ids = Fast_distance_based_potential_force_calculator._get_target_and_distant_atom_ids(self,index)
-        cdef float distance  = calc_distance_simulation(self._simulation, atom_ids.target_atom_id, atom_ids.distant_atom_id)
+        cdef float distance  = calc_distance_simulation(self._simulation, self._compiled_components[index].target_atom,self._compiled_components[index].remote_atom_1)
 #        TODO: this should be the non bonded distance cutoff
 #TODO class variable of self are not being looked up!
         if distance < 5.0:
