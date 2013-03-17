@@ -1274,22 +1274,22 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         if  self._compiled_components ==  NULL:
             print 'compile components....', id(self)
             self._compile_components(components) 
-
+        
     cdef _compile_components(self,components):
         self._compiled_components = <Distance_component*>malloc(len(components) * sizeof(Distance_component))
         self._num_components = len(components)
         for i,component in enumerate(components):
-            self._compiled_components[i].target_atom = components[i][0]
+            self._compiled_components[i].target_atom = components[i][self._target_atom_index]
             if len(component) == 4:
-                self._compiled_components[i].remote_atom_1 = components[i][0]
-                self._compiled_components[i].remote_atom_2 = components[i][1]
-                self._compiled_components[i].coefficient   = components[i][2]
-                self._compiled_components[i].exponent      = components[i][3]
+                self._compiled_components[i].remote_atom_1 = components[i][self._distance_atom_index_1]
+                self._compiled_components[i].remote_atom_2 = components[i][self._distance_atom_index_2]
+                self._compiled_components[i].coefficient   = components[i][self._coefficient_index]
+                self._compiled_components[i].exponent      = components[i][self._exponent_index]
             elif len(component) == 5:
-                self._compiled_components[i].remote_atom_1 = components[i][1]
-                self._compiled_components[i].remote_atom_1 = components[i][2]
-                self._compiled_components[i].coefficient   = components[i][3]
-                self._compiled_components[i].exponent      = components[i][4]
+                self._compiled_components[i].remote_atom_1 = components[i][self._distance_atom_index_1]
+                self._compiled_components[i].remote_atom_2 = components[i][self._distance_atom_index_2]
+                self._compiled_components[i].coefficient   = components[i][self._coefficient_index]
+                self._compiled_components[i].exponent      = components[i][self._exponent_index]
             else:
                 raise Exception("bad distance component length %i should be either 4 or 5 " % len(component))
             
