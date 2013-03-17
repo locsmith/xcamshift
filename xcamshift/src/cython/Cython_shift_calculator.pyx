@@ -250,7 +250,7 @@ cdef class Vec3_container:
         self.floats[1] =  vec3.y()
         self.floats[2] =  vec3.z()
         
-        
+    @cython.profile(False)    
     cdef Vec3  get_vec3(self):
         return Vec3(self.floats[0],self.floats[1],self.floats[2])
     
