@@ -335,22 +335,22 @@ cdef class Coef_components:
         free(self._components)
         self._components = NULL
     
-    cdef int _check_offset(self, int offset) except -1:
-    
-        if not offset < self.num_components:
-            raise IndexError("tried to access object at %i length is %i" % (offset,self._num_components))
-        if self._components is NULL:
-            raise AttributeError("trying to access deallocated memory!")
-        return 0
+#    cdef int _check_offset(self, int offset) except -1:
+#    
+#        if not offset < self.num_components:
+#            raise IndexError("tried to access object at %i length is %i" % (offset,self._num_components))
+#        if self._components is NULL:
+#            raise AttributeError("trying to access deallocated memory!")
+#        return 0
 
-    
+     
 #    cdef set_component(self,int offset, coef_component& component):
 #        self._check_offset(offset)
 #        self._components[offset] = component
 
     @cython.profile(False)
     cdef inline Coef_component* get_component(self,int offset):
-        self._check_offset(offset)
+#        self._check_offset(offset)
         return &self._components[offset] 
 
 cdef struct ring_atom_ids:
