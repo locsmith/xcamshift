@@ -1423,22 +1423,23 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         cdef Vec3 xyz_distances
         cdef float force_factor, distance
         cdef Vec3 result
-
-        atom_ids =  self._get_target_and_distant_atom_ids(index)
+ 
+#        atom_ids =  self._get_target_and_distant_atom_ids(index)
 #        
 ##        print atom_ids.target_atom_id,atom_ids.distant_atom_id
-        xyz_distances  = self._xyz_distances(atom_ids.target_atom_id,atom_ids.distant_atom_id)
+        xyz_distances  = self._xyz_distances(self._compiled_components[index].remote_atom_1,self._compiled_components[index].remote_atom_2)
         
         force_factor  = self._cython_calc_single_force_factor(index, factor)
-
+        
         cdef Vec3 target_forces = xyz_distances
         operator_times(target_forces, -force_factor)
         
         cdef Vec3 distant_forces = xyz_distances
         operator_times(distant_forces, force_factor)
 #        
-        forces.add(atom_ids.target_atom_id,target_forces)
-        forces.add(atom_ids.distant_atom_id,distant_forces)
+        forces.add(self._compiled_components[index].remote_atom_1,target_forces)
+        forces.add(self._compiled_components[index].remote_atom_2,distant_forces)
+        
 
 cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_calculator):
     cdef float _non_bonded_cutoff
