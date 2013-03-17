@@ -49,7 +49,7 @@ def load_tests(loader, tests, pattern):
                 TestXcamshiftAGFA,
                 TestXcamshift,
                 TestXcamshiftAGAGA,
-                TestXcamshiftGB3
+#                TestXcamshiftGB3
 )
     
     suite = unittest2.TestSuite()

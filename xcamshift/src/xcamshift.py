@@ -593,7 +593,6 @@ class Base_potential(object):
         self._filtered_components =  None
     
         #TODO: this can go in the end... we just need some more clever logic in the get
-        self._fast = False
         self._shift_calculator = None
         
         
@@ -615,8 +614,6 @@ class Base_potential(object):
         return Base_force_calculator(self)
 
 
-    def set_fast(self, on):
-        self._fast =  (on == True)
     
     def _filter_components(self, target_atom_ids):
         if self._freeze  and not self._filtered_components == None:
@@ -1031,11 +1028,6 @@ class Distance_based_potential(Base_potential):
         self._shift_calculator = self._get_shift_calculator()
         self._force_calculator = self._get_force_calculator()
         
-    #TODO: move to base potential
-    def set_fast(self, on):
-        self._fast = (on == True)
-        self._shift_calculator = self._get_shift_calculator()
-        self._force_calculator = self._get_force_calculator()
         
     #TODO: move to base potential
     def _get_shift_calculator(self):
@@ -1525,10 +1517,6 @@ class Dihedral_potential(Base_potential):
                     self._calc_single_force_set(index,force_factor,forces)
         return forces
         
-    def set_fast(self, on):
-        self._fast = (on == True)
-        self._shift_calculator = self._get_shift_calculator()
-        self._force_calculator = self._get_force_calculator()
         
     def calc_shifts(self, target_atom_ids, results):
         components  = self._filter_components(target_atom_ids)
@@ -2369,7 +2357,6 @@ class Ring_Potential(Base_potential):
         self._add_component_factory(Ring_backbone_component_factory())
         self._add_component_factory(Ring_coefficient_component_factory())
         self._add_component_factory(Ring_sidechain_atom_factory())
-        self._fast =False
         self._shift_calculator = self._get_shift_calculator()
         self._ring_data_calculator = self._get_ring_data_calculator()
         self._force_calculator = self._get_force_calculator()
@@ -2405,12 +2392,7 @@ class Ring_Potential(Base_potential):
             self._build_ring_data_cache()
             self._setup_ring_calculator(self._shift_calculator)
          
-    def set_fast(self, on):
-        self._fast = (on == True)
-        self._shift_calculator = self._get_shift_calculator()
-        self._ring_data_calculator =  self._get_ring_data_calculator()
-        self._force_calculator = self._get_force_calculator()
-        
+
     def _setup_ring_calculator(self,calculator):
         calculator._set_coef_components(self._get_component_list('COEF'))
         calculator._set_ring_components(self._get_component_list('RING'))
@@ -2757,7 +2739,6 @@ class Non_bonded_list(object):
         self._reset()
         
 
-        self._fast = False
         self._verbose = False 
         self._non_bonded_list_calculator = self._get_non_bonded_calculator()
         
@@ -3581,7 +3562,6 @@ class Xcamshift(PyPot):
         self._verbose=verbose
         self._shift_table = Observed_shift_table()
         self._shift_cache = {}
-        self._fast =  False
         self._out_array =  None
         self._selected_atoms = None
         self._energy_term_cache = self._create_energy_term_cache()
@@ -3613,10 +3593,6 @@ class Xcamshift(PyPot):
 
     def update_force_factor_calculator(self):
         self._update_calculator(self._force_factor_calculator)
- 
-    def set_fast(self,on):
-        self._fast = (on == True)
-        self._set_sub_potetials_fast()
         
     def clear_shift_cache(self):
         self._shift_cache = {}
@@ -3962,14 +3938,8 @@ class Xcamshift(PyPot):
         return active_target_atom_ids
     
 
-    def _set_sub_potetials_fast(self):
-        for potential in self.potential:
-            potential.set_fast(self._fast)
-        
-        return potential
 
     def _prepare_potentials(self, change, data):
-        self._set_sub_potetials_fast()
         
         for potential in self.potential:
             potential._prepare(change, data)

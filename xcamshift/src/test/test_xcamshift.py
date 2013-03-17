@@ -32,7 +32,6 @@ import sys
 from table_manager import Table_manager
 from component_list import Component_list
 from common_constants import TARGET_ATOM_IDS_CHANGED
-fast = False
 from cython.shift_calculators import Out_array
 
 TOTAL_ENERGY = 'total'
@@ -57,11 +56,8 @@ def almostEqual(first, second, places = 7):
 
 #class testSegmentManager(object):
 class TestXcamshift(unittest2.TestCase):
-    def _make_xcamshift(self, shifts={}, set_fast=True):
-        global fast
+    def _make_xcamshift(self, shifts={}):
         xcamshift = self._setup_xcamshift_with_shifts_table(shifts)
-        if set_fast:
-            xcamshift.set_fast(fast)
         return xcamshift
      
     def _prepare_xcamshift(self, xcamshift):
@@ -399,12 +395,10 @@ class TestXcamshift(unittest2.TestCase):
         return self.assertEqual(len(expected_force_factors), 0)
 
     def testDistanceBasedPotentialSingleForceFactor(self):
-        global fast
         # TODO make this a dummy distance based potential, 
         # _calc_single_force_factor is in distance based potential
         #TODO: test the force calculator not the potential
         distance_potential = Distance_potential()
-        distance_potential.set_fast(fast)
         distance_potential._force_calculator._set_components(distance_potential._get_component_list())
             
         expected_force_factors = dict(ala_3.ala_3_distance_forces_well)
@@ -556,36 +550,28 @@ class TestXcamshift(unittest2.TestCase):
         
     #TODO for completeness there ought to be tests that the well forces are zero here
     def testDistancePotentialSingleForceHarmonic(self):
-        global fast
         distance_potential = Distance_potential()
-        distance_potential.set_fast(fast)
         expected_forces = ala_3.ala_3_distance_real_forces_harmonic
         factors_harmonic = ala_3.ala_3_factors_harmonic
         
         self._test_distance_forces(factors_harmonic, distance_potential,expected_forces)
 
     def testExtraPotentialSingleForceHarmonic(self):
-        global fast
         extra_potential = Extra_potential()
-        extra_potential.set_fast(fast)
         expected_forces = ala_3.ala_3_extra_real_forces_harmonic
         factors_harmonic = ala_3.ala_3_factors_harmonic
         
         self._test_distance_forces(factors_harmonic, extra_potential ,expected_forces)
         
     def testSidechainPotentialSingleForceHarmonic(self):
-        global fast
         sidechain_potential = Sidechain_potential()
-        sidechain_potential.set_fast(fast)
         expected_forces = ala_3.ala_3_sidechain_real_forces_harmonic
         factors_harmonic = ala_3.ala_3_factors_harmonic
 
         self._test_distance_forces(factors_harmonic, sidechain_potential,expected_forces)
         
     def testDihedralPotentialSingleForceTanh(self):
-        global fast
         dihedral_potential = Dihedral_potential()
-        dihedral_potential.set_fast(fast)
         expected_forces = ala_3.ala_3_dihedral_forces_tanh
         factors_tanh = ala_3.ala_3_factors_tanh
 
@@ -808,8 +794,6 @@ class TestXcamshift(unittest2.TestCase):
 #            self.assertTrue(potential._fast, potential_name)        
 
 def run_tests():
-    if fast:
-        print >> sys.stderr, TestXcamshift.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testXcamshift')
     

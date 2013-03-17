@@ -474,8 +474,6 @@ cdef class Base_shift_calculator:
             self._name = name
             self._simulation =  currentSimulation()
             
-    def is_fast(self):
-        return True
     
     def set_verbose(self,bint state):
         self._verbose =  state

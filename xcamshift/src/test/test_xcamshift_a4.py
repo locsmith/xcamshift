@@ -36,7 +36,6 @@ from cython.fast_segment_manager import Segment_Manager
 from cython.shift_calculators import Out_array
 
 
-fast = False
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -329,9 +328,7 @@ class TestXcamshiftA4(unittest2.TestCase):
 
 
     def _get_non_bonded_potential(self, smoothed = True):
-        global fast
         non_bonded_potential = Non_bonded_potential(smoothed)
-        non_bonded_potential.set_fast(fast)
         return non_bonded_potential
 
     def testNonBondedComponents(self):
@@ -513,9 +510,7 @@ class TestXcamshiftA4(unittest2.TestCase):
 
 
     def _get_xcamshift(self):
-        global fast
         xcamshift_potential = Xcamshift()
-        xcamshift_potential.set_fast(fast)
         return xcamshift_potential
 
     def  test_overall_shifts_a4(self):
@@ -584,8 +579,6 @@ class TestXcamshiftA4(unittest2.TestCase):
         self._test_force_sets(xcamshift, expected_energy, expected_forces)
                 
 def run_tests():
-    if fast:
-        print >> sys.stderr, TestXcamshiftA4.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift_a4')
 #    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testNonBondedForceFactorsNotSmoothed')
     
