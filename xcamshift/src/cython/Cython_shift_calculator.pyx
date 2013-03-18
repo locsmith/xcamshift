@@ -1666,18 +1666,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 
     
 
-    #TODO: use this more places
-    @cython.profile(False)
-    cdef inline ring_atom_ids _get_ring_atom_ids(self, int ring_id):
-        cdef object ring_component = self._ring_components.get_component(ring_id)
-        cdef object python_ring_atom_ids = ring_component[RING_ATOM_IDS]
-        cdef int num_atoms =  len(python_ring_atom_ids)
-        cdef ring_atom_ids  ring_atoms 
-        
-        ring_atoms.num_atoms  = num_atoms
-        for i in range(num_atoms):
-            ring_atoms.atom_ids[i] = python_ring_atom_ids[i]
-        return  ring_atoms
+
        
     
 
@@ -1825,9 +1814,8 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         cdef Vec3 temp_normal =  Vec3(force_terms.ring_normal)
         cdef Vec3 nSum = temp_normal
         operator_times(nSum,2.0)  #            float_type g [3], ab [3], c [3]
-        cdef ring_atom_ids ring_atoms = self._get_ring_atom_ids(ring_id)
     #// 2 for a 5-membered ring, 3 for a 6-membered ring
-        cdef int num_ring_atoms = ring_atoms.num_atoms
+        cdef int num_ring_atoms = self._compiled_ring_components[ring_id].num_atoms 
         cdef int limit = num_ring_atoms - 3
 
 #        for atom_type_id, ring_id, coefficient in coef_components:
