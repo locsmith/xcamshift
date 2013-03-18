@@ -361,38 +361,6 @@ cdef struct ring_atom_ids:
 
     
 
-cdef class Ring_atom_positions:
-    cdef int num_vecs
-    cdef Vec3* _vecs
-    
-    def __init__ (self, int num_vecs):
-        self.num_vecs = num_vecs
-
-        
-    def __cinit__(self, int num_vecs):
-        self._vecs = <Vec3 *>malloc(num_vecs * sizeof(Vec3))
-        if not self._vecs:
-            raise MemoryError()
-    
-    def __dealloc__(self):
-        free(self._vecs)
-        self._vecs = NULL
-    
-#    cdef inline int _check_offset(self, int offset) except -1:
-#        if not offset < self.num_vecs:
-#            raise IndexError("tried to access object at %i length is %i" % (offset,self._num_vecs))
-#        if self._vecs is NULL:
-#            raise AttributeError("trying to access deallocated memory!")
-
-    
-    cdef set_vec(self,int offset, Vec3& vec):
-#        self._check_offset(offset)
-        self._vecs[offset] = vec
-        
-    @cython.profile(False)
-    cdef inline Vec3* get_vec(self,int offset):
-#        self._check_offset(offset)
-        return &self._vecs[offset] 
 
 cdef struct dihedral_parameters:
     float param_0
@@ -1713,18 +1681,6 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
        
     
 
-    @cython.profile(False)
-    cdef inline Ring_atom_positions _get_ring_atom_positions(self, int ring_id):
-        cdef ring_atom_ids ring_atoms =  self._get_ring_atom_ids(ring_id)
-        cdef int num_atoms = self._compiled_ring_components[ring_id].num_atoms
-        cdef Ring_atom_positions  positions  = Ring_atom_positions(num_atoms) 
-        
-        cdef Vec3* position = NULL
-        for i in range(num_atoms):
-            position = positions.get_vec(i)
-            position[0] = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[i])
-            
-        return positions
 
 #    @cython.profile(False)
 #    cdef inline target_type _get_target_and_type(self,int index):
@@ -1870,7 +1826,6 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         cdef Vec3 nSum = temp_normal
         operator_times(nSum,2.0)  #            float_type g [3], ab [3], c [3]
         cdef ring_atom_ids ring_atoms = self._get_ring_atom_ids(ring_id)
-        cdef Ring_atom_positions ring_atom_positions = self._get_ring_atom_positions(ring_id)
     #// 2 for a 5-membered ring, 3 for a 6-membered ring
         cdef int num_ring_atoms = ring_atoms.num_atoms
         cdef int limit = num_ring_atoms - 3
@@ -1905,13 +1860,13 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         cdef int axis 
         cdef float sub_term
         for ring_atom_index in range(num_ring_atoms):
-            ring_atom_id = ring_atoms.atom_ids[ring_atom_index]
+            ring_atom_id = self._compiled_ring_components[ring_id].atom_ids[ring_atom_index]
             if ring_atom_index < limit:
                 for axis in range(3):
                     index_1 = (ring_atom_index + 1) % 3
                     index_2 = (ring_atom_index + 2) % 3
-                    pos_1 = (ring_atom_positions.get_vec(index_1)[0][axis])
-                    pos_2 = ring_atom_positions.get_vec(index_2)[0][axis]
+                    pos_1 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[index_1])[axis]
+                    pos_2 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[index_2])[axis]
                     g[axis] =  pos_1 - pos_2 # atoms 3,4 (5 member) or 3,4,5 (6 member)
             
             else:
@@ -1920,16 +1875,16 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
                     for axis in range(3):
                         index_1 = (ring_atom_index + 1 - offset) % 3 + offset
                         index_2 = (ring_atom_index + 2 - offset) % 3 + offset
-                        pos_1 = ring_atom_positions.get_vec(index_1)[0][axis]
-                        pos_2 = ring_atom_positions.get_vec(index_2)[0][axis]
+                        pos_1 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[index_1])[axis]
+                        pos_2 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[index_2])[axis]
                         g[axis] = pos_1 - pos_2
                 else:
                     
                     for axis in range(3):
-                        pos_1 = ring_atom_positions.get_vec(0)[0][axis]
-                        pos_2 = ring_atom_positions.get_vec(1)[0][axis] 
-                        pos_3 = ring_atom_positions.get_vec(3)[0][axis]
-                        pos_4 = ring_atom_positions.get_vec(4)[0][axis]
+                        pos_1 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[0])[axis]
+                        pos_2 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[1])[axis]
+                        pos_3 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[2])[axis]
+                        pos_4 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[3])[axis]
                         g[axis] = pos_1 - pos_2 + pos_3 - pos_4
         
             # 0 1 2 2 1   (0+1) %3 (0+2) %3
