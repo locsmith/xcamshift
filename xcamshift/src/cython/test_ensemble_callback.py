@@ -2,8 +2,8 @@ import sys
 import cython.cyfwk as cyfwk
 import unittest
 
-#cyfwk.AlgBase
-class PyEnsemble():
+#
+class PyEnsemble(cyfwk.AlgBase):
     def __init__(self): 
         self.test_value =  False
         
