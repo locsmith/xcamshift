@@ -5,6 +5,10 @@ Created on 31 Jul 2012
 '''
 from libc.string cimport const_char
 
+cdef extern from "cdsString.hh":
+     cdef cppclass String:
+          String(char* , int)
+                  
 
 cdef extern from "fixedVector.hh":
     cdef float norm(Vec3)
@@ -25,6 +29,8 @@ cdef extern from "vec3.hh":
         Vec3& operator*(Vec3&)
         float norm()
         float& operator[](long)
+        bint operator==(Vec3&)
+        bint operator!=(Vec3&)
         
 cdef extern from "atom.hh":
     cdef cppclass Atom:
@@ -60,5 +66,9 @@ cdef extern from "simulation.hh" namespace "Simulation":
     Simulation* currentSimulation()
     
 
+cdef extern from "pot.hh":
+    cdef cppclass DerivList:
+        pass
 
-     
+cdef extern from "sthead.hh":
+    ctypedef double float_type
