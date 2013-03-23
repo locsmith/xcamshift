@@ -1,46 +1,46 @@
+import xplorWrap
 cimport cyfwk 
 cimport cpython.ref as cpy_ref
+from  xplor_access cimport Simulation, String
+
 from cython.operator cimport dereference as deref
 import inspect
-#cimport cpython.cobject as cpy_cobj
+#cimport cpython.cobject as cpy_cobj 
 
 cdef class AlgBase:
     cdef CyAlgBase* alg
-    def __init__(self):
+    cdef String* _instance_name
+    cdef String* _potential_name
+    cdef Simulation *_simulation
+    
+    def __init__(self, instance_name, potential_name, simulation):
         print ("[cy]  AlgBase.__init__")
-        self.alg = new CyAlgBase(
+        
+        self._instance_name = new String(instance_name, len(instance_name))
+        self._potential_name = new String(potential_name, len(potential_name))
+        self._simulation = currentSimulation()
+        self.alg = new CyAlgBase(self._instance_name[0], self._potential_name[0],self._simulation,
             <cpy_ref.PyObject*>self)
             
     #------- non-virutal methods --------
     def doRun(self):
         print ("[cy]  AlgBase.doRun()")
-        self.alg.doRun()
+        self.alg.run()
 
-    def doJump(self, int i):
-        print ("[cy]  AlgBase.doJump(%d)" % i)
-        self.alg.doJump(i)
 
 #------- virutal methods --------
 
 cdef public api void cy_call_run(object self, int *error):
     print("[cy]  cy_call_run()")
     try:
-        func = self.run
+        func = self.virtual_call
     except AttributeError:
         error[0] = 1
     else:
         error[0] = 0
         func()
 
-cdef public api void cy_call_jump(object self, int i, int *error):
-    print("[cy]  cy_call_jump(%d)" % i)
-    try:
-        func = self.jump
-    except AttributeError:
-        error[0] = 1
-    else:
-        error[0] = 0
-        func(i)
+
 
 #------- implementation --------
 
@@ -53,10 +53,10 @@ cdef class MyAlg(AlgBase):
     def run(self):
         print("[cy]  MyAlg.run() => %i" % self.i)
 
-
-cdef public api IAlg* cy_create_alg():
-    cdef AlgBase cyalg = MyAlg(42)
-    return <IAlg*>(cyalg.alg)
+#
+#cdef public api IAlg* cy_create_alg():
+#    cdef AlgBase cyalg = MyAlg(42)
+#    return <IAlg*>(cyalg.alg)
 
 #------- experiments --------
 

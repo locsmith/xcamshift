@@ -4,84 +4,9 @@
 
 #include "cyfwk_api.h"
 
-#
-IAlg::~IAlg()
-{
-}
 
-IAlg::IAlg()
-{
-    printf("[c+]  IAlg::IAlg()\n");
-}
-
-void
-IAlg::doRun()
-{
-	printf("[c+]  IAlg::doRun()\n");
-  run();
-}
-
-void
-IAlg::doJump(int i)
-{
-	printf("[c+]  IAlg::doJump( %i)\n",i);
-  jump(i);
-}
-
-void
-IAlg::jump(int i)
-{
-	printf("[c+]  IAlg::jump(%i)\n",i);
-}
-
-class Alg : public IAlg
-{
-public:
-  Alg();
-  ~Alg();
-
-  void run();
-  void jump(int i);
-};
-
-Alg::Alg()
-{
-	printf("[c+]  Alg::Alg()\n");
-}
-
-Alg::~Alg()
-{
-	printf("[c+]  Alg::~Alg()\n");
-}
-
-void
-Alg::run()
-{
-	printf("[c+]  Alg::run()\n");
-}
-
-void
-Alg::jump(int i)
-{
-  printf("[c+]  Alg::jump( %i\n",i);
-}
-
-IAlg *create_alg(int algid)
-{
-  switch (algid) {
-  case 0:
-    return new Alg;
-  case 1:
-    return 0;
-  default:
-    return 0;
-  }
-
-  return 0;
-}
-
-CyAlgBase::CyAlgBase(PyObject *obj) :
-  m_obj(obj)
+CyAlgBase::CyAlgBase(const String& potName, const String& instanceName, Simulation* simulation, PyObject *obj) :
+  EnsemblePot(potName, instanceName, simulation),  m_obj(obj)
 {
   if (import_cyfwk()) {
     printf("[c+]  error in import_cyfwk!\n");
@@ -93,6 +18,12 @@ CyAlgBase::CyAlgBase(PyObject *obj) :
 CyAlgBase::~CyAlgBase()
 {
   Py_XDECREF(this->m_obj);
+}
+
+void CyAlgBase::doRun(){
+	printf("[c+]  CyAlgBase::doRun() call run()\n");
+	run();
+	printf("[c+]  CyAlgBase::doRun() run() called\n");
 }
 
 void
@@ -111,19 +42,12 @@ CyAlgBase::run()
   return;
 }
 
-void
-CyAlgBase::jump(int i)
-{
-  printf("[c+]  CyAlgBase::jump( %d)\n",i);
-  if (this->m_obj) {
-    int error;
-    // call a virtual overload, if it exists
-    cy_call_jump(this->m_obj, i, &error);
-    if (error)
-      // call parent method
-      IAlg::jump(i);
-    return;
-  }
-  printf("** invalid cy-state: obj [%d]\n", this->m_obj);
-  return;
+float_type CyAlgBase::rms(){
+	return 0.0f;
+}
+int CyAlgBase::violations(){
+	return 0;
+}
+int CyAlgBase::numRestraints(){
+	return 0;
 }
