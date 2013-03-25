@@ -776,7 +776,7 @@ def run_tests():
 
 
 if __name__ == "__main__":
-    run_tests(failfast=True)
+    run_tests()
 #    run_tests()
     
 #if __name__ == "__main__":
