@@ -1611,7 +1611,13 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     cdef Ring_component* _compiled_ring_components
     cdef int _num_ring_components
     
-    
+    def __cinit__(self):
+        self._compiled_components = NULL
+        self._num_components = 0
+        
+        self._compiled_ring_components = NULL
+        self._num_ring_components = 0
+        
     def __init__(self,name="not set"):
         super(Fast_ring_force_calculator, self).__init__(name=name)
         self._coef_components = None
@@ -1619,11 +1625,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         self._centre_cache = None
         self._normal_cache = None
         
-        self._compiled_components = NULL
-        self._num_components = 0
-        
-        self._compiled_ring_components = NULL
-        self._num_ring_components = 0
+
          
     def _set_components(self,components):
         super(Fast_ring_force_calculator, self)._set_components(components)
