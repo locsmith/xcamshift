@@ -1899,8 +1899,8 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
                     for axis in range(3):
                         pos_1 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[0])[axis]
                         pos_2 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[1])[axis]
-                        pos_3 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[2])[axis]
-                        pos_4 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[3])[axis]
+                        pos_3 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[3])[axis]
+                        pos_4 = self._simulation[0].atomPos(self._compiled_ring_components[ring_id].atom_ids[4])[axis]
                         g[axis] = pos_1 - pos_2 + pos_3 - pos_4
         
             # 0 1 2 2 1   (0+1) %3 (0+2) %3
