@@ -1130,6 +1130,9 @@ cdef class Base_force_calculator:
         self._simulation =  currentSimulation()
         
         self._name = name
+        
+    def _prepare(self, change, data):
+        pass
     
     def set_verbose(self,on):
         self._verbose = on
@@ -1240,6 +1243,15 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         super(Fast_distance_based_potential_force_calculator, self)._set_components(components)
         if  self._compiled_components ==  NULL:
             self._compile_components(components) 
+    
+    def _free_compiled_components(self):
+        if self._compiled_components != NULL:
+            free (self._compiled_components)
+            self._compiled_components = NULL        
+            
+    def _prepare(self, change, data):
+         self._free_compiled_components()   
+
         
     cdef _compile_components(self,components):
         self._compiled_components = <Distance_component*>malloc(len(components) * sizeof(Distance_component))
@@ -1264,13 +1276,13 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         saved_component_list = self._components
         component_list = Component_list()
         component_list.add_component(self._components[index])
-        self._compiled_components = NULL
+        self._free_compiled_components()
         self._set_components(component_list)
         
         
         self.__call__(component_list,[0], [factor], forces)
         self._components =  saved_component_list
-        self._compiled_components =  NULL
+        self._free_compiled_components()
         self._set_components(saved_component_list)
                     
         

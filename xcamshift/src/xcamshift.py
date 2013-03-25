@@ -660,6 +660,12 @@ class Base_potential(object):
             
         if change == TARGET_ATOM_IDS_CHANGED:
             self._build_component_to_result(data)
+        
+        if self._have_derivative():
+            self._force_calculator._prepare(change, data)
+#         if self._shift_calculator != None:
+#             #TODO: shiftpotential is not lyskov substituable
+#            self._shift_calculator._prepare(change, data)
 
     
     def get_component_table_names(self):
