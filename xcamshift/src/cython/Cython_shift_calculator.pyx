@@ -1638,6 +1638,11 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         for i,component in enumerate(components):
             self._compiled_components[i].target_atom_id = components[i][0]
             self._compiled_components[i].atom_type_id = components[i][1]
+    
+    def _free_compiled_components(self):   
+        if self._compiled_components != NULL:
+            free(self._compiled_components)
+            self._compiled_components = NULL
             
                 
         
@@ -1658,6 +1663,15 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
             for j in range(len(ring_component[1])):
                 self._compiled_ring_components[i].atom_ids[j] =ring_component[1][j]
     
+    def _free_compiled_ring_components(self):   
+        if self._compiled_ring_components != NULL:
+            free(self._compiled_ring_components)
+            self._compiled_ring_components = NULL
+
+    def _prepare(self, change, data):
+         self._free_compiled_components() 
+         self._free_compiled_ring_components()
+            
     def _set_normal_cache(self,normals):
         self._normal_cache = normals
         
