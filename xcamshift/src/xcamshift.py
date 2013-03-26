@@ -46,7 +46,7 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_ring_force_calculator,                                     \
                                      Fast_force_factor_calculator,                                   \
                                      Fast_non_bonded_shift_calculator,                               \
-                                     Out_array
+                                     Out_array, Vec3_list
 from time import time
 
 class Component_factory(object):
@@ -731,7 +731,10 @@ class Base_potential(object):
         
     def _get_cache_list(self,name):
         if not name in self._cache_list_data:
-            self._cache_list_data[name] = Component_list()
+            if name in ('NORM', 'CENT'):
+                self._cache_list_data[name] = Vec3_list()
+            else:
+                self._cache_list_data[name] = Component_list()
         return self._cache_list_data[name]
     
     def clear_caches(self):
@@ -2388,8 +2391,8 @@ class Ring_Potential(Base_potential):
     def _prepare(self, change, target_atom_ids): 
         super(Ring_Potential, self)._prepare(change, target_atom_ids)
         
-        if change == STRUCTURE_CHANGED:
-            self._clear_ring_cache()
+#         if change == STRUCTURE_CHANGED:
+#             self._clear_ring_cache()
             
         if change  == ROUND_CHANGED:
             if self._verbose:
@@ -2457,16 +2460,22 @@ class Ring_Potential(Base_potential):
     
     
 
-    def _clear_ring_cache(self):
-        normals = self._get_cache_list('NORM')
-        normals.clear()
-        centres = self._get_cache_list('CENT')
-        centres.clear()
-        return normals, centres
+#     def _clear_ring_cache(self):
+#         normals = self._get_cache_list('NORM')
+# #         normals.clear()
+#         centres = self._get_cache_list('CENT')
+# #         centres.clear()
+#         return normals, centres
+#     def _clear_ring_cache(self):
+#         normals = self._get_cache_list('NORM')
+# #         normals.clear()
+#         centres = self._get_cache_list('CENT')
+# #         centres.clear()
+#         return normals, centres
 
     def _build_ring_data_cache(self):
         #TODO: remove double normal calculation
-        self._clear_ring_cache()
+#         self._clear_ring_cache()
         
         normals = self._get_cache_list('NORM')
         centres = self._get_cache_list('CENT')
