@@ -21,7 +21,8 @@ from atomSel import AtomSel
 from test import gb3, gb3_10_steps
 from test import  util_for_testing
 from observed_chemical_shifts import Observed_shift_table
-from common_constants import  SIDE_CHAIN, NON_BONDED, RING
+from common_constants import  SIDE_CHAIN, NON_BONDED, RING,\
+    CAMSHIFT_SUB_POTENTIALS
 from common_constants import TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
 from test.gb3 import gb3_component_shifts_sc, gb3_component_shifts_ring
 from utils import Atom_utils
@@ -651,7 +652,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         xcamshift._calc_shift_cache(xcamshift._get_active_target_atom_ids())
         xcamshift.update_force_factor_calculator()
         
-        for i, potential_name in enumerate(common_constants.CAMSHIFT_SUB_POTENTIALS):
+        for i, potential_name in enumerate(CAMSHIFT_SUB_POTENTIALS):
             out_string = '%s %i/%i:  ' % (potential_name,i+1, len(common_constants.CAMSHIFT_SUB_POTENTIALS))
             out_string = '%-20s' % out_string
             print out_string,
