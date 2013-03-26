@@ -33,7 +33,6 @@ from test.util_for_testing import  _check_shift_results, _shift_cache_as_result,
     get_atom_index, get_key_for_atom_index
 TOTAL_ENERGY = 'total'
 from cython.shift_calculators import Out_array
-fast = False
 
 
 def almostEqual(first, second, places = 7):
@@ -561,7 +560,6 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
         
     def make_xcamshift(self, shifts):
-        global fast
         xcamshift = self._setup_xcamshift_with_shifts_table(shifts)
 
         
@@ -768,30 +766,10 @@ class TestXcamshiftGB3(unittest2.TestCase):
             shift_diffs.append(expected_shifts[target_atom_selection]-shift)
             self.assertAlmostEqual(expected_shifts[target_atom_selection], shift, self.DEFAULT_DECIMAL_PLACES - 2, target_atom_selection)
         
-def run_tests():
-    if fast:
-        print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
-#     unittest2.main(module='test.test_xcamshift_gb3',failfast=True)
+
+
+if __name__ == "__main__":
 #     TODO: add a way to run the complete test suite
     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
-
-
-if __name__ == "__main__":
-    run_tests()
-#    run_tests()
-    
-#if __name__ == "__main__":
-##    unittest2.main()
-#    cProfile.run('unittest2.main()')
-    
-#    TestXcamshift.list_test_shifts()
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_forces')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_energies')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_component_chemical_shifts')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components_add_up')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components2')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy')
-    
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
