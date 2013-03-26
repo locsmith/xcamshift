@@ -1249,7 +1249,11 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     cdef float _cutoff
     cdef Distance_component* _compiled_components 
     cdef int _num_components
-    
+        
+    def __cinit__(self):
+        self._compiled_components  = NULL
+        self._num_components =  0
+        
     def __init__(self, object indices, bint smoothed, name="Not set"):
         super(Fast_distance_based_potential_force_calculator, self).__init__(name=name)
         self._target_atom_index = indices.target_atom_index
@@ -1261,8 +1265,6 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         self._smoothed =  smoothed
         self._smoothing_factor =  DEFAULT_SMOOTHING_FACTOR
         self._cutoff =  DEFAULT_CUTOFF
-        self._compiled_components  
-        self._num_components
 
     def set_cutoff(self, cutoff):
         self._cutoff =  cutoff
