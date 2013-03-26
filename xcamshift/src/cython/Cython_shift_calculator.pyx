@@ -18,15 +18,47 @@ Created on 31 Jul 2012
 
 cimport cython
 from vec3 import Vec3 as python_vec3
-from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross,  Simulation
+from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from time import time
 from utils import Atom_utils
 from component_list import Component_list
-
  
+# 
+cdef class Vec3_list:
+    cdef CDSVector[Vec3] *data
+    
+    def __cinit__(self):
+         self.data = new CDSVector[Vec3]()
+
+     
+    cdef set_length(self,int length):
+        self.data.resize(length)
+        
+    @cython.profile(False)   
+    cdef inline Vec3*  get(self, int offset): 
+        return &self.data[0][offset]
+    
+    @cython.profile(False)    
+    cdef inline set(self, int x, Vec3& y):
+        self.data[0][x] =  y
+        
+    def __dealloc__(self):
+        
+        del self.data
+        self.data = NULL
+            
+    
+    def __iter__(self): 
+        cdef Vec3 vec3
+        
+        for i in range(self.data.size()):
+            vec3 = self.get(i)[0]
+            yield (i,python_vec3(vec3[0],vec3[1],vec3[2]))
+    
+    
 cdef class Out_array:
     cdef long _length
     cdef double[60000] _data
