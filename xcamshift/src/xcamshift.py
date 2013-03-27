@@ -3950,7 +3950,8 @@ class Xcamshift(PyPot):
         observed_shift_atom_ids = self.get_selected_atom_ids()
         active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
         active_target_atom_ids = list(active_target_atom_ids)
-        return active_target_atom_ids
+        
+        return sorted(active_target_atom_ids)
     
 
 
