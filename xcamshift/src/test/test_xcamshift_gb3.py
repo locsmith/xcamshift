@@ -765,11 +765,25 @@ class TestXcamshiftGB3(unittest2.TestCase):
             target_atom_selection = util_for_testing.translate_atom_key(target_atom_selection)
             shift_diffs.append(expected_shifts[target_atom_selection]-shift)
             self.assertAlmostEqual(expected_shifts[target_atom_selection], shift, self.DEFAULT_DECIMAL_PLACES - 2, target_atom_selection)
-        
+            
+    def test_atom_id_stability(self):  
+        test = None
+        for i,file in enumerate(gb3_10_steps.gb3_files):
+            PDBTool("test_data/gb3_10_steps/%s" % file).read()
+            print file
+            latest = {}
+            for atom_sel in AtomSel('all'):
+                index  = atom_sel.index()
+                info  = atom_sel.segmentName(), atom_sel.residueNum(), atom_sel.atomName()
+                latest[index] = info
+                
+            if test != None:
+                self.assertDictEqual(latest, test)
+            test=latest
 
 
 if __name__ == "__main__":
 #     TODO: add a way to run the complete test suite
-    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
+        unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
