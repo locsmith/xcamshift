@@ -3085,7 +3085,10 @@ class Non_bonded_potential(Distance_based_potential):
         updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
         
         if updated:
+            old_freeze  = self._freeze
+            self._freeze = False
             self._prepare(TARGET_ATOM_IDS_CHANGED, sorted(target_atom_list.get_component_atom_ids()))
+            self._freeze = old_freeze
         return non_bonded_list
     
     def _prepare(self, change, target_atom_ids):
