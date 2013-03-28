@@ -3717,7 +3717,7 @@ class Xcamshift(PyPot):
             
             print "shifts completed in ", "%.17g " %  (end_time-start_time),"seconds"
 
-        
+    #TODO: add standalone mode flag or wrap in a external wrapper that call round changed etc    
     def calc_shifts(self, target_atom_ids=None, result=None):
         def target_atom_ids_as_selection_strings(target_atom_ids):
             result  = []
