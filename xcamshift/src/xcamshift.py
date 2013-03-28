@@ -3591,6 +3591,7 @@ class Xcamshift(PyPot):
         self.set_verbose(verbose)
         self.update_energy_calculator()
         self.update_force_factor_calculator()
+        self._freeze = False
 
     
     
@@ -3750,7 +3751,13 @@ class Xcamshift(PyPot):
 #        self._prepare(ROUND_CHANGED,None)
         
 #        self.set_shifts(result)
-        self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
+#         for id in target_atom_ids:
+#             print Atom_utils._get_atom_info_from_index(id)
+
+        #TODO: currently needed to generate a component to result remove by making component to result lazy?
+        if not self._freeze:
+            self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
+            
         for potential in self.potential:
 
             potential.calc_shifts(target_atom_ids, result)
@@ -4082,6 +4089,7 @@ class Xcamshift(PyPot):
     def _set_frozen(self,on=True):
         for potential in self.potential:
             potential.set_frozen(on)
+        self._freeze = True
             
     def setup(self):
         self._prepare(TARGET_ATOM_IDS_CHANGED, self._get_active_target_atom_ids())
