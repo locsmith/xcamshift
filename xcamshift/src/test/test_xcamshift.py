@@ -739,7 +739,7 @@ class TestXcamshift(unittest2.TestCase):
         coefficient_list = non_bonded_potential._get_component_list('COEF')
         
         component_list =  Component_list()
-        boxes = non_bonded_list.get_boxes(target_atoms, remote_atoms, component_list, coefficient_list)
+        non_bonded_list.get_boxes(target_atoms, remote_atoms, component_list, coefficient_list)
         
 #        local_boxes = []
 #        for box_component in boxes:
@@ -749,7 +749,7 @@ class TestXcamshift(unittest2.TestCase):
 #            print box_component
             
             
-        for box_component in boxes:
+        for box_component in component_list:
             target_atom_id, distant_atom_id, coefficient,exponent  = box_component
             
             target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)

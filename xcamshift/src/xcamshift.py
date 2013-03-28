@@ -2791,6 +2791,7 @@ class Non_bonded_list(object):
         
     def get_boxes(self,component_list_1, component_list_2,target_component_list,coefficient_list):
 #        print self._box_update_count, se        if self._verbose:
+        updated = False
         if self._verbose:
             print '  update, box_count= ',self._box_update_count
 
@@ -2804,8 +2805,10 @@ class Non_bonded_list(object):
             self._box_update_count = -1
             self._non_bonded_calculation_count += 1
             self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list)
-            
-        return target_component_list
+        
+            updated = True
+
+        return updated
         
     
     def _get_cached_pos(self,atom_id):
@@ -3079,8 +3082,10 @@ class Non_bonded_potential(Distance_based_potential):
         target_atom_list = self._get_component_list('ATOM')
         remote_atom_list = self._get_component_list('NBRM')
         coefficient_list  = self._get_component_list('COEF')
-        self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
+        updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
         
+        if updated:
+            self._prepare(TARGET_ATOM_IDS_CHANGED, sorted(target_atom_list.get_component_atom_ids()))
         return non_bonded_list
     
     def _prepare(self, change, target_atom_ids):
