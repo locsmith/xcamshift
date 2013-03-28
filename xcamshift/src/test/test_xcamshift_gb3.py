@@ -563,12 +563,12 @@ class TestXcamshiftGB3(unittest2.TestCase):
         xcamshift = self._setup_xcamshift_with_shifts_table(shifts)
 
         
-        non_bonded = xcamshift.get_named_sub_potential(NON_BONDED)
-        non_bonded.update_non_bonded_list()
+        #non_bonded = xcamshift.get_named_sub_potential(NON_BONDED)
+        #non_bonded.update_non_bonded_list()
         
 
-        ring_potential = xcamshift.get_named_sub_potential(RING)
-        ring_potential._build_ring_data_cache()
+        #ring_potential = xcamshift.get_named_sub_potential(RING)
+        #ring_potential._build_ring_data_cache()
         
         return xcamshift
 
@@ -784,6 +784,6 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
 if __name__ == "__main__":
 #     TODO: add a way to run the complete test suite
-        unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
