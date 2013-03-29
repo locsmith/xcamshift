@@ -4094,12 +4094,14 @@ class Xcamshift(PyPot):
         self._freeze = True
             
     def setup(self):
+        #TODO: do we need a STRUCTURE_CHANGED here
         self._prepare(TARGET_ATOM_IDS_CHANGED, self._get_active_target_atom_ids())
         self._set_frozen()
     
     def reset(self):
         self._prepare(STRUCTURE_CHANGED, None)
         self._prepare(TARGET_ATOM_IDS_CHANGED, None)
+        #TODO: do we need a  set froze here
 
     
 
