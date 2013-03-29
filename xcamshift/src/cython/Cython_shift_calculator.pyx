@@ -9,6 +9,7 @@
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
 # cython: profile=True
+from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
 '''
 Created on 31 Jul 2012
 
@@ -16,6 +17,7 @@ Created on 31 Jul 2012
 
 '''
 
+import traceback
 cimport cython
 from vec3 import Vec3 as python_vec3
 from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector
@@ -1283,7 +1285,8 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
             self._compiled_components = NULL        
             
     def _prepare(self, change, data):
-         self._free_compiled_components()   
+         if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
+             self._free_compiled_components()   
 
         
     cdef _compile_components(self,components):
@@ -1461,12 +1464,48 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
             self._distance_calc_single_force_set(index, factor, forces)
 
 
+cdef struct Dihedral_component:
+      int target_atom
+      int[4] dihedral_atoms
+      float coefficient
+      float[5] parameters
+
     
 cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     
+    cdef Dihedral_component *_compiled_components
+    
+    def __cinit__(self):
+        self._compiled_components = NULL
+        
     def __init__(self,name="not set"):
         Base_force_calculator.__init__(self,name=name)
+        
+        
+    def _set_components(self,components):
+        super(Fast_dihedral_force_calculator, self)._set_components(components)
+        if self._compiled_components ==  NULL:
+            self._compile_components(components)
+            
+    def _compile_components(self, components):
+        self._compiled_components = <Dihedral_component*>malloc(len(components) * sizeof(Dihedral_component))
+        for i,component in enumerate(components):
+            self._compiled_components[i].target_atom = component[0]
+            for j in range(4):
+                self._compiled_components[i].dihedral_atoms[j] = component[1+j]
+            self._compiled_components[i].coefficient = component[5]
+            for j in range(5):
+                self._compiled_components[i].parameters[j] = component[5+j]
     
+    def _free_compiled_components(self):
+        if self._compiled_components != NULL:
+            free(self._compiled_components)
+            self._compiled_components = NULL        
+                   
+    def _prepare(self, change, data):
+         if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
+             self._free_compiled_components() 
+                     
     @cython.profile(False)
     cdef inline dihedral_ids _get_dihedral_atom_ids(self, int index):
         cdef dihedral_ids result
@@ -1702,8 +1741,9 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
             self._compiled_ring_components = NULL
 
     def _prepare(self, change, data):
-         self._free_compiled_components() 
-         self._free_compiled_ring_components()
+        if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
+            self._free_compiled_components() 
+            self._free_compiled_ring_components()
             
     def _set_normal_cache(self,normals):
         self._normal_cache = <Vec3_list> normals
