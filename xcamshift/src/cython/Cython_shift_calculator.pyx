@@ -1509,48 +1509,45 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
          if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
              self._free_compiled_components() 
                      
+#     TODO: remove this is no longer needed
     @cython.profile(False)
     cdef inline dihedral_ids _get_dihedral_atom_ids(self, int index):
         cdef dihedral_ids result
         
-        component = self._get_component(index)
-        
-        result.atom_id_1= component[1]
-        result.atom_id_2= component[2]
-        result.atom_id_3= component[3]
-        result.atom_id_4= component[4]
+        result.atom_id_1 = self._compiled_components[index].dihedral_atoms[0]
+        result.atom_id_2 = self._compiled_components[index].dihedral_atoms[1]
+        result.atom_id_3 = self._compiled_components[index].dihedral_atoms[2]
+        result.atom_id_4 = self._compiled_components[index].dihedral_atoms[3]
         
         return result
     
+    #TODO: remove this an correct order of parameters!
     @cython.profile(False)
     cdef inline dihedral_parameters _get_parameters(self, int index):
-        component = self._get_component(index)
         
         cdef dihedral_parameters result  
+
+        result.param_0 = self._compiled_components[index].parameters[0]
+        result.param_1 = self._compiled_components[index].parameters[3]
+        result.param_2 = self._compiled_components[index].parameters[1]
+        result.param_3 = self._compiled_components[index].parameters[4]
+        result.param_4 = self._compiled_components[index].parameters[2]
         
-        parameters = component[6:11]
-        
-        result.param_0 =  parameters[0]
-        result.param_1 =  parameters[3]
-        result.param_2 =  parameters[1]
-        result.param_3 =  parameters[4]
-        result.param_4 =  parameters[2]
+
         
             
         return result
     
     @cython.profile(False)
     cdef inline float _get_coefficient(self, int index):
-        component = self._get_component(index)
-        coefficient = component[5]
-        return coefficient
+        return self._compiled_components[index].coefficient
     
 #    TODO make this consistent with the distance forces factor
     def _calc_single_force_factor(self, int index):
         return self._cython_calc_single_force_factor(index)
 
     cdef _do_calc_components(self, object component_to_result, object force_factors, Out_array force):
-        for i in range(len(self._components)):
+        for i in range(self._num_components):
             self._dihedral_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
 
