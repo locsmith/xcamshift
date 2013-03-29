@@ -1183,9 +1183,13 @@ cdef class Base_force_calculator:
         saved_component_list = self._components
         component_list = Component_list()
         component_list.add_component(self._components[index])
+        self._free_compiled_components()
+        self._set_components(component_list)
         
         self.__call__(component_list,[0], [factor], forces)
         self._components =  saved_component_list
+        self._free_compiled_components()
+        self._set_components(saved_component_list)
         
         
 #    TODO should most probably be a fixed array
