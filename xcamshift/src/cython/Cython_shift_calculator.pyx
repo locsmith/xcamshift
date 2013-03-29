@@ -1474,9 +1474,11 @@ cdef struct Dihedral_component:
 cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     
     cdef Dihedral_component *_compiled_components
+    cdef int _num_components
     
     def __cinit__(self):
         self._compiled_components = NULL
+        self._num_components = 0
         
     def __init__(self,name="not set"):
         Base_force_calculator.__init__(self,name=name)
@@ -1489,13 +1491,14 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
             
     def _compile_components(self, components):
         self._compiled_components = <Dihedral_component*>malloc(len(components) * sizeof(Dihedral_component))
+        self._num_components = len(components) 
         for i,component in enumerate(components):
             self._compiled_components[i].target_atom = component[0]
             for j in range(4):
                 self._compiled_components[i].dihedral_atoms[j] = component[1+j]
             self._compiled_components[i].coefficient = component[5]
             for j in range(5):
-                self._compiled_components[i].parameters[j] = component[5+j]
+                self._compiled_components[i].parameters[j] = component[6+j]
     
     def _free_compiled_components(self):
         if self._compiled_components != NULL:
