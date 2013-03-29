@@ -1310,7 +1310,8 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
                 self._compiled_components[i].exponent      = components[i][self._exponent_index]
             else:
                 raise Exception("bad distance component length %i should be either 4 or 5 " % len(component))
-            
+   
+#   TODO: generalise this based on compiled components
     def _calc_single_force_set(self, int index, float factor, Out_array forces):
         #TODO tidy this up a hack for the test suite
         saved_component_list = self._components
