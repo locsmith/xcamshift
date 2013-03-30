@@ -2106,8 +2106,8 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
             
         for index in range(len(components)):
             component = components[index]
-            target_atom_id = component[self._distance_atom_index_1]
-            distant_atom_id  = component[self._distance_atom_index_2]
+            target_atom_id = self._compiled_components[index].remote_atom_1
+            distant_atom_id  = self._compiled_components[index].remote_atom_2
             
             distance = calc_distance_simulation(self._simulation, target_atom_id, distant_atom_id)
             if distance < self._nb_cutoff:
