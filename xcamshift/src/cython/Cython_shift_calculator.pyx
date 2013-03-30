@@ -2105,7 +2105,6 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
             start_time = time()
             
         for index in range(len(components)):
-            component = components[index]
             target_atom_id = self._compiled_components[index].remote_atom_1
             distant_atom_id  = self._compiled_components[index].remote_atom_2
             
