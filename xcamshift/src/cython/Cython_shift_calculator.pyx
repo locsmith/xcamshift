@@ -586,23 +586,20 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         
     @cython.profile(False)
     cdef inline target_distant_atom _get_target_and_distant_atom_ids(self, int index):
-        cdef object values 
         cdef target_distant_atom result 
-        values  = self._components.get_component(index)
         
-        result.target_atom_id = values[self._distance_atom_index_1]
-        result.distant_atom_id  = values[self._distance_atom_index_2]
+        result.target_atom_id = self._compiled_components[index].remote_atom_1
+        result.distant_atom_id  = self._compiled_components[index].remote_atom_2
         return result
     
     @cython.profile(False)
     cdef inline coefficient_exponent _get_coefficient_and_exponent(self, int index):
-        cdef object values
         cdef coefficient_exponent result
-        values = self._components.get_component(index)
+
         
-        result.coefficient = values[self._coefficient_index]
-        result.exponent = values[self._exponent_index]
-        
+        result.coefficient = self._compiled_components[index].coefficient
+        result.exponent = self._compiled_components[index].exponent 
+
         return result
 #    
     def __call__(self, object components, object results, object component_to_target):
