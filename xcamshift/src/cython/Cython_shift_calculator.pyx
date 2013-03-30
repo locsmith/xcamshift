@@ -629,11 +629,11 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
             
         for index in range(len(components)):
             
-            component = components[index]
+#             component = components[index]
 
             
-            target_atom_id = component[self._distance_atom_index_1]
-            distant_atom_id  = component[self._distance_atom_index_2]
+            target_atom_id = self._compiled_components[index].remote_atom_1
+            distant_atom_id  = self._compiled_components[index].remote_atom_2
             
             
             coef_exp = self._get_coefficient_and_exponent(index)
