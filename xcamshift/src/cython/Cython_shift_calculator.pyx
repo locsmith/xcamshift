@@ -28,7 +28,14 @@ from time import time
 from utils import Atom_utils
 from component_list import Component_list
  
-# 
+cdef struct Distance_component:
+      int target_atom
+      int remote_atom_1
+      int remote_atom_2
+      float coefficient
+      float exponent
+
+ 
 cdef class Vec3_list:
     cdef CDSVector[Vec3] *data
     
@@ -474,11 +481,13 @@ cdef class Base_shift_calculator:
     cdef bint _verbose 
     cdef str _name
     cdef Simulation* _simulation
+    cdef object _components
 
     def __init__(self, str name):
             self._verbose = False
             self._name = name
             self._simulation =  currentSimulation()
+            self._components =  None
             
     
     def set_verbose(self,bint state):
@@ -486,6 +495,14 @@ cdef class Base_shift_calculator:
         
     cdef set_simulation(self):
         self._simulation = currentSimulation()
+    
+    def _prepare(self,change,data):
+        pass
+    
+    def _set_components(self,components):
+        self._components = components
+    
+    
         
         
 cdef class Fast_distance_shift_calculator(Base_shift_calculator):
@@ -497,16 +514,34 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
     cdef int _exponent_index
     cdef int _coefficient_index
     cdef bint _smoothed 
-    cdef object _components
     cdef float _smoothing_factor 
     cdef float _cutoff            
     
-    
+    cdef Distance_component* _compiled_components 
+    cdef int _num_components
+        
+    def __cinit__(self):
+        self._compiled_components  = NULL
+        self._num_components =  0
+        
+    def __dealloc__(self):
+        
+        self._free_compiled_components()
+        
+    cdef _free_compiled_components(self):
+        if self._compiled_components != NULL:
+            free (self._compiled_components)
+            self._compiled_components = NULL   
+                        
+    def _prepare(self, change, data):
+        if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
+             self._free_compiled_components()
+                         
     def __init__(self, indices, smoothed, str name = "not set"):
         Base_shift_calculator.__init__(self, name)
         self._target_atom_index = indices.target_atom_index
         self._distance_atom_index_1 =  indices.distance_atom_index_1
-        self._distance_atom_index_2 =  indices .distance_atom_index_2
+        self._distance_atom_index_2 =  indices.distance_atom_index_2
         self._exponent_index  = indices.exponent_index
         self._coefficient_index  = indices.coefficient_index
         
@@ -523,8 +558,31 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 #        self._smoothing_factor = smoothing_factor
 #    
 #    TODO: this needs to be removed
-    cdef _set_components(self,components):
-        self._components = components
+
+            
+    def _set_components(self,components):
+        super(Fast_distance_shift_calculator, self)._set_components(components)
+        if  self._compiled_components ==  NULL:
+            self._compile_components(components)  
+
+        
+    cdef _compile_components(self,components):
+        self._compiled_components = <Distance_component*>malloc(len(components) * sizeof(Distance_component))
+        self._num_components = len(components)
+        for i,component in enumerate(components):
+            self._compiled_components[i].target_atom = components[i][self._target_atom_index]
+            if len(component) == 4:
+                self._compiled_components[i].remote_atom_1 = components[i][self._distance_atom_index_1]
+                self._compiled_components[i].remote_atom_2 = components[i][self._distance_atom_index_2]
+                self._compiled_components[i].coefficient   = components[i][self._coefficient_index]
+                self._compiled_components[i].exponent      = components[i][self._exponent_index]
+            elif len(component) == 5:
+                self._compiled_components[i].remote_atom_1 = components[i][self._distance_atom_index_1]
+                self._compiled_components[i].remote_atom_2 = components[i][self._distance_atom_index_2]
+                self._compiled_components[i].coefficient   = components[i][self._coefficient_index]
+                self._compiled_components[i].exponent      = components[i][self._exponent_index]
+            else:
+                raise Exception("bad distance component length %i should be either 4 or 5 " % len(component))
         
     @cython.profile(False)
     cdef inline target_distant_atom _get_target_and_distant_atom_ids(self, int index):
@@ -561,6 +619,8 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         cdef float result
         cdef target_distant_atom atom_indices
         cdef coefficient_exponent coef_exp
+        cdef float coefficent
+        cdef float exponent
         cdef object component
         cdef int target_atom_id
         cdef int distant_atom_id
@@ -596,7 +656,6 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 
     
 cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
-    cdef object _components
     
     def __init__(self, str name = "not set"):
         Base_shift_calculator.__init__(self,name)
@@ -682,7 +741,6 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
             print '   dihedral shift components ',len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
 
 cdef class Fast_ring_shift_calculator(Base_shift_calculator):
-    cdef object _components
     cdef object _coef_components
     cdef object _ring_components
     cdef Vec3_list _centre_cache
@@ -1233,12 +1291,6 @@ cdef class Base_force_calculator:
 #    cdef _cython_calc_single_force_set(self, int index, float force_factor, object forces):
 #        raise Exception("unexpected! this method should be implemented")
 
-cdef struct Distance_component:
-      int target_atom
-      int remote_atom_1
-      int remote_atom_2
-      float coefficient
-      float exponent
 
 
 cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator):

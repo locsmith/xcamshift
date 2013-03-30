@@ -663,9 +663,10 @@ class Base_potential(object):
         
         if self._have_derivative():
             self._force_calculator._prepare(change, data)
-#         if self._shift_calculator != None:
-#             #TODO: shiftpotential is not lyskov substituable
-#            self._shift_calculator._prepare(change, data)
+            
+        if self._shift_calculator:
+            #TODO: shiftpotential is not lyskov substituable
+           self._shift_calculator._prepare(change, data)
 
     
     def get_component_table_names(self):
@@ -3796,7 +3797,6 @@ class Xcamshift(PyPot):
         
 
     def _calc_single_atom_shift(self,target_atom_id):
-        self._prepare(TARGET_ATOM_IDS_CHANGED,[ target_atom_id,])
         self._shift_cache = {}
         self._calc_shift_cache([target_atom_id,])
         return  self._shift_cache [target_atom_id]
