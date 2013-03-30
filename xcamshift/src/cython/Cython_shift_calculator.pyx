@@ -2086,7 +2086,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._verbose = on
     
     def __call__(self, object components, object results, object component_to_target):
-        self._components =  components
+        self._set_components(components)
         self.set_simulation()
         
         cdef float default_smoothing_factor = self._smoothing_factor
