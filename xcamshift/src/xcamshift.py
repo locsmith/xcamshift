@@ -1553,8 +1553,10 @@ class Dihedral_potential(Base_potential):
     
     def _calc_component_shift(self, index):
         components = Component_list()
-        components.add_component(self._get_distance_components()[index])
+        component = self._get_distance_components()[index]
+        components.add_component(component)
         results = [0.0]
+        self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
         self._shift_calculator(components,results,[0])
         return results[0]
         

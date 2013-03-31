@@ -35,6 +35,11 @@ cdef struct Distance_component:
       float coefficient
       float exponent
 
+cdef struct Dihedral_component:
+      int target_atom
+      int[4] dihedral_atoms
+      float coefficient
+      float[5] parameters
  
 cdef class Vec3_list:
     cdef CDSVector[Vec3] *data
@@ -654,13 +659,42 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
     
 cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     
+    cdef Dihedral_component *_compiled_components
+    cdef int _num_components
+     
+    def __cinit__(self):
+        self._compiled_components = NULL
+        self._num_components = 0
+        
+        
     def __init__(self, str name = "not set"):
         Base_shift_calculator.__init__(self,name)
         self._components = None
     
     cdef _set_components(self, object components):
-        self._components = components
-        
+        if self._compiled_components ==  NULL:
+            self._compile_components(components)
+            
+    def _compile_components(self, components):
+        self._compiled_components = <Dihedral_component*>malloc(len(components) * sizeof(Dihedral_component))
+        self._num_components = len(components) 
+        for i,component in enumerate(components):
+            self._compiled_components[i].target_atom = component[0]
+            for j in range(4):
+                self._compiled_components[i].dihedral_atoms[j] = component[1+j]
+            self._compiled_components[i].coefficient = component[5]
+            for j in range(5):
+                self._compiled_components[i].parameters[j] = component[6+j]
+    
+    def _free_compiled_components(self):
+        if self._compiled_components != NULL:
+            free(self._compiled_components)
+            self._compiled_components = NULL        
+                   
+    def _prepare(self, change, data):
+         if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
+             self._free_compiled_components()  
+                    
     cdef inline _get_component(self,int index):
         return self._components[index]
     
@@ -668,37 +702,31 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     cdef inline dihedral_ids _get_dihedral_atom_ids(self, int index):
         cdef dihedral_ids result
         
-        component = self._get_component(index)
-        
-        result.atom_id_1= component[1]
-        result.atom_id_2= component[2]
-        result.atom_id_3= component[3]
-        result.atom_id_4= component[4]
+        result.atom_id_1 = self._compiled_components[index].dihedral_atoms[0]
+        result.atom_id_2 = self._compiled_components[index].dihedral_atoms[1]
+        result.atom_id_3 = self._compiled_components[index].dihedral_atoms[2]
+        result.atom_id_4 = self._compiled_components[index].dihedral_atoms[3]
         
         return result
 
-    @cython.profile(False)
-    cdef inline float _get_coefficient(self, int index):
-        component = self._get_component(index)
-        coefficient = component[5]
-        return coefficient
-
-    @cython.profile(False)
     cdef inline dihedral_parameters _get_parameters(self, int index):
-        component = self._get_component(index)
         
-        cdef dihedral_parameters result
+        cdef dihedral_parameters result  
+
+        result.param_0 = self._compiled_components[index].parameters[0]
+        result.param_1 = self._compiled_components[index].parameters[3]
+        result.param_2 = self._compiled_components[index].parameters[1]
+        result.param_3 = self._compiled_components[index].parameters[4]
+        result.param_4 = self._compiled_components[index].parameters[2]
         
-        parameters = component[6:11]
-        
-        result.param_0 =  parameters[0]
-        result.param_1 =  parameters[3]
-        result.param_2 =  parameters[1]
-        result.param_3 =  parameters[4]
-        result.param_4 =  parameters[2]
+
         
             
         return result
+    
+    @cython.profile(False)
+    cdef inline float _get_coefficient(self, int index):
+        return self._compiled_components[index].coefficient
 
     def __call__(self, object components, object results, object component_to_target):
         self.set_simulation()
@@ -1518,11 +1546,6 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
             self._distance_calc_single_force_set(index, factor, forces)
 
 
-cdef struct Dihedral_component:
-      int target_atom
-      int[4] dihedral_atoms
-      float coefficient
-      float[5] parameters
 
     
 cdef class Fast_dihedral_force_calculator(Base_force_calculator):
