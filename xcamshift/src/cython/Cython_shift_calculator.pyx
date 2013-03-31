@@ -771,29 +771,81 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     cdef Vec3_list _centre_cache
     cdef Vec3_list _normal_cache
     
+    cdef Ring_target_component* _compiled_components 
+    cdef int _num_components
+    
+    cdef Ring_component* _compiled_ring_components
+    cdef int _num_ring_components
+    
+    def __cinit__(self):
+        self._compiled_components = NULL
+        self._num_components = 0
+        
+        self._compiled_ring_components = NULL
+        self._num_ring_components = 0
     
     def __init__(self, str name = "not set"):
         Base_shift_calculator.__init__(self,name)
-        self._components = None
         self._coef_components = None
-        self._ring_components = None
+#         self._ring_components = None
         self._centre_cache = None
         self._normal_cache = None
         
     def _set_components(self,components):
-        self._components = components
-        
-    def _set_coef_components(self,coef_components):
-        self._coef_components =  coef_components
+        super(Fast_ring_shift_calculator, self)._set_components(components)
+        if  self._compiled_components ==  NULL:
+            self._compile_components(components)
             
-    def _set_ring_components(self,coef_components):
-        self._ring_components =  coef_components
+    def _compile_components(self,components): 
+        self._compiled_components = <Ring_target_component*>malloc(len(components) * sizeof(Ring_target_component))
+        self._num_components = len(components)
+        for i,component in enumerate(components):
+            self._compiled_components[i].target_atom_id = components[i][0]
+            self._compiled_components[i].atom_type_id = components[i][1]
     
+    def _free_compiled_components(self):   
+        if self._compiled_components != NULL:
+            free(self._compiled_components)
+            self._compiled_components = NULL
+            
+    def _free_compiled_ring_components(self):   
+        if self._compiled_ring_components != NULL:
+            free(self._compiled_ring_components)
+            self._compiled_ring_components = NULL
+
+    def _prepare(self, change, data):
+        if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
+            self._free_compiled_components() 
+            self._free_compiled_ring_components()
+            
     def _set_normal_cache(self,normals):
         self._normal_cache = <Vec3_list> normals
         
     def _set_centre_cache(self,centres):
         self._centre_cache = <Vec3_list> centres
+        
+    def _set_coef_components(self,coef_components):
+        self._coef_components =  coef_components
+    
+    #TODO: not needed ?        
+    def _set_ring_components(self,ring_components):
+#         self._ring_components =  ring_components
+        if  self._compiled_ring_components ==  NULL:
+            self._compile_ring_components(ring_components)
+
+    def _compile_ring_components(self,ring_components): 
+        self._compiled_ring_components = <Ring_component*>malloc(len(ring_components) * sizeof(Ring_component))
+        self._num_ring_components = len(ring_components)
+        for i,ring_component in enumerate(ring_components):
+            self._compiled_ring_components[i].ring_id  = ring_components[i][0]
+            self._compiled_ring_components[i].num_atoms  = len(ring_component[1])
+            for j in range(len(ring_component[1])):
+                self._compiled_ring_components[i].atom_ids[j] =ring_component[1][j]
+    
+    def _free_compiled_ring_components(self):   
+        if self._compiled_ring_components != NULL:
+            free(self._compiled_ring_components)
+            self._compiled_ring_components = NULL
 
     @cython.profile(False)
     cdef _get_coef_components(self, int atom_type_id):
@@ -839,6 +891,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     def __call__(self, object components, object results, object component_to_target):
         self.set_simulation()
         cdef int target_atom_id
+        cdef int atom_type_id
         cdef int ring_id
         cdef float coefficient
         cdef double start_time = 0.0 
@@ -851,9 +904,9 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         
         self._set_components(components)
         
-        for index in range(len(components)):
-            component = components[index]
-            atom_type_id = component[1]
+        for index in range(self._num_components):
+            target_atom_id = self._compiled_components[index].target_atom_id
+            atom_type_id = self._compiled_components[index].atom_type_id
 
             shift = 0.0
         
@@ -861,7 +914,6 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
             for coef_component in self._get_coef_components(atom_type_id):
 #                TODO: remove magic numbers or add structs
 
-                target_atom_id = component[0]
                 ring_id = coef_component[1]
                 coefficient = coef_component[2]
                 shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
