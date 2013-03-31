@@ -134,7 +134,7 @@ class TestXcamshiftAGAGA(unittest2.TestCase):
             self.assertAlmostEqual(test_data_sum[key], agaga_shifts[key], places=self.DEFAULT_DECIMAL_PLACES - 2, msg=key)
             
 def run_tests():
-    unittest2.main(module='test.test_xcamshift_agaga')
+    unittest2.main(module='test.test_xcamshift_agaga',defaultTest='TestXcamshiftAGAGA.test_agaga_shifts')
     
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'TestXcamshifAGA.testName']
