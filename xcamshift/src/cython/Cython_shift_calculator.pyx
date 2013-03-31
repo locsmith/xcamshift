@@ -1403,33 +1403,6 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         self._free_compiled_components()
         self._set_components(saved_component_list)
                     
-        
-    @cython.profile(False)
-    cdef inline target_distant_atom _get_target_and_distant_atom_ids(self, int index):
-        
-        cdef object values
-        cdef int target_atom_id
-        cdef int distant_atom_id
-        cdef target_distant_atom result
-        
-        values  = self._components.get_component(index)
-        
-        result.target_atom_id = values[self._distance_atom_index_1]
-        result.distant_atom_id = values[self._distance_atom_index_2]
-        
-        return result
-    
-
- 
-#    cdef inline float _distance(self, int target_atom, int distance_atom):
-#        cdef Vec3 target_pos, distant_pos, distance
-#        cdef float result 
-#        
-#        target_pos = currentSimulation().atomPosArr().data(target_atom)
-#        distant_pos =  currentSimulation().atomPosArr().data(distance_atom)
-#        
-#        return  norm(target_pos - distant_pos)
-    
     @cython.profile(False)    
     cdef inline Vec3 _xyz_distances(self, int target_atom, int distance_atom):
         cdef Vec3 target_pos, distant_pos
