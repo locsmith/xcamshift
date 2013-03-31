@@ -3721,7 +3721,7 @@ class Xcamshift(PyPot):
             
         self._shift_cache = {}
         result_shifts = [0.0]*len(target_atom_ids)
-        self.calc_shifts(target_atom_ids, result_shifts)
+        self._calc_shifts(target_atom_ids, result_shifts)
 
         for target_atom_id, result in zip(target_atom_ids,result_shifts):
             self._shift_cache[target_atom_id] =  result
@@ -3731,43 +3731,46 @@ class Xcamshift(PyPot):
             
             print "shifts completed in ", "%.17g " %  (end_time-start_time),"seconds"
 
-    #TODO: add standalone mode flag or wrap in a external wrapper that call round changed etc    
     def calc_shifts(self, target_atom_ids=None, result=None):
         def target_atom_ids_as_selection_strings(target_atom_ids):
             result  = []
             for target_atom_id in target_atom_ids:
                 result.append(Atom_utils._get_atom_info_from_index(target_atom_id))
             return tuple(result)
+
+        if target_atom_ids  == None:
+            target_atom_ids = self._get_all_component_target_atom_ids() 
+            
+  
+        if result == None or len(result) < len(target_atom_ids):
+            result = [0.0] *len(target_atom_ids)
+
+
+        
+        result = self._calc_shifts(target_atom_ids, result)
+        
+        #TODO review whole funtion and resturn types
+        return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(result))
+        
+    #TODO: add standalone mode flag or wrap in a external wrapper that call round changed etc    
+    def _calc_shifts(self, target_atom_ids=None, result=None):
                 
         if self._verbose:
             start_time =  time()
             print 'start calc shifts'
             
-        if target_atom_ids  == None:
-            target_atom_ids = self._get_all_component_target_atom_ids() 
             
-        #todo this could be more elegant
+      #todo this could be more elegant
         reset_selected_atoms = False
         if self._selected_atoms == None:
             self._selected_atoms = target_atom_ids
             reset_selected_atoms =  True
-            
-        if result == None or len(result) < len(target_atom_ids):
-            result = [0.0] *len(target_atom_ids)
-
-#        self._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
-#        self._prepare(ROUND_CHANGED,None)
-        
-#        self.set_shifts(result)
-#         for id in target_atom_ids:
-#             print Atom_utils._get_atom_info_from_index(id)
 
         #TODO: currently needed to generate a component to result remove by making component to result lazy?
         if not self._freeze:
             self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
             
         for potential in self.potential:
-
             potential.calc_shifts(target_atom_ids, result)
 
         if self._selected_atoms == None:
@@ -3778,16 +3781,14 @@ class Xcamshift(PyPot):
             end_time =  time()
             print 'end calc shifts (calculated shifts in  %.17g seconds) \n' % (end_time-start_time)
         
-        #TODO review whole funtion and resturn types
-        return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(result))
                            
-    #TODO: deprecated remove use calc_shifts
+    #TODO: deprecated remove use _calc_shifts
     def set_shifts(self, result):
-        print 'deprecated remove use calc_shifts'
+        print 'deprecated remove use _calc_shifts'
         target_atom_ids =  self._get_all_component_target_atom_ids()
         self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
         result_shifts  = [0.0] * len(target_atom_ids)
-        self.calc_shifts(target_atom_ids, result_shifts)
+        self._calc_shifts(target_atom_ids, result_shifts)
         for target_atom_id, shift in zip(target_atom_ids,result_shifts):
             result[target_atom_id] =  shift
         
