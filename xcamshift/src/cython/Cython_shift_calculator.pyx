@@ -1326,13 +1326,11 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
         return  result
 cdef class Base_force_calculator:
     
-    cdef object _components
     cdef bint _verbose 
     cdef Simulation* _simulation
     cdef str _name
     
     def __init__(self,potential=None, name= "not set"):
-        self._components =  None
         self._verbose = False
         self._simulation =  currentSimulation()
         
@@ -1346,24 +1344,10 @@ cdef class Base_force_calculator:
     
     def set_simulation(self):
         self._simulation =  currentSimulation()
-    def _set_components(self,components):
-        self._components = components
     
-    cdef inline object _get_component(self,int index):
-        return self._components.get_component(index)
+
     
-    def _calc_single_force_set(self, int index, float factor, Out_array forces):
-        #TODO tidy this up a hack for the test suite
-        saved_component_list = self._components
-        component_list = Component_list()
-        component_list.add_component(self._components[index])
-        self._free_compiled_components()
-        self._set_components(component_list)
         
-        self.__call__(component_list,[0], [factor], forces)
-        self._components =  saved_component_list
-        self._free_compiled_components()
-        self._set_components(saved_component_list)
         
         
 #    TODO should most probably be a fixed array
@@ -1435,7 +1419,6 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         self._distance_atom_index_2 =  indices .distance_atom_index_2
         self._exponent_index  = indices.exponent_index
         self._coefficient_index  = indices.coefficient_index
-        self._components =  None
         self._smoothed =  smoothed
         self._smoothing_factor =  DEFAULT_SMOOTHING_FACTOR
         self._cutoff =  DEFAULT_CUTOFF
@@ -1447,7 +1430,6 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         self._smoothing_factor = smoothing_factor
         
     def _set_components(self,components):
-        super(Fast_distance_based_potential_force_calculator, self)._set_components(components)
         if  self._compiled_components ==  NULL:
             self._compile_components(components) 
     
@@ -1482,18 +1464,18 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
 #   TODO: generalise this based on compiled components
     def _calc_single_force_set(self, int index, float factor, Out_array forces):
         #TODO tidy this up a hack for the test suite
-        saved_component_list = self._components
-        component_list = Component_list()
-        component_list.add_component(self._components[index])
-        self._free_compiled_components()
-        self._set_components(component_list)
+        cdef Distance_component* saved_component_list = self._compiled_components
+        cdef int saved_num_components = self._num_components 
         
+        self._num_components  = 1
+        self._compiled_components = &saved_component_list[index]
+             
+        self._distance_calc_single_force_set(0,factor,forces)
         
-        self.__call__(component_list,[0], [factor], forces)
-        self._components =  saved_component_list
-        self._free_compiled_components()
-        self._set_components(saved_component_list)
-                    
+        self._compiled_components = saved_component_list
+        self._num_components = saved_num_components 
+        
+                            
     @cython.profile(False)    
     cdef inline Vec3 _xyz_distances(self, int target_atom, int distance_atom):
         cdef Vec3 target_pos, distant_pos
@@ -1626,7 +1608,6 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         
         
     def _set_components(self,components):
-        super(Fast_dihedral_force_calculator, self)._set_components(components)
         if self._compiled_components ==  NULL:
             self._compile_components(components)
             
@@ -1710,8 +1691,19 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
 
     
 
-#    def _calc_single_force_set(self, int index, float factor, object forces):
-#        self._cython_calc_single_force_set(index, factor, forces)
+    def _calc_single_force_set(self, int index, float factor, Out_array forces):
+        #TODO tidy this up a hack for the test suite
+        cdef Dihedral_component* saved_component_list = self._compiled_components
+        cdef int saved_num_components = self._num_components 
+        
+        self._num_components  = 1
+        self._compiled_components = &saved_component_list[index]
+             
+        self._dihedral_calc_single_force_set(0,factor,forces)
+        
+        self._compiled_components = saved_component_list
+        self._num_components = saved_num_components 
+        
         
     cdef inline _dihedral_calc_single_force_set(self, int index, float factor, Out_array forces):
         cdef Vec3 r1, r2, r4, temp
@@ -1844,7 +1836,6 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 
          
     def _set_components(self,components):
-        super(Fast_ring_force_calculator, self)._set_components(components)
         if  self._compiled_components ==  NULL:
             self._compile_components(components)
             
