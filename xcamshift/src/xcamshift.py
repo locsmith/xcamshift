@@ -2462,6 +2462,7 @@ class Ring_Potential(Base_potential):
         results = [0.0]
         self._setup_ring_calculator(self._shift_calculator)
         self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
+        self._setup_ring_calculator(self._shift_calculator)
         self._shift_calculator(components,results,[0])
         return results[0]
     
