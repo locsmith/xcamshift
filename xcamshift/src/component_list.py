@@ -44,7 +44,8 @@ class Component_list():
     
 #    TODO rename to get_target_atom_ids
     def get_component_atom_ids(self):
-        return tuple(self._component_ids)
+        result = sorted(list(self._component_ids))
+        return tuple(result)
     
 
     def report_bad_atom_id(self, atom_id):
