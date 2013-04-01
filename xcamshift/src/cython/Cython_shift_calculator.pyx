@@ -526,13 +526,11 @@ cdef class Base_shift_calculator:
     cdef bint _verbose 
     cdef str _name
     cdef Simulation* _simulation
-    cdef object _components
 
     def __init__(self, str name):
             self._verbose = False
             self._name = name
             self._simulation =  currentSimulation()
-            self._components =  None
             
     
     def set_verbose(self,bint state):
@@ -543,10 +541,6 @@ cdef class Base_shift_calculator:
     
     def _prepare(self,change,data):
         pass
-    
-    def _set_components(self,components):
-        self._components = components
-    
     
         
         
@@ -593,7 +587,6 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         self._smoothed =  smoothed
         self._smoothing_factor =  DEFAULT_SMOOTHING_FACTOR
 #        
-        self._components =  None
         self._cutoff =  DEFAULT_CUTOFF
 #    
 #    def set_cutoff(self, cutoff):
@@ -606,7 +599,6 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 
             
     def _set_components(self,components):
-        super(Fast_distance_shift_calculator, self)._set_components(components)
         if  self._compiled_components ==  NULL:
             self._compile_components(components)  
 
@@ -709,7 +701,6 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         
     def __init__(self, str name = "not set"):
         Base_shift_calculator.__init__(self,name)
-        self._components = None
     
     cdef _set_components(self, object components):
         if self._compiled_components ==  NULL:
@@ -835,7 +826,6 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
 
         
     def _set_components(self,components):
-        super(Fast_ring_shift_calculator, self)._set_components(components)
         if  self._compiled_components ==  NULL:
             self._compile_components(components)
             
