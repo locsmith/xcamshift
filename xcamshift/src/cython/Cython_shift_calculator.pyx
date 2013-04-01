@@ -17,6 +17,7 @@ Created on 31 Jul 2012
 
 '''
 
+from stdio cimport printf
 import traceback
 cimport cython
 from vec3 import Vec3 as python_vec3
@@ -941,7 +942,6 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         angle = dot(direction_vector, ring_normal) / (distance * length_normal)
         contrib = (1.0 - 3.0 * angle ** 2) / distance3
         
-#        print Atom_utils._get_atom_info_from_index(target_atom_id), ring_id, angle, distance3, coefficient, contrib * coefficient, angle
         return contrib * coefficient
 
     
@@ -953,6 +953,8 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         cdef float coefficient
         cdef double start_time = 0.0 
         cdef double end_time =0.0
+        cdef Component_Offsets* coeff_offset
+        cdef Coef_component* coef_component
         
         if self._verbose:
             start_time = time()
@@ -967,12 +969,14 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
 
             shift = 0.0
         
-            
-            for coef_component in self._get_coef_components(atom_type_id):
-#                TODO: remove magic numbers or add structs
+            coeff_offset =  self._compiled_coef_components.get_id_offsets(atom_type_id)
 
-                ring_id = coef_component[1]
-                coefficient = coef_component[2]
+            for coef_offset in range(coeff_offset[0].offset,coeff_offset[0].offset+coeff_offset[0].length):
+#                TODO: remove magic numbers or add structs
+                coef_component = self._compiled_coef_components.get_component(coef_offset)
+                
+                ring_id = coef_component[0].ring_id
+                coefficient = coef_component[0].coefficient
                 shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
             
             results[component_to_target[index]] += shift
