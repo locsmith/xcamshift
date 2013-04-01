@@ -69,7 +69,9 @@ class Component_list():
 
     def get_components_for_atom_id(self,atom_id):
         start, end = self.get_component_range(atom_id)
-        return self._components[start:end]
+        result = Component_list()
+        result.add_components(self._components[start:end])
+        return result
     
     def get_component(self,i):
         return self._components[i]
