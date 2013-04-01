@@ -9,7 +9,6 @@
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
 # cython: profile=True
-from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
 '''
 Created on 31 Jul 2012
 
@@ -17,10 +16,9 @@ Created on 31 Jul 2012
 
 '''
 
-from stdio cimport printf
-import traceback
 cimport cython
 from vec3 import Vec3 as python_vec3
+from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
 from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
@@ -439,9 +437,6 @@ cdef class Coef_components:
 #        return 0
 
      
-#    cdef set_component(self,int offset, coef_component& component):
-#        self._check_offset(offset)
-#        self._components[offset] = component
 
     @cython.profile(False)
     cdef inline Coef_component* get_component(self,int offset):
@@ -811,8 +806,6 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
             print '   dihedral shift components ',len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
 
 cdef class Fast_ring_shift_calculator(Base_shift_calculator):
-    cdef object _coef_components
-    cdef object _ring_components
     cdef Vec3_list _centre_cache
     cdef Vec3_list _normal_cache
     
@@ -833,13 +826,13 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         
         #note this is not a raw array of structs it's a compiled python class
         self._compiled_coef_components = None
+        
+        self._centre_cache = None
+        self._normal_cache = None
     
     def __init__(self, str name = "not set"):
         Base_shift_calculator.__init__(self,name)
-        self._coef_components = None
-#         self._ring_components = None
-        self._centre_cache = None
-        self._normal_cache = None
+
         
     def _set_components(self,components):
         super(Fast_ring_shift_calculator, self)._set_components(components)
@@ -881,13 +874,11 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         self._centre_cache = <Vec3_list> centres
         
     def _set_coef_components(self,coef_components):
-        self._coef_components =  coef_components
         self._compiled_coef_components = Coef_components(coef_components)
         
         
     #TODO: not needed ?        
     def _set_ring_components(self,ring_components):
-#         self._ring_components =  ring_components
         if  self._compiled_ring_components ==  NULL:
             self._compile_ring_components(ring_components)
 
@@ -905,9 +896,6 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
             free(self._compiled_ring_components)
             self._compiled_ring_components = NULL
 
-    @cython.profile(False)
-    cdef _get_coef_components(self, int atom_type_id):
-        return self._coef_components.get_components_for_atom_id(atom_type_id)
 
     @cython.profile(False)
     cdef inline Vec3* _get_ring_normal(self, int ring_id):
@@ -1835,8 +1823,6 @@ cdef struct Ring_component:
 cdef class Fast_ring_force_calculator(Base_force_calculator):
 
     
-    cdef object _coef_components
-#     cdef object _ring_components
     cdef Vec3_list _centre_cache
     cdef Vec3_list _normal_cache
     
@@ -1845,6 +1831,9 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     
     cdef Ring_component* _compiled_ring_components
     cdef int _num_ring_components
+
+    cdef Coef_components _compiled_coef_components
+
     
     def __cinit__(self):
         self._compiled_components = NULL
@@ -1852,13 +1841,15 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         
         self._compiled_ring_components = NULL
         self._num_ring_components = 0
+
+        #note this is not a raw array of structs it's a compiled python class
+        self._compiled_coef_components = None        
         
-    def __init__(self,name="not set"):
-        super(Fast_ring_force_calculator, self).__init__(name=name)
-        self._coef_components = None
-#         self._ring_components = None
         self._centre_cache = None
         self._normal_cache = None
+
+    def __init__(self,name="not set"):
+        super(Fast_ring_force_calculator, self).__init__(name=name)
         
 
          
@@ -1873,19 +1864,12 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         for i,component in enumerate(components):
             self._compiled_components[i].target_atom_id = components[i][0]
             self._compiled_components[i].atom_type_id = components[i][1]
-    
-    def _free_compiled_components(self):   
-        if self._compiled_components != NULL:
-            free(self._compiled_components)
-            self._compiled_components = NULL
-            
                 
         
     def _set_coef_components(self,coef_components):
-        self._coef_components =  coef_components
+        self._compiled_coef_components = Coef_components(coef_components)
             
     def _set_ring_components(self,ring_components):
-#         self._ring_components =  ring_components
         if  self._compiled_ring_components ==  NULL:
             self._compile_ring_components(ring_components)
             
@@ -1903,19 +1887,26 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
             free(self._compiled_ring_components)
             self._compiled_ring_components = NULL
 
+    def _free_coef_components(self):
+        self._compiled_coef_components = None
+
+    cdef _free_compiled_components(self):
+        if self._compiled_components != NULL:
+            free (self._compiled_components)
+            self._compiled_components = NULL   
+            
     def _prepare(self, change, data):
         if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
             self._free_compiled_components() 
             self._free_compiled_ring_components()
-            
+            self._free_coef_components()
+                        
     def _set_normal_cache(self,normals):
         self._normal_cache = <Vec3_list> normals
         
     def _set_centre_cache(self,centres):
         self._centre_cache = <Vec3_list> centres
 
-#    cdef _get_coef_components(self, int atom_type_id):
-#        return self._coef_components.get_components_for_atom_id(atom_type_id)
     
     @cython.profile(False)        
     cdef inline Vec3* _get_ring_normal(self, int ring_id):
@@ -1925,13 +1916,6 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     cdef inline Vec3* _get_ring_centre(self, int ring_id):
         return  self._centre_cache.get(ring_id)
         
-
-    
-
-
-       
-    
-
 
 #    @cython.profile(False)
 #    cdef inline target_type _get_target_and_type(self,int index):
@@ -1943,25 +1927,19 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 #        
 #        return result#
     
-    @cython.profile(False)
-    cdef inline  Coef_components _get_coef_components(self, int atom_type_id):
-        cdef object python_coef_components = self._coef_components.get_components_for_atom_id(atom_type_id)
-        return Coef_components(python_coef_components)
     
     cdef _do_calc_components(self, object component_to_result,object force_factors, Out_array force):
         for i in range(self._num_components):
             self._ring_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
     cdef inline _ring_calc_single_force_set(self,  int index, float force_factor, object forces): 
-        #TODO: make array a union
-        cdef Coef_components coef_components = self._get_coef_components(self._compiled_components[index].atom_type_id)
+        cdef int atom_type_id  = self._compiled_components[index].atom_type_id
+        cdef Component_Offsets* coeff_offset =  self._compiled_coef_components.get_id_offsets(atom_type_id)
         cdef Coef_component* coef_component
-        for i in range(coef_components.num_components):
-            coef_component = coef_components.get_component(i)
-#            print coef_component.atom_type_id, coef_component.ring_id, coef_component.coefficient
-    #                print 'coef_component', i, coef_component
-    #                 print 'here', target_atom_id, atom_type_id,
-    #                coef_component, force_factor
+        
+        for coef_offset in range(coeff_offset[0].offset,coeff_offset[0].offset+coeff_offset[0].length):
+#           TODO: remove magic numbers or add structs
+            coef_component = self._compiled_coef_components.get_component(coef_offset)
             self._calculate_single_ring_forces(self._compiled_components[index].target_atom_id, self._compiled_components[index].atom_type_id, coef_component, force_factor, forces)
 
     def _calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Python_ring_force_sub_terms python_sub_terms,Out_array forces):
@@ -1970,14 +1948,10 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 
     cdef _calculate_single_ring_forces(self, int target_atom_id, int atom_type_id, Coef_component* coef_component, float force_factor,Out_array forces):
         
-#    print atom_type_id, ring_id, coefficient, self._get_component_list('RING').get_components_for_atom_id(ring_id)
         cdef Ring_force_sub_terms force_terms = self._build_cython_force_terms(target_atom_id, coef_component.ring_id)
-#        print coef_component
-        
-#        print vec3_as_tuple(force_terms.gradUQ), force_terms.dL3, force_terms.u, vec3_as_tuple(force_terms.gradVQ), force_terms.dL6
-#        print Atom_utils._get_atom_info_from_index(target_atom_id)
 
         self._cython_calc_target_atom_forces(target_atom_id, force_factor * coef_component.coefficient, force_terms, forces)
+
 #        #            #TODO: this is not how camshift does it, it uses the sum of the two ring normals
         self._cython_calculate_ring_forces(atom_type_id, coef_component.ring_id, force_factor * coef_component.coefficient, force_terms, forces)
 
