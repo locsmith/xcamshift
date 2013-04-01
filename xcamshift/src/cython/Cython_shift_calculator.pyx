@@ -27,7 +27,8 @@ from libc.string cimport strcmp
 from time import time
 from utils import Atom_utils
 from component_list import Component_list
- 
+
+
 cdef struct Distance_component:
       int target_atom
       int remote_atom_1
@@ -364,26 +365,69 @@ cdef class Python_ring_force_sub_terms:
         
     cdef Ring_force_sub_terms get_terms(self):
         return self._terms
-        
+
+
+cdef struct Component_Offsets:
+    int id 
+    int offset
+    int length
+    
+                
 cdef class Coef_components:
     cdef int num_components
     cdef Coef_component* _components
+    cdef int num_ids
+    cdef Component_Offsets* _component_offsets
     
-    def __init__ (self, object components):
+        
+    def __cinit__(self, object components):
+        self.num_components = len(components)
+        self._components = <Coef_component *>malloc( self.num_components * sizeof(Coef_component))
+        if not self._components:
+            raise MemoryError()
+        
+        self. num_ids = len(components.get_component_atom_ids())
+        self._component_offsets =  <Component_Offsets*>malloc(self.num_ids * sizeof(Coef_component))
+        if not self._component_offsets:
+            raise MemoryError()
+        
         self.num_components = len(components)
         for i,component in enumerate(components):
             self._components[i].atom_type_id = component[0] 
             self._components[i].ring_id = component[1]
             self._components[i].coefficient = component[2]
+            
         
-    def __cinit__(self, object components):
-        self._components = <Coef_component *>malloc(len(components) * sizeof(Coef_component))
-        if not self._components:
-            raise MemoryError()
+        ids =  components.get_component_atom_ids()
+        for i,id in enumerate(ids):
+            start,end = components.get_component_range(id)
+            self._component_offsets[i].id = id
+            self._component_offsets[i].offset = start
+            self._component_offsets[i].length = end-start
+
+        
+    def __init__ (self, object components):
+        pass
+        
+    
+    cdef inline Component_Offsets* get_id_offsets(self,id):
+        return &self._component_offsets[id]
     
     def __dealloc__(self):
-        free(self._components)
-        self._components = NULL
+ 
+        
+        
+        if self._components != NULL: 
+            free(self._components)
+            self._components = NULL
+            self.num_components = 0
+        
+        
+        if self._component_offsets != NULL:
+            free(self._component_offsets)
+            self._component_offsets =  NULL
+            self.num_ids = 0 
+        
     
 #    cdef int _check_offset(self, int offset) except -1:
 #    
@@ -777,12 +821,17 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     cdef Ring_component* _compiled_ring_components
     cdef int _num_ring_components
     
+    cdef Coef_components _compiled_coef_components
+    
     def __cinit__(self):
         self._compiled_components = NULL
         self._num_components = 0
         
         self._compiled_ring_components = NULL
         self._num_ring_components = 0
+        
+        #note this is not a raw array of structs it's a compiled python class
+        self._compiled_coef_components = None
     
     def __init__(self, str name = "not set"):
         Base_shift_calculator.__init__(self,name)
@@ -813,10 +862,16 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
             free(self._compiled_ring_components)
             self._compiled_ring_components = NULL
 
+    def _free_coef_components(self):
+        self._compiled_coef_components = None
+
+
     def _prepare(self, change, data):
         if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
             self._free_compiled_components() 
             self._free_compiled_ring_components()
+            self._free_coef_components()
+
             
     def _set_normal_cache(self,normals):
         self._normal_cache = <Vec3_list> normals
@@ -826,7 +881,9 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         
     def _set_coef_components(self,coef_components):
         self._coef_components =  coef_components
-    
+        self._compiled_coef_components = Coef_components(coef_components)
+        
+        
     #TODO: not needed ?        
     def _set_ring_components(self,ring_components):
 #         self._ring_components =  ring_components
