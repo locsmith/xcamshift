@@ -1061,7 +1061,7 @@ cdef class Fast_ring_data_calculator:
         operator_times(result[0], 1.0/2.0)
 
     
-            
+    @cython.profile(True)        
     def __call__(self, rings, Vec3_list normals, Vec3_list centres):
         self.set_simulation()
 #        cdef Vec3_container centre 
