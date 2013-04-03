@@ -1031,7 +1031,7 @@ cdef class Fast_ring_data_calculator:
         result[0] =  cross(vec_1,vec_2)
    
     #TODO could try newells method http://www.opengl.org/wiki/Calculating_a_Surface_Normal
-    cdef  _calculate_one_ring_normal(self, ring_component, Vec3* result):
+    cdef inline  void  _calculate_one_ring_normal(self, ring_component, Vec3* result):
 
         atom_ids = ring_component[RING_ATOM_IDS]
 #        self._check_ring_size_ok(atom_ids)
