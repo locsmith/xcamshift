@@ -1148,6 +1148,7 @@ cdef class Fast_non_bonded_calculator:
             is_non_bonded =  distance < self._full_cutoff_distance
         return is_non_bonded
     
+    @cython.profile(True)
     def __call__(self, atom_list_1, atom_list_2):
         
         if self._verbose:
@@ -1161,6 +1162,7 @@ cdef class Fast_non_bonded_calculator:
 
         self.set_simulation()
         non_bonded_lists = []
+        cdef int i, atom_id_1, atom_id_2
         for atom_id_1 in atom_list_1:
             non_bonded_list = []
             non_bonded_lists.append(non_bonded_list)
@@ -1229,8 +1231,9 @@ cdef class Fast_energy_calculator:
         else:
             result = shift_diff + flat_bottom_shift_limit
         return result
-        
-    def __call__(self,target_atom_ids):
+
+    @cython.profile(True)    
+    def __call__(self,int[:] target_atom_ids):
         self.set_simulation()
         cdef float energy
         cdef float flat_bottom_shift_limit
@@ -1250,6 +1253,9 @@ cdef class Fast_energy_calculator:
             
         energy = 0.0
         
+        cdef int target_atom_index
+        cdef float shift_diffs
+         
         for target_atom_index in target_atom_ids:
             shift_diff = self._get_shift_difference(target_atom_index)
             energy_terms = self._get_energy_terms(target_atom_index)
