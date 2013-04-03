@@ -1935,7 +1935,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         cdef Ring_force_sub_terms  terms  =  python_sub_terms.get_terms()
         self._cython_calculate_ring_forces(atom_type_id, ring_id, force_factor, terms, forces)
 
-    cdef _calculate_single_ring_forces(self, int target_atom_id, int atom_type_id, Coef_component* coef_component, float force_factor,Out_array forces):
+    cdef void _calculate_single_ring_forces(self, int target_atom_id, int atom_type_id, Coef_component* coef_component, float force_factor,Out_array forces):
         
         cdef Ring_force_sub_terms force_terms 
         self._build_cython_force_terms(target_atom_id, coef_component.ring_id, force_terms)
