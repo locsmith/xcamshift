@@ -1363,7 +1363,8 @@ cdef class Base_force_calculator:
         
         
 #    TODO should most probably be a fixed array
-    def __call__(self, object components, object component_to_result, object force_factors, Out_array forces):
+    @cython.profile(True)
+    def __call__(self, object components, int[:] component_to_result, float[:] force_factors, Out_array forces):
 
         cdef double start_time =0.0
         cdef double end_time =0.0
