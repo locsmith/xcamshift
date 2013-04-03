@@ -988,20 +988,20 @@ cdef class Fast_ring_data_calculator:
     def set_verbose(self,on):
         self._verbose =  on
         
-    cdef  _calculate_one_ring_centre(self, ring_component, Vec3* result):
+    cdef inline void _calculate_one_ring_centre(self, ring_component, Vec3* result):
 
         atom_ids = ring_component[RING_ATOM_IDS]
         cdef float num_atom_ids = len(atom_ids)
         cdef Vec3 total
-
-        total=Vec3(0.0,0.0,0.0)
+        cdef int atom_id
+        
+        result[0]=Vec3(0.0,0.0,0.0)
         for atom_id in atom_ids:
-            total += self._simulation.atomPos(atom_id)
+            result[0] += self._simulation.atomPos(atom_id)
         
-        operator_times(total,1.0/float(num_atom_ids))
+        operator_times(result[0],1.0/float(num_atom_ids))
         
-#        TODO get operator / working properly
-        result[0] = total
+#       
         
     
     
