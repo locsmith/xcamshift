@@ -766,8 +766,9 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     @cython.profile(False)
     cdef inline float _get_coefficient(self, int index):
         return self._compiled_components[index].coefficient
-
-    def __call__(self, object components, object results, object component_to_target):
+    
+    @cython.profile(True)
+    def __call__(self, object components, double[:] results, int[:] component_to_target):
         self.set_simulation()
         cdef float angle
         cdef float angle_term
@@ -784,7 +785,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
             start_time = time()
             
         self._set_components(components)
-        for index in range(len(components)):
+        for index in range(self._num_components):
             dihedral_atom_ids = self._get_dihedral_atom_ids(index)
             
             coefficient = self._get_coefficient(index)
