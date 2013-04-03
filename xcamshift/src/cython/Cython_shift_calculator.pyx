@@ -1921,7 +1921,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         for i in range(self._num_components):
             self._ring_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
-    cdef inline _ring_calc_single_force_set(self,  int index, float force_factor, object forces): 
+    cdef inline void _ring_calc_single_force_set(self,  int index, float force_factor, Out_array forces): 
         cdef int atom_type_id  = self._compiled_components[index].atom_type_id
         cdef Component_Offsets* coeff_offset =  self._compiled_coef_components.get_id_offsets(atom_type_id)
         cdef Coef_component* coef_component
