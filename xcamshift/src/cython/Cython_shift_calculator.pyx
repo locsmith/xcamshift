@@ -575,7 +575,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         
         self._free_compiled_components()
         
-    cdef _free_compiled_components(self):
+    cdef void _free_compiled_components(self):
         if self._compiled_components != NULL:
             free (self._compiled_components)
             self._compiled_components = NULL   
