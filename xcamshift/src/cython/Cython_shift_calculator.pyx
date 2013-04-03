@@ -1055,7 +1055,7 @@ cdef class Fast_ring_data_calculator:
             result[i] = atom_ids[i]
         
         
-    cdef inline _average_2_vec_3(self, Vec3& vector_1, Vec3& vector_2, Vec3* result):
+    cdef inline void _average_2_vec_3(self, Vec3& vector_1, Vec3& vector_2, Vec3* result):
         result[0] =  vector_1 + vector_2
             
         operator_times(result[0], 1.0/2.0)
