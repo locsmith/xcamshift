@@ -1558,7 +1558,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
 #        self._cython_calc_single_force_set(index, factor, forces)
         
     @cython.profile(False)
-    cdef inline _distance_calc_single_force_set(self,int index, float factor, Out_array forces):
+    cdef inline void _distance_calc_single_force_set(self,int index, float factor, Out_array forces):
         
 #        cdef target_distant_atom atom_ids
         cdef Vec3 xyz_distances
