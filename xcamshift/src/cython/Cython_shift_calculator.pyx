@@ -8,7 +8,7 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
-# cython: profile=True
+# cython: profile=False
 '''
 Created on 31 Jul 2012
 
@@ -25,9 +25,17 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from time import time
 from utils import Atom_utils
-from component_list import Component_list
+from cpython cimport array
 
-
+cpdef array.array allocate_array(int len, type='d'):
+    result = array.array(type,[0])
+    array.resize(result, len)
+    array.zero(result)
+    return result
+    
+cpdef zero_array(array.array array):
+     array.zero(array)
+     
 cdef struct Distance_component:
       int target_atom
       int remote_atom_1
@@ -2149,7 +2157,8 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
     def set_verbose(self,on):
         self._verbose = on
     
-    def __call__(self, object components, object results, object component_to_target):
+    @cython.profile(True)
+    def __call__(self, object components, double[:] results, int[:] component_to_target):
         self._set_components(components)
         self.set_simulation()
         
@@ -2157,31 +2166,26 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         cdef float smoothing_factor
         cdef float ratio
         cdef float result
+        cdef float distance
         cdef target_distant_atom atom_indices
         cdef coefficient_exponent coef_exp
-        cdef object component
         cdef int target_atom_id
         cdef int distant_atom_id
+        cdef int result_index
+        cdef double value 
         
         cdef double start_time =0.0
         cdef double end_time =0.0
         if self._verbose:
             start_time = time()
             
-        for index in range(len(components)):
+        for index in range(self._num_components):
             target_atom_id = self._compiled_components[index].remote_atom_1
             distant_atom_id  = self._compiled_components[index].remote_atom_2
             
             distance = calc_distance_simulation(self._simulation, target_atom_id, distant_atom_id)
             if distance < self._nb_cutoff:
         
-  
-            
-
-    
-                
-                
-                
                 coef_exp = self._get_coefficient_and_exponent(index)
                 smoothing_factor = default_smoothing_factor
                 if self._smoothed:

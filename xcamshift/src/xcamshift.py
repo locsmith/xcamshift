@@ -46,8 +46,9 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_ring_force_calculator,                                     \
                                      Fast_force_factor_calculator,                                   \
                                      Fast_non_bonded_shift_calculator,                               \
-                                     Out_array, Vec3_list
+                                     Out_array, Vec3_list, allocate_array, zero_array
 from time import time
+import array#
 
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
@@ -641,16 +642,17 @@ class Base_potential(object):
         components = Component_list()
         component = self._get_distance_components()[index]
         components.add_component(component)
-        results = [0.0]
+        results = allocate_array(1)
+        component_to_result =  allocate_array(1,'i')
         self._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
-        self._shift_calculator(components,results,[0])
+        self._shift_calculator(components,results,component_to_result)
         return results[0]
       
     
     def _build_component_to_result(self, target_atom_ids):
         if not self._freeze:
             components = self._filter_components(target_atom_ids)
-            self._component_to_result =  [0] *len(components)
+            self._component_to_result =  allocate_array(len(components),'i')
             for i, component in enumerate(components):
                 out_atom_id = component[0]
                 out_index  =  target_atom_ids.index(out_atom_id)
@@ -3723,7 +3725,7 @@ class Xcamshift(PyPot):
             start_time =  time()
             
         self._shift_cache = {}
-        result_shifts = [0.0]*len(target_atom_ids)
+        result_shifts = allocate_array(len(target_atom_ids)) 
         self._calc_shifts(target_atom_ids, result_shifts)
 
         for target_atom_id, result in zip(target_atom_ids,result_shifts):
@@ -3790,7 +3792,7 @@ class Xcamshift(PyPot):
         print 'deprecated remove use _calc_shifts'
         target_atom_ids =  self._get_all_component_target_atom_ids()
         self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
-        result_shifts  = [0.0] * len(target_atom_ids)
+        result_shifts  = allocate_array(len(target_atom_ids))
         self._calc_shifts(target_atom_ids, result_shifts)
         for target_atom_id, shift in zip(target_atom_ids,result_shifts):
             result[target_atom_id] =  shift
@@ -3973,8 +3975,9 @@ class Xcamshift(PyPot):
         observed_shift_atom_ids = self.get_selected_atom_ids()
         active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
         active_target_atom_ids = list(active_target_atom_ids)
-        
-        return sorted(active_target_atom_ids)
+         
+         
+        return array.array('i',sorted(active_target_atom_ids))
     
 
 
