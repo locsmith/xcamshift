@@ -1917,7 +1917,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 #        return result#
     
     
-    cdef _do_calc_components(self, object component_to_result,object force_factors, Out_array force):
+    cdef inline void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
         for i in range(self._num_components):
             self._ring_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
