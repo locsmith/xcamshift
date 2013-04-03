@@ -2035,7 +2035,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 #    #TODO: calculation of GradU and gradV are not consistent with force_terms for target atom correct
 #    #TODO: reduce number of parameters to method
 
-    cdef inline _cython_calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Ring_force_sub_terms force_terms, Out_array forces):
+    cdef inline void _cython_calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Ring_force_sub_terms force_terms, Out_array forces):
         cdef Vec3 temp_normal =  Vec3(force_terms.ring_normal)
         cdef Vec3 nSum = temp_normal
         operator_times(nSum,2.0)  #            float_type g [3], ab [3], c [3]
@@ -2072,6 +2072,8 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         
         cdef int axis 
         cdef float sub_term
+        cdef float sub_force
+        
         for ring_atom_index in range(num_ring_atoms):
             ring_atom_id = self._compiled_ring_components[ring_id].atom_ids[ring_atom_index]
             if ring_atom_index < limit:
