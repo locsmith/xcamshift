@@ -1036,8 +1036,8 @@ cdef class Fast_ring_data_calculator:
         atom_ids = ring_component[RING_ATOM_IDS]
 #        self._check_ring_size_ok(atom_ids)
         
-        cdef int[3] atom_triplet_1
-        cdef int[3] atom_triplet_2
+        cdef int* atom_triplet_1 = [0,0,0]
+        cdef int* atom_triplet_2 = [0,0,0]
         self._build_atom_triplet(atom_ids[:3], atom_triplet_1)
         self._build_atom_triplet(atom_ids[-3:], atom_triplet_2)
        
