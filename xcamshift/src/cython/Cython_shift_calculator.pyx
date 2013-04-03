@@ -611,7 +611,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
             self._compile_components(components)  
 
         
-    cdef _compile_components(self,components):
+    cdef void _compile_components(self,components):
         self._compiled_components = <Distance_component*>malloc(len(components) * sizeof(Distance_component))
         self._num_components = len(components)
         for i,component in enumerate(components):
