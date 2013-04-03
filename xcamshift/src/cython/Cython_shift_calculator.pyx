@@ -646,8 +646,9 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         result.exponent = self._compiled_components[index].exponent 
 
         return result
-#    
-    def __call__(self, object components, object results, object component_to_target):
+    
+    @cython.profile(True)
+    def __call__(self, object components, double[:] results, int[:] component_to_target):
         self.set_simulation()
         cdef double start_time = 0.0
         cdef double end_time = 0.0
@@ -666,13 +667,16 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         cdef object component
         cdef int target_atom_id
         cdef int distant_atom_id
+        cdef float distance
 
         
 
         if self._verbose:
             start_time = time()
-            
-        for index in range(len(components)):
+        
+        cdef int index
+          
+        for index in range(self._num_components):
             
 #             component = components[index]
 
