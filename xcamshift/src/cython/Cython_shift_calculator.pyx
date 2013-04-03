@@ -1937,7 +1937,8 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 
     cdef _calculate_single_ring_forces(self, int target_atom_id, int atom_type_id, Coef_component* coef_component, float force_factor,Out_array forces):
         
-        cdef Ring_force_sub_terms force_terms = self._build_cython_force_terms(target_atom_id, coef_component.ring_id)
+        cdef Ring_force_sub_terms force_terms 
+        self._build_cython_force_terms(target_atom_id, coef_component.ring_id, force_terms)
 
         self._cython_calc_target_atom_forces(target_atom_id, force_factor * coef_component.coefficient, force_terms, forces)
 
@@ -1945,13 +1946,13 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         self._cython_calculate_ring_forces(atom_type_id, coef_component.ring_id, force_factor * coef_component.coefficient, force_terms, forces)
 
     def _build_force_terms(self, int target_atom_id, int ring_id):
-        cdef Ring_force_sub_terms terms  = self._build_cython_force_terms(target_atom_id, ring_id)
+        cdef Ring_force_sub_terms terms  
+        self._build_cython_force_terms(target_atom_id, ring_id, terms)
         result  = Python_ring_force_sub_terms()
         result.setup(terms)
         return result
     
-    cdef Ring_force_sub_terms _build_cython_force_terms(self, int target_atom_id, int ring_id):
-        cdef Ring_force_sub_terms result
+    cdef inline void _build_cython_force_terms(self, int target_atom_id, int ring_id, Ring_force_sub_terms& result):
         cdef Vec3 target_atom_pos  = self._simulation[0].atomPos(target_atom_id)
         
         cdef Vec3 ring_centre = self._get_ring_centre(ring_id)[0]
@@ -1972,7 +1973,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         cdef float nL = norm(ring_normal[0])
         cdef float nL2 = nL ** 2
         cdef float dLnL = dL * nL
-        cdef dL3nL3 = dL3 * nL2 * nL
+        cdef float dL3nL3 = dL3 * nL2 * nL
         
         cdef float dn = dot(d, ring_normal[0])
         cdef float dn2 = dn ** 2
@@ -2008,8 +2009,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         result.dL6 = dL6
         result.ring_normal =  ring_normal[0]
         
-        return result
-#        return  dL3, u, dL6, ring_normal,  atom_type_id, coefficient, d, factor, dn, dL3nL3, dL, nL, dLnL
+         return  dL3, u, dL6, ring_normal,  atom_type_id, coefficient, d, factor, dn, dL3nL3, dL, nL, dLnL
 ##    ---
 #
     def _calc_target_atom_forces(self, int target_atom_id, float force_factor, Python_ring_force_sub_terms python_sub_terms, Out_array forces):
