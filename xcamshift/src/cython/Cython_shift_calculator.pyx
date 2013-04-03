@@ -1287,7 +1287,8 @@ cdef class Fast_energy_calculator:
 
 cdef class Fast_force_factor_calculator(Fast_energy_calculator):
 
-    def __call__(self, target_atom_ids):
+    @cython.profile(True)
+    def  __call__(self, int[:] target_atom_ids):
         cdef double start_time =0.0
         cdef double end_time =0.0
         if self._verbose:
