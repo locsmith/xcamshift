@@ -1576,7 +1576,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
 #        
         forces.add(self._compiled_components[index].remote_atom_1,target_forces)
         forces.add(self._compiled_components[index].remote_atom_2,distant_forces) 
-        
+         
 
 cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_calculator):
     cdef float _non_bonded_cutoff
