@@ -1294,8 +1294,12 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
             start_time = time()
 
         self.set_simulation()
-        result  = []
-        for target_atom_id in target_atom_ids:
+        #TODO: shouldn't be allocated each time
+        cdef float[:] result  = allocate_array(len(target_atom_ids),'f')
+        cdef int i
+        cdef float factor, shift_diff
+        
+        for i,target_atom_id in enumerate(target_atom_ids):
             factor  = 0.0
                 
             
@@ -1324,7 +1328,7 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
                 else:
                     factor = weight * tanh_amplitude * tanh_elongation / (cosh(tanh_elongation * (adjusted_shift_diff - end_harmonic)))**2.0 * fact;
 
-            result.append(factor)
+            result[i] = factor
             
         if self._verbose:
             end_time = time()
@@ -1385,7 +1389,7 @@ cdef class Base_force_calculator:
             end_time = time()
             print '   force calculator: ', self._name ,' ',len(components), ' in', "%.17g" %  (end_time-start_time), "seconds"
 
-    cdef _do_calc_components(self, object component_to_result,  object force_factors, Out_array force):
+    cdef void _do_calc_components(self, int[:] component_to_result,  float[:] force_factors, Out_array force):
         raise Exception("this should not be called!")
     
     cdef inline _get_or_make_target_force_triplet(self, object forces, object target_offset):
@@ -1512,7 +1516,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     def _calc_single_force_factor(self, int index, float factor):
         return self._cython_calc_single_force_factor(index, factor)
     
-    cdef _do_calc_components(self, object component_to_result, object force_factors, Out_array force):
+    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
         for i in range(self._num_components):
             self._distance_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
@@ -1588,7 +1592,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         
 #    def _calc_single_force_set(self, int index, float factor, object forces):
 #        self._cython_calc_single_force_set(index, factor, forces)
-    cdef _do_calc_components(self, object component_to_result, object force_factors, Out_array force):
+    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
         for i in range(self._num_components):
             self._non_bonded_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
@@ -1676,7 +1680,8 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     def _calc_single_force_factor(self, int index):
         return self._cython_calc_single_force_factor(index)
 
-    cdef _do_calc_components(self, object component_to_result, object force_factors, Out_array force):
+    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
+        cdef int i
         for i in range(self._num_components):
             self._dihedral_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
@@ -2013,7 +2018,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         result.dL6 = dL6
         result.ring_normal =  ring_normal[0]
         
-         return  dL3, u, dL6, ring_normal,  atom_type_id, coefficient, d, factor, dn, dL3nL3, dL, nL, dLnL
+#        return  dL3, u, dL6, ring_normal,  atom_type_id, coefficient, d, factor, dn, dL3nL3, dL, nL, dLnL
 ##    ---
 #
     def _calc_target_atom_forces(self, int target_atom_id, float force_factor, Python_ring_force_sub_terms python_sub_terms, Out_array forces):

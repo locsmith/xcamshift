@@ -3937,7 +3937,7 @@ class Xcamshift(PyPot):
         return constants_table.get_tanh_elongation(atom_name)
     
     def _calc_single_factor(self, target_atom_id):
-        target_atom_ids = [target_atom_id]
+        target_atom_ids = array.array('i',[target_atom_id])
         
         if not target_atom_id in self._shift_table.get_atom_indices():
             msg = "requested factor for target [%s] which is not in shift table"
