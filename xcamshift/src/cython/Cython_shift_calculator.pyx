@@ -1050,7 +1050,8 @@ cdef class Fast_ring_data_calculator:
 #         result.set_vec3(average)
 #         return result
        
-    cdef inline  _build_atom_triplet(self,atom_ids, int[3]& result):
+    cdef inline void  _build_atom_triplet(self,atom_ids, int[3]& result):
+        cdef int i
         for i in range(3):
             result[i] = atom_ids[i]
         
