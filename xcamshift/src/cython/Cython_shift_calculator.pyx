@@ -1681,10 +1681,12 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
             self._dihedral_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
 
-    cdef inline _cython_calc_single_force_factor(self, int index):
+    cdef inline float _cython_calc_single_force_factor(self, int index):
         
         cdef dihedral_ids dihedral_atom_ids
         cdef dihedral_parameters params
+        
+        cdef float angle,result
         
         
         dihedral_atom_ids  = dihedral_atom_ids= self._get_dihedral_atom_ids(index)
