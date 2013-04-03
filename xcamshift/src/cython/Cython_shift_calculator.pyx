@@ -1013,7 +1013,7 @@ cdef class Fast_ring_data_calculator:
 #            raise Exception(msg)
 #
 
-    cdef Vec3  _calculate_normal(self, int[3] atom_id_triplet):
+    cdef inline void  _calculate_normal(self, int[3] atom_id_triplet, Vec3* result):
     
         cdef Vec3 normal
         cdef Vec3 vec_1 
@@ -1028,7 +1028,7 @@ cdef class Fast_ring_data_calculator:
         vec_1 =  atom_vector_1 -atom_vector_2
         vec_2 =  atom_vector_3- atom_vector_2
             
-        return cross(vec_1,vec_2)
+        result[0] =  cross(vec_1,vec_2)
    
     #TODO could try newells method http://www.opengl.org/wiki/Calculating_a_Surface_Normal
     cdef  _calculate_one_ring_normal(self, ring_component, Vec3* result):
@@ -1042,8 +1042,10 @@ cdef class Fast_ring_data_calculator:
         self._build_atom_triplet(atom_ids[-3:], atom_triplet_2)
        
         
-        cdef Vec3 normal_1 = self._calculate_normal(atom_triplet_1)
-        cdef Vec3 normal_2 = self._calculate_normal(atom_triplet_2)
+        cdef Vec3 normal_1
+        self._calculate_normal(atom_triplet_1, &normal_1)
+        cdef Vec3 normal_2
+        self._calculate_normal(atom_triplet_2,  &normal_2)
         
 #         cdef Vec3_container result = Vec3_container()
         self._average_2_vec_3(normal_1, normal_2, result)
