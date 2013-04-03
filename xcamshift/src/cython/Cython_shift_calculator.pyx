@@ -930,8 +930,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         
         return contrib * coefficient
 
-    
-    def __call__(self, object components, object results, object component_to_target):
+    def __call__(self, object components, double[:] results, int[:] component_to_target):
         self.set_simulation()
         cdef int target_atom_id
         cdef int atom_type_id

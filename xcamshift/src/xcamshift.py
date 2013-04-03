@@ -2461,11 +2461,12 @@ class Ring_Potential(Base_potential):
         components = Component_list()
         component = self._get_distance_components()[index]
         components.add_component(component)
-        results = [0.0]
+        results = array.array('d',[0.0])
         self._setup_ring_calculator(self._shift_calculator)
         self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
         self._setup_ring_calculator(self._shift_calculator)
-        self._shift_calculator(components,results,[0])
+        component_to_result  = array.array('i',[0])
+        self._shift_calculator(components,results,component_to_result)
         return results[0]
     
     
@@ -3878,7 +3879,7 @@ class Xcamshift(PyPot):
         
     def _calc_single_atom_energy(self, target_atom_index):
         
-        target_atom_ids = [target_atom_index]
+        target_atom_ids = array.array('i',[target_atom_index])
         self._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
         self._calc_single_atom_shift(target_atom_index)
         self.update_energy_calculator()
