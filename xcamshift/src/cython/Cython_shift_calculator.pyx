@@ -1502,6 +1502,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     cdef inline float _sum_xyz_distances_2(self, int target_atom, int distance_atom):
         cdef Vec3 target_pos, distant_pos, distance
         cdef float result =0.0
+        cdef int i 
         
         target_pos =   self._simulation[0].atomPos(target_atom)
         distant_pos =  self._simulation[0].atomPos(distance_atom)
