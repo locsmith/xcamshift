@@ -1713,7 +1713,7 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         self._num_components = saved_num_components 
         
         
-    cdef inline _dihedral_calc_single_force_set(self, int index, float factor, Out_array forces):
+    cdef inline void _dihedral_calc_single_force_set(self, int index, float factor, Out_array forces):
         cdef Vec3 r1, r2, r4, temp
         cdef Vec3 n1, n2
         cdef float weight
@@ -1721,8 +1721,10 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         cdef Vec3 F2, F3, 
         cdef Vec3 T3, T4
         
-        cdef float dihedral_factor = self._calc_single_force_factor(index)
+        cdef float dihedral_factor = self._cython_calc_single_force_factor(index)
         cdef dihedral_ids atom_ids = self._get_dihedral_atom_ids(index)
+        
+        cdef float r2_length, r2_length_2
         
         v1 = self._simulation[0].atomPos(atom_ids.atom_id_1)
         v2 = self._simulation[0].atomPos(atom_ids.atom_id_2)
