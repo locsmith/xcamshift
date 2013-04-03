@@ -1392,16 +1392,6 @@ cdef class Base_force_calculator:
     cdef void _do_calc_components(self, int[:] component_to_result,  float[:] force_factors, Out_array force):
         raise Exception("this should not be called!")
     
-    cdef inline _get_or_make_target_force_triplet(self, object forces, object target_offset):
-        target_forces = forces[target_offset]
-        if target_forces == None:
-            target_forces = [0.0] * 3
-            forces[target_offset] = target_forces
-        return target_forces
-
-#    TODO make abstract
-#    cdef _cython_calc_single_force_set(self, int index, float force_factor, object forces):
-#        raise Exception("unexpected! this method should be implemented")
 
 
 
