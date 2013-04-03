@@ -544,7 +544,7 @@ cdef class Base_shift_calculator:
     def set_verbose(self,bint state):
         self._verbose =  state
         
-    cdef set_simulation(self):
+    cdef inline void set_simulation(self):
         self._simulation = currentSimulation()
     
     def _prepare(self,change,data):
