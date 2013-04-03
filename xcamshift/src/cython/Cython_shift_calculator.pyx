@@ -2016,7 +2016,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         cdef Ring_force_sub_terms  terms  =  python_sub_terms.get_terms()
         self._cython_calc_target_atom_forces(target_atom_id, force_factor, terms, forces)
 
-    cdef inline _cython_calc_target_atom_forces(self, int target_atom_id, float force_factor, Ring_force_sub_terms& sub_terms, Out_array forces):
+    cdef inline void _cython_calc_target_atom_forces(self, int target_atom_id, float force_factor, Ring_force_sub_terms& sub_terms, Out_array forces):
         cdef object target_force_triplet
         cdef int axis 
 #        target_force_triplet = self._get_or_make_target_force_triplet(forces, target_atom_id)
