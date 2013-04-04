@@ -72,8 +72,6 @@ cdef class Vec3_list:
         if self.data != NULL:
             del self.data
             
-    def __iter__(self):
-        raise Exception()
     
     def __iter__(self): 
         cdef Vec3 vec3
