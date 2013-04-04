@@ -417,7 +417,7 @@ cdef class Coef_components:
         pass
         
     
-    cdef inline Component_Offsets* get_id_offsets(self,id):
+    cdef inline Component_Offsets* get_id_offsets(self,int id):
         return &self._component_offsets[id]
     
     def __dealloc__(self):
