@@ -517,12 +517,13 @@ cdef inline float calc_dihedral_angle_simulation(Simulation* simulation, dihedra
     
     
 
-    atom_1  = simulation[0].atomByID(dihedral_atom_ids.atom_id_1)
-    atom_2  = simulation[0].atomByID(dihedral_atom_ids.atom_id_2)
-    atom_3  = simulation[0].atomByID(dihedral_atom_ids.atom_id_3)
-    atom_4  = simulation[0].atomByID(dihedral_atom_ids.atom_id_4)
+    cdef Atom atom_1  = simulation[0].atomByID(dihedral_atom_ids.atom_id_1)
+    cdef Atom atom_2  = simulation[0].atomByID(dihedral_atom_ids.atom_id_2)
+    cdef Atom atom_3  = simulation[0].atomByID(dihedral_atom_ids.atom_id_3)
+    cdef Atom atom_4  = simulation[0].atomByID(dihedral_atom_ids.atom_id_4)
     
-    return Dihedral(atom_1,atom_2,atom_3,atom_4).value()
+    cdef double result = Dihedral(atom_1,atom_2,atom_3,atom_4).value()
+    return result 
 
 
 
