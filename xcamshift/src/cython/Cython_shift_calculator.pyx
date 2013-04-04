@@ -7,8 +7,10 @@
 # 
 # Contributors:
 #     gary thompson - initial API and implementation
-#-------------------------------------------------------------------------------
-# cython: profile=False
+#-------------------------------------------------------------------------------# cython: profile=False 
+# cython: boundscheck=False    
+# cython: wraparound=False
+# cython: cdivision=True 
 '''
 Created on 31 Jul 2012
 
