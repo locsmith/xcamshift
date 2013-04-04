@@ -934,6 +934,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         
         return contrib * coefficient
 
+    @cython.profile(True)
     def __call__(self, object components, double[:] results, int[:] component_to_target):
         self.set_simulation()
         cdef int target_atom_id
