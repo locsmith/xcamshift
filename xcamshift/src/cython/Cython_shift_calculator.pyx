@@ -479,7 +479,7 @@ cdef inline void operator_times (Vec3& vec3, float scale):
      vec3[2] =  vec3[2] * scale
      
 @cython.profile(False)
-cdef inline float calc_distance_simulation(Simulation* sim, int atom_index_1, atom_index_2):
+cdef inline float calc_distance_simulation(Simulation* sim, int atom_index_1, int atom_index_2):
 
     cdef Vec3 vec1 = sim[0].atomPos(atom_index_1)
     cdef Vec3 vec2 = sim[0].atomPos(atom_index_2)
