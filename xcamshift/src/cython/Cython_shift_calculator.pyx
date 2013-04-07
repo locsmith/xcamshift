@@ -7,10 +7,13 @@
 # 
 # Contributors:
 #     gary thompson - initial API and implementation
-#-------------------------------------------------------------------------------# cython: profile=False 
+#-------------------------------------------------------------------------------
+# cython: profile=False 
 # cython: boundscheck=False    
 # cython: wraparound=False
 # cython: cdivision=True 
+import numpy as np
+
 '''
 Created on 31 Jul 2012
 
@@ -28,6 +31,7 @@ from libc.string cimport strcmp
 from time import time
 from utils import Atom_utils
 from cpython cimport array
+import ctypes
 
 cpdef array.array allocate_array(int len, type='d'):
     result = array.array(type,[0])
@@ -51,6 +55,16 @@ cdef struct Dihedral_component:
       float coefficient
       float[5] parameters
  
+def test_dump_dist_comp(data):
+    cdef size_t  test  = ctypes.addressof(data)
+    cdef Distance_component* test2 = <Distance_component*> test
+    cdef Distance_component[:] dummy_view = <Distance_component[:len(data)/ sizeof(Distance_component)]> &test2[0]
+    
+    result = []
+    for i in range(len(data)/ sizeof(Distance_component)):
+        result.append([dummy_view[i].target_atom,  dummy_view[i].remote_atom_1,  dummy_view[i].remote_atom_2,   dummy_view[i].coefficient, dummy_view[i].exponent]) 
+    return result
+    
 cdef class Vec3_list:
     cdef CDSVector[Vec3] *data
     

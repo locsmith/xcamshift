@@ -15,7 +15,10 @@ Created on 11 Feb 2012
 '''
 import unittest2
 from component_list import Component_list
-
+from struct import  Struct
+from array import array
+from  cython.shift_calculators import test_dump_dist_comp
+import ctypes
 TEST_DATA_1 = ((1,2),
                (2,4),
                (1,3))
@@ -109,9 +112,18 @@ class Test_component_list(unittest2.TestCase):
         self.assertEqual(len(self._component_list),0)
         self._component_list.add_components(TEST_DATA_1)
         self.assertEqual(len(self._component_list),len(TEST_DATA_1))
+        
+    def test_struct_translations(self):
 
-#        TODO add missing tests
+        distance_component_struct = Struct('iiiff')
+        struct_size = distance_component_struct.size
+        bytes = ctypes.create_string_buffer(struct_size*2) 
+        for j in range(2):
+            i = j+1
+            distance_component_struct.pack_into(bytes,struct_size*j, 1*i,2*i,3*i,4*i,5*i)
+        result = test_dump_dist_comp(bytes)
+        expected = [[1,2,3,4.0,5.0],[2,4,6,8.0,10.0]]
+        self.assertEqual(result, expected)
+        
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testEmptyComponentList']
-
     unittest2.main()
