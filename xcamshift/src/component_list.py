@@ -14,6 +14,7 @@ Created on 11 Feb 2012
 @author: garyt
 '''
 from bisect import insort
+from collections import defaultdict
 
 class Component_list():
     def __init__(self):
@@ -122,6 +123,27 @@ class Component_list():
     def clear(self):
         self._components =[]
         self._component_ids = set()
+    
+    def _get_native_component(self, index):
+        return self._components[index]
+    
+    def _get_struct_type(self):
+        if len(self._components) == 0:
+            raise Exception('component list must contain some data to allow type to be determined')
+        
+        component = self. _get_native_component(0)
+        
+        translations = defaultdict(lambda : '?' ,[(int,'i'),(float,'f')])
+        result = []
+        for elem in component:
+            result.append(translations[elem.__class__])
+        
+        if  '?'  in result:
+            bad_index  =  result.index('?')
+            bad_class = component[bad_index].__class__.__name__
+            raise Exception('bad format for component at index %i class: %s' % (bad_index,bad_class))
+            
+        return ''.join(result)
 #TODO: not a useful string
 #    def __str__(self):
 #        result = []

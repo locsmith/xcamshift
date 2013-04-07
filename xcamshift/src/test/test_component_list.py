@@ -42,6 +42,11 @@ EXPECTED_COMPONENTS_2 = (0,1,2)
 
 EXPECTED_ALL_2 = ((0,1),(1,2),(1,3),(1,4),(2,4))
 
+TEST_DATA_3 =  ((1,2,3.0,4.0),(5,6,7.0,8.0))
+
+
+TEST_DATA_4 =  ((1,2,3.0,'bad'),(5,6,7.0,8.0))
+
 class Test_component_list(unittest2.TestCase):
 
 
@@ -124,6 +129,21 @@ class Test_component_list(unittest2.TestCase):
         result = test_dump_dist_comp(bytes)
         expected = [[1,2,3,4.0,5.0],[2,4,6,8.0,10.0]]
         self.assertEqual(result, expected)
+    
+    def test_get_data_type(self):
+        self._component_list.add_components(TEST_DATA_3)
+        result = self._component_list._get_struct_type()
+        
+        self.assertEqual(result, 'iiff')
+    
+    def test_get_bad_data_type(self):
+        self._component_list.add_components(TEST_DATA_4)
+        with self.assertRaises(Exception):
+            result = self._component_list._get_struct_type()
+        
+    def test_get_data_type_empty_list(self):
+        with self.assertRaises(Exception):
+            result = self._component_list._get_struct_type()            
         
 if __name__ == "__main__":
     unittest2.main()
