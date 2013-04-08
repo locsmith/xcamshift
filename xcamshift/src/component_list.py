@@ -15,12 +15,15 @@ Created on 11 Feb 2012
 '''
 from bisect import insort
 from collections import defaultdict
-
+from struct import Struct
+import ctypes
 class Component_list():
-    def __init__(self):
+    def __init__(self, translator = lambda x : x):
         self._components = []
         self._component_offsets = None
         self._component_ids =  set()
+        #TODO remove an simplifiy!
+        self._translator = translator
         
 
     def _clear_component_offsets(self):
@@ -124,14 +127,14 @@ class Component_list():
         self._components =[]
         self._component_ids = set()
     
-    def _get_native_component(self, index):
-        return self._components[index]
+    def _translate_to_native_component(self, index):
+        return self._translator(self._components[index])
     
     def _get_struct_type(self):
         if len(self._components) == 0:
             raise Exception('component list must contain some data to allow type to be determined')
         
-        component = self. _get_native_component(0)
+        component = self. _translate_to_native_component(0)
         
         translations = defaultdict(lambda : '?' ,[(int,'i'),(float,'f')])
         result = []
@@ -144,6 +147,20 @@ class Component_list():
             raise Exception('bad format for component at index %i class: %s' % (bad_index,bad_class))
             
         return ''.join(result)
+    
+    def get_native_components(self):
+        struct_type =  self._get_struct_type()
+        
+        component_struct = Struct(struct_type)
+        struct_size = component_struct.size
+        num_components = len(self._components)
+        bytes = ctypes.create_string_buffer(struct_size*num_components) 
+        for i in range(num_components):
+            native_component = self._translate_to_native_component(i)
+            component_struct.pack_into(bytes,struct_size*i, *native_component)
+        
+        return bytes
+            
 #TODO: not a useful string
 #    def __str__(self):
 #        result = []
