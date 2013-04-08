@@ -44,8 +44,12 @@ EXPECTED_ALL_2 = ((0,1),(1,2),(1,3),(1,4),(2,4))
 
 TEST_DATA_3 =  ((1,2,3.0,4.0),(5,6,7.0,8.0))
 
-
 TEST_DATA_4 =  ((1,2,3.0,'bad'),(5,6,7.0,8.0))
+
+TEST_DATA_5  = ((1,2,3,4.0,5.0),(6,7,8,9.0,10.0))
+
+EXPECTED_3 = (1, 2, 3, 4.0, 5.0), (2, 4, 6, 8.0, 10.0)
+        
 
 class Test_component_list(unittest2.TestCase):
 
@@ -127,7 +131,7 @@ class Test_component_list(unittest2.TestCase):
             i = j+1
             distance_component_struct.pack_into(bytes,struct_size*j, 1*i,2*i,3*i,4*i,5*i)
         result = test_dump_dist_comp(bytes)
-        expected = [[1,2,3,4.0,5.0],[2,4,6,8.0,10.0]]
+        expected = EXPECTED_3
         self.assertEqual(result, expected)
     
     def test_get_data_type(self):
@@ -143,7 +147,17 @@ class Test_component_list(unittest2.TestCase):
         
     def test_get_data_type_empty_list(self):
         with self.assertRaises(Exception):
-            result = self._component_list._get_struct_type()            
+            result = self._component_list._get_struct_type()    
+    
+    def test_get_native_component(self): 
+        self._component_list.add_components(TEST_DATA_5)
+        result = self._component_list.get_native_components()
+        
+        result = test_dump_dist_comp(result)
+        expected = TEST_DATA_5
+        self.assertEqual(result, expected)
+        
+               
         
 if __name__ == "__main__":
     unittest2.main()

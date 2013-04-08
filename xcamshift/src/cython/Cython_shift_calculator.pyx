@@ -62,8 +62,8 @@ def test_dump_dist_comp(data):
     
     result = []
     for i in range(len(data)/ sizeof(Distance_component)):
-        result.append([dummy_view[i].target_atom,  dummy_view[i].remote_atom_1,  dummy_view[i].remote_atom_2,   dummy_view[i].coefficient, dummy_view[i].exponent]) 
-    return result
+        result.append((dummy_view[i].target_atom,  dummy_view[i].remote_atom_1,  dummy_view[i].remote_atom_2,   dummy_view[i].coefficient, dummy_view[i].exponent)) 
+    return tuple(result) 
     
 cdef class Vec3_list:
     cdef CDSVector[Vec3] *data
