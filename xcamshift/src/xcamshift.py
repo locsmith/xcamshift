@@ -751,7 +751,7 @@ class Base_potential(object):
         if name == None:
             name  = self._get_target_atom_list_name()
         if not name in self._component_list_data:
-            self._component_list_data[name] = Component_list()
+            self._component_list_data[name] = self._create_component_list(name)
             self._build_component_list(name,"(all)")
         return self._component_list_data[name]
     
@@ -844,6 +844,9 @@ class Base_potential(object):
             forces[target_offset] = target_forces
         return target_forces
 
+    def _create_component_list(self,name):
+        return Component_list()
+    
 class Base_shift_calculator(object):
     
     def __init__(self,name="not_set"):
