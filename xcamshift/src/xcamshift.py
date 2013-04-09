@@ -1037,7 +1037,7 @@ class Distance_based_potential(Base_potential):
     def __init__(self,  smoothed = False, fast=False):
         super(Distance_based_potential, self).__init__()
         self._smoothed = smoothed
-        #TODO: sort placement out
+        #TODO: sort placement out, move to non bonded
         #
         self._cutoff = 5.0
         
