@@ -17,6 +17,8 @@ from bisect import insort
 from collections import defaultdict
 from struct import Struct
 import ctypes
+from copy import copy
+
 class Component_list(object):
     def __init__(self):
         self._components = []
@@ -125,16 +127,73 @@ class Component_list(object):
     def clear(self):
         self._components =[]
         self._component_ids = set()
+        
+    def build_filtered_copy(self, accept = lambda x: True):
+        
+        filtered_elems = []
+        for elem in self._components:
+            if accept(elem):
+                filtered_elems.append(elem)
+        result =  copy(self)
+        result.clear()
+        result.add_components(filtered_elems)
+        
+        return result
+                
 
 class Native_component_list(Component_list):
-    def __init__(self, translator = lambda x : x):
+    def __init__(self, format, translator = lambda x : x):
         super(Native_component_list, self).__init__()
         #TODO remove and simplifiy!
-        self._translator = translator
+        self.set_translator(translator)
+        self.set_format(format)    
+        self._native_components =  None
+
+   
+    def set_translator(self, translator):
+        self._translator =  translator
+        
+    def set_format(self,format):
+        self._component_struct =  Struct(format)
+        
+    def _basic_add_component(self,component):
+        super(Native_component_list, self)._basic_add_component(component)
+        self._native_components =  None
     
+    def clear(self):
+        super(Native_component_list, self).clear()
+        self._native_components = None
+            
     def _translate_to_native_component(self, index):
         return self._translator(self._components[index])
     
+
+    def _build_native_components(self):
+        
+        num_components = len(self._components)
+        if num_components > 0 :
+            format_length = len(self._component_struct.format)
+            data_length =  len(self._translate_to_native_component(0))
+            
+            if format_length != data_length:
+                msg = 'data and format must have the same length, got len(data) = %i and len(format) = %i'
+                raise Exception(msg % (format_length, data_length))
+        
+        struct_size = self._component_struct.size
+        bytes = ctypes.create_string_buffer(struct_size * num_components)
+        for i in range(num_components):
+            native_component = self._translate_to_native_component(i)
+            self._component_struct.pack_into(bytes, struct_size * i, *native_component)
+        
+        return bytes
+
+    def get_native_components(self):
+        if self._native_components == None:
+            bytes = self._build_native_components()
+        else:
+            bytes = self._native_components 
+        
+        return bytes
             
 #TODO: not a useful string
 #    def __str__(self):

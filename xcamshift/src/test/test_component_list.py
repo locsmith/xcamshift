@@ -42,14 +42,15 @@ EXPECTED_COMPONENTS_2 = (0,1,2)
 
 EXPECTED_ALL_2 = ((0,1),(1,2),(1,3),(1,4),(2,4))
 
-# TEST_DATA_3 =  ((1,2,3.0,4.0),(5,6,7.0,8.0))
-# 
-# TEST_DATA_4 =  ((1,2,3.0,'bad'),(5,6,7.0,8.0))
-# 
-# TEST_DATA_5  = ((1,2,3,4.0,5.0),(6,7,8,9.0,10.0))
-# 
-# EXPECTED_3 = (1, 2, 3, 4.0, 5.0), (2, 4, 6, 8.0, 10.0)
+TEST_DATA_5  = ((1,2,3,4.0,5.0),(6,7,8,9.0,10.0))
+
+TEST_DATA_6  = (11,12,13,14.0,15.0)
+
+EXPECTED_3 = (1, 2, 3, 4.0, 5.0), (2, 4, 6, 8.0, 10.0)
         
+EXPECTED_6 = ((1,2,3,4.0,5.0),(6,7,8,9.0,10.0),(11,12,13,14.0,15.0))
+
+EXPECTED_7 = ((1,1,1,1.0,1.0),)
 
 class Test_component_list(unittest2.TestCase):
 
@@ -122,21 +123,6 @@ class Test_component_list(unittest2.TestCase):
         self._component_list.add_components(TEST_DATA_1)
         self.assertEqual(len(self._component_list),len(TEST_DATA_1))
 
-    def test_null_translate_to_native_component(self):
-        component_list = Native_component_list()
-        component_list.add_components(TEST_DATA_2)
-        
-        result = (component_list._translate_to_native_component(0),component_list._translate_to_native_component(1))
-        EXPECTED = ((0,1),(1,4))
-        self.assertEqual(result, EXPECTED)
-
-    def test_translate_to_native_component(self):
-        component_list = Native_component_list(lambda x : (x[0],x[1]+1))
-        component_list.add_components(TEST_DATA_2)
-        
-        result = (component_list._translate_to_native_component(0),component_list._translate_to_native_component(1))
-        EXPECTED = ((0,2),(1,5))
-        self.assertEqual(result, EXPECTED) 
         
     def test_null_build_filtered_copy(self):
         self._component_list.add_components(TEST_DATA_2)
@@ -160,43 +146,104 @@ class Test_component_list(unittest2.TestCase):
         
         filtered_components = self._component_list.build_filtered_copy(lambda x: False)
         self.assertEqual(len(filtered_components), 0)
+        
+class  Test_native_component_list(Test_component_list):
+    
+    def setUp(self):
+        self._component_list =  Native_component_list(format='fi')
 
-#     def test_struct_translations(self):
-# 
-#         distance_component_struct = Struct('iiiff')
-#         struct_size = distance_component_struct.size
-#         bytes = ctypes.create_string_buffer(struct_size*2) 
-#         for j in range(2):
-#             i = j+1
-#             distance_component_struct.pack_into(bytes,struct_size*j, 1*i,2*i,3*i,4*i,5*i)
-#         result = test_dump_dist_comp(bytes)
-#         expected = EXPECTED_3
-#         self.assertEqual(result, expected)
-#     
-#     def test_get_data_type(self):
-#         self._component_list.add_components(TEST_DATA_3)
-#         result = self._component_list._get_struct_type()
-#         
-#         self.assertEqual(result, 'iiff')
-#     
-#     def test_get_bad_data_type(self):
-#         self._component_list.add_components(TEST_DATA_4)
-#         with self.assertRaises(Exception):
-#             result = self._component_list._get_struct_type()
-#         
-#     def test_get_data_type_empty_list(self):
-#         with self.assertRaises(Exception):
-#             result = self._component_list._get_struct_type()    
-#     
-#     def test_get_native_component(self): 
-#         self._component_list.add_components(TEST_DATA_5)
-#         result = self._component_list.get_native_components()
-#         
-#         result = test_dump_dist_comp(result)
-#         expected = TEST_DATA_5
-#         self.assertEqual(result, expected)
-#         
-#                
+    def test_null_translate_to_native_component(self):
+        component_list = self._component_list
+        component_list.add_components(TEST_DATA_2)
+        
+        result = tuple([component_list._translate_to_native_component(i) for i in range(2)])
+        EXPECTED = ((0,1),(1,4))
+        self.assertEqual(result, EXPECTED)
+
+    def test_translate_to_native_component(self):
+        component_list =  self._component_list
+        component_list.set_translator(lambda x : (x[0],x[1]+1))
+        component_list.add_components(TEST_DATA_2)
+        
+        result = tuple([component_list._translate_to_native_component(i) for i in range(2)])
+        EXPECTED = ((0,2),(1,5))
+        self.assertEqual(result, EXPECTED) 
+       
+
+    def test_struct_translations(self):
+ 
+        distance_component_struct = Struct('iiiff')
+        struct_size = distance_component_struct.size
+        bytes = ctypes.create_string_buffer(struct_size*2) 
+        for j in range(2):
+            i = j+1
+            distance_component_struct.pack_into(bytes,struct_size*j, 1*i,2*i,3*i,4*i,5*i)
+        result = test_dump_dist_comp(bytes)
+        expected = EXPECTED_3
+        self.assertEqual(result, expected)
+     
+
+
+
+     
+    def test_get_native_component(self):
+        self._component_list.set_format('iiiff') 
+        self._component_list.add_components(TEST_DATA_5)
+        result = self._component_list.get_native_components()
+         
+        result = test_dump_dist_comp(result)
+        expected = TEST_DATA_5
+        self.assertEqual(result, expected)
+        
+    
+    def test_get_native_component_empty(self):
+        self._component_list.set_format('iiiff') 
+        result = self._component_list.get_native_components()
+         
+        result = test_dump_dist_comp(result)
+        expected = ()
+        self.assertEqual(result, expected)         
+                
+    def test_get_native_component_add_extra(self):
+        self._component_list.set_format('iiiff') 
+        self._component_list.add_components(TEST_DATA_5)
+        self._component_list.add_component(TEST_DATA_6)
+        
+        result = self._component_list.get_native_components()
+        result = test_dump_dist_comp(result)
+        
+        self.assertEqual(result, EXPECTED_6) 
+        
+    def test_get_native_component_clear(self):
+        self._component_list.set_format('iiiff') 
+        self._component_list.add_components(TEST_DATA_5)
+        self._component_list.clear()
+        
+        result = self._component_list.get_native_components()
+        result = test_dump_dist_comp(result)
+        
+        self.assertEqual(result, ()) 
+        
+    def test_get_native_component_clear_and_add(self):
+        self._component_list.set_format('iiiff') 
+        self._component_list.add_components(TEST_DATA_5)
+        self._component_list.clear()
+        self._component_list.add_components(EXPECTED_6)
+        
+        result = self._component_list.get_native_components()
+        result = test_dump_dist_comp(result)
+        
+        self.assertEqual(result, EXPECTED_6) 
+
+    def test_translator(self):
+        self._component_list.set_format('iiiff') 
+        self._component_list.set_translator(lambda x : (int(x[0]),int(x[0]), int(x[0]), float(x[0]),float(x[0])))
+        self._component_list.add_component((1,),)
+        
+        result = self._component_list.get_native_components()
+        result = test_dump_dist_comp(result)
+        
+        self.assertEqual(result, EXPECTED_7) 
         
 if __name__ == "__main__":
     unittest2.main()

@@ -58,12 +58,17 @@ cdef struct Dihedral_component:
 def test_dump_dist_comp(data):
     cdef size_t  test  = ctypes.addressof(data)
     cdef Distance_component* test2 = <Distance_component*> test
-    cdef Distance_component[:] dummy_view = <Distance_component[:len(data)/ sizeof(Distance_component)]> &test2[0]
-    
-    result = []
-    for i in range(len(data)/ sizeof(Distance_component)):
-        result.append((dummy_view[i].target_atom,  dummy_view[i].remote_atom_1,  dummy_view[i].remote_atom_2,   dummy_view[i].coefficient, dummy_view[i].exponent)) 
-    return tuple(result) 
+    cdef Distance_component[:] dummy_view
+    if len(data) == 0:
+        result = ()
+    else:
+        dummy_view = <Distance_component[:len(data)/ sizeof(Distance_component)]> &test2[0]
+        
+        result_data = []
+        for i in range(len(data)/ sizeof(Distance_component)):
+            result_data.append((dummy_view[i].target_atom,  dummy_view[i].remote_atom_1,  dummy_view[i].remote_atom_2,   dummy_view[i].coefficient, dummy_view[i].exponent)) 
+        result = tuple(result_data)
+    return result 
     
 cdef class Vec3_list:
     cdef CDSVector[Vec3] *data
