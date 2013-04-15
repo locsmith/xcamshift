@@ -136,7 +136,31 @@ class Test_component_list(unittest2.TestCase):
         
         result = (component_list._translate_to_native_component(0),component_list._translate_to_native_component(1))
         EXPECTED = ((0,2),(1,5))
-        self.assertEqual(result, EXPECTED)            
+        self.assertEqual(result, EXPECTED) 
+        
+    def test_null_build_filtered_copy(self):
+        self._component_list.add_components(TEST_DATA_2)
+        
+        filtered_components = self._component_list.build_filtered_copy(lambda x:True)
+        result = (filtered_components[0],filtered_components[1])
+        EXPECTED = ((0,1),(1,4))
+        self.assertEqual(result, EXPECTED)
+    
+    def test_build_filtered_copy(self):
+        self._component_list.add_components(TEST_DATA_2)
+        
+        filtered_components = self._component_list.build_filtered_copy(lambda x: x[0]==1)
+        self.assertEqual(len(filtered_components), 1)
+        result = (filtered_components[0])
+        EXPECTED = ((1,4))
+        self.assertEqual(result, EXPECTED)
+        
+    def test_build_empty_filtered_copy(self):
+        self._component_list.add_components(TEST_DATA_2)
+        
+        filtered_components = self._component_list.build_filtered_copy(lambda x: False)
+        self.assertEqual(len(filtered_components), 0)
+
 #     def test_struct_translations(self):
 # 
 #         distance_component_struct = Struct('iiiff')
