@@ -17,13 +17,12 @@ from bisect import insort
 from collections import defaultdict
 from struct import Struct
 import ctypes
-class Component_list():
-    def __init__(self, translator = lambda x : x):
+class Component_list(object):
+    def __init__(self):
         self._components = []
         self._component_offsets = None
         self._component_ids =  set()
-        #TODO remove an simplifiy!
-        self._translator = translator
+
         
 
     def _clear_component_offsets(self):
@@ -126,40 +125,16 @@ class Component_list():
     def clear(self):
         self._components =[]
         self._component_ids = set()
+
+class Native_component_list(Component_list):
+    def __init__(self, translator = lambda x : x):
+        super(Native_component_list, self).__init__()
+        #TODO remove and simplifiy!
+        self._translator = translator
     
     def _translate_to_native_component(self, index):
         return self._translator(self._components[index])
     
-    def _get_struct_type(self):
-        if len(self._components) == 0:
-            raise Exception('component list must contain some data to allow type to be determined')
-        
-        component = self. _translate_to_native_component(0)
-        
-        translations = defaultdict(lambda : '?' ,[(int,'i'),(float,'f')])
-        result = []
-        for elem in component:
-            result.append(translations[elem.__class__])
-        
-        if  '?'  in result:
-            bad_index  =  result.index('?')
-            bad_class = component[bad_index].__class__.__name__
-            raise Exception('bad format for component at index %i class: %s' % (bad_index,bad_class))
-            
-        return ''.join(result)
-    
-    def get_native_components(self):
-        struct_type =  self._get_struct_type()
-        
-        component_struct = Struct(struct_type)
-        struct_size = component_struct.size
-        num_components = len(self._components)
-        bytes = ctypes.create_string_buffer(struct_size*num_components) 
-        for i in range(num_components):
-            native_component = self._translate_to_native_component(i)
-            component_struct.pack_into(bytes,struct_size*i, *native_component)
-        
-        return bytes
             
 #TODO: not a useful string
 #    def __str__(self):
