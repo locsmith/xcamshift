@@ -19,7 +19,7 @@ Created on 27 Dec 2011
 
 
 from atomSel import AtomSel,intersection
-from component_list import Component_list
+from component_list import Component_list, Native_component_list
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from math import cos, tanh, cosh, sin
@@ -622,21 +622,19 @@ class Base_potential(object):
         else:
             if self._verbose:
                 print '   filtering components %s' % self.get_abbreviated_name(),
-            components = self._get_all_components()
-            result = Component_list()
-            
+
             if target_atom_ids == None:
-                result.add_components(components)
-            if target_atom_ids != None:
+                test = lambda x: True
+            else:
                 target_atom_ids = sorted(set(target_atom_ids))
-                for component in components:
-                    if component[0] in target_atom_ids:
-                        result.add_component(component)
-    #        print 'components',components[:]
-            self._filtered_components = result
+                test =  lambda x: x[0] in target_atom_ids
+                
+            self._filtered_components = self._get_component_list().build_filtered_copy(test)
+
             if self._verbose:
                 print ' %i reduced to %i' % (len(components),len(self._filtered_components))
-        return result    
+                
+        return self._filtered_components    
     
     def _calc_component_shift(self, index):
         components = Component_list()
