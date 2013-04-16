@@ -486,7 +486,7 @@ class TestXcamshift(unittest2.TestCase):
         expected_force_factors = dict(ala_3.ala_3_dihedral_force_factors_tanh)
         potential = Dihedral_potential()
         
-        potential._force_calculator._set_components(potential._get_component_list())
+        potential._force_calculator._set_components(potential._get_component_list().get_native_components())
         for i, data in enumerate(potential.dump()):
             SELECTION_INDEX = 0
             TARGET_ATOM_INDEX = 0
@@ -519,7 +519,7 @@ class TestXcamshift(unittest2.TestCase):
     def _test_dihedral_forces(self, test_factors, potential,expected_forces):
         expected_forces_dict = dict(expected_forces)
         
-        potential._force_calculator._set_components(potential._get_component_list())
+        potential._force_calculator._set_components(potential._get_component_list().get_native_components())
         for i, data in enumerate(potential.dump()):
             
             

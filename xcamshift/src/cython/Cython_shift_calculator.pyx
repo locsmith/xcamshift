@@ -53,7 +53,8 @@ cdef struct Dihedral_component:
       int target_atom
       int[4] dihedral_atoms
       float coefficient
-      float[5] parameters
+      float[6] parameters
+      #TODO: there seems to be an extra float here...
  
 def test_dump_dist_comp(data):
     cdef size_t  test  = ctypes.addressof(data)
@@ -69,6 +70,26 @@ def test_dump_dist_comp(data):
             result_data.append((dummy_view[i].target_atom,  dummy_view[i].remote_atom_1,  dummy_view[i].remote_atom_2,   dummy_view[i].coefficient, dummy_view[i].exponent)) 
         result = tuple(result_data)
     return result 
+
+def test_dump_dihedral_comp(data):
+    cdef size_t  test  = ctypes.addressof(data)
+    
+    compiled_components =  <Dihedral_component*> <size_t> ctypes.addressof(data)
+    num_components =  len(data)/ sizeof(Dihedral_component)
+    print 'dump num comp',num_components, test
+    
+    for i in range(num_components):
+        
+        print 'target_atom',i, compiled_components[0].target_atom
+        
+        print 'dihedral_atoms',i, compiled_components[i].dihedral_atoms[0],compiled_components[i].dihedral_atoms[1],\
+                               compiled_components[i].dihedral_atoms[2], compiled_components[i].dihedral_atoms[4]
+        print 'coeff',i, compiled_components[i].coefficient
+        print 'param',i, compiled_components[i].parameters[0], compiled_components[i].parameters[1],\
+                      compiled_components[i].parameters[2], compiled_components[i].parameters[3],\
+                      compiled_components[i].parameters[4], compiled_components[i].parameters[5],\
+                      compiled_components[i].parameters[6]
+
     
 cdef class Vec3_list:
     cdef CDSVector[Vec3] *data
@@ -1635,41 +1656,32 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
     
 cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     
-    cdef Dihedral_component *_compiled_components
-    cdef int _num_components
+    cdef Dihedral_component* _compiled_components
+    cdef int _num_components 
+    cdef object raw_data
     
+    cdef void _bytes_to_components(self, data):
+        self.raw_data =  data 
+        
+        self._compiled_components =  <Dihedral_component*> <size_t> ctypes.addressof(data)
+        self._num_components =  len(data)/ sizeof(Dihedral_component)
+        
+        
     def __cinit__(self):
         self._compiled_components = NULL
         self._num_components = 0
         
     def __init__(self,name="not set"):
         Base_force_calculator.__init__(self,name=name)
+        self.raw_data =  None
         
         
     def _set_components(self,components):
-        if self._compiled_components ==  NULL:
-            self._compile_components(components)
-            
-    def _compile_components(self, components):
-        self._compiled_components = <Dihedral_component*>malloc(len(components) * sizeof(Dihedral_component))
-        self._num_components = len(components) 
-        for i,component in enumerate(components):
-            self._compiled_components[i].target_atom = component[0]
-            for j in range(4):
-                self._compiled_components[i].dihedral_atoms[j] = component[1+j]
-            self._compiled_components[i].coefficient = component[5]
-            for j in range(5):
-                self._compiled_components[i].parameters[j] = component[6+j]
-    
-    def _free_compiled_components(self):
-        if self._compiled_components != NULL:
-            free(self._compiled_components)
-            self._compiled_components = NULL        
+        self._bytes_to_components(components)
                    
     def _prepare(self, change, data):
-         if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
-             self._free_compiled_components() 
-                     
+         pass
+     
 #     TODO: remove this is no longer needed
     @cython.profile(False)
     cdef inline dihedral_ids _get_dihedral_atom_ids(self, int index):

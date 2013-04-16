@@ -813,9 +813,13 @@ class Base_potential(object):
                     print "updated component_to result complete in %.8g seconds." % (end_time-start_time)
                     #print len(self._component_to_result),  len(self._filtered_components), self.get_abbreviated_name()
             
-            
-            
-            self._force_calculator(self._filtered_components,self._component_to_result, force_factors, forces)
+            if self.get_abbreviated_name() == DIHEDRAL:
+                components = self._filtered_components.get_native_components()
+            else:
+                components = self._filtered_components
+                
+                
+            self._force_calculator(components,self._component_to_result, force_factors, forces)
             
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
@@ -1665,7 +1669,10 @@ class Dihedral_potential(Base_potential):
         result.set_verbose(self._verbose)
         return result
 
-    
+    def _create_component_list(self, name):
+        if name == 'ATOM':
+            return Native_component_list(format='iiiiifffffff')
+        
 class Sidechain_potential(Distance_based_potential):
     
     def __init__(self):
