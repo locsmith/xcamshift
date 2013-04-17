@@ -176,7 +176,7 @@ class Native_component_list(Component_list):
             data_length =  len(self._translate_to_native_component(0))
             
             if format_length != data_length:
-                msg = 'data and format must have the same length, got len(data) = %i and len(format) = %i'
+                msg = 'data and format must have the same length, got len(fomat) = %i and len(data) = %i'
                 raise Exception(msg % (format_length, data_length))
         
         struct_size = self._component_struct.size
