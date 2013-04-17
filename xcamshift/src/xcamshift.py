@@ -50,6 +50,29 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
 from time import time
 import array#
 
+#TODO: REMOVE!
+class Index_translator(object):
+    def __init__(self, indices):
+        self._indices=indices
+        
+    def __call__(self, component):
+        result = []
+        result.append(component[self._indices.target_atom_index])
+        if len(component) == 4:
+            result.append(component[self._indices.distance_atom_index_1])
+            result.append(component[self._indices.distance_atom_index_2])
+            result.append(component[self._indices.coefficient_index])
+            result.append(component[self._indices.exponent_index])
+        elif len(component) == 5:
+            result.append(component[self._indices.distance_atom_index_1])
+            result.append(component[self._indices.distance_atom_index_2])
+            result.append(component[self._indices.coefficient_index])
+            result.append(component[self._indices.exponent_index])
+        else:
+            raise Exception("bad distance component length %i should be either 4 or 5 " % len(component))
+        
+        return result
+    
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
     
@@ -813,7 +836,7 @@ class Base_potential(object):
                     print "updated component_to result complete in %.8g seconds." % (end_time-start_time)
                     #print len(self._component_to_result),  len(self._filtered_components), self.get_abbreviated_name()
             
-            if self.get_abbreviated_name() in (DIHEDRAL, BACK_BONE, XTRA, SIDE_CHAIN):
+            if self.get_abbreviated_name() in (DIHEDRAL, BACK_BONE, XTRA, SIDE_CHAIN, NON_BONDED):
                 components = self._filtered_components.get_native_components()
             else:
                 components = self._filtered_components
@@ -1129,27 +1152,7 @@ class Distance_based_potential(Base_potential):
 
     #TODO move this to su classes when required   
     def _create_component_list(self, name):
-        class Index_translator(object):
-            def __init__(self, indices):
-                self._indices=indices
-                
-            def __call__(self, component):
-                result = []
-                result.append(component[self._indices.target_atom_index])
-                if len(component) == 4:
-                    result.append(component[self._indices.distance_atom_index_1])
-                    result.append(component[self._indices.distance_atom_index_2])
-                    result.append(component[self._indices.coefficient_index])
-                    result.append(component[self._indices.exponent_index])
-                elif len(component) == 5:
-                    result.append(component[self._indices.distance_atom_index_1])
-                    result.append(component[self._indices.distance_atom_index_2])
-                    result.append(component[self._indices.coefficient_index])
-                    result.append(component[self._indices.exponent_index])
-                else:
-                    raise Exception("bad distance component length %i should be either 4 or 5 " % len(component))
-                
-                return result
+
             
         if name == 'ATOM':
             translator = Index_translator(self._get_indices())
@@ -3440,6 +3443,12 @@ class Non_bonded_potential(Distance_based_potential):
             
         return '\n'.join(result)
 
+    def _create_component_list(self, name):
+        if name == 'NBLT':
+            translator = Index_translator(self._get_indices())
+            return Native_component_list(translator=translator,format='iiiff')
+        else:
+            return Component_list()
 
 class Energy_calculator:
     def __init__(self):
