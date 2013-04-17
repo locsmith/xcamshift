@@ -189,9 +189,8 @@ class Native_component_list(Component_list):
 
     def get_native_components(self):
         if self._native_components == None:
-            bytes = self._build_native_components()
-        else:
-            bytes = self._native_components 
+            self._native_components = self._build_native_components()
+        bytes = self._native_components 
         
         return bytes
             
