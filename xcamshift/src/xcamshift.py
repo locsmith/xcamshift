@@ -813,7 +813,7 @@ class Base_potential(object):
                     print "updated component_to result complete in %.8g seconds." % (end_time-start_time)
                     #print len(self._component_to_result),  len(self._filtered_components), self.get_abbreviated_name()
             
-            if self.get_abbreviated_name() in (DIHEDRAL, BACK_BONE, XTRA):
+            if self.get_abbreviated_name() in (DIHEDRAL, BACK_BONE, XTRA, SIDE_CHAIN):
                 components = self._filtered_components.get_native_components()
             else:
                 components = self._filtered_components
