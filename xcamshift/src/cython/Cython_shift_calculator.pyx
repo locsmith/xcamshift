@@ -32,6 +32,7 @@ from time import time
 from utils import Atom_utils
 from cpython cimport array
 import ctypes
+from component_list import  Component_list, Native_component_list
 
 cpdef array.array allocate_array(int len, type='d'):
     result = array.array(type,[0])
@@ -1466,6 +1467,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     cdef float _cutoff
     cdef Distance_component* _compiled_components 
     cdef int _num_components
+    cdef object raw_data
         
     def __cinit__(self):
         self._compiled_components  = NULL
@@ -1489,19 +1491,30 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         self._smoothing_factor = smoothing_factor
         
     def _set_components(self,components):
-        if  self._compiled_components ==  NULL:
+        if  self._compiled_components ==  NULL  and isinstance(components, (Component_list, Native_component_list)):
             self._compile_components(components) 
+        elif self._compiled_components !=  NULL  and  isinstance(components, (Component_list, Native_component_list)):
+            pass
+        else:
+            self._bytes_to_components(components)
+        
     
     def _free_compiled_components(self):
         if self._compiled_components != NULL:
-            free (self._compiled_components)
-            self._compiled_components = NULL        
+            if self.raw_data == None:
+                free (self._compiled_components)
+                self._compiled_components = NULL        
             
     def _prepare(self, change, data):
          if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
              self._free_compiled_components()   
 
-        
+    cdef void _bytes_to_components(self, data):
+
+        self.raw_data =  data 
+        self._compiled_components =  <Distance_component*> <size_t> ctypes.addressof(data)
+        self._num_components =  len(data)/ sizeof(Distance_component)
+                
     cdef _compile_components(self,components):
         self._compiled_components = <Distance_component*>malloc(len(components) * sizeof(Distance_component))
         self._num_components = len(components)
