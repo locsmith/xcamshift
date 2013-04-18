@@ -870,6 +870,12 @@ class Base_potential(object):
     def _create_component_list(self,name):
         return Component_list()
     
+    #TODO: unify with ring random coil and disuphide shift calculators
+    def calc_shifts(self, target_atom_ids, results):
+        self._filtered_components  = self._filter_components(target_atom_ids)
+        self._shift_calculator(self._filtered_components,results,self._component_to_result)
+
+    
 class Base_shift_calculator(object):
     
     def __init__(self,name="not_set"):
@@ -1085,11 +1091,6 @@ class Distance_based_potential(Base_potential):
 #        result = Distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
         result.set_verbose(self._verbose)
         return result 
-#    TODO: remove to base class
-    def calc_shifts(self, target_atom_ids, results):
-        components  = self._filter_components(target_atom_ids)
-        self._filtered_components = components
-        self._shift_calculator(components,results,self._component_to_result)
                 
     class Indices(object):
         def __init__(self, target_atom_index,distance_atom_index_1,
@@ -1566,9 +1567,9 @@ class Dihedral_potential(Base_potential):
         return forces
         
         
-    def calc_shifts(self, target_atom_ids, results):
-        components  = self._filter_components(target_atom_ids)
-        self._shift_calculator(components,results,self._component_to_result)
+#     def calc_shifts(self, target_atom_ids, results):cal
+#         components  = self._filter_components(target_atom_ids)
+#         self._shift_calculator(components,results,self._component_to_result)
         
     def get_abbreviated_name(self):
         return DIHEDRAL
