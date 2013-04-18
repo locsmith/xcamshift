@@ -836,7 +836,7 @@ class Base_potential(object):
                     print "updated component_to result complete in %.8g seconds." % (end_time-start_time)
                     #print len(self._component_to_result),  len(self._filtered_components), self.get_abbreviated_name()
             
-            if self.get_abbreviated_name() in (DIHEDRAL, BACK_BONE, XTRA, SIDE_CHAIN, NON_BONDED):
+            if self.get_abbreviated_name() in (DIHEDRAL, BACK_BONE, XTRA, SIDE_CHAIN, NON_BONDED, RING):
                 components = self._filtered_components.get_native_components()
             else:
                 components = self._filtered_components
@@ -2616,6 +2616,12 @@ class Ring_Potential(Base_potential):
 #    
 #    def _translate_atom_name(self, atom_name,context):
 #        return context._table.get_translation(atom_name)
+
+    def _create_component_list(self, name):
+        if name == 'ATOM':
+            return Native_component_list(format='ii')
+        else:
+            return Component_list()
 
 # TODO: it should be the default that all residues are accepted
 class Non_bonded_backbone_component_factory(Ring_backbone_component_factory):
