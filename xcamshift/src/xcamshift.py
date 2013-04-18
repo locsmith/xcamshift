@@ -660,13 +660,13 @@ class Base_potential(object):
         return self._filtered_components    
     
     def _calc_component_shift(self, index):
-        components = Component_list()
+        components = self._create_component_list('ATOM')
         component = self._get_distance_components()[index]
         components.add_component(component)
-        results = allocate_array(1)
-        component_to_result =  allocate_array(1,'i')
-        self._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
-        self._shift_calculator(components,results,component_to_result)
+        results = array.array('d',[0.0])
+        self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
+        component_to_result = array.array('i', [0])
+        self._shift_calculator(components.get_native_components(),results,component_to_result)
         return results[0]
       
     
@@ -873,7 +873,7 @@ class Base_potential(object):
     #TODO: unify with ring random coil and disuphide shift calculators
     def calc_shifts(self, target_atom_ids, results):
         self._filtered_components  = self._filter_components(target_atom_ids)
-        if self.get_abbreviated_name() in (DIHEDRAL):
+        if self.get_abbreviated_name() in (DIHEDRAL, BACK_BONE, SIDE_CHAIN, XTRA, NON_BONDED):
             components = self._filtered_components.get_native_components()
         else:
             components = self._filtered_components
@@ -1593,15 +1593,7 @@ class Dihedral_potential(Base_potential):
     def _get_distance_components(self):
         return self._get_component_list()
     
-    def _calc_component_shift(self, index):
-        components = self._create_component_list('ATOM')
-        component = self._get_distance_components()[index]
-        components.add_component(component)
-        results = array.array('d',[0.0])
-        self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
-        component_to_result = array.array('i', [0])
-        self._shift_calculator(components.get_native_components(),results,component_to_result)
-        return results[0]
+
         
 
 
@@ -3454,7 +3446,7 @@ class Non_bonded_potential(Distance_based_potential):
         return '\n'.join(result)
 
     def _create_component_list(self, name):
-        if name == 'NBLT':
+        if name in  ('NBLT', 'ATOM'):
             translator = Index_translator(self._get_indices())
             return Native_component_list(translator=translator,format='iiiff')
         else:

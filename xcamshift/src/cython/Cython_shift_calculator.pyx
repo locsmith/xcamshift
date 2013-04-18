@@ -608,24 +608,13 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
     
     cdef Distance_component* _compiled_components 
     cdef int _num_components
+    cdef object _raw_data
         
     def __cinit__(self):
+        self._raw_data = None
         self._compiled_components  = NULL
         self._num_components =  0
-        
-    def __dealloc__(self):
-        
-        self._free_compiled_components()
-        
-    cdef void _free_compiled_components(self):
-        if self._compiled_components != NULL:
-            free (self._compiled_components)
-            self._compiled_components = NULL   
                         
-    def _prepare(self, change, data):
-        if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
-             self._free_compiled_components()
-                         
     def __init__(self, indices, smoothed, str name = "not set"):
         Base_shift_calculator.__init__(self, name)
         self._target_atom_index = indices.target_atom_index
@@ -646,30 +635,19 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 #        self._smoothing_factor = smoothing_factor
 #    
 #    TODO: this needs to be removed
+    cdef void _bytes_to_components(self, data):
 
+        self._raw_data =  data 
+        self._compiled_components =  <Distance_component*> <size_t> ctypes.addressof(data)
+        self._num_components =  len(data)/ sizeof(Distance_component)
             
     def _set_components(self,components):
-        if  self._compiled_components ==  NULL:
-            self._compile_components(components)  
+        self._bytes_to_components(components)
 
         
-    cdef void _compile_components(self,components):
-        self._compiled_components = <Distance_component*>malloc(len(components) * sizeof(Distance_component))
-        self._num_components = len(components)
-        for i,component in enumerate(components):
-            self._compiled_components[i].target_atom = components[i][self._target_atom_index]
-            if len(component) == 4:
-                self._compiled_components[i].remote_atom_1 = components[i][self._distance_atom_index_1]
-                self._compiled_components[i].remote_atom_2 = components[i][self._distance_atom_index_2]
-                self._compiled_components[i].coefficient   = components[i][self._coefficient_index]
-                self._compiled_components[i].exponent      = components[i][self._exponent_index]
-            elif len(component) == 5:
-                self._compiled_components[i].remote_atom_1 = components[i][self._distance_atom_index_1]
-                self._compiled_components[i].remote_atom_2 = components[i][self._distance_atom_index_2]
-                self._compiled_components[i].coefficient   = components[i][self._coefficient_index]
-                self._compiled_components[i].exponent      = components[i][self._exponent_index]
-            else:
-                raise Exception("bad distance component length %i should be either 4 or 5 " % len(component))
+            
+    def _prepare(self, change, data):
+         pass  
         
     @cython.profile(False)
     cdef inline target_distant_atom _get_target_and_distant_atom_ids(self, int index):
@@ -767,8 +745,6 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     
     cdef _set_components(self, object components):
         self._bytes_to_components(components)
-#         if self._compiled_components ==  NULL:
-#             self._compile_components(components)
             
     cdef inline _get_component(self,int index):
         return self._components[index]
