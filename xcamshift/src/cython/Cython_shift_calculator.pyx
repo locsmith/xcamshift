@@ -747,39 +747,29 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     
     cdef Dihedral_component *_compiled_components
     cdef int _num_components
-     
+    cdef object _raw_data
+        
     def __cinit__(self):
+        self._raw_data =  None
         self._compiled_components = NULL
         self._num_components = 0
         
         
     def __init__(self, str name = "not set"):
         Base_shift_calculator.__init__(self,name)
+        
+        
+    cdef void _bytes_to_components(self, data):
+        self._raw_data =  data 
+        
+        self._compiled_components =  <Dihedral_component*> <size_t> ctypes.addressof(data)
+        self._num_components =  len(data)/ sizeof(Dihedral_component)
     
     cdef _set_components(self, object components):
-        if self._compiled_components ==  NULL:
-            self._compile_components(components)
+        self._bytes_to_components(components)
+#         if self._compiled_components ==  NULL:
+#             self._compile_components(components)
             
-    def _compile_components(self, components):
-        self._compiled_components = <Dihedral_component*>malloc(len(components) * sizeof(Dihedral_component))
-        self._num_components = len(components) 
-        for i,component in enumerate(components):
-            self._compiled_components[i].target_atom = component[0]
-            for j in range(4):
-                self._compiled_components[i].dihedral_atoms[j] = component[1+j]
-            self._compiled_components[i].coefficient = component[5]
-            for j in range(5):
-                self._compiled_components[i].parameters[j] = component[6+j]
-    
-    def _free_compiled_components(self):
-        if self._compiled_components != NULL:
-            free(self._compiled_components)
-            self._compiled_components = NULL        
-                   
-    def _prepare(self, change, data):
-         if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
-             self._free_compiled_components()  
-                    
     cdef inline _get_component(self,int index):
         return self._components[index]
     
