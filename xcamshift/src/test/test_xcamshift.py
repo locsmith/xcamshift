@@ -399,7 +399,7 @@ class TestXcamshift(unittest2.TestCase):
         # _calc_single_force_factor is in distance based potential
         #TODO: test the force calculator not the potential
         distance_potential = Distance_potential()
-        distance_potential._force_calculator._set_components(distance_potential._get_component_list())
+        distance_potential._force_calculator._set_components(distance_potential._get_component_list().get_native_components())
             
         expected_force_factors = dict(ala_3.ala_3_distance_forces_well)
         test_force_factors = ala_3.ala_3_factors_harmonic
@@ -436,7 +436,7 @@ class TestXcamshift(unittest2.TestCase):
         expected_forces_dict = dict(expected_forces)
         test_factors = ala_3.ala_3_factors_harmonic
         
-        distance_potential._force_calculator._set_components(distance_potential._get_component_list())
+        distance_potential._force_calculator._set_components(distance_potential._get_component_list().get_native_components())
         indices = distance_potential._get_indices()
         
         #TODO don't like using dump here

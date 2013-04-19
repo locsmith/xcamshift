@@ -398,7 +398,7 @@ class TestXcamshiftA4(unittest2.TestCase):
 
     def _test_non_bonded_force_factors(self, non_bonded_potential, non_bonded_force_factors, active_shifts, factors):
         
-        non_bonded_potential._force_calculator._set_components(non_bonded_potential._get_component_list())
+        non_bonded_potential._force_calculator._set_components(non_bonded_potential._get_component_list().get_native_components())
         for i, component in enumerate(non_bonded_potential._get_all_components()):
             target_atom_id, remote_atom_id, coefficient, exponent = component
             target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
@@ -444,7 +444,7 @@ class TestXcamshiftA4(unittest2.TestCase):
 
     def _test_non_bonded_forces(self, potential, non_bonded_forces, active_shifts, factors):
         
-        potential._force_calculator._set_components(potential._get_component_list())
+        potential._force_calculator._set_components(potential._get_component_list().get_native_components())
         for i, component in enumerate(potential._get_all_components()):
             target_atom_id, remote_atom_id, coefficient, exponent = component
             target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
