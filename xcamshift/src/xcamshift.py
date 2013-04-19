@@ -660,7 +660,7 @@ class Base_potential(object):
         return self._filtered_components    
     
     def _calc_component_shift(self, index):
-        components = self._create_component_list('ATOM')
+        components = self._create_component_list(self._get_target_atom_list_name())
         component = self._get_distance_components()[index]
         components.add_component(component)
         results = array.array('d',[0.0])
@@ -3445,9 +3445,13 @@ class Non_bonded_potential(Distance_based_potential):
         return '\n'.join(result)
 
     def _create_component_list(self, name):
-        if name in  ('NBLT', 'ATOM'):
+        if name  == 'NBLT':
             translator = Index_translator(self._get_indices())
             return Native_component_list(translator=translator,format='iiiff')
+        elif name == "ATOM":
+            return Native_component_list(format='ii')
+        elif name == 'NBRM':
+            return Native_component_list(format='iii')
         else:
             return Component_list()
 
