@@ -2462,6 +2462,7 @@ class Ring_Potential(Base_potential):
         if len(components) > 0:
             #TODO: add as general method in base
             self._setup_ring_calculator(self._shift_calculator)
+            components = components.get_native_components()
             self._shift_calculator(components,results, self._component_to_result)
         
         
@@ -2492,7 +2493,7 @@ class Ring_Potential(Base_potential):
 
     
     def _calc_component_shift(self, index):
-        components = Component_list()
+        components = self._create_component_list('ATOM')
         component = self._get_distance_components()[index]
         components.add_component(component)
         results = array.array('d',[0.0])
@@ -2500,7 +2501,7 @@ class Ring_Potential(Base_potential):
         self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
         self._setup_ring_calculator(self._shift_calculator)
         component_to_result  = array.array('i',[0])
-        self._shift_calculator(components,results,component_to_result)
+        self._shift_calculator(components.get_native_components(),results,component_to_result)
         return results[0]
     
     

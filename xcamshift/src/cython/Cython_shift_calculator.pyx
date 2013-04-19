@@ -826,10 +826,13 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     
     cdef Ring_component* _compiled_ring_components
     cdef int _num_ring_components
+    cdef object raw_data
+
     
     cdef Coef_components _compiled_coef_components
     
     def __cinit__(self):
+        self.raw_data = None
         self._compiled_components = NULL
         self._num_components = 0
         
@@ -845,22 +848,15 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     def __init__(self, str name = "not set"):
         Base_shift_calculator.__init__(self,name)
 
-        
+    cdef void _bytes_to_components(self, data):
+        self.raw_data =  data 
+        self._compiled_components =  <Ring_target_component*> <size_t> ctypes.addressof(data)
+        self._num_components =  len(data)/ sizeof(Ring_target_component)
+
+         
     def _set_components(self,components):
-        if  self._compiled_components ==  NULL:
-            self._compile_components(components)
+        self._bytes_to_components(components)
             
-    def _compile_components(self,components): 
-        self._compiled_components = <Ring_target_component*>malloc(len(components) * sizeof(Ring_target_component))
-        self._num_components = len(components)
-        for i,component in enumerate(components):
-            self._compiled_components[i].target_atom_id = components[i][0]
-            self._compiled_components[i].atom_type_id = components[i][1]
-    
-    def _free_compiled_components(self):   
-        if self._compiled_components != NULL:
-            free(self._compiled_components)
-            self._compiled_components = NULL
             
     def _free_compiled_ring_components(self):   
         if self._compiled_ring_components != NULL:
@@ -873,7 +869,6 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
 
     def _prepare(self, change, data):
         if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
-            self._free_compiled_components() 
             self._free_compiled_ring_components()
             self._free_coef_components()
 
