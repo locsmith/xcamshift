@@ -873,10 +873,8 @@ class Base_potential(object):
     #TODO: unify with ring random coil and disuphide shift calculators
     def calc_shifts(self, target_atom_ids, results):
         self._filtered_components  = self._filter_components(target_atom_ids)
-        if self.get_abbreviated_name() in (DIHEDRAL, BACK_BONE, SIDE_CHAIN, XTRA, NON_BONDED):
-            components = self._filtered_components.get_native_components()
-        else:
-            components = self._filtered_components
+       
+        components = self._filtered_components.get_native_components()
             
         self._shift_calculator(components,results,self._component_to_result)
 
