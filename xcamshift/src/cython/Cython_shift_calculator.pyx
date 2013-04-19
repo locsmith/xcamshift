@@ -1452,11 +1452,11 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         self._smoothing_factor = smoothing_factor
         
     def _set_components(self,components):
-            self._bytes_to_components(components)
+        self._bytes_to_components(components)
         
     
-     def _prepare(self, change, data):
-         pass  
+    def _prepare(self, change, data):
+        pass  
 
     cdef void _bytes_to_components(self, data):
 
