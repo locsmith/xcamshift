@@ -56,6 +56,15 @@ cdef struct Dihedral_component:
       float coefficient
       float[6] parameters
       #TODO: there seems to be an extra float here...
+
+#TODO: same as sing target component unite and rename
+cdef struct Non_bonded_target_component:
+      int target_atom_id
+      int atom_type_id
+        
+cdef struct Non_bonded_remote_atom_component:
+      int remote_atom_id
+      int chem_type[2] # one for each sphere
  
 def test_dump_dist_comp(data):
     cdef size_t  test  = ctypes.addressof(data)
@@ -1159,13 +1168,37 @@ cdef class Fast_non_bonded_calculator:
             is_non_bonded =  distance < self._full_cutoff_distance
         return is_non_bonded
     
+#     cdef struct Non_bonded_target_component:
+#       int target_atom_id
+#       int atom_type_id
+#         
+# cdef struct Non_bonded_remote_atom_component:
+#       int remote_atom
+#       int chem_type[2] # one for each sphere
+
+    cdef   int _bytes_to_target_components(self, data, Non_bonded_target_component** target_pointer):
+
+        target_pointer[0] =  <Non_bonded_target_component*> <size_t> ctypes.addressof(data)
+        return len(data)/ sizeof(Non_bonded_target_component)
+
+    cdef   int _bytes_to_remote_components(self, data, Non_bonded_remote_atom_component** remote_pointer):
+
+        remote_pointer[0] =  <Non_bonded_remote_atom_component*> <size_t> ctypes.addressof(data)
+        return len(data)/ sizeof(Non_bonded_remote_atom_component)
+            
     @cython.profile(True)
     def __call__(self, atom_list_1, atom_list_2):
         
         if self._verbose:
             print '***** BUILD NON BONDED ******'
-            
-        cdef double start_time = 0.0 
+        
+        cdef  Non_bonded_target_component* target_components
+        cdef int num_target_components = self._bytes_to_target_components(atom_list_1,&target_components)
+        
+        cdef Non_bonded_remote_atom_component* remote_components
+        cdef int num_remote_components = self._bytes_to_remote_components(atom_list_2,&remote_components)
+        
+        cdef double start_time = 0.0  
         cdef double end_time = 0.0
         if self._verbose:
             start_time = time()
@@ -1174,12 +1207,15 @@ cdef class Fast_non_bonded_calculator:
         self.set_simulation()
         non_bonded_lists = []
         cdef int i, atom_id_1, atom_id_2
-        for atom_id_1 in atom_list_1:
+        
+        for i in range(num_target_components):
+            atom_id_1 = target_components[i].target_atom_id
             non_bonded_list = []
             non_bonded_lists.append(non_bonded_list)
-            for i, atom_id_2 in enumerate(atom_list_2):
+            for j in range(num_remote_components):
+                atom_id_2  = remote_components[j].remote_atom_id
                 if self._is_non_bonded(atom_id_1, atom_id_2):
-                    non_bonded_list.append(i)
+                    non_bonded_list.append(j)
         if self._verbose:
             end_time = time()
             print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"

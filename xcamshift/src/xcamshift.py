@@ -2841,7 +2841,7 @@ class Non_bonded_list(object):
         if self._verbose:
              print "  BOX COUNT UPDATED TO: ", self._box_update_count
         
-    def get_boxes(self,component_list_1, component_list_2,target_component_list,coefficient_list):
+    def get_boxes(self,component_list_1, component_list_2,target_component_list,coefficient_list, native_target_atom_list, native_remote_atom_list):
 #        print self._box_update_count, se        if self._verbose:
         updated = False
         if self._verbose:
@@ -2856,7 +2856,7 @@ class Non_bonded_list(object):
             target_component_list.clear()
             self._box_update_count = -1
             self._non_bonded_calculation_count += 1
-            self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list)
+            self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list, native_target_atom_list, native_remote_atom_list)
         
             updated = True
 
@@ -2880,16 +2880,14 @@ class Non_bonded_list(object):
 
 
 
-    def _build_boxes(self, component_list_1, component_list_2, target_component_list, coefficient_list):
+    def _build_boxes(self, component_list_1, component_list_2, target_component_list, coefficient_list, native_component_list_1, native_component_list_2):
         
 #        print
 #        for elem in component_list_2:
 #            print elem
 #        print
         self._pos_cache = {}
-        atom_ids_1 = [component[0] for component in component_list_1[:]]
-        atom_ids_2 = [component[0] for component in component_list_2[:]]
-        non_bonded_lists = self._non_bonded_list_calculator(atom_ids_1,atom_ids_2)
+        non_bonded_lists = self._non_bonded_list_calculator(native_component_list_1,native_component_list_2)
                     
 
         for i,non_bonded_list in enumerate(non_bonded_lists):
@@ -3132,9 +3130,13 @@ class Non_bonded_potential(Distance_based_potential):
         non_bonded_list = self._get_component_list('NBLT')
         
         target_atom_list = self._get_component_list('ATOM')
+        native_target_atom_list = target_atom_list.get_native_components()
+        
         remote_atom_list = self._get_component_list('NBRM')
+        native_remote_atom_list = remote_atom_list.get_native_components()
+        
         coefficient_list  = self._get_component_list('COEF')
-        updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
+        updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list, native_target_atom_list, native_remote_atom_list)
         
         if updated:
             old_freeze  = self._freeze

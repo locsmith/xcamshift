@@ -734,12 +734,19 @@ class TestXcamshift(unittest2.TestCase):
         expected_box_atoms_1 = set(ala_3.ala3_expected_non_bonded_pairs)
         expected_box_atoms_3 = set(ala_3.ala3_expected_non_bonded_pairs)
         non_bonded_potential = Non_bonded_potential()
-        target_atoms = non_bonded_potential._get_all_components('ATOM')
-        remote_atoms  = non_bonded_potential._get_all_components('NBRM')
+        
+        target_atoms = non_bonded_potential._create_component_list('ATOM')
+        target_atoms.add_components(non_bonded_potential._get_all_components('ATOM'))
+        native_target_atoms = target_atoms.get_native_components()
+        
+        remote_atoms  =  non_bonded_potential._create_component_list('NBRM')
+        remote_atoms.add_components(non_bonded_potential._get_all_components('NBRM'))
+        native_remote_atoms = remote_atoms.get_native_components()
+        
         coefficient_list = non_bonded_potential._get_component_list('COEF')
         
         component_list =  Component_list()
-        non_bonded_list.get_boxes(target_atoms, remote_atoms, component_list, coefficient_list)
+        non_bonded_list.get_boxes(target_atoms, remote_atoms, component_list, coefficient_list, native_target_atoms,native_remote_atoms)
         
 #        local_boxes = []
 #        for box_component in boxes:
