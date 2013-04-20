@@ -2889,38 +2889,39 @@ class Non_bonded_list(object):
         self._pos_cache = {}
         non_bonded_lists = self._non_bonded_list_calculator(native_component_list_1,native_component_list_2)
                     
-
-        for i,non_bonded_list in enumerate(non_bonded_lists):
+        for i,j in non_bonded_lists:
             component_1 = component_list_1[i]
-            if len(non_bonded_list) > 0:
-                atom_id_1 = component_1[0]
-                self._interaction_count = 0
-                for j in non_bonded_list:#
-                    component_2 = component_list_2[j]
-                    atom_id_2 = component_2[0]
-                    atom_1_coefficent_offset = component_1[1]
-                    for chem_type_id in component_2[1:]:
-                        #TODO replace with a more direct lookup, we shouldn't need multiple values here
-                        #so only list chem type ids by know chem_types in the sturtcure not all chem types
-        #                    print chem_type_id
-        #                    print coefficient_list
-        #                    print chem_type_id, sphere_id, exponent 
-                        
-                        
-                        
-                            
-                        coefficient_data  = coefficient_list.get_components_for_atom_id(chem_type_id)
-        #                    print coefficient_data
-                        coefficient_data = coefficient_data[0]
-                        coefficients = coefficient_data[3:]
-                        
-                        chem_type_id, sphere_id, exponent = coefficient_data[:3]
-        #                    print chem_type_id, sphere_id, exponent 
+            component_2 = component_list_2[j]
+            
+            atom_id_1 = component_1[0]
+            atom_id_2 = component_2[0]
+            
+            self._interaction_count = 0
+            
+            atom_1_coefficent_offset = component_1[1]
+            
+            for chem_type_id in component_2[1:]:
+                #TODO replace with a more direct lookup, we shouldn't need multiple values here
+                #so only list chem type ids by know chem_types in the sturtcure not all chem types
+#                    print chem_type_id
+#                    print coefficient_list
+#                    print chem_type_id, sphere_id, exponent 
+                
+                
+                
                     
+                coefficient_data  = coefficient_list.get_components_for_atom_id(chem_type_id)
+#                    print coefficient_data
+                coefficient_data = coefficient_data[0]
+                coefficients = coefficient_data[3:]
+                
+                chem_type_id, sphere_id, exponent = coefficient_data[:3]
+#                    print chem_type_id, sphere_id, exponent 
+            
 
-                        result_component = atom_id_1,atom_id_2,coefficients[atom_1_coefficent_offset],exponent 
-                        target_component_list.add_component(result_component)
-                        self._interaction_count += 1
+                result_component = atom_id_1,atom_id_2,coefficients[atom_1_coefficent_offset],exponent 
+                target_component_list.add_component(result_component)
+                self._interaction_count += 1
 
         if self._verbose:
             print '  build boxes [slow]'

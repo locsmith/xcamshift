@@ -1210,12 +1210,11 @@ cdef class Fast_non_bonded_calculator:
         
         for i in range(num_target_components):
             atom_id_1 = target_components[i].target_atom_id
-            non_bonded_list = []
-            non_bonded_lists.append(non_bonded_list)
+
             for j in range(num_remote_components):
                 atom_id_2  = remote_components[j].remote_atom_id
                 if self._is_non_bonded(atom_id_1, atom_id_2):
-                    non_bonded_list.append(j)
+                    non_bonded_lists.append((i,j),)
         if self._verbose:
             end_time = time()
             print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"
