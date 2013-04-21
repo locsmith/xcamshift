@@ -21,6 +21,7 @@ Created on 31 Jul 2012
 
 '''
 
+from math import ceil
 cimport cython
 from vec3 import Vec3 as python_vec3
 from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
@@ -65,7 +66,12 @@ cdef struct Non_bonded_target_component:
 cdef struct Non_bonded_remote_atom_component:
       int remote_atom_id
       int chem_type[2] # one for each sphere
- 
+
+def test_dump_component_index_pair(Non_bonded_list data, int index):
+    cdef Component_index_pair* result =  data.get(index)
+    
+    return result[0].target_index, result[0].remote_index
+    
 def test_dump_dist_comp(data):
     cdef size_t  test  = ctypes.addressof(data)
     cdef Distance_component* test2 = <Distance_component*> test
@@ -99,8 +105,59 @@ def test_dump_dihedral_comp(data):
                       compiled_components[i].parameters[2], compiled_components[i].parameters[3],\
                       compiled_components[i].parameters[4], compiled_components[i].parameters[5],\
                       compiled_components[i].parameters[6]
-
+                      
+cdef struct Component_index_pair:
+    int target_index
+    int remote_index
     
+cdef  class Non_bonded_list:
+    cdef CDSVector[int]  *data
+    cdef int length
+    cdef int size_increment 
+ 
+    def __cinit__(self, int length=0, double fill_factor=1.0):
+        self.data = new CDSVector[int]() 
+        self.data[0].resize(<int>ceil(length*fill_factor*2))
+        self.length =  0
+        self.size_increment =  20
+    
+    def test_append(self,int i, int j):
+        self.append(i,j)      
+    
+    def reset(self):
+        self.length = 0
+            
+    cdef inline void append(self,int target_id, int remote_id):
+ 
+        if  self.data[0].size()*2 <= self.length*2:
+            self.resize()
+        self.data[0][self.length] = target_id
+        self.data[0][self.length+1] = remote_id
+        
+        self.length += 2
+        
+         
+    cdef inline void resize(self):
+        self.data[0].resize(self.data[0].size()+self.size_increment*2)    
+     
+    cdef inline Component_index_pair* get(self,offset):
+        return <Component_index_pair *> &self.data[0][offset*2]      
+             
+    def get_allocation(self):
+        return self.data[0].size() 
+    
+    def get_size_increment(self):
+        return self.size_increment
+    
+    def __len__(self):
+        return self.length/2
+     
+    def __getitem__(self, int key):
+        if key >= self.length/2:
+            raise IndexError("index (%i) out of range (%i)" % (key, self.length/2)) 
+        return self.data[0][key*2],self.data[0][key*2+1]         
+        
+      
 cdef class Vec3_list:
     cdef CDSVector[Vec3] *data
     
@@ -1205,7 +1262,7 @@ cdef class Fast_non_bonded_calculator:
 
 
         self.set_simulation()
-        non_bonded_lists = []
+        cdef Non_bonded_list non_bonded_lists = Non_bonded_list()
         cdef int i, atom_id_1, atom_id_2
         
         for i in range(num_target_components):
@@ -1214,7 +1271,7 @@ cdef class Fast_non_bonded_calculator:
             for j in range(num_remote_components):
                 atom_id_2  = remote_components[j].remote_atom_id
                 if self._is_non_bonded(atom_id_1, atom_id_2):
-                    non_bonded_lists.append((i,j),)
+                    non_bonded_lists.append(i,j)
         if self._verbose:
             end_time = time()
             print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"

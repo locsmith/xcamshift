@@ -28,6 +28,7 @@ from test.test_xcamshift_vin import TestXcamshiftVIN
 from test.test_xcamshift_agfa import TestXcamshiftAGFA
 from test.test_xcamshift_agaga import TestXcamshiftAGAGA
 from test.test_xcamshift_gb3 import TestXcamshiftGB3
+from test.test_cython_non_bonded_list import Test_cython_non_boned_list
 import sys
 
 fast = False
@@ -49,6 +50,7 @@ def load_tests(loader, tests, pattern):
                 TestXcamshiftAGFA,
                 TestXcamshift,
                 TestXcamshiftAGAGA,
+                Test_cython_non_boned_list
 #                TestXcamshiftGB3
 )
     
