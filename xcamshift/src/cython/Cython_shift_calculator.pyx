@@ -12,7 +12,6 @@
 # cython: boundscheck=False    
 # cython: wraparound=False
 # cython: cdivision=True 
-import numpy as np
 
 '''
 Created on 31 Jul 2012
