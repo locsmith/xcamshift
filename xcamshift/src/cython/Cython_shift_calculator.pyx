@@ -1451,6 +1451,7 @@ cdef class Base_force_calculator:
     cdef bint _verbose 
     cdef Simulation* _simulation
     cdef str _name
+    cdef int[:] _active_components
     
     def __init__(self,potential=None, name= "not set"):
         self._verbose = False
@@ -1474,7 +1475,7 @@ cdef class Base_force_calculator:
         
 #    TODO should most probably be a fixed array
     @cython.profile(True)
-    def __call__(self, object components, int[:] component_to_result, float[:] force_factors, Out_array forces):
+    def __call__(self, object components, int[:] component_to_result, float[:] force_factors, Out_array forces, int[:] active_components=None):
 
         cdef double start_time =0.0
         cdef double end_time =0.0
@@ -1484,6 +1485,7 @@ cdef class Base_force_calculator:
         self._set_components(components)
         self.set_simulation()
 #        TODO rename component to result to something better
+        self._active_components = active_components
         self._do_calc_components(component_to_result, force_factors, forces)
 
 #        component_target_atom_ids = components.get_component_atom_ids()
@@ -1757,9 +1759,12 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         return self._cython_calc_single_force_factor(index)
 
     cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
-        cdef int i
-        for i in range(self._num_components):
-            self._dihedral_calc_single_force_set(i,force_factors[component_to_result[i]],force)
+        cdef int factor_index 
+        cdef int component_index
+        
+        for factor_index, component_index in enumerate(self._active_components):
+            self._dihedral_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
+            
             
 
     cdef inline float _cython_calc_single_force_factor(self, int index):

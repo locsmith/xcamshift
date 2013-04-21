@@ -653,6 +653,7 @@ class Base_potential(object):
                 test =  lambda x: x[0] in target_atom_ids
                 
             self._filtered_components = self._get_component_list().build_filtered_copy(test)
+            self._active_components = self._get_component_list().build_filter_list(test)
 
             if self._verbose:
                 print ' %i reduced to %i' % (len(components),len(self._filtered_components))
@@ -840,7 +841,11 @@ class Base_potential(object):
 
                 
                 
-            self._force_calculator(components,self._component_to_result, force_factors, forces)
+            if self.get_abbreviated_name() ==  DIHEDRAL:
+                components = self._get_component_list().get_native_components()
+                self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._active_components)
+            else:   
+                self._force_calculator(components,self._component_to_result, force_factors, forces)
             
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
