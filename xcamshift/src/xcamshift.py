@@ -667,7 +667,10 @@ class Base_potential(object):
         results = array.array('d',[0.0])
         self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
         component_to_result = array.array('i', [0])
-        self._shift_calculator(components.get_native_components(),results,component_to_result)
+        if self.get_abbreviated_name() == DIHEDRAL:
+            self._shift_calculator(components.get_native_components(),results,component_to_result, active_components=array.array('i',[0]))
+        else:
+            self._shift_calculator(components.get_native_components(),results,component_to_result)
         return results[0]
       
     
@@ -876,8 +879,13 @@ class Base_potential(object):
         self._filtered_components  = self._filter_components(target_atom_ids)
        
         components = self._filtered_components.get_native_components()
-            
-        self._shift_calculator(components,results,self._component_to_result)
+
+        if self.get_abbreviated_name() in (DIHEDRAL):
+            components = self._get_component_list().get_native_components()
+            self._shift_calculator(components,results,self._component_to_result, active_components=self._active_components)
+        else:   
+            self._shift_calculator(components,results,self._component_to_result)
+             
 
     
 class Base_shift_calculator(object):

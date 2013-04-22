@@ -845,7 +845,10 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         return self._compiled_components[index].coefficient
     
     @cython.profile(True)
-    def __call__(self, object components, double[:] results, int[:] component_to_target):
+    #TODO: architecture different from force calculator no base function/class
+    #TODO: still uses component to result...
+    #TODO: add common force and shift base class
+    def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
         self.set_simulation()
         cdef float angle
         cdef float angle_term
@@ -860,14 +863,18 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         
         if self._verbose:
             start_time = time()
+        cdef int factor_index 
+        cdef int component_index
+        
             
         self._set_components(components)
-        for index in range(self._num_components):
-            dihedral_atom_ids = self._get_dihedral_atom_ids(index)
+        for factor_index, component_index in enumerate(active_components):
             
-            coefficient = self._get_coefficient(index)
+            dihedral_atom_ids = self._get_dihedral_atom_ids(component_index)
             
-            parameters = self._get_parameters(index)
+            coefficient = self._get_coefficient(component_index)
+            
+            parameters = self._get_parameters(component_index)
             
             angle = calc_dihedral_angle_simulation(self._simulation, dihedral_atom_ids)
     
@@ -876,7 +883,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
                          parameters.param_4
             shift = coefficient * angle_term
     
-            results[component_to_target[index]] += shift
+            results[component_to_target[factor_index]] += shift
             
         if self._verbose:
             end_time = time()
