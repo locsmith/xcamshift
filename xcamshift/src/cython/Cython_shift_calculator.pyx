@@ -1685,8 +1685,11 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
 #    def _calc_single_force_set(self, int index, float factor, object forces):
 #        self._cython_calc_single_force_set(index, factor, forces)
     cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
-        for i in range(self._num_components):
-            self._non_bonded_calc_single_force_set(i,force_factors[component_to_result[i]],force)
+        cdef int factor_index 
+        cdef int component_index
+        
+        for factor_index, component_index in enumerate(self._active_components):
+            self._non_bonded_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
             
     cdef inline void  _non_bonded_calc_single_force_set(self, int index, float factor, Out_array forces):
         cdef float distance  = calc_distance_simulation(self._simulation, self._compiled_components[index].target_atom,self._compiled_components[index].remote_atom_2)

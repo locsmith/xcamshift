@@ -837,15 +837,11 @@ class Base_potential(object):
                     print "updated component_to result complete in %.8g seconds." % (end_time-start_time)
                     #print len(self._component_to_result),  len(self._filtered_components), self.get_abbreviated_name()
             
-            components = self._filtered_components.get_native_components()
 
                 
                 
-            if self.get_abbreviated_name() in (RING,  DIHEDRAL, XTRA, BACK_BONE, SIDE_CHAIN):
-                components = self._get_component_list().get_native_components()
-                self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._active_components)
-            else:   
-                self._force_calculator(components,self._component_to_result, force_factors, forces)
+            components = self._get_component_list().get_native_components()
+            self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._active_components)
             
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
