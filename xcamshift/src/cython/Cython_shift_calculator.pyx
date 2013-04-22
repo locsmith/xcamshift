@@ -733,7 +733,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         return result
     
     @cython.profile(True)
-    def __call__(self, object components, double[:] results, int[:] component_to_target):
+    def __call__(self, object components, double[:] results, int[:] component_to_target,  int[:] active_components):
         self.set_simulation()
         cdef double start_time = 0.0
         cdef double end_time = 0.0
@@ -761,23 +761,22 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         
         cdef int index
           
-        for index in range(self._num_components):
-            
+        for factor_index, component_index in enumerate(active_components):            
 #             component = components[index]
 
             
-            target_atom_id = self._compiled_components[index].remote_atom_1
-            distant_atom_id  = self._compiled_components[index].remote_atom_2
+            target_atom_id = self._compiled_components[component_index].remote_atom_1
+            distant_atom_id  = self._compiled_components[component_index].remote_atom_2
             
             
-            coef_exp = self._get_coefficient_and_exponent(index)
+            coef_exp = self._get_coefficient_and_exponent(component_index)
             distance =calc_distance_simulation(self._simulation, target_atom_id, distant_atom_id)
     #        Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
 
             if self._smoothed:
                 ratio = distance / self._cutoff
                 smoothing_factor = 1.0 - ratio ** 8
-            results[component_to_target[index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
+            results[component_to_target[factor_index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
 
         if self._verbose:
             end_time = time()
