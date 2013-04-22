@@ -841,7 +841,7 @@ class Base_potential(object):
 
                 
                 
-            if self.get_abbreviated_name() in (RING,  DIHEDRAL):
+            if self.get_abbreviated_name() in (RING,  DIHEDRAL, XTRA, BACK_BONE, SIDE_CHAIN):
                 components = self._get_component_list().get_native_components()
                 self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._active_components)
             else:   

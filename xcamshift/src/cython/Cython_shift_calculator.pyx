@@ -1603,8 +1603,14 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         return self._cython_calc_single_force_factor(index, factor)
     
     cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
-        for i in range(self._num_components):
-            self._distance_calc_single_force_set(i,force_factors[component_to_result[i]],force)
+        cdef int factor_index 
+        cdef int component_index
+        
+        for factor_index, component_index in enumerate(self._active_components):
+            self._distance_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
+
+#         for i in range(self._num_components):
+#             self._distance_calc_single_force_set(i,force_factors[component_to_result[i]],force)
             
     
     @cython.profile(False)
