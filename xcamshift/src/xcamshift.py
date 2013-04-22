@@ -667,7 +667,8 @@ class Base_potential(object):
         results = array.array('d',[0.0])
         self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
         component_to_result = array.array('i', [0])
-        if self.get_abbreviated_name() == DIHEDRAL:
+        
+        if self.get_abbreviated_name() in (DIHEDRAL,RING):
             self._shift_calculator(components.get_native_components(),results,component_to_result, active_components=array.array('i',[0]))
         else:
             self._shift_calculator(components.get_native_components(),results,component_to_result)
@@ -2467,12 +2468,15 @@ class Ring_Potential(Base_potential):
         return result
     
     def calc_shifts(self, target_atom_ids, results):
-        components  = self._filter_components(target_atom_ids)
+        #TODO: should only need to filter components when TARGTE_ATOMS etc change
+        self._filter_components(target_atom_ids)
+       
+
+        components = self._get_component_list().get_native_components()
         if len(components) > 0:
             #TODO: add as general method in base
             self._setup_ring_calculator(self._shift_calculator)
-            components = components.get_native_components()
-            self._shift_calculator(components,results, self._component_to_result)
+            self._shift_calculator(components,results, self._component_to_result, active_components=self._active_components)
         
         
     def get_abbreviated_name(self):
@@ -2510,7 +2514,7 @@ class Ring_Potential(Base_potential):
         self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
         self._setup_ring_calculator(self._shift_calculator)
         component_to_result  = array.array('i',[0])
-        self._shift_calculator(components.get_native_components(),results,component_to_result)
+        self._shift_calculator(components.get_native_components(),results,component_to_result, active_components=array.array('i',[0]))
         return results[0]
     
     

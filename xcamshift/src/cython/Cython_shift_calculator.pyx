@@ -1011,7 +1011,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         return contrib * coefficient
 
     @cython.profile(True)
-    def __call__(self, object components, double[:] results, int[:] component_to_target):
+    def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
         self.set_simulation()
         cdef int target_atom_id
         cdef int atom_type_id
@@ -1029,9 +1029,9 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         
         self._set_components(components)
         
-        for index in range(self._num_components):
-            target_atom_id = self._compiled_components[index].target_atom_id
-            atom_type_id = self._compiled_components[index].atom_type_id
+        for factor_index, component_index in enumerate(active_components):
+            target_atom_id = self._compiled_components[component_index].target_atom_id
+            atom_type_id = self._compiled_components[component_index].atom_type_id
 
             shift = 0.0
         
@@ -1045,7 +1045,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
                 coefficient = coef_component[0].coefficient
                 shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
             
-            results[component_to_target[index]] += shift
+            results[component_to_target[factor_index]] += shift
         
         if self._verbose:
             end_time = time()
