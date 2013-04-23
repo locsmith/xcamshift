@@ -18,6 +18,7 @@ from collections import defaultdict
 from struct import Struct
 import ctypes
 from copy import copy
+import array
 
 class Component_list(object):
     def __init__(self):
@@ -127,7 +128,15 @@ class Component_list(object):
     def clear(self):
         self._components =[]
         self._component_ids = set()
-        
+    
+    def build_filter_list(self, accept = lambda x: True):
+        result = []
+        for i,elem in enumerate(self._components):
+            if accept(elem):
+                result.append(i)
+        return array.array('i',result)
+            
+                   
     def build_filtered_copy(self, accept = lambda x: True):
         
         filtered_elems = []
