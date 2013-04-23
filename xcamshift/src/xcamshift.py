@@ -614,7 +614,6 @@ class Base_potential(object):
         self._component_factories = {}
         self._cache_list_data = {}
         self._freeze  = False
-        self._filtered_components =  None
     
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._shift_calculator = None
@@ -622,7 +621,7 @@ class Base_potential(object):
         
     
         self._component_to_result = None
-        self._filtered_components = None
+        self._active_components = None
         self._verbose = False
         
     def set_frozen(self,on):
@@ -640,9 +639,7 @@ class Base_potential(object):
 
     
     def _filter_components(self, target_atom_ids):
-        if self._freeze  and not self._filtered_components == None:
-            result = self._filtered_components
-        else:
+        if not self._freeze  or  self._active_components == None:
             if self._verbose:
                 print '   filtering components %s' % self.get_abbreviated_name(),
 
@@ -652,13 +649,12 @@ class Base_potential(object):
                 target_atom_ids = sorted(set(target_atom_ids))
                 test =  lambda x: x[0] in target_atom_ids
                 
-            self._filtered_components = self._get_component_list().build_filtered_copy(test)
             self._active_components = self._get_component_list().build_filter_list(test)
 
             if self._verbose:
-                print ' %i reduced to %i' % (len(components),len(self._filtered_components))
+                print ' %i reduced to %i' % (len(components),len(self._active_components))
                 
-        return self._filtered_components    
+    
     
     def _calc_component_shift(self, index):
         components = self._create_component_list(self._get_target_atom_list_name())
@@ -668,19 +664,18 @@ class Base_potential(object):
         self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
         component_to_result = array.array('i', [0])
         
-        if self.get_abbreviated_name() in (DIHEDRAL,RING, XTRA, BACK_BONE, SIDE_CHAIN, NON_BONDED):
-            self._shift_calculator(components.get_native_components(),results,component_to_result, active_components=array.array('i',[0]))
-        else:
-            self._shift_calculator(components.get_native_components(),results,component_to_result)
+        self._shift_calculator(components.get_native_components(),results,component_to_result, active_components=array.array('i',[0]))
+        
         return results[0]
       
     
     def _build_component_to_result(self, target_atom_ids):
         if not self._freeze:
-            components = self._filter_components(target_atom_ids)
-            self._component_to_result =  allocate_array(len(components),'i')
-            for i, component in enumerate(components):
-                out_atom_id = component[0]
+            self._filter_components(target_atom_ids)
+            self._component_to_result =  allocate_array(len(self._active_components),'i')
+            components =  self._get_component_list()
+            for i, component_index in enumerate(self._active_components):
+                out_atom_id = components[component_index][0]
                 out_index  =  target_atom_ids.index(out_atom_id)
                 self._component_to_result[i] = out_index
 
@@ -770,7 +765,7 @@ class Base_potential(object):
     
     def clear_caches(self):
         self._cache_list_data = {}
-        self._filtered_components = None
+        self._active_components = None
 
 #    TODO put 'ATOM' in a constant and rename to BB_ATOM?
     def _get_component_list(self,name=None):
@@ -825,14 +820,14 @@ class Base_potential(object):
     def calc_force_set(self,target_atom_ids,force_factors,forces):
         if self._have_derivative():
 #            TODO: some of this code could go with careful organisation and wrapping access to component_to result in a accessor
-            if self._filtered_components == None:
-                self._filtered_components = self._filter_components(target_atom_ids)
+            if self._active_components == None:
+                self._filter_components(target_atom_ids)
                 if self._component_to_result ==  None:
                     print "*****WARNING unexpected build of component to result"
                     self._build_component_to_result(target_atom_ids)
             if self._component_to_result == None:
                 raise Exception("component to target must be set")
-            elif len(self._component_to_result) != len(self._filtered_components):
+            elif len(self._component_to_result) != len(self._active_components):
                 if self._verbose:
                     start_time = time()
                 self._build_component_to_result(target_atom_ids)
@@ -877,15 +872,10 @@ class Base_potential(object):
     
     #TODO: unify with ring random coil and disuphide shift calculators
     def calc_shifts(self, target_atom_ids, results):
-        self._filtered_components  = self._filter_components(target_atom_ids)
+        self._filter_components(target_atom_ids)
        
-        components = self._filtered_components.get_native_components()
-
-        if self.get_abbreviated_name() in (DIHEDRAL, XTRA, BACK_BONE, SIDE_CHAIN, NON_BONDED):
-            components = self._get_component_list().get_native_components()
-            self._shift_calculator(components,results,self._component_to_result, active_components=self._active_components)
-        else:   
-            self._shift_calculator(components,results,self._component_to_result)
+        components = self._get_component_list().get_native_components()
+        self._shift_calculator(components,results,self._component_to_result, active_components=self._active_components)
              
 
     
@@ -1313,9 +1303,10 @@ class RandomCoilShifts(Base_potential):
         return self._table_manager.get_random_coil_table
 
     def calc_shifts(self, target_atom_ids, result):
-        components  = self._filter_components(target_atom_ids)
-        for i, component in enumerate(components):
-            result[self._component_to_result[i]] += component[1]
+        self._filter_components(target_atom_ids)
+        components = self._get_component_list()
+        for i, component_index in enumerate(self._active_components):
+            result[self._component_to_result[i]] += components[component_index][1]
             
     def _calc_component_shift(self,index):
         components = self._get_component_list()
@@ -1350,11 +1341,13 @@ class Disulphide_shift_calculator(Base_potential):
     
     def _get_table_source(self):
         return self._table_manager.get_disulphide_table
-
+    
+    #TODO: this is the same as for the random coild shifts
     def calc_shifts(self, target_atom_ids, result):
-        components  = self._filter_components(target_atom_ids)
-        for i, component in enumerate(components):
-            result[self._component_to_result[i]] += component[1]
+        self._filter_components(target_atom_ids)
+        components = self._get_component_list()
+        for i, component_index in enumerate(self._active_components):
+            result[self._component_to_result[i]] += components[component_index][1]
             
     def _calc_component_shift(self,index):
         components = self._get_component_list()
@@ -3743,7 +3736,7 @@ class Xcamshift(PyPot):
             num_atoms = len(result)
             sub_result  = [0.0] * num_atoms
             potential.set_shifts(sub_result)
-            key = potential.get_abbreviated_name()
+            key = potential.L()
             keys.append(key)
             result_elements[key] = sub_result
         
