@@ -124,28 +124,26 @@ class Test_component_list(unittest2.TestCase):
         self.assertEqual(len(self._component_list),len(TEST_DATA_1))
 
         
-    def test_null_build_filtered_copy(self):
+    def test_null_build_filter_list(self):
         self._component_list.add_components(TEST_DATA_2)
         
-        filtered_components = self._component_list.build_filtered_copy(lambda x:True)
-        result = (filtered_components[0],filtered_components[1])
-        EXPECTED = ((0,1),(1,4))
+        result = self._component_list.build_filter_list(lambda x:True)
+        EXPECTED = array('i',(0,1))
         self.assertEqual(result, EXPECTED)
     
-    def test_build_filtered_copy(self):
+    def test_build_filter_list(self):
         self._component_list.add_components(TEST_DATA_2)
         
-        filtered_components = self._component_list.build_filtered_copy(lambda x: x[0]==1)
-        self.assertEqual(len(filtered_components), 1)
-        result = (filtered_components[0])
-        EXPECTED = ((1,4))
+        result = self._component_list.build_filter_list(lambda x: x[0]==1)
+        self.assertEqual(len(result), 1)
+        EXPECTED = array('i',[1,])
         self.assertEqual(result, EXPECTED)
         
-    def test_build_empty_filtered_copy(self):
+    def test_build_empty_filter_list(self):
         self._component_list.add_components(TEST_DATA_2)
         
-        filtered_components = self._component_list.build_filtered_copy(lambda x: False)
-        self.assertEqual(len(filtered_components), 0)
+        result = self._component_list.build_filter_list(lambda x: False)
+        self.assertEqual(len(result), 0)
         
 class  Test_native_component_list(Test_component_list):
     

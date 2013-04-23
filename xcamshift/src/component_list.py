@@ -135,20 +135,7 @@ class Component_list(object):
             if accept(elem):
                 result.append(i)
         return array.array('i',result)
-            
-                   
-    def build_filtered_copy(self, accept = lambda x: True):
-        
-        filtered_elems = []
-        for elem in self._components:
-            if accept(elem):
-                filtered_elems.append(elem)
-        result =  copy(self)
-        result.clear()
-        result.add_components(filtered_elems)
-        
-        return result
-                
+                            
 
 class Native_component_list(Component_list):
     def __init__(self, format, translator = lambda x : x):
