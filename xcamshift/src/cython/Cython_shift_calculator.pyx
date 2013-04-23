@@ -732,7 +732,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 
         return result
     
-    @cython.profile(True)
+    @cython.profile(False)
     def __call__(self, object components, double[:] results, int[:] component_to_target,  int[:] active_components):
         self.set_simulation()
         cdef double start_time = 0.0
@@ -753,15 +753,19 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         cdef int target_atom_id
         cdef int distant_atom_id
         cdef float distance
-
+        
         
 
         if self._verbose:
             start_time = time()
         
-        cdef int index
-          
-        for factor_index, component_index in enumerate(active_components):            
+        cdef int factor_index = 0
+        cdef int component_index
+        
+        #TODO: note to cython list for componnt_index in active_components produces awful code!
+        for factor_index in range(len(active_components)):
+            component_index = active_components[factor_index]         
+            
 #             component = components[index]
 
             
@@ -772,7 +776,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
             coef_exp = self._get_coefficient_and_exponent(component_index)
             distance =calc_distance_simulation(self._simulation, target_atom_id, distant_atom_id)
     #        Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
-
+            
             if self._smoothed:
                 ratio = distance / self._cutoff
                 smoothing_factor = 1.0 - ratio ** 8
@@ -867,7 +871,8 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         
             
         self._set_components(components)
-        for factor_index, component_index in enumerate(active_components):
+        for factor_index in range(len(active_components)):
+            component_index = active_components[factor_index] 
             
             dihedral_atom_ids = self._get_dihedral_atom_ids(component_index)
             
@@ -1028,7 +1033,11 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         
         self._set_components(components)
         
-        for factor_index, component_index in enumerate(active_components):
+        cdef int factor_index
+        cdef int component_index
+        for factor_index in range(len(active_components)):
+            component_index = active_components[factor_index] 
+            
             target_atom_id = self._compiled_components[component_index].target_atom_id
             atom_type_id = self._compiled_components[component_index].atom_type_id
 
@@ -1612,7 +1621,8 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         cdef int factor_index 
         cdef int component_index
         
-        for factor_index, component_index in enumerate(self._active_components):
+        for factor_index in range(len(self._active_components)):
+            component_index = self._active_components[factor_index] 
             self._distance_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
 
 #         for i in range(self._num_components):
@@ -1694,7 +1704,8 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         cdef int factor_index 
         cdef int component_index
         
-        for factor_index, component_index in enumerate(self._active_components):
+        for factor_index in range(len(self._active_components)):
+            component_index = self._active_components[factor_index] 
             self._non_bonded_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
             
     cdef inline void  _non_bonded_calc_single_force_set(self, int index, float factor, Out_array forces):
@@ -1776,7 +1787,8 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         cdef int factor_index 
         cdef int component_index
         
-        for factor_index, component_index in enumerate(self._active_components):
+        for factor_index in range(len(self._active_components)):
+            component_index = self._active_components[factor_index] 
             self._dihedral_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
             
             
@@ -2018,7 +2030,8 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         cdef int factor_index 
         cdef int component_index
         
-        for factor_index, component_index in enumerate(self._active_components):
+        for factor_index in range(len(self._active_components)):
+            component_index = self._active_components[factor_index] 
             self._ring_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
             
     cdef inline void _ring_calc_single_force_set(self,  int index, float force_factor, Out_array forces): 
