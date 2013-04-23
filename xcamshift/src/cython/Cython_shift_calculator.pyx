@@ -2273,7 +2273,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._verbose = on
     
     @cython.profile(True)
-    def __call__(self, object components, double[:] results, int[:] component_to_target):
+    def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
         self._set_components(components)
         self.set_simulation()
         
@@ -2294,19 +2294,24 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         if self._verbose:
             start_time = time()
             
-        for index in range(self._num_components):
-            target_atom_id = self._compiled_components[index].remote_atom_1
-            distant_atom_id  = self._compiled_components[index].remote_atom_2
+        cdef int factor_index = 0
+        cdef int component_index
+        
+        #TODO: note to cython list for componnt_index in active_components produces awful code!
+        for factor_index in range(len(active_components)):
+            component_index = active_components[factor_index]             
+            target_atom_id = self._compiled_components[component_index].remote_atom_1
+            distant_atom_id  = self._compiled_components[component_index].remote_atom_2
             
             distance = calc_distance_simulation(self._simulation, target_atom_id, distant_atom_id)
             if distance < self._nb_cutoff:
         
-                coef_exp = self._get_coefficient_and_exponent(index)
+                coef_exp = self._get_coefficient_and_exponent(component_index)
                 smoothing_factor = default_smoothing_factor
                 if self._smoothed:
                     ratio = distance / self._cutoff
                     smoothing_factor = 1.0 - ratio ** 8
-                results[component_to_target[index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
+                results[component_to_target[factor_index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
         
         if self._verbose:
             end_time = time()
