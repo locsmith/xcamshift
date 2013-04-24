@@ -673,22 +673,29 @@ class Base_potential(object):
         return results[0]
       
     
-    def _build_component_to_result(self, target_atom_ids):
+
+    def _build_component_to_result(self, active_components, target_atom_ids):
+        result = allocate_array(len(active_components), 'i')
+        components = self._get_component_list()
+        for i, component_index in enumerate(active_components):
+            out_atom_id = components[component_index][0]
+            out_index = target_atom_ids.index(out_atom_id)
+            result[i] = out_index
+        
+        return result
+
+    def _update_component_to_result(self, target_atom_ids):
         if not self._freeze:
             self._filter_target_components(target_atom_ids)
-            self._component_to_result =  allocate_array(len(self._active_components),'i')
-            components =  self._get_component_list()
-            for i, component_index in enumerate(self._active_components):
-                out_atom_id = components[component_index][0]
-                out_index  =  target_atom_ids.index(out_atom_id)
-                self._component_to_result[i] = out_index
+            self._component_to_result = self._build_component_to_result(self._active_components, target_atom_ids)
+         
 
     def _prepare(self,change, data):
         if change == STRUCTURE_CHANGED:
             self.clear_caches()
             
         if change == TARGET_ATOM_IDS_CHANGED:
-            self._build_component_to_result(data)
+            self._update_component_to_result(data)
         
         if self._have_derivative():
             self._force_calculator._prepare(change, data)
@@ -828,13 +835,13 @@ class Base_potential(object):
                 self._filter_target_components(target_atom_ids)
                 if self._component_to_result ==  None:
                     print "*****WARNING unexpected build of component to result"
-                    self._build_component_to_result(target_atom_ids)
+                    self._update_component_to_result(target_atom_ids)
             if self._component_to_result == None:
                 raise Exception("component to target must be set")
             elif len(self._component_to_result) != len(self._active_components):
                 if self._verbose:
                     start_time = time()
-                self._build_component_to_result(target_atom_ids)
+                self._update_component_to_result(target_atom_ids)
                 if self._verbose:
                     end_time=time()
                     print "updated component_to result complete in %.8g seconds." % (end_time-start_time)
