@@ -46,7 +46,8 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_ring_force_calculator,                                     \
                                      Fast_force_factor_calculator,                                   \
                                      Fast_non_bonded_shift_calculator,                               \
-                                     Out_array, Vec3_list, allocate_array, zero_array
+                                     Out_array, Vec3_list, allocate_array, zero_array,               \
+                                     New_fast_non_bonded_shift_calculator
 from time import time
 import array#
 
@@ -2817,6 +2818,7 @@ class Non_bonded_list(object):
 
         self._verbose = False 
         self._non_bonded_list_calculator = self._get_non_bonded_calculator()
+        self._non_bonded_list = None
         
     def _reset(self):
         self._box_update_count = self._update_frequency
@@ -2897,7 +2899,7 @@ class Non_bonded_list(object):
 #        print
         self._pos_cache = {}
         non_bonded_lists = self._non_bonded_list_calculator(native_component_list_1,native_component_list_2)
-                    
+        self._non_bonded_list = non_bonded_lists         
         for i,j in non_bonded_lists:
             component_1 = component_list_1[i]
             component_2 = component_list_2[j]
