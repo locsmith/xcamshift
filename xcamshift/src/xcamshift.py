@@ -638,18 +638,21 @@ class Base_potential(object):
 
 
     
-    def _filter_components(self, target_atom_ids):
+
+    def _filter_components(self, target_atom_ids, components):
+        if target_atom_ids == None:
+            test = lambda x:True
+        else:
+            target_atom_ids = sorted(set(target_atom_ids))
+            test = lambda x:x[0] in target_atom_ids
+        return components.build_filter_list(test)
+
+    def _filter_target_components(self, target_atom_ids):
         if not self._freeze  or  self._active_components == None:
             if self._verbose:
                 print '   filtering components %s' % self.get_abbreviated_name(),
 
-            if target_atom_ids == None:
-                test = lambda x: True
-            else:
-                target_atom_ids = sorted(set(target_atom_ids))
-                test =  lambda x: x[0] in target_atom_ids
-                
-            self._active_components = self._get_component_list().build_filter_list(test)
+            self._active_components =  self._filter_components(target_atom_ids, self._get_component_list())
 
             if self._verbose:
                 print ' %i reduced to %i' % (len(components),len(self._active_components))
@@ -671,7 +674,7 @@ class Base_potential(object):
     
     def _build_component_to_result(self, target_atom_ids):
         if not self._freeze:
-            self._filter_components(target_atom_ids)
+            self._filter_target_components(target_atom_ids)
             self._component_to_result =  allocate_array(len(self._active_components),'i')
             components =  self._get_component_list()
             for i, component_index in enumerate(self._active_components):
@@ -821,7 +824,7 @@ class Base_potential(object):
         if self._have_derivative():
 #            TODO: some of this code could go with careful organisation and wrapping access to component_to result in a accessor
             if self._active_components == None:
-                self._filter_components(target_atom_ids)
+                self._filter_target_components(target_atom_ids)
                 if self._component_to_result ==  None:
                     print "*****WARNING unexpected build of component to result"
                     self._build_component_to_result(target_atom_ids)
@@ -872,7 +875,7 @@ class Base_potential(object):
     
     #TODO: unify with ring random coil and disuphide shift calculators
     def calc_shifts(self, target_atom_ids, results):
-        self._filter_components(target_atom_ids)
+        self._filter_target_components(target_atom_ids)
        
         components = self._get_component_list().get_native_components()
         self._shift_calculator(components,results,self._component_to_result, active_components=self._active_components)
@@ -1303,7 +1306,7 @@ class RandomCoilShifts(Base_potential):
         return self._table_manager.get_random_coil_table
 
     def calc_shifts(self, target_atom_ids, result):
-        self._filter_components(target_atom_ids)
+        self._filter_target_components(target_atom_ids)
         components = self._get_component_list()
         for i, component_index in enumerate(self._active_components):
             result[self._component_to_result[i]] += components[component_index][1]
@@ -1344,7 +1347,7 @@ class Disulphide_shift_calculator(Base_potential):
     
     #TODO: this is the same as for the random coild shifts
     def calc_shifts(self, target_atom_ids, result):
-        self._filter_components(target_atom_ids)
+        self._filter_target_components(target_atom_ids)
         components = self._get_component_list()
         for i, component_index in enumerate(self._active_components):
             result[self._component_to_result[i]] += components[component_index][1]
@@ -2462,7 +2465,7 @@ class Ring_Potential(Base_potential):
     
     def calc_shifts(self, target_atom_ids, results):
         #TODO: should only need to filter components when TARGTE_ATOMS etc change
-        self._filter_components(target_atom_ids)
+        self._filter_target_components(target_atom_ids)
        
 
         components = self._get_component_list().get_native_components()
