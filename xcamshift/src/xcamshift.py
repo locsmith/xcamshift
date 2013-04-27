@@ -674,9 +674,9 @@ class Base_potential(object):
       
     
 
-    def _build_component_to_result(self, active_components, target_atom_ids):
+    def _build_component_to_result(self, active_components, target_atom_ids, components):
         result = allocate_array(len(active_components), 'i')
-        components = self._get_component_list()
+        
         for i, component_index in enumerate(active_components):
             out_atom_id = components[component_index][0]
             out_index = target_atom_ids.index(out_atom_id)
@@ -687,7 +687,7 @@ class Base_potential(object):
     def _update_component_to_result(self, target_atom_ids):
         if not self._freeze:
             self._filter_target_components(target_atom_ids)
-            self._component_to_result = self._build_component_to_result(self._active_components, target_atom_ids)
+            self._component_to_result = self._build_component_to_result(self._active_components, target_atom_ids, self._get_component_list())
          
 
     def _prepare(self,change, data):
@@ -3475,7 +3475,7 @@ class Non_bonded_potential(Distance_based_potential):
             return Native_component_list(format='iii')
         else:
             return Component_list()
-
+        
 class Energy_calculator:
     def __init__(self):
         raise Exception ("not used!")
