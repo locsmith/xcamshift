@@ -2910,7 +2910,7 @@ class Non_bonded_list(object):
 #            print elem
 #        print
         self._pos_cache = {}
-        for i,j in self._non_bonded_list:
+        for atom_id, i,j in self._non_bonded_list:
             component_1 = component_list_1[i]
             component_2 = component_list_2[j]
             

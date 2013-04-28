@@ -106,41 +106,45 @@ def test_dump_dihedral_comp(data):
                       compiled_components[i].parameters[6]
                       
 cdef struct Component_index_pair:
+    int target_atom_id
     int target_index
     int remote_index
     
 cdef  class Non_bonded_list:
     cdef CDSVector[int]  *data
     cdef int length
-    cdef int size_increment 
+    cdef int size_increment
+    cdef int RECORD_LENGTH 
  
     def __cinit__(self, int length=0, double fill_factor=1.0):
         self.data = new CDSVector[int]() 
         self.data[0].resize(<int>ceil(length*fill_factor*2))
         self.length =  0
         self.size_increment =  20
+        self.RECORD_LENGTH = 3
     
-    def test_append(self,int i, int j):
-        self.append(i,j)      
+    def test_append(self,int atom_id, int i, int j):
+        self.append( atom_id, i,j)      
     
     def reset(self):
         self.length = 0
             
-    cdef inline void append(self,int target_id, int remote_id):
+    cdef inline void append(self, int target_atom_id, int target_id, int remote_id):
  
-        if  self.data[0].size()*2 <= self.length*2:
+        if  self.data[0].size()*self.RECORD_LENGTH <= self.length*self.RECORD_LENGTH:
             self.resize()
-        self.data[0][self.length] = target_id
-        self.data[0][self.length+1] = remote_id
+        self.data[0][self.length] = target_atom_id
+        self.data[0][self.length+1] = target_id
+        self.data[0][self.length+2] = remote_id
         
-        self.length += 2
+        self.length += self.RECORD_LENGTH
         
          
     cdef inline void resize(self):
-        self.data[0].resize(self.data[0].size()+self.size_increment*2)    
+        self.data[0].resize(self.data[0].size()+self.size_increment*self.RECORD_LENGTH)    
      
     cdef inline Component_index_pair* get(self,offset):
-        return <Component_index_pair *> &self.data[0][offset*2]      
+        return <Component_index_pair *> &self.data[0][offset*self.RECORD_LENGTH]      
              
     def get_allocation(self):
         return self.data[0].size() 
@@ -149,14 +153,19 @@ cdef  class Non_bonded_list:
         return self.size_increment
     
     def __len__(self):
-        return self.length/2
+        return self.length/self.RECORD_LENGTH
      
     def __getitem__(self, int key):
-        if key >= self.length/2:
-            raise IndexError("index (%i) out of range (%i)" % (key, self.length/2)) 
-        return self.data[0][key*2],self.data[0][key*2+1]         
-        
-      
+        if key >= self.length/self.RECORD_LENGTH:
+            raise IndexError("index (%i) out of range (%i)" % (key, self.length/self.RECORD_LENGTH)) 
+        return self.data[0][key*self.RECORD_LENGTH],self.data[0][key*self.RECORD_LENGTH+1], self.data[0][key*self.RECORD_LENGTH+2]        
+         
+    def build_filter_list(self, accept = lambda x: True):
+        result = []
+        for i,elem in enumerate(self):
+            if accept(elem):
+                result.append(i)
+        return array.array('i',result)
 cdef class Vec3_list:
     cdef CDSVector[Vec3] *data
     
@@ -1285,7 +1294,7 @@ cdef class Fast_non_bonded_calculator:
             for j in range(num_remote_components):
                 atom_id_2  = remote_components[j].remote_atom_id
                 if self._is_non_bonded(atom_id_1, atom_id_2):
-                    non_bonded_lists.append(i,j)
+                    non_bonded_lists.append(atom_id_1, i,j)
         if self._verbose:
             end_time = time()
             print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"
