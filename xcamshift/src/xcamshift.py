@@ -855,7 +855,7 @@ class Base_potential(object):
             
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
-        target_atom_ids = array('i',[target_atom_id])
+        target_atom_ids = array.array('i',[target_atom_id])
         force_factors = [force_factor]
         self.calc_force_set(target_atom_ids,force_factor,forces)
     
@@ -3822,7 +3822,7 @@ class Xcamshift(PyPot):
             
   
         if result == None or len(result) < len(target_atom_ids):
-            result = array('d',[0.0] *len(target_atom_ids))
+            result = array.array('d',[0.0] *len(target_atom_ids))
 
 
         
