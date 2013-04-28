@@ -2832,6 +2832,7 @@ class Non_bonded_list(object):
         self._non_bonded_call_count = 0
         self._interaction_count = 0
         self._pos_cache = {}
+        self._num_target_atoms = None
         
     def get_cutoff_distance(self):
         return self._cutoff_distance
@@ -2876,13 +2877,17 @@ class Non_bonded_list(object):
             native_target_atom_list = component_list_1.get_native_components()
             native_remote_atom_list = component_list_2.get_native_components()
             
+            self._num_target_atoms = len(component_list_1.get_component_atom_ids())            
             self._non_bonded_list = self._non_bonded_list_calculator(native_target_atom_list, native_remote_atom_list)
+            
             self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list)
         
             updated = True
 
         return updated
         
+    def get_num_target_atoms(self):
+        return self._num_target_atoms
     
     def _get_cached_pos(self,atom_id):
         if atom_id in  self._pos_cache:
