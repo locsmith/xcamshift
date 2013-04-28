@@ -33,7 +33,7 @@ from test.util_for_testing import  _check_shift_results, _shift_cache_as_result,
     get_atom_index, get_key_for_atom_index
 TOTAL_ENERGY = 'total'
 from cython.shift_calculators import Out_array
-
+from array import array
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -434,7 +434,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
         xcamshift._prepare(ROUND_CHANGED, None)
         active_target_atoms_ids = xcamshift._get_active_target_atom_ids()
 
-        result  =  [0.0] * len(active_target_atoms_ids)
+        result  =  array('d',[0.0] * len(active_target_atoms_ids))
+
         xcamshift.calc_shifts(active_target_atoms_ids, result)
         
         _check_shift_results(active_target_atoms_ids, result,gb3.gb3_shifts)
