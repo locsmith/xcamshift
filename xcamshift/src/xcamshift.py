@@ -2874,7 +2874,8 @@ class Non_bonded_list(object):
             target_component_list.clear()
             self._box_update_count = -1
             self._non_bonded_calculation_count += 1
-            self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list, native_target_atom_list, native_remote_atom_list)
+            self._non_bonded_list = self._non_bonded_list_calculator(native_target_atom_list, native_remote_atom_list)
+            self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list)
         
             updated = True
 
@@ -2898,16 +2899,14 @@ class Non_bonded_list(object):
 
 
 
-    def _build_boxes(self, component_list_1, component_list_2, target_component_list, coefficient_list, native_component_list_1, native_component_list_2):
+    def _build_boxes(self, component_list_1, component_list_2, target_component_list, coefficient_list):
         
 #        print
 #        for elem in component_list_2:
 #            print elem
 #        print
         self._pos_cache = {}
-        non_bonded_lists = self._non_bonded_list_calculator(native_component_list_1,native_component_list_2)
-        self._non_bonded_list = non_bonded_lists         
-        for i,j in non_bonded_lists:
+        for i,j in self._non_bonded_list:
             component_1 = component_list_1[i]
             component_2 = component_list_2[j]
             
