@@ -3822,7 +3822,7 @@ class Xcamshift(PyPot):
             
   
         if result == None or len(result) < len(target_atom_ids):
-            result = [0.0] *len(target_atom_ids)
+            result = array('d',[0.0] *len(target_atom_ids))
 
 
         
