@@ -2859,7 +2859,7 @@ class Non_bonded_list(object):
         if self._verbose:
              print "  BOX COUNT UPDATED TO: ", self._box_update_count
         
-    def get_boxes(self,component_list_1, component_list_2,target_component_list,coefficient_list, native_target_atom_list, native_remote_atom_list):
+    def get_boxes(self,component_list_1, component_list_2,target_component_list,coefficient_list):
 #        print self._box_update_count, se        if self._verbose:
         updated = False
         if self._verbose:
@@ -2874,6 +2874,10 @@ class Non_bonded_list(object):
             target_component_list.clear()
             self._box_update_count = -1
             self._non_bonded_calculation_count += 1
+            
+            native_target_atom_list = component_list_1.get_native_components()
+            native_remote_atom_list = component_list_2.get_native_components()
+            
             self._non_bonded_list = self._non_bonded_list_calculator(native_target_atom_list, native_remote_atom_list)
             self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list)
         
@@ -3148,13 +3152,11 @@ class Non_bonded_potential(Distance_based_potential):
         non_bonded_list = self._get_component_list('NBLT')
         
         target_atom_list = self._get_component_list('ATOM')
-        native_target_atom_list = target_atom_list.get_native_components()
         
         remote_atom_list = self._get_component_list('NBRM')
-        native_remote_atom_list = remote_atom_list.get_native_components()
         
         coefficient_list  = self._get_component_list('COEF')
-        updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list, native_target_atom_list, native_remote_atom_list)
+        updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
         
         if updated:
             old_freeze  = self._freeze
