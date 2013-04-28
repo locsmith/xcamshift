@@ -3826,7 +3826,7 @@ class Xcamshift(PyPot):
 
 
         
-        result = self._calc_shifts(target_atom_ids, result)
+        self._calc_shifts(target_atom_ids, result)
         
         #TODO review whole funtion and resturn types
         return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(result))
