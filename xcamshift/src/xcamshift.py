@@ -661,14 +661,12 @@ class Base_potential(object):
     
     
     def _calc_component_shift(self, index):
-        components = self._create_component_list(self._get_target_atom_list_name())
-        component = self._get_distance_components()[index]
-        components.add_component(component)
-        results = array.array('d',[0.0])
-        self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
-        component_to_result = array.array('i', [0])
         
-        self._shift_calculator(components.get_native_components(),results,component_to_result, active_components=array.array('i',[0]))
+        component_to_result = array.array('i', [0])
+        results = array.array('d',[0.0])
+        components = self._get_component_list().get_native_components()
+        active_components = array.array('i', [index])
+        self._shift_calculator(components,results,component_to_result, active_components=active_components)
         
         return results[0]
       
