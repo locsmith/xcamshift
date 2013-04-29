@@ -2404,6 +2404,14 @@ cdef class New_fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         cdef float default_smoothing_factor = self._smoothing_factor
         cdef float smoothing_factor
         
+        cdef float ratio
+        
+        cdef int factor_index
+        
+        cdef int atom_1_coefficent_offset
+        
+        cdef float coefficient,exponent
+        
         for factor_index  in range(len(active_components)):
             i = active_components[factor_index]
             non_bonded_pair  =  self._non_bonded_list.get(i)
@@ -2425,7 +2433,6 @@ cdef class New_fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
                     coefficient_data =  self._coefficients.get_components_for_atom_id(chem_type_id)
                     
                     coefficient_data = coefficient_data[0]
-                    coefficients = coefficient_data[3:]
 
                     exponent = coefficient_data[2]
                     coefficient =  coefficient_data[3+atom_1_coefficent_offset]
