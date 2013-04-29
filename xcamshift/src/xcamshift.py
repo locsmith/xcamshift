@@ -677,7 +677,10 @@ class Base_potential(object):
         
         for i, component_index in enumerate(active_components):
             out_atom_id = components[component_index][0]
-            out_index = target_atom_ids.index(out_atom_id)
+            if out_atom_id in target_atom_ids:
+                out_index = target_atom_ids.index(out_atom_id)
+            else:
+                out_index =  -1
             result[i] = out_index
         
         return result
