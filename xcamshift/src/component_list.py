@@ -160,16 +160,19 @@ class Native_component_list(Component_list):
         super(Native_component_list, self).clear()
         self._native_components = None
             
-    def _translate_to_native_component(self, index):
-        return self._translator(self._components[index])
+    def _translate_to_native_component(self, component):
+        return self._translator(component)
     
+    def _prepare_component_list(self, components):
+        return components
 
     def _build_native_components(self):
         
-        num_components = len(self._components)
+        target_components =  self._prepare_component_list(self._components)
+        num_components = len(target_components)
         if num_components > 0 :
             format_length = len(self._component_struct.format)
-            data_length =  len(self._translate_to_native_component(0))
+            data_length =  len(self._translate_to_native_component(target_components[0]))
             
             if format_length != data_length:
                 msg = 'data and format must have the same length, got len(fomat) = %i and len(data) = %i'
@@ -178,7 +181,7 @@ class Native_component_list(Component_list):
         struct_size = self._component_struct.size
         bytes = ctypes.create_string_buffer(struct_size * num_components)
         for i in range(num_components):
-            native_component = self._translate_to_native_component(i)
+            native_component = self._translate_to_native_component(target_components[i])
             self._component_struct.pack_into(bytes, struct_size * i, *native_component)
         
         return bytes
