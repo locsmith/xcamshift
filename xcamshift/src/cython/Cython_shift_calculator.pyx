@@ -2331,6 +2331,28 @@ cdef class New_fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
     
     cdef float _nb_cutoff
     
+    cdef Non_bonded_list _non_bonded_list 
+    
+
+    cdef object _raw_target_data
+    #TODO: can we use memory views here...
+    cdef Non_bonded_target_component* _compiled_target_components
+    cdef int _num_target_components
+    
+
+    cdef object _raw_remote_data
+    #TODO: can we use memory views here...
+    cdef Non_bonded_remote_atom_component* _compiled_remote_components
+    cdef int _num_remote_components
+    
+    cdef object _coefficients
+    
+    
+    def __cinit__(self):
+        self._non_bonded_list = None
+        self._coefficients = None
+        self._compiled_target_components =  NULL
+
     def __init__(self, object indices, bint smoothed, str name):
         super(New_fast_non_bonded_shift_calculator, self).__init__(indices,smoothed,name)
         global DEFAULT_NB_CUTOFF
@@ -2339,51 +2361,81 @@ cdef class New_fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
     def set_verbose(self,on):
         self._verbose = on
     
+    #TODO: use global version
+    cdef _bytes_to_target_components(self,data):
+        self._raw_data =  data 
+        
+        self._raw_target_data =  data 
+        self._compiled_target_components =  <Non_bonded_target_component*> <size_t> ctypes.addressof(data)
+        self._num_target_components =  len(data)/ sizeof(Non_bonded_target_component)
+
+    #TODO: use global version
+    cdef _bytes_to_remote_components(self,data):
+        self._raw_data =  data 
+        
+        self._raw_remote_data =  data 
+        self._compiled_remote_components =  <Non_bonded_remote_atom_component*> <size_t> ctypes.addressof(data)
+        self._num_remote_components =  len(data)/ sizeof(Non_bonded_remote_atom_component)
+
+    
+    def _set_components(self, components):
+        self._non_bonded_list =  components['NBLT']
+        self._bytes_to_target_components(components['ATOM'])
+        self._bytes_to_remote_components(components['NBRM'])
+        self._coefficients = components['COEF']
+        
     @cython.profile(True)
     def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
-        print components
-        pass 
-#         self._set_components(components)
-#         self.set_simulation()
-#         
-#         cdef float default_smoothing_factor = self._smoothing_factor
-#         cdef float smoothing_factor
-#         cdef float ratio
-#         cdef float result
-#         cdef float distance
-#         cdef target_distant_atom atom_indices
-#         cdef coefficient_exponent coef_exp
-#         cdef int target_atom_id
-#         cdef int distant_atom_id
-#         cdef int result_index
-#         cdef double value 
-#         
-#         cdef double start_time =0.0
-#         cdef double end_time =0.0
-#         if self._verbose:
-#             start_time = time()
-#             
-#         cdef int factor_index = 0
-#         cdef int component_index
-#         
-#         #TODO: note to cython list for componnt_index in active_components produces awful code!
-#         for factor_index in range(len(active_components)):
-#             component_index = active_components[factor_index]             
-#             target_atom_id = self._compiled_components[component_index].remote_atom_1
-#             distant_atom_id  = self._compiled_components[component_index].remote_atom_2
-#             
-#             distance = calc_distance_simulation(self._simulation, target_atom_id, distant_atom_id)
-#             if distance < self._nb_cutoff:
-#         
-#                 coef_exp = self._get_coefficient_and_exponent(component_index)
-#                 smoothing_factor = default_smoothing_factor
-#                 if self._smoothed:
-#                     ratio = distance / self._cutoff
-#                     smoothing_factor = 1.0 - ratio ** 8
-#                 results[component_to_target[factor_index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
-#         
-#         if self._verbose:
-#             end_time = time()
-#             print '   distance shift components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
+        self._set_components(components)
+        
+        cdef int i
+        cdef Component_index_pair* non_bonded_pair 
+        
+        cdef int target_component_index
+        cdef int remote_component_index
+        
+        cdef int target_index
+        cdef int remote_index
+
+        cdef float distance
+        
+        cdef int chem_type_id
+
+        cdef float default_smoothing_factor = self._smoothing_factor
+        cdef float smoothing_factor
+        
+        for factor_index  in range(len(active_components)):
+            i = active_components[factor_index]
+            non_bonded_pair  =  self._non_bonded_list.get(i)
+            
+            target_component_index = non_bonded_pair[0].target_index
+            remote_component_index = non_bonded_pair[0].remote_index
+            
+            target_index  = self._compiled_target_components[target_component_index].target_atom_id
+            remote_index = self._compiled_remote_components[remote_component_index].remote_atom_id
+            
+            distance = calc_distance_simulation(self._simulation, target_index, remote_index)
+
+            if distance < self._nb_cutoff:
+
+                atom_1_coefficent_offset = self._compiled_target_components[target_component_index].atom_type_id
+                
+                for i in range(2):
+                    chem_type_id = self._compiled_remote_components[remote_component_index].chem_type[i]
+                    coefficient_data =  self._coefficients.get_components_for_atom_id(chem_type_id)
+                    
+                    coefficient_data = coefficient_data[0]
+                    coefficients = coefficient_data[3:]
+
+                    exponent = coefficient_data[2]
+                    coefficient =  coefficient_data[3+atom_1_coefficent_offset]
+        
+                    smoothing_factor = default_smoothing_factor
+                    if self._smoothed:
+                        ratio = distance / self._cutoff
+                        smoothing_factor = 1.0 - ratio ** 8
+                    
+                    results[component_to_target[target_component_index]]  +=  smoothing_factor * pow(distance,  exponent) * coefficient
+
 
 
