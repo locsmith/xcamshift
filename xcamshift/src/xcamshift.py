@@ -2826,7 +2826,7 @@ class Non_bonded_list(object):
 
         self._verbose = False 
         self._non_bonded_list_calculator = self._get_non_bonded_calculator()
-        self._non_bonded_list = None
+        self._non_bonded_interaction_list = None
         
     def _reset(self):
         self._box_update_count = self._update_frequency
@@ -2880,8 +2880,8 @@ class Non_bonded_list(object):
             native_target_atom_list = component_list_1.get_native_components()
             native_remote_atom_list = component_list_2.get_native_components()
             
-            self._num_target_atoms = len(component_list_1.get_component_atom_ids())            
-            self._non_bonded_list = self._non_bonded_list_calculator(native_target_atom_list, native_remote_atom_list)
+            self._num_target_atoms = len(component_list_1.get_component_atom_ids())
+            self._non_bonded_interaction_list = self._non_bonded_list_calculator(native_target_atom_list, native_remote_atom_list)
             
             self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list)
         
@@ -2889,6 +2889,9 @@ class Non_bonded_list(object):
 
         return updated
         
+    def get_non_bonded_interaction_list(self):
+        return self._non_bonded_interaction_list
+    
     def get_num_target_atoms(self):
         return self._num_target_atoms
     
@@ -2916,7 +2919,7 @@ class Non_bonded_list(object):
 #            print elem
 #        print
         self._pos_cache = {}
-        for atom_id, i,j in self._non_bonded_list:
+        for atom_id, i,j in self._non_bonded_interaction_list:
             component_1 = component_list_1[i]
             component_2 = component_list_2[j]
             
