@@ -2428,7 +2428,7 @@ cdef class New_fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         
         cdef Nonbonded_coefficient_component* coefficent_component
         
-        for factor_index  in range(len(active_components)):
+        for factor_index  in range(active_components.shape[0]):
             non_bonded_index = active_components[factor_index]
             non_bonded_pair  =  self._non_bonded_list.get(non_bonded_index)
             
