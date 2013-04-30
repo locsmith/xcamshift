@@ -2402,6 +2402,9 @@ cdef class New_fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
     def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
         self._set_components(components)
         
+        cdef double start_time = 0.0
+        cdef double end_time = 0.0
+        
         cdef int non_bonded_index
         cdef Component_index_pair* non_bonded_pair 
         
@@ -2428,6 +2431,10 @@ cdef class New_fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         
         cdef Nonbonded_coefficient_component* coefficent_component
         
+        if self._verbose:
+            start_time = time()
+
+
         for factor_index  in range(active_components.shape[0]):
             non_bonded_index = active_components[factor_index]
             non_bonded_pair  =  self._non_bonded_list.get(non_bonded_index)
@@ -2460,5 +2467,8 @@ cdef class New_fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
                     
                     results[component_to_target[target_component_index]]  +=  smoothing_factor * pow(distance,  exponent) * coefficient
 
+        if self._verbose:
+            end_time = time()
+            print '   distance shift components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
 
 
