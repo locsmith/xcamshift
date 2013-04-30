@@ -3545,7 +3545,7 @@ class Non_bonded_potential(Distance_based_potential):
         component_to_result = self._build_component_to_result(active_target_components, target_atom_ids, target_component_list)
         
         components = {'NBLT' : non_bonded_list,'ATOM':  native_target_atom_list,
-                      'NBRM' : native_remote_atom_list, 'COEF' : coefficient_list}
+                      'NBRM' : native_remote_atom_list, 'COEF' : native_coefficient_list}
         calc(components,results,component_to_result, active_components=active_components)
         
 class Energy_calculator:

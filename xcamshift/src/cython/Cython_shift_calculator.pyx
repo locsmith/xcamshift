@@ -2395,7 +2395,7 @@ cdef class New_fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._non_bonded_list =  components['NBLT']
         self._bytes_to_target_components(components['ATOM'])
         self._bytes_to_remote_components(components['NBRM'])
-        self._bytes_to_nonbonded_coefficient_components(components['COEF'].get_native_components())
+        self._bytes_to_nonbonded_coefficient_components(components['COEF'])
         
         
     @cython.profile(True)
