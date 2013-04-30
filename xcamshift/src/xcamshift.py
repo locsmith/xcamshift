@@ -3516,36 +3516,49 @@ class Non_bonded_potential(Distance_based_potential):
 
 
             
-    def calc_shifts(self, target_atom_ids, results):
+
+    def _get_components(self):
+        target_component_list = self._get_component_list('ATOM')
+        native_target_atom_list = target_component_list.get_native_components()
         
+        remote_component_list = self._get_component_list('NBRM')
+        native_remote_atom_list = remote_component_list.get_native_components()
+        
+        coefficient_list = self._get_component_list('COEF')
+        native_coefficient_list = coefficient_list.get_native_components()
+
+        non_bonded_list = self._non_bonded_list.get_non_bonded_interaction_list()
+        
+        components = {'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
+            'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list}
+        
+        return components
+
+
+    def _build_component_to_reult_and_active_list(self, target_atom_ids, target_component_list, non_bonded_list):
+        num_target_atoms = self._non_bonded_list.get_num_target_atoms()
+
+        if num_target_atoms != len(target_atom_ids):
+            active_components = self._filter_components(target_atom_ids, non_bonded_list)
+            active_target_components = array.array('i', range(len(target_component_list)))
+        else:
+            active_components = array.array('i', range(len(non_bonded_list)))
+            active_target_components = active_components[:len(target_component_list)]
+        component_to_result = self._build_component_to_result(active_target_components, target_atom_ids, target_component_list)
+        return component_to_result, active_components
+
+
+    def calc_shifts(self, target_atom_ids, results):
          
         calc = New_fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
            
+        components = self._get_components()
+        
         target_component_list = self._get_component_list('ATOM')
-        native_target_atom_list = target_component_list.get_native_components()
-          
-        remote_component_list = self._get_component_list('NBRM')
-        native_remote_atom_list = remote_component_list.get_native_components()
-          
-        coefficient_list  = self._get_component_list('COEF')
-        native_coefficient_list = coefficient_list.get_native_components()
+        non_bonded_list =  components['NBLT']
         
+        component_to_result, active_components = self._build_component_to_reult_and_active_list(target_atom_ids, target_component_list, non_bonded_list)
         
-        non_bonded_list = self._non_bonded_list.get_non_bonded_interaction_list()
-        num_target_atoms = self._non_bonded_list.get_num_target_atoms()
-        
-        if num_target_atoms  != len(target_atom_ids):
-            active_components = self._filter_components(target_atom_ids, non_bonded_list)
-            
-            active_target_components = array.array('i',range(len(target_component_list)))
-        else:
-            active_components = array.array('i',range(len(non_bonded_list)))
-            active_target_components = active_components[:len(target_component_list)]
-        
-        component_to_result = self._build_component_to_result(active_target_components, target_atom_ids, target_component_list)
-        
-        components = {'NBLT' : non_bonded_list,'ATOM':  native_target_atom_list,
-                      'NBRM' : native_remote_atom_list, 'COEF' : native_coefficient_list}
         calc(components,results,component_to_result, active_components=active_components)
         
 class Energy_calculator:
