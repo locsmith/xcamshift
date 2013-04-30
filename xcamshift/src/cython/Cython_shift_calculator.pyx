@@ -149,7 +149,7 @@ cdef  class Non_bonded_list:
     cdef inline void resize(self):
         self.data[0].resize(self.data[0].size()+self.size_increment*self.RECORD_LENGTH)    
      
-    cdef inline Component_index_pair* get(self,offset):
+    cdef inline Component_index_pair* get(self,int offset):
         return <Component_index_pair *> &self.data[0][offset*self.RECORD_LENGTH]      
              
     def get_allocation(self):
