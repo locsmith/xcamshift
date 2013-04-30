@@ -138,16 +138,20 @@ class Component_list(object):
                             
 
 class Native_component_list(Component_list):
-    def __init__(self, format, translator = lambda x : x):
+    def __init__(self, format, translator = lambda x : x, preparer = lambda x : x):
         super(Native_component_list, self).__init__()
         #TODO remove and simplifiy!
         self.set_translator(translator)
         self.set_format(format)    
         self._native_components =  None
+        self.set_preparer(preparer)
 
    
     def set_translator(self, translator):
         self._translator =  translator
+        
+    def set_preparer(self,preparer):
+        self._preparer =  preparer
         
     def set_format(self,format):
         self._component_struct =  Struct(format)
@@ -164,7 +168,7 @@ class Native_component_list(Component_list):
         return self._translator(component)
     
     def _prepare_component_list(self, components):
-        return components
+        return self._preparer(components)
 
     def _build_native_components(self):
         
