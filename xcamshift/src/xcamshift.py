@@ -3483,6 +3483,34 @@ class Non_bonded_potential(Distance_based_potential):
             return Native_component_list(format='ii')
         elif name == 'NBRM':
             return Native_component_list(format='iii')
+        elif name == 'COEF':
+            def coef_translator(component):
+                result = list()
+                result.extend(component)
+                COEF_COMP_LENGTH = 3 + (3 * 7)
+                extension_length =  COEF_COMP_LENGTH - len(component)
+                result.extend([0.0]*extension_length)
+                for i,elem in enumerate(result):
+                    if elem ==  None:
+                        result[i]=0.0
+                return result
+            
+            def coef_expander(components):
+                keyed_components = {}
+                for component in components:
+                    keyed_components[component[0]]= component
+                
+                result = []
+                last_component_index  =  components[-1][0]
+                for i in range(0,last_component_index+1):
+                    if i in keyed_components:
+                        result.append(keyed_components[i])
+                    else:
+                        num_floats = len(components[0])-2
+                        result.append([0,0] + ([0.0] * num_floats))                
+                return result
+            
+            return Native_component_list('iif'+ ('f'*3*7), translator=coef_translator, preparer=coef_expander)
         else:
             return Component_list()
 
@@ -3500,6 +3528,7 @@ class Non_bonded_potential(Distance_based_potential):
         native_remote_atom_list = remote_component_list.get_native_components()
           
         coefficient_list  = self._get_component_list('COEF')
+        native_coefficient_list = coefficient_list.get_native_components()
         
         
         non_bonded_list = self._non_bonded_list.get_non_bonded_interaction_list()
