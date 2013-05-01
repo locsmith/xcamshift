@@ -355,23 +355,30 @@ class TestXcamshiftA4(unittest2.TestCase):
 
     def _test_non_bonded_shifts(self, non_bonded_potential, non_bonded_shifts):
         non_bonded_potential.update_non_bonded_list()
-        for i, component in enumerate(non_bonded_potential._get_all_components()):
-            target_atom_id, remote_atom_id = component[:2]
-            exponent = component[3]
-            target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
-            remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
-            expected_shift_key = target_atom_key, remote_atom_key, int(exponent)
-            if expected_shift_key in non_bonded_shifts:
-                expected_shift = non_bonded_shifts[expected_shift_key]
+        data =  non_bonded_potential._get_all_components()
+        for i, components in enumerate(zip(data[0::2], data[1::2])):
+             
+            
+            expected_shift = 0.0
+            key_good = False
+            for j, component in enumerate(components):
+                target_atom_id, remote_atom_id = components[0][:2]
+                exponent = component[3]
+                target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
+                remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
+                expected_shift_key = target_atom_key, remote_atom_key, int(exponent)
+                if expected_shift_key in non_bonded_shifts:
+                    expected_shift += non_bonded_shifts[expected_shift_key]
+                    key_good=True
+                elif j == 0:
+                    distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
+                    self.assertTrue(distance >= 5.0, expected_shift_key)
+                
+            if key_good:
                 calculated_shift = non_bonded_potential._calc_component_shift(i)
-    #                print expected_shift_key,calculated_shift
                 self.assertAlmostEqual(expected_shift, calculated_shift, self.DEFAULT_DECIMAL_PLACES, expected_shift_key)
-                del non_bonded_shifts[expected_shift_key]
-            else:
-                distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
-                self.assertTrue(distance >= 5.0, expected_shift_key)
-        
-        self.assertEmpty(non_bonded_shifts)
+                
+
 
     def testNonBondedShiftsNoSmoothing(self):
         non_bonded_potential = self._get_non_bonded_potential(smoothed=False)
@@ -579,8 +586,8 @@ class TestXcamshiftA4(unittest2.TestCase):
         self._test_force_sets(xcamshift, expected_energy, expected_forces)
                 
 def run_tests():
-    unittest2.main(module='test.test_xcamshift_a4')
-#    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testNonBondedForceFactorsNotSmoothed')
+#     unittest2.main(module='test.test_xcamshift_a4')
+    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testComponentShiftsA4')
     
 if __name__ == "__main__":
     run_tests()

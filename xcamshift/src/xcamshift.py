@@ -3196,10 +3196,7 @@ class Non_bonded_potential(Distance_based_potential):
             self._non_bonded_list.update()
         self._get_non_bonded_list()
         
-#    TODO add a with prepare construct
-    def _calc_single_atom_shift(self, target_atom_id):
-#        self.update_non_bonded_list()
-        return Distance_based_potential._calc_single_atom_shift(self, target_atom_id)
+
     
     def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
 #        self.update_non_bonded_list()
@@ -3216,14 +3213,7 @@ class Non_bonded_potential(Distance_based_potential):
 #            self._force_calculator._calc_single_force_set(index, factor, forces)
 
     
-    def _calc_component_shift(self, index):
-        target_atom_index,distant_atom_index = self._get_target_and_distant_atom_ids(index)
-        
-        result  = 0.0
-        distance  = Atom_utils._calculate_distance(target_atom_index, distant_atom_index)
-        if distance < 5.0:
-            result = super(Non_bonded_potential, self)._calc_component_shift(index)
-        return result
+
     
     class Base_indexer(object):
         
@@ -3547,6 +3537,40 @@ class Non_bonded_potential(Distance_based_potential):
         component_to_result = self._build_component_to_result(active_target_components, target_atom_ids, target_component_list)
         return component_to_result, active_components
 
+    #TODO: this is no longer as canonical as the other versions 
+    # NB calculator doesn't have a 1:1 correspondence between nb lists elememnts and distance components....
+    def _calc_single_atom_shift(self, target_atom_id):
+        components =  self._non_bonded_list.get_non_bonded_interaction_list()
+        
+        result = 0.0
+        for i,component in enumerate(components):
+            if component[0] ==  target_atom_id:
+                result += self._calc_component_shift(i)
+        
+        return result    
+    
+    def _calc_component_shift(self, index):
+#         index =  index/2
+#         print index
+         
+        calc = New_fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
+            
+        components = self._get_components()
+         
+        target_component_list = self._get_component_list('ATOM')
+        non_bonded_list =  components['NBLT']
+         
+        target_atom_ids = [non_bonded_list[index][0],]
+        component_to_result, active_components = self._build_component_to_reult_and_active_list(target_atom_ids, target_component_list, non_bonded_list)
+         
+        active_components = array.array('i',[index,])
+  
+        results = array.array('d',[0.0])
+
+        calc(components,results,component_to_result, active_components=active_components)
+ 
+        return results[0]
+    
 
     def calc_shifts(self, target_atom_ids, results):
          
