@@ -2271,69 +2271,9 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
                 sub_force = -force_factor * sub_term / force_terms.dL6
                 result[axis] = sub_force
             forces.add(ring_atom_id,result)
-#                print AXIS_NAMES[axis],sub_force,-force_factor, gradU[axis], force_terms.dL3, force_terms.u, gradV[axis],force_terms.dL6
-#            print
-##        print 
+
 
 cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
-    
-    cdef float _nb_cutoff
-    
-    def __init__(self, object indices, bint smoothed, str name):
-        super(Fast_non_bonded_shift_calculator, self).__init__(indices,smoothed,name)
-        global DEFAULT_NB_CUTOFF
-        self._nb_cutoff = DEFAULT_NB_CUTOFF
-        
-    def set_verbose(self,on):
-        self._verbose = on
-    
-    @cython.profile(True)
-    def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
-        self._set_components(components)
-        self.set_simulation()
-        
-        cdef float default_smoothing_factor = self._smoothing_factor
-        cdef float smoothing_factor
-        cdef float ratio
-        cdef float result
-        cdef float distance
-        cdef target_distant_atom atom_indices
-        cdef coefficient_exponent coef_exp
-        cdef int target_atom_id
-        cdef int distant_atom_id
-        cdef int result_index
-        cdef double value 
-        
-        cdef double start_time =0.0
-        cdef double end_time =0.0
-        if self._verbose:
-            start_time = time()
-            
-        cdef int factor_index = 0
-        cdef int component_index
-        
-        #TODO: note to cython list for componnt_index in active_components produces awful code!
-        for factor_index in range(len(active_components)):
-            component_index = active_components[factor_index]             
-            target_atom_id = self._compiled_components[component_index].remote_atom_1
-            distant_atom_id  = self._compiled_components[component_index].remote_atom_2
-            
-            distance = calc_distance_simulation(self._simulation, target_atom_id, distant_atom_id)
-            if distance < self._nb_cutoff:
-        
-                coef_exp = self._get_coefficient_and_exponent(component_index)
-                smoothing_factor = default_smoothing_factor
-                if self._smoothed:
-                    ratio = distance / self._cutoff
-                    smoothing_factor = 1.0 - ratio ** 8
-                results[component_to_target[factor_index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
-        
-        if self._verbose:
-            end_time = time()
-            print '   distance shift components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
-
-
-cdef class New_fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
     
     cdef float _nb_cutoff
     
@@ -2364,7 +2304,7 @@ cdef class New_fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._compiled_coefficient_components = NULL
 
     def __init__(self, object indices, bint smoothed, str name):
-        super(New_fast_non_bonded_shift_calculator, self).__init__(indices,smoothed,name)
+        super(Fast_non_bonded_shift_calculator, self).__init__(indices,smoothed,name)
         global DEFAULT_NB_CUTOFF
         self._nb_cutoff = DEFAULT_NB_CUTOFF
         

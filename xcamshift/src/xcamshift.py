@@ -45,9 +45,8 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_dihedral_force_calculator,                                 \
                                      Fast_ring_force_calculator,                                     \
                                      Fast_force_factor_calculator,                                   \
-                                     Fast_non_bonded_shift_calculator,                               \
                                      Out_array, Vec3_list, allocate_array, zero_array,               \
-                                     New_fast_non_bonded_shift_calculator
+                                     Fast_non_bonded_shift_calculator
 from time import time
 import array#
 
@@ -3126,7 +3125,7 @@ class Non_bonded_potential(Distance_based_potential):
         self._non_bonded_list = Non_bonded_list()
     
     def _get_shift_calculator(self):
-        result  =Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name()) 
+        result  = Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name()) 
         result.set_verbose(self._verbose)
         return result
     
@@ -3550,10 +3549,8 @@ class Non_bonded_potential(Distance_based_potential):
         return result    
     
     def _calc_component_shift(self, index):
-#         index =  index/2
-#         print index
          
-        calc = New_fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
+        calc = self._get_shift_calculator()
             
         components = self._get_components()
          
@@ -3574,7 +3571,7 @@ class Non_bonded_potential(Distance_based_potential):
 
     def calc_shifts(self, target_atom_ids, results):
          
-        calc = New_fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
+        calc = Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
            
         components = self._get_components()
         
