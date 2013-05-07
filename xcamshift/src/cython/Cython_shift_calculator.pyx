@@ -1434,7 +1434,8 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
 
         self.set_simulation()
         #TODO: shouldn't be allocated each time
-        cdef float[:] result  = allocate_array(len(target_atom_ids),'f')
+        cdef object python_result  = allocate_array(len(target_atom_ids),'f')
+        cdef float[:] result = python_result
         cdef int i
         cdef float factor, shift_diff
         
@@ -1474,7 +1475,8 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
             print '   force factors : ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
 
         
-        return  result
+        return  python_result
+    
 cdef class Base_force_calculator:
     
     cdef bint _verbose 
