@@ -46,7 +46,8 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_ring_force_calculator,                                     \
                                      Fast_force_factor_calculator,                                   \
                                      Out_array, Vec3_list, allocate_array, zero_array,               \
-                                     Fast_non_bonded_shift_calculator
+                                     Fast_non_bonded_shift_calculator,                                \
+                                     New_fast_non_bonded_force_calculator
 from time import time
 import array#
 
@@ -3581,7 +3582,34 @@ class Non_bonded_potential(Distance_based_potential):
         component_to_result, active_components = self._build_component_to_reult_and_active_list(target_atom_ids, target_component_list, non_bonded_list)
         
         calc(components,results,component_to_result, active_components=active_components)
+
+
+    def _temporary_rebuild_force_factors(self, target_atom_ids, force_factors, target_component_list):
+        if len(force_factors) != len(target_component_list):
+            old_force_factors = force_factors
+            new_force_factors = [0.0] * len(target_component_list)
+            for i, target_atom_id in enumerate(target_atom_ids):
+                atom_offset = target_component_list.get_component_range(target_atom_id)[0]
+                new_force_factors[atom_offset] = force_factors[i]
+            
+            force_factors = array.array('f', new_force_factors)
+        return force_factors
+
+    def calc_force_set(self,target_atom_ids,force_factors,forces):
+
+        calc = New_fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
+           
+        components = self._get_components()
+                
+        target_component_list = self._get_component_list('ATOM')
+        non_bonded_list =  components['NBLT']
         
+        component_to_result, active_components = self._build_component_to_reult_and_active_list(target_atom_ids, target_component_list, non_bonded_list)
+
+        force_factors = self._temporary_rebuild_force_factors(target_atom_ids, force_factors, target_component_list)        
+            
+        calc(components, self._component_to_result, force_factors, forces, active_components=active_components)
+         
 class Energy_calculator:
     def __init__(self):
         raise Exception ("not used!")
