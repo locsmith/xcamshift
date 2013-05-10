@@ -41,7 +41,6 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_ring_shift_calculator, Fast_ring_data_calculator,          \
                                      Fast_non_bonded_calculator, Fast_energy_calculator,             \
                                      Fast_distance_based_potential_force_calculator,                 \
-                                     Fast_non_bonded_force_calculator,                               \
                                      Fast_dihedral_force_calculator,                                 \
                                      Fast_ring_force_calculator,                                     \
                                      Fast_force_factor_calculator,                                   \
@@ -3132,7 +3131,7 @@ class Non_bonded_potential(Distance_based_potential):
     
     def _get_force_calculator(self):
 #        if self._fast:
-        result = Fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed, name=self.get_abbreviated_name())
+        result = New_fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed, name=self.get_abbreviated_name())
 #        else:
 #        result = Non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
         result.set_verbose(self._verbose)
