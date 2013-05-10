@@ -1707,30 +1707,6 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         forces.add(self._compiled_components[index].remote_atom_2,distant_forces) 
          
 
-cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_calculator):
-    cdef float _non_bonded_cutoff
-    
-    def __init__(self, object indices, bint smoothed, name = "not set"):
-        global DEFAULT_NB_CUTOFF
-        super(Fast_non_bonded_force_calculator, self).__init__(indices,smoothed,name=name)
-        self._non_bonded_cutoff = DEFAULT_NB_CUTOFF
-        
-#    def _calc_single_force_set(self, int index, float factor, object forces):
-#        self._cython_calc_single_force_set(index, factor, forces)
-    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
-        cdef int factor_index 
-        cdef int component_index
-        
-        for factor_index in range(len(self._active_components)):
-            component_index = self._active_components[factor_index] 
-            self._non_bonded_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
-            
-    cdef inline void  _non_bonded_calc_single_force_set(self, int index, float factor, Out_array forces):
-        cdef float distance  = calc_distance_simulation(self._simulation, self._compiled_components[index].target_atom,self._compiled_components[index].remote_atom_2)
-#        TODO: this should be the non bonded distance cutoff
-#TODO class variable of self are not being looked up!
-        if distance < 5.0:
-            self._distance_calc_single_force_set(index, factor, forces)
 
  
 
