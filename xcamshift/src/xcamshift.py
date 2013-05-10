@@ -830,26 +830,6 @@ class Base_potential(object):
     
     def calc_force_set(self,target_atom_ids,force_factors,forces):
         if self._have_derivative():
-#            TODO: some of this code could go with careful organisation and wrapping access to component_to result in a accessor
-            if self._active_components == None:
-                self._filter_target_components(target_atom_ids)
-                if self._component_to_result ==  None:
-                    print "*****WARNING unexpected build of component to result"
-                    self._update_component_to_result(target_atom_ids)
-            if self._component_to_result == None:
-                raise Exception("component to target must be set")
-            elif len(self._component_to_result) != len(self._active_components):
-                if self._verbose:
-                    start_time = time()
-                self._update_component_to_result(target_atom_ids)
-                if self._verbose:
-                    end_time=time()
-                    print "updated component_to result complete in %.8g seconds." % (end_time-start_time)
-                    #print len(self._component_to_result),  len(self._filtered_components), self.get_abbreviated_name()
-            
-
-                
-                
             components = self._get_component_list().get_native_components()
             self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._active_components)
             
