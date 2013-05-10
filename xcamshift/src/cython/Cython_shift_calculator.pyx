@@ -40,8 +40,8 @@ cpdef array.array allocate_array(int len, type='d'):
     array.zero(result)
     return result
     
-cpdef zero_array(array.array array):
-     array.zero(array)
+cpdef zero_array(array.array in_array):
+     array.zero(in_array)
 
 cdef struct Nonbonded_coefficient_component:
     int chem_type_id
