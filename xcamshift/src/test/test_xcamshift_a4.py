@@ -415,13 +415,13 @@ class TestXcamshiftA4(unittest2.TestCase):
                 continue
     #
             distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
-    #            print target_atom_id,remote_atom_id,distance,target_atom_key, remote_atom_key
+
             if distance  >= 5.0:
                 continue
             
             expected_key = target_atom_key, remote_atom_key, int(exponent)
             factor = factors[target_atom_key]
-    #            print expected_key,factor
+
             force_factor = non_bonded_potential._force_calculator._calc_single_force_factor(i, factor)
             
             #TODO: check change from 7 to 5 dp is ok
@@ -456,18 +456,18 @@ class TestXcamshiftA4(unittest2.TestCase):
             target_atom_id, remote_atom_id, coefficient, exponent = component
             target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
             remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
-            
+             
             if active_shifts[target_atom_key] == 0:
                 continue
     #
             distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
-    #            print target_atom_id,remote_atom_id,distance,target_atom_key, remote_atom_key
+
             if distance  >= 5.0:
                 continue
             
             expected_key = target_atom_key, remote_atom_key, int(exponent)
             factor = factors[target_atom_key]
-    #            print expected_key,factor
+
             out_array = self.make_out_array()
             potential._force_calculator._calc_single_force_set(i, factor,out_array)
             
