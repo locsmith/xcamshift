@@ -20,6 +20,7 @@ import unittest2
 #    Dihedral_potential, Base_potential, Sidechain_potential, Xcamshift,\
 from xcamshift import    Non_bonded_potential, Non_bonded_list, Xcamshift
 from atomSel import AtomSel
+from cython.shift_calculators import allocate_array, zero_array
 #from test.xdists import xdists_ala_3
 #from test.dihedrals import dihedrals_ala_3
 #from cython.fast_segment_manager import Segment_Manager
@@ -405,9 +406,19 @@ class TestXcamshiftA4(unittest2.TestCase):
 
     def _test_non_bonded_force_factors(self, non_bonded_potential, non_bonded_force_factors, active_shifts, factors):
         
-        non_bonded_potential._force_calculator._set_components(non_bonded_potential._get_component_list().get_native_components())
-        for i, component in enumerate(non_bonded_potential._get_all_components()):
-            target_atom_id, remote_atom_id, coefficient, exponent = component
+        components = dict(non_bonded_potential._get_components())
+        nb_interaction_list = components['NBLT']
+        active_array = allocate_array(1,'i')
+        components['ACTI'] =  active_array
+        non_bonded_potential._force_calculator._set_components(components)
+        
+        for i, component in enumerate(nb_interaction_list):
+            zero_array(active_array)
+            active_array[0] = i
+            
+            target_atom_id =  non_bonded_potential._get_component_list('ATOM')[component[1]][0]
+            remote_atom_id =  non_bonded_potential._get_component_list('NBRM')[component[2]][0]
+
             target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
             remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
             
@@ -416,17 +427,18 @@ class TestXcamshiftA4(unittest2.TestCase):
     #
             distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
 
-            if distance  >= 5.0:
-                continue
-            
-            expected_key = target_atom_key, remote_atom_key, int(exponent)
-            factor = factors[target_atom_key]
-
-            force_factor = non_bonded_potential._force_calculator._calc_single_force_factor(i, factor)
-            
-            #TODO: check change from 7 to 5 dp is ok
-            self.assertAlmostEqual(force_factor, non_bonded_force_factors[expected_key],places=self.DEFAULT_DECIMAL_PLACES)
-            del non_bonded_force_factors[expected_key]
+            if distance  < 5.0:
+               
+                for exponent_index, exponent in enumerate((1,-3)):
+                    expected_key = target_atom_key, remote_atom_key, int(exponent)
+                    factor = factors[target_atom_key]
+    
+                    non_bonded_potential._force_calculator._build_component(0,exponent_index)
+    
+                    force_factor = non_bonded_potential._force_calculator._calc_single_force_factor(0, factor)
+                    #TODO: check change from 7 to 5 dp is ok
+                    self.assertAlmostEqual(force_factor, non_bonded_force_factors[expected_key],places=self.DEFAULT_DECIMAL_PLACES)
+                    del non_bonded_force_factors[expected_key]
         self.assertEmpty(non_bonded_force_factors)
 
     def testNonBondedForceFactorsNotSmoothed(self):
@@ -449,11 +461,21 @@ class TestXcamshiftA4(unittest2.TestCase):
         self._test_non_bonded_force_factors(non_bonded_potential, non_bonded_force_factors, 
                                             ala_4.active_shifts, ala_4.ala4_factors_non_bonded)
 
-    def _test_non_bonded_forces(self, potential, non_bonded_forces, active_shifts, factors):
+    def _test_non_bonded_forces(self, non_bonded_potential, non_bonded_forces, active_shifts, factors):
+
+        components = dict(non_bonded_potential._get_components())
+        nb_interaction_list = components['NBLT']
+        active_array = allocate_array(1,'i')
+        components['ACTI'] =  active_array
+        non_bonded_potential._force_calculator._set_components(components)
         
-        potential._force_calculator._set_components(potential._get_component_list().get_native_components())
-        for i, component in enumerate(potential._get_all_components()):
-            target_atom_id, remote_atom_id, coefficient, exponent = component
+        for i, component in enumerate(nb_interaction_list):
+            zero_array(active_array)
+            active_array[0] = i
+            
+            target_atom_id =  non_bonded_potential._get_component_list('ATOM')[component[1]][0]
+            remote_atom_id =  non_bonded_potential._get_component_list('NBRM')[component[2]][0]
+
             target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
             remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
              
@@ -462,35 +484,39 @@ class TestXcamshiftA4(unittest2.TestCase):
     #
             distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
 
-            if distance  >= 5.0:
-                continue
-            
-            expected_key = target_atom_key, remote_atom_key, int(exponent)
-            factor = factors[target_atom_key]
+            if distance  < 5.0:
+               
+                for exponent_index, exponent in enumerate((1,-3)):
+                    expected_key = target_atom_key, remote_atom_key, int(exponent)
+                    factor = factors[target_atom_key]
+    
+                    non_bonded_potential._force_calculator._build_component(0,exponent_index)
+                    
+                    factor = factors[target_atom_key]
 
-            out_array = self.make_out_array()
-            potential._force_calculator._calc_single_force_set(i, factor,out_array)
-            
-            forces = out_array.add_forces_to_result()
-            target_force_triplet = forces[target_atom_id]
-            remote_force_triplet  = forces[remote_atom_id]
-            
-            expected_target_forces = non_bonded_forces[expected_key]
-            expected_remote_forces  = [-elem for elem in expected_target_forces]
-            
-            #TODO: check change from 7 to 5 dp is ok also improve assertSequenceAlmostEqual ro take a places argument
-            self.assertSequenceAlmostEqual(target_force_triplet, expected_target_forces,delta= 1e-1**self.DEFAULT_DECIMAL_PLACES)
-            self.assertSequenceAlmostEqual(remote_force_triplet, expected_remote_forces,delta= 1e-1**self.DEFAULT_DECIMAL_PLACES)
-            
-            atom_ids =  [target_atom_id,remote_atom_id]
-            atom_ids.sort(reverse=True)
-            for atom_id in atom_ids:
-                del forces[atom_id]
-            forces = self.remove_almost_zero_force_elems_from_list(forces)
-            
-            self.assertEmpty(forces)
-            
-            del non_bonded_forces[expected_key]
+                    out_array = self.make_out_array()
+                    non_bonded_potential._force_calculator._calc_single_force_set(0, factor,out_array)
+                     
+                    forces = out_array.add_forces_to_result()
+                    target_force_triplet = forces[target_atom_id]
+                    remote_force_triplet  = forces[remote_atom_id]
+                     
+                    expected_target_forces = non_bonded_forces[expected_key]
+                    expected_remote_forces  = [-elem for elem in expected_target_forces]
+                     
+                    #TODO: check change from 7 to 5 dp is ok also improve assertSequenceAlmostEqual ro take a places argument
+                    self.assertSequenceAlmostEqual(target_force_triplet, expected_target_forces,delta= 1e-1**self.DEFAULT_DECIMAL_PLACES)
+                    self.assertSequenceAlmostEqual(remote_force_triplet, expected_remote_forces,delta= 1e-1**self.DEFAULT_DECIMAL_PLACES)
+
+                    atom_ids =  [target_atom_id,remote_atom_id]
+                    atom_ids.sort(reverse=True)
+                    for atom_id in atom_ids:
+                        del forces[atom_id]
+                    forces = self.remove_almost_zero_force_elems_from_list(forces)
+                     
+                    self.assertEmpty(forces)
+                    
+                    del non_bonded_forces[expected_key]
         self.assertEmpty(non_bonded_forces)
 
     def testNonBondedForces(self):
@@ -586,8 +612,8 @@ class TestXcamshiftA4(unittest2.TestCase):
         self._test_force_sets(xcamshift, expected_energy, expected_forces)
                 
 def run_tests():
-#     unittest2.main(module='test.test_xcamshift_a4')
-    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testComponentShiftsA4')
+    unittest2.main(module='test.test_xcamshift_a4')
+#     unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testNonBondedForceFactorsSmoothed')
     
 if __name__ == "__main__":
     run_tests()
