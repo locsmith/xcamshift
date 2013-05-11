@@ -647,7 +647,7 @@ class Base_potential(object):
             test = lambda x:x[0] in target_atom_ids
         return components.build_filter_list(test)
 
-    def _filter_target_components(self, target_atom_ids):
+    def _build_active_components_list(self, target_atom_ids):
         if not self._freeze  or  self._active_components == None:
             if self._verbose:
                 print '   filtering components %s' % self.get_abbreviated_name(),
@@ -694,7 +694,7 @@ class Base_potential(object):
             self.clear_caches()
             
         if change == TARGET_ATOM_IDS_CHANGED:
-            self._filter_target_components(data)
+            self._build_active_components_list(data)
             self._update_component_to_result(data)
         
         if self._have_derivative():
