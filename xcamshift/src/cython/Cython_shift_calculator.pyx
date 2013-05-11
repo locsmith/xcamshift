@@ -1710,7 +1710,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
 
  
 
-cdef class New_fast_non_bonded_force_calculator(Fast_distance_based_potential_force_calculator):
+cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_calculator): 
      
     cdef float _nb_cutoff
     
@@ -1741,7 +1741,7 @@ cdef class New_fast_non_bonded_force_calculator(Fast_distance_based_potential_fo
         self._compiled_coefficient_components = NULL
         
     def __init__(self, object indices, bint smoothed, str name):
-        super(New_fast_non_bonded_force_calculator, self).__init__(indices,smoothed,name)
+        super(Fast_non_bonded_force_calculator, self).__init__(indices,smoothed,name)
         global DEFAULT_NB_CUTOFF
         self._nb_cutoff = DEFAULT_NB_CUTOFF
         self._compiled_components =  <Distance_component*>malloc(sizeof(Distance_component))
