@@ -686,7 +686,6 @@ class Base_potential(object):
 
     def _update_component_to_result(self, target_atom_ids):
         if not self._freeze:
-            self._filter_target_components(target_atom_ids)
             self._component_to_result = self._build_component_to_result(self._active_components, target_atom_ids, self._get_component_list())
          
 
@@ -695,6 +694,7 @@ class Base_potential(object):
             self.clear_caches()
             
         if change == TARGET_ATOM_IDS_CHANGED:
+            self._filter_target_components(data)
             self._update_component_to_result(data)
         
         if self._have_derivative():
@@ -863,7 +863,6 @@ class Base_potential(object):
     
     #TODO: unify with ring random coil and disuphide shift calculators
     def calc_shifts(self, target_atom_ids, results):
-        self._filter_target_components(target_atom_ids)
        
         components = self._get_component_list().get_native_components()
         self._shift_calculator(components,results,self._component_to_result, active_components=self._active_components)
@@ -1294,7 +1293,6 @@ class RandomCoilShifts(Base_potential):
         return self._table_manager.get_random_coil_table
 
     def calc_shifts(self, target_atom_ids, result):
-        self._filter_target_components(target_atom_ids)
         components = self._get_component_list()
         for i, component_index in enumerate(self._active_components):
             result[self._component_to_result[i]] += components[component_index][1]
@@ -1335,7 +1333,6 @@ class Disulphide_shift_calculator(Base_potential):
     
     #TODO: this is the same as for the random coild shifts
     def calc_shifts(self, target_atom_ids, result):
-        self._filter_target_components(target_atom_ids)
         components = self._get_component_list()
         for i, component_index in enumerate(self._active_components):
             result[self._component_to_result[i]] += components[component_index][1]
@@ -2453,7 +2450,6 @@ class Ring_Potential(Base_potential):
     
     def calc_shifts(self, target_atom_ids, results):
         #TODO: should only need to filter components when TARGTE_ATOMS etc change
-        self._filter_target_components(target_atom_ids)
        
 
         components = self._get_component_list().get_native_components()
