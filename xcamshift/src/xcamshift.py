@@ -637,22 +637,21 @@ class Base_potential(object):
         return Base_force_calculator(self)
 
 
-    
 
-    def _filter_components(self, target_atom_ids, components):
-        if target_atom_ids == None:
-            test = lambda x:True
-        else:
-            target_atom_ids = sorted(set(target_atom_ids))
-            test = lambda x:x[0] in target_atom_ids
-        return components.build_filter_list(test)
-
-    def _build_active_components_list(self, target_atom_ids):
+    def _build_active_components_list(self, target_atom_ids, components=None):
         if not self._freeze  or  self._active_components == None:
             if self._verbose:
                 print '   filtering components %s' % self.get_abbreviated_name(),
-
-            self._active_components =  self._filter_components(target_atom_ids, self._get_component_list())
+            
+            if target_atom_ids == None:
+                test = lambda x:True
+            else:
+                target_atom_ids = sorted(set(target_atom_ids))
+                test = lambda x:x[0] in target_atom_ids
+            if components == None: 
+                components =  self._get_component_list() 
+                 
+            self._active_components =  components.build_selection_list(test)
 
             if self._verbose:
                 print ' %i reduced to %i' % (len(components),len(self._active_components))
@@ -3504,7 +3503,8 @@ class Non_bonded_potential(Distance_based_potential):
         num_target_atoms = self._non_bonded_list.get_num_target_atoms()
 
         if num_target_atoms != len(target_atom_ids):
-            active_components = self._filter_components(target_atom_ids, non_bonded_list)
+            self._build_active_components_list(target_atom_ids, non_bonded_list)
+            active_components =  self._active_components
             active_target_components = array.array('i', range(len(target_component_list)))
         else:
             active_components = array.array('i', range(len(non_bonded_list)))

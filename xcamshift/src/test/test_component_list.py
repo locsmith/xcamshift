@@ -127,14 +127,14 @@ class Test_component_list(unittest2.TestCase):
     def test_null_build_filter_list(self):
         self._component_list.add_components(TEST_DATA_2)
         
-        result = self._component_list.build_filter_list(lambda x:True)
+        result = self._component_list.build_selection_list(lambda x:True)
         EXPECTED = array('i',(0,1))
         self.assertEqual(result, EXPECTED)
     
     def test_build_filter_list(self):
         self._component_list.add_components(TEST_DATA_2)
         
-        result = self._component_list.build_filter_list(lambda x: x[0]==1)
+        result = self._component_list.build_selection_list(lambda x: x[0]==1)
         self.assertEqual(len(result), 1)
         EXPECTED = array('i',[1,])
         self.assertEqual(result, EXPECTED)
@@ -142,7 +142,7 @@ class Test_component_list(unittest2.TestCase):
     def test_build_empty_filter_list(self):
         self._component_list.add_components(TEST_DATA_2)
         
-        result = self._component_list.build_filter_list(lambda x: False)
+        result = self._component_list.build_selection_list(lambda x: False)
         self.assertEqual(len(result), 0)
         
 class  Test_native_component_list(Test_component_list):

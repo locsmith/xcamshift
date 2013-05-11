@@ -166,7 +166,7 @@ cdef  class Non_bonded_list:
             raise IndexError("index (%i) out of range (%i)" % (key, self.length/self.RECORD_LENGTH)) 
         return self.data[0][key*self.RECORD_LENGTH],self.data[0][key*self.RECORD_LENGTH+1], self.data[0][key*self.RECORD_LENGTH+2]        
          
-    def build_filter_list(self, accept = lambda x: True):
+    def build_selection_list(self, accept = lambda x: True):
         result = []
         for i,elem in enumerate(self):
             if accept(elem):
