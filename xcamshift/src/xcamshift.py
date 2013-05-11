@@ -3102,7 +3102,7 @@ class Non_bonded_potential(Distance_based_potential):
         self._non_bonded_list = Non_bonded_list()
     
     def _get_shift_calculator(self):
-        result  = Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name()) 
+        result  = Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
         result.set_verbose(self._verbose)
         return result
     
@@ -3549,8 +3549,7 @@ class Non_bonded_potential(Distance_based_potential):
 
     def calc_shifts(self, target_atom_ids, results):
          
-        calc = Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
-           
+        calc = self._get_shift_calculator()  
         components = self._get_components()
         
         target_component_list = self._get_component_list('ATOM')
