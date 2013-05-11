@@ -657,12 +657,14 @@ class Base_potential(object):
                 print ' %i reduced to %i' % (len(components),len(self._active_components))
                 
     
+    def _get_components(self):
+        return self._get_component_list().get_native_components()
     
     def _calc_component_shift(self, index):
         
         component_to_result = array.array('i', [0])
         results = array.array('d',[0.0])
-        components = self._get_component_list().get_native_components()
+        components = self._get_components()
         active_components = array.array('i', [index])
         self._shift_calculator(components,results,component_to_result, active_components=active_components)
         
@@ -829,7 +831,7 @@ class Base_potential(object):
     
     def calc_force_set(self,target_atom_ids,force_factors,forces):
         if self._have_derivative():
-            components = self._get_component_list().get_native_components()
+            components = self._get_components()
             self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._active_components)
             
     
@@ -863,7 +865,7 @@ class Base_potential(object):
     #TODO: unify with ring random coil and disuphide shift calculators
     def calc_shifts(self, target_atom_ids, results):
        
-        components = self._get_component_list().get_native_components()
+        components = self._get_components()
         self._shift_calculator(components,results,self._component_to_result, active_components=self._active_components)
              
 
@@ -2451,7 +2453,7 @@ class Ring_Potential(Base_potential):
         #TODO: should only need to filter components when TARGTE_ATOMS etc change
        
 
-        components = self._get_component_list().get_native_components()
+        components = self._get_components()
         if len(components) > 0:
             #TODO: add as general method in base
             self._setup_ring_calculator(self._shift_calculator)
