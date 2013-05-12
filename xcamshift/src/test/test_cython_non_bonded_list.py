@@ -4,12 +4,12 @@ Created on 20 Apr 2013
 @author: garyt
 '''
 import unittest
-from cython.shift_calculators import  Non_bonded_list, test_dump_component_index_pair
+from cython.shift_calculators import  Non_bonded_interaction_list, test_dump_component_index_pair
 
 class Test_cython_non_boned_list(unittest.TestCase):
 
     def setUp(self):
-        self.test_list = Non_bonded_list()
+        self.test_list = Non_bonded_interaction_list()
         
     def test_create(self):
         self.assertEqual(len(self.test_list),0)
@@ -31,29 +31,30 @@ class Test_cython_non_boned_list(unittest.TestCase):
         for i in range(101):
             self.test_list.test_append((i+offset) * 2, ((i+offset) * 2) + 1, ((i+offset) * 2) + 2)
 
-
-    def _test_101(self,offset=0):
+    
+    def _test_101(self, test_list, offset=0):
         for i in range(101):
-            self.assertEqual(self.test_list[i], ((i+offset) * 2, ((i+offset) * 2) + 1, ((i+offset) * 2) + 2))
+            self.assertEqual(test_list[i], ((i+offset) * 2, ((i+offset) * 2) + 1, ((i+offset) * 2) + 2))
         
-        self.assertEqual(len(self.test_list), 101)
-        self.assertEqual(self.test_list.get_allocation(), self._calc_expected_allocation(self.test_list))
+        self.assertEqual(len(test_list), 101)
+        if hasattr(test_list,'get_allocation'):
+            self.assertEqual(test_list.get_allocation(), self._calc_expected_allocation(self.test_list))
 
     def test_allocation(self):
         
         self._build_101() 
-        self._test_101()
+        self._test_101(self.test_list)
     
-    def test_reset(self):
+    def test_clear(self):
         self._build_101() 
-        self._test_101()
+        self._test_101(self.test_list)
         self.assertEqual(self.test_list.get_allocation(), self._calc_expected_allocation(self.test_list))
         
-        self.test_list.reset() 
+        self.test_list.clear() 
         self.assertEqual(self.test_list.get_allocation(), self._calc_expected_allocation(self.test_list))
                 
         self._build_101(1000) 
-        self._test_101(1000)
+        self._test_101(self.test_list,1000)
         self.assertEqual(self.test_list.get_allocation(), self._calc_expected_allocation(self.test_list))
             
 
@@ -65,7 +66,9 @@ class Test_cython_non_boned_list(unittest.TestCase):
             self.assertEqual(target, i*2+1)
             self.assertEqual(remote, i*2+2)
         
-        
+    def test_get_all_components(self):
+        self._build_101()
+        self._test_101(self.test_list.get_all_components())
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

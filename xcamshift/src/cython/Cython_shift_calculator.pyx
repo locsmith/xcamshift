@@ -72,7 +72,7 @@ cdef struct Non_bonded_remote_atom_component:
       int remote_atom_id
       int chem_type[2] # one for each sphere
 
-def test_dump_component_index_pair(Non_bonded_list data, int index):
+def test_dump_component_index_pair(Non_bonded_interaction_list data, int index):
     cdef Component_index_pair* result =  data.get(index)
     
     return result[0].target_index, result[0].remote_index
@@ -116,7 +116,7 @@ cdef struct Component_index_pair:
     int target_index
     int remote_index
     
-cdef  class Non_bonded_list:
+cdef  class Non_bonded_interaction_list:
     cdef CDSVector[int]  *data
     cdef int length
     cdef int size_increment
@@ -132,7 +132,7 @@ cdef  class Non_bonded_list:
     def test_append(self,int atom_id, int i, int j):
         self.append( atom_id, i,j)      
     
-    def reset(self):
+    def clear(self): 
         self.length = 0
             
     cdef inline void append(self, int target_atom_id, int target_id, int remote_id):
@@ -172,6 +172,14 @@ cdef  class Non_bonded_list:
             if accept(elem):
                 result.append(i)
         return array.array('i',result)
+    
+        
+    def get_all_components(self):
+        result = []
+        for i in range(self.length/self.RECORD_LENGTH):
+            result.append(self[i])
+        return result 
+    
 cdef class Vec3_list:
     cdef CDSVector[Vec3] *data
     
@@ -1273,7 +1281,7 @@ cdef class Fast_non_bonded_calculator:
         return len(data)/ sizeof(Non_bonded_remote_atom_component)
             
     @cython.profile(True)
-    def __call__(self, atom_list_1, atom_list_2):
+    def __call__(self, atom_list_1, atom_list_2,  Non_bonded_interaction_list non_bonded_lists):
         
         if self._verbose:
             print '***** BUILD NON BONDED ******'
@@ -1291,8 +1299,9 @@ cdef class Fast_non_bonded_calculator:
 
 
         self.set_simulation()
-        cdef Non_bonded_list non_bonded_lists = Non_bonded_list()
         cdef int i, atom_id_1, atom_id_2
+        
+        non_bonded_lists.clear()
         
         for i in range(num_target_components):
             atom_id_1 = target_components[i].target_atom_id
@@ -1714,7 +1723,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
      
     cdef float _nb_cutoff
     
-    cdef Non_bonded_list _non_bonded_list 
+    cdef Non_bonded_interaction_list _non_bonded_list 
     
 
     #TODO: can we use memory views here...
@@ -2416,7 +2425,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
     
     cdef float _nb_cutoff
     
-    cdef Non_bonded_list _non_bonded_list 
+    cdef Non_bonded_interaction_list _non_bonded_list 
     
 
     #TODO: can we use memory views here...
