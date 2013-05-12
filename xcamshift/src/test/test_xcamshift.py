@@ -724,15 +724,10 @@ class TestXcamshift(unittest2.TestCase):
         self.assertSequenceAlmostEqual(coefficents_1, expected_coefficients_1, self.DEFAULT_DECIMAL_PLACES)
 
     
-    def testDistances(self):
+    def test_non_bonded_distances_found(self):
         non_bonded_list = Non_bonded_list(min_residue_separation=1)
-#        sel = AtomSel("((residue 2 and name CA) around 5.2)")
-#        
-#        atom_indices = [atom.index() for atom in sel]
-#        atom_indices.sort()
         
-        expected_box_atoms_1 = set(ala_3.ala3_expected_non_bonded_pairs)
-        expected_box_atoms_3 = set(ala_3.ala3_expected_non_bonded_pairs)
+        expected_non_bonded_pairs = set(ala_3.ala3_expected_non_bonded_pairs)
         non_bonded_potential = Non_bonded_potential()
         
         target_atoms = non_bonded_potential._create_component_list('ATOM')
@@ -745,39 +740,23 @@ class TestXcamshift(unittest2.TestCase):
         
         coefficient_list = non_bonded_potential._get_component_list('COEF')
         
-        component_list =  Component_list()
+        component_list = non_bonded_potential._get_component_list('NBLT')
+        
         non_bonded_list.get_boxes(target_atoms, remote_atoms, component_list, coefficient_list)
         
-#        local_boxes = []
-#        for box_component in boxes:
-#            local_boxes.append((box_component[0],box_component[1],box_component[3],))
-#        local_boxes.sort()
-#        for box_component in local_boxes:
-#            print box_component
+        for ignored_target_atom_id, target_component_index,remote_component_index in component_list:
             
-            
-        for box_component in component_list:
-            target_atom_id, distant_atom_id, coefficient,exponent  = box_component
-            
+            target_atom_id = target_atoms[target_component_index][0]
+            distant_atom_id = remote_atoms[remote_component_index][0]
+
             target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
             box_atom_key = Atom_utils._get_atom_info_from_index(distant_atom_id)
             atom_key = target_atom_key,box_atom_key
-                
-#            print box_component, atom_key
-            
-            if exponent == 1.0:
-                self.assertElemeInSet(atom_key, expected_box_atoms_1)
-                expected_box_atoms_1.remove(atom_key)
-            elif exponent == -3.0:
-                self.assertElemeInSet(atom_key, expected_box_atoms_3)
-                expected_box_atoms_3.remove(atom_key)
-                
-                
-        self.assertEmpty(expected_box_atoms_1)
-        self.assertEmpty(expected_box_atoms_3)    
-        
-#        print target_atoms
-            
+
+            self.assertElemeInSet(atom_key, expected_non_bonded_pairs)
+            expected_non_bonded_pairs.remove(atom_key)
+
+        self.assertEmpty(expected_non_bonded_pairs)
             
         
     @staticmethod
@@ -802,7 +781,7 @@ class TestXcamshift(unittest2.TestCase):
 
 def run_tests():
     unittest2.main(module='test.test_xcamshift')
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testXcamshift')
+#     unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_non_bonded_distances_found')
     
 if __name__ == "__main__":
     run_tests()

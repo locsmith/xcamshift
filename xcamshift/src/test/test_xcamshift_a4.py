@@ -335,20 +335,26 @@ class TestXcamshiftA4(unittest2.TestCase):
     def testNonBondedComponents(self):
             non_bonded_potential = self._get_non_bonded_potential()
             non_bonded_potential.update_non_bonded_list()
-    
+            
+            target_components = non_bonded_potential._get_component_list('ATOM')
+            remote_components = non_bonded_potential._get_component_list('NBRM')
+            
             expected_components = dict(ala_4.ala_components_non_bond)
             for component in non_bonded_potential._get_all_components():
-                target_atom_id,remote_atom_id,coefficient,exponent = component
+                #TODO: remove need for component?
+                for exponent in (1,-3):
+                    target_atom_id,target_component_index, remote_component_index = component
+                    
+                    target_atom_id = target_components[target_component_index][0]
+                    remote_atom_id = remote_components[remote_component_index][0]
+                    
+                    target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
+                    remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
                 
-                
-                target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
-                remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
-            
-                expected_shift_key = target_atom_key,remote_atom_key,int(exponent)
-                self.assertElemeInSet(expected_shift_key, expected_components)
-                self.assertAlmostEqual(expected_components[expected_shift_key], coefficient, self.DEFAULT_DECIMAL_PLACES)
-                
-                del expected_components[expected_shift_key]
+                    expected_shift_key = target_atom_key,remote_atom_key,int(exponent)
+                    self.assertElemeInSet(expected_shift_key, expected_components)
+                    
+                    del expected_components[expected_shift_key]
             
             self.assertEmpty(expected_components)
                 
@@ -356,15 +362,20 @@ class TestXcamshiftA4(unittest2.TestCase):
 
     def _test_non_bonded_shifts(self, non_bonded_potential, non_bonded_shifts):
         non_bonded_potential.update_non_bonded_list()
-        data =  non_bonded_potential._get_all_components()
-        for i, components in enumerate(zip(data[0::2], data[1::2])):
+        
+        target_components = non_bonded_potential._get_component_list('ATOM')
+        remote_components = non_bonded_potential._get_component_list('NBRM')
+        
+        for i, component in enumerate( non_bonded_potential._get_all_components()):
              
+            target_atom_id,target_component_index, remote_component_index = component
+                    
+            target_atom_id = target_components[target_component_index][0]
+            remote_atom_id = remote_components[remote_component_index][0]
             
             expected_shift = 0.0
             key_good = False
-            for j, component in enumerate(components):
-                target_atom_id, remote_atom_id = components[0][:2]
-                exponent = component[3]
+            for j, exponent in enumerate((1,-3)):
                 target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
                 remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
                 expected_shift_key = target_atom_key, remote_atom_key, int(exponent)
