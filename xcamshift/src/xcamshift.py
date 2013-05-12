@@ -46,7 +46,8 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_force_factor_calculator,                                   \
                                      Out_array, Vec3_list, allocate_array, zero_array,               \
                                      Fast_non_bonded_shift_calculator,                               \
-                                     Fast_non_bonded_force_calculator
+                                     Fast_non_bonded_force_calculator,                               \
+                                     Non_bonded_interaction_list
 from time import time
 import array#
 
@@ -2849,6 +2850,7 @@ class Non_bonded_list(object):
         else:
             if self._verbose:
                 print '  update boxes call count = ', self._box_update_count
+
             target_component_list.clear()
             self._box_update_count = -1
             self._non_bonded_calculation_count += 1
@@ -2857,9 +2859,9 @@ class Non_bonded_list(object):
             native_remote_atom_list = component_list_2.get_native_components()
             
             self._num_target_atoms = len(component_list_1.get_component_atom_ids())
-            self._non_bonded_interaction_list = self._non_bonded_list_calculator(native_target_atom_list, native_remote_atom_list)
+            self._non_bonded_interaction_list = self._non_bonded_list_calculator(native_target_atom_list, native_remote_atom_list, target_component_list)
             
-            self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list)
+#             self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list)
         
             updated = True
 
@@ -3162,7 +3164,8 @@ class Non_bonded_potential(Distance_based_potential):
     def get_target_atom_ids(self):
         #TODO: this  call is required check why....
         self.update_non_bonded_list(increment=False)
-        return super(Non_bonded_potential, self).get_target_atom_ids()
+        components = self._get_component_list('ATOM')
+        return components.get_component_atom_ids()
     
     def _reset_non_bonded_list(self, increment=True):
         self._non_bonded_list._reset()
@@ -3443,8 +3446,7 @@ class Non_bonded_potential(Distance_based_potential):
 
     def _create_component_list(self, name):
         if name  == 'NBLT':
-            translator = Index_translator(self._get_indices())
-            return Native_component_list(translator=translator,format='iiiff')
+            return Non_bonded_interaction_list()
         elif name == "ATOM":
             return Native_component_list(format='ii')
         elif name == 'NBRM':
