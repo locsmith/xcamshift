@@ -1313,7 +1313,6 @@ cdef class Fast_non_bonded_calculator:
         if self._verbose:
             end_time = time()
             print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"
-        return  non_bonded_lists
 
 
 cdef class Fast_energy_calculator:

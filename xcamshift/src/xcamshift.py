@@ -2803,7 +2803,7 @@ class Non_bonded_list(object):
 
         self._verbose = False 
         self._non_bonded_list_calculator = self._get_non_bonded_calculator()
-        self._non_bonded_interaction_list = None
+
         
     def _reset(self):
         self._box_update_count = self._update_frequency
@@ -2859,16 +2859,12 @@ class Non_bonded_list(object):
             native_remote_atom_list = component_list_2.get_native_components()
             
             self._num_target_atoms = len(component_list_1.get_component_atom_ids())
-            self._non_bonded_interaction_list = self._non_bonded_list_calculator(native_target_atom_list, native_remote_atom_list, target_component_list)
+            self._non_bonded_list_calculator(native_target_atom_list, native_remote_atom_list, target_component_list)
             
-#             self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list)
         
             updated = True
 
         return updated
-        
-    def get_non_bonded_interaction_list(self):
-        return self._non_bonded_interaction_list
     
     def get_num_target_atoms(self):
         return self._num_target_atoms
@@ -2890,49 +2886,6 @@ class Non_bonded_list(object):
 
 
 
-    def _build_boxes(self, component_list_1, component_list_2, target_component_list, coefficient_list):
-        
-#        print
-#        for elem in component_list_2:
-#            print elem
-#        print
-        self._pos_cache = {}
-        for atom_id, i,j in self._non_bonded_interaction_list:
-            component_1 = component_list_1[i]
-            component_2 = component_list_2[j]
-            
-            atom_id_1 = component_1[0]
-            atom_id_2 = component_2[0]
-            
-            self._interaction_count = 0
-            
-            atom_1_coefficent_offset = component_1[1]
-            
-            for chem_type_id in component_2[1:]:
-                #TODO replace with a more direct lookup, we shouldn't need multiple values here
-                #so only list chem type ids by know chem_types in the sturtcure not all chem types
-#                    print chem_type_id
-#                    print coefficient_list
-#                    print chem_type_id, sphere_id, exponent 
-                
-                
-                
-                    
-                coefficient_data  = coefficient_list.get_components_for_atom_id(chem_type_id)
-#                    print coefficient_data
-                coefficient_data = coefficient_data[0]
-                coefficients = coefficient_data[3:]
-                
-                chem_type_id, sphere_id, exponent = coefficient_data[:3]
-#                    print chem_type_id, sphere_id, exponent 
-            
-
-                result_component = atom_id_1,atom_id_2,coefficients[atom_1_coefficent_offset],exponent 
-                target_component_list.add_component(result_component)
-                self._interaction_count += 1
-
-        if self._verbose:
-            print '  build boxes [slow]'
             
     def __str__(self):
         result  = []
@@ -3495,7 +3448,7 @@ class Non_bonded_potential(Distance_based_potential):
         coefficient_list = self._get_component_list('COEF')
         native_coefficient_list = coefficient_list.get_native_components()
 
-        non_bonded_list = self._non_bonded_list.get_non_bonded_interaction_list()
+        non_bonded_list = self._get_component_list('NBLT')
         
         components = {'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
             'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list}
@@ -3519,7 +3472,7 @@ class Non_bonded_potential(Distance_based_potential):
     #TODO: this is no longer as canonical as the other versions 
     # NB calculator doesn't have a 1:1 correspondence between nb lists elememnts and distance components....
     def _calc_single_atom_shift(self, target_atom_id):
-        components =  self._non_bonded_list.get_non_bonded_interaction_list()
+        components =  self._get_component_list()
         
         result = 0.0
         for i,component in enumerate(components):
