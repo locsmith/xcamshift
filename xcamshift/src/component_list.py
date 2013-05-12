@@ -129,7 +129,7 @@ class Component_list(object):
         self._components =[]
         self._component_ids = set()
     
-    def build_filter_list(self, accept = lambda x: True):
+    def build_selection_list(self, accept = lambda x: True):
         result = []
         for i,elem in enumerate(self._components):
             if accept(elem):
