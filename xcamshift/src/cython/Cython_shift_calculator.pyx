@@ -71,11 +71,18 @@ cdef struct Non_bonded_target_component:
 cdef struct Non_bonded_remote_atom_component:
       int remote_atom_id
       int chem_type[2] # one for each sphere
+      
+cdef struct Component_index_pair:
+    int target_atom_id
+    int target_index
+    int remote_index
+    int component_index
+
 
 def test_dump_component_index_pair(Non_bonded_interaction_list data, int index):
     cdef Component_index_pair* result =  data.get(index)
     
-    return result[0].target_index, result[0].remote_index
+    return result[0].target_atom_id, result[0].target_index, result[0].remote_index, result[0].component_index
     
 def test_dump_dist_comp(data):
     cdef size_t  test  = ctypes.addressof(data)
@@ -111,10 +118,7 @@ def test_dump_dihedral_comp(data):
                       compiled_components[i].parameters[4], compiled_components[i].parameters[5],\
                       compiled_components[i].parameters[6]
                       
-cdef struct Component_index_pair:
-    int target_atom_id
-    int target_index
-    int remote_index
+
     
 cdef  class Non_bonded_interaction_list:
     cdef CDSVector[int]  *data
@@ -127,21 +131,22 @@ cdef  class Non_bonded_interaction_list:
         self.data[0].resize(<int>ceil(length*fill_factor*2))
         self.length =  0
         self.size_increment =  20
-        self.RECORD_LENGTH = 3
+        self.RECORD_LENGTH = 4
     
-    def test_append(self,int atom_id, int i, int j):
-        self.append( atom_id, i,j)      
+    def test_append(self,int target_atom_id, int target_id, int remote_id, component_index):
+        self.append(target_atom_id,  target_id,  remote_id, component_index)      
     
     def clear(self): 
         self.length = 0
             
-    cdef inline void append(self, int target_atom_id, int target_id, int remote_id):
+    cdef inline void append(self, int target_atom_id, int target_id, int remote_id, int component_index):
  
         if  self.data[0].size()*self.RECORD_LENGTH <= self.length*self.RECORD_LENGTH:
             self.resize()
         self.data[0][self.length] = target_atom_id
         self.data[0][self.length+1] = target_id
         self.data[0][self.length+2] = remote_id
+        self.data[0][self.length+3] = component_index
         
         self.length += self.RECORD_LENGTH
         
@@ -164,7 +169,10 @@ cdef  class Non_bonded_interaction_list:
     def __getitem__(self, int key):
         if key >= self.length/self.RECORD_LENGTH:
             raise IndexError("index (%i) out of range (%i)" % (key, self.length/self.RECORD_LENGTH)) 
-        return self.data[0][key*self.RECORD_LENGTH],self.data[0][key*self.RECORD_LENGTH+1], self.data[0][key*self.RECORD_LENGTH+2]        
+        result  = []
+        for i in range(self.RECORD_LENGTH):
+            result.append(self.data[0][key*self.RECORD_LENGTH+i])
+        return tuple(result)
          
     def build_selection_list(self, accept = lambda x: True):
         result = []
@@ -1309,7 +1317,7 @@ cdef class Fast_non_bonded_calculator:
             for j in range(num_remote_components):
                 atom_id_2  = remote_components[j].remote_atom_id
                 if self._is_non_bonded(atom_id_1, atom_id_2):
-                    non_bonded_lists.append(atom_id_1, i,j)
+                    non_bonded_lists.append(atom_id_1, i,j,i)
         if self._verbose:
             end_time = time()
             print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"

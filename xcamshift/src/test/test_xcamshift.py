@@ -744,8 +744,9 @@ class TestXcamshift(unittest2.TestCase):
         
         non_bonded_list.get_boxes(target_atoms, remote_atoms, component_list, coefficient_list)
         
-        for ignored_target_atom_id, target_component_index,remote_component_index in component_list:
-            
+        for component in component_list:
+            target_component_index,remote_component_index =  component[1:3]
+
             target_atom_id = target_atoms[target_component_index][0]
             distant_atom_id = remote_atoms[remote_component_index][0]
 

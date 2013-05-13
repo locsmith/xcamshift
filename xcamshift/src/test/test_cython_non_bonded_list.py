@@ -15,26 +15,32 @@ class Test_cython_non_boned_list(unittest.TestCase):
         self.assertEqual(len(self.test_list),0)
         
     def test_append(self):
-        self.test_list.test_append(0,1,2)
-        self.assertEqual(self.test_list[0], (0,1,2))
+        self.test_list.test_append(0,1,2,3)
+        self.assertEqual(self.test_list[0], (0,1,2,3))
         self.assertEqual(len(self.test_list), 1)
         
-        self.test_list.test_append(3,4,5)
-        self.assertEqual(self.test_list[1], (3,4,5))
+        self.test_list.test_append(4,5,6,7)
+        self.assertEqual(self.test_list[1], (4,5,6,7))
         self.assertEqual(len(self.test_list), 2)
 
 
     def _calc_expected_allocation(self, test_list):
-        return 6 * test_list.get_size_increment() * 3
+        return 6 * test_list.get_size_increment() * 4
     
+
+    def _get_test_data_elem(self, offset, i):
+        return tuple([((i + offset) * 4) + j for j in range(4)])
+
     def _build_101(self,offset=0):
         for i in range(101):
-            self.test_list.test_append((i+offset) * 2, ((i+offset) * 2) + 1, ((i+offset) * 2) + 2)
+            test_data = self._get_test_data_elem(offset, i)
+            self.test_list.test_append(*test_data)
 
     
     def _test_101(self, test_list, offset=0):
         for i in range(101):
-            self.assertEqual(test_list[i], ((i+offset) * 2, ((i+offset) * 2) + 1, ((i+offset) * 2) + 2))
+            test_data = self._get_test_data_elem(offset, i)
+            self.assertEqual(test_list[i],test_data)
         
         self.assertEqual(len(test_list), 101)
         if hasattr(test_list,'get_allocation'):
@@ -62,10 +68,9 @@ class Test_cython_non_boned_list(unittest.TestCase):
         self._build_101() 
         
         for i in range(100):
-            target,remote  = test_dump_component_index_pair(self.test_list,i)
-            self.assertEqual(target, i*2+1)
-            self.assertEqual(remote, i*2+2)
-        
+            result  = test_dump_component_index_pair(self.test_list,i)
+            self.assertEqual(result, self._get_test_data_elem(0, i))
+#         
     def test_get_all_components(self):
         self._build_101()
         self._test_101(self.test_list.get_all_components())

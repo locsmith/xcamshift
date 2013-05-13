@@ -343,7 +343,7 @@ class TestXcamshiftA4(unittest2.TestCase):
             for component in non_bonded_potential._get_all_components():
                 #TODO: remove need for component?
                 for exponent in (1,-3):
-                    target_atom_id,target_component_index, remote_component_index = component
+                    target_component_index, remote_component_index = component[1:3]
                     
                     target_atom_id = target_components[target_component_index][0]
                     remote_atom_id = remote_components[remote_component_index][0]
@@ -368,7 +368,7 @@ class TestXcamshiftA4(unittest2.TestCase):
         
         for i, component in enumerate( non_bonded_potential._get_all_components()):
              
-            target_atom_id,target_component_index, remote_component_index = component
+            target_component_index, remote_component_index = component[1:3]
                     
             target_atom_id = target_components[target_component_index][0]
             remote_atom_id = remote_components[remote_component_index][0]
