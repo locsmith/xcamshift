@@ -1748,13 +1748,14 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
     cdef Nonbonded_coefficient_component* _compiled_coefficient_components
     cdef int _num_coefficient_components 
     
-    
+    cdef int _component_offset
     
     def __cinit__(self):
         self._non_bonded_list = None
         self._compiled_target_components =  NULL
         self._compiled_remote_components = NULL
         self._compiled_coefficient_components = NULL
+        self._component_offset = 0
         
     def __init__(self, object indices, bint smoothed, str name):
         super(Fast_non_bonded_force_calculator, self).__init__(indices,smoothed,name)
@@ -1793,6 +1794,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         self._bytes_to_nonbonded_coefficient_components(components['COEF'])
         if 'ACTI' in components:
             self._active_components = components['ACTI']
+        self._component_offset = components['OFFS']
         
     cdef inline void _set_the_component(self, int target_atom_index,int remote_atom_index, float coefficient,float exponent):
         self._compiled_components[0].target_atom =target_atom_index
@@ -1827,6 +1829,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
             
             target_component_index = non_bonded_pair[0].target_index
             remote_component_index = non_bonded_pair[0].remote_index
+            component_offset = self._component_offset + non_bonded_pair[0].component_index
             
             target_index  = self._compiled_target_components[target_component_index].target_atom_id
             remote_index = self._compiled_remote_components[remote_component_index].remote_atom_id
@@ -1834,7 +1837,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
             if distance < self._nb_cutoff:
                 for i in range(2):
                         self._cython_build_component(factor_index,i)
-                        self._distance_calc_single_force_set(0, force_factors[target_component_index] , force)
+                        self._distance_calc_single_force_set(0, force_factors[component_offset] , force)
                      
     def  _build_component(self, factor_index, i):
         self._cython_build_component(factor_index, i)

@@ -3451,7 +3451,8 @@ class Non_bonded_potential(Distance_based_potential):
         non_bonded_list = self._get_component_list('NBLT')
         
         components = {'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
-            'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list}
+            'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
+            'OFFS' : 0}
         
         return components
 
