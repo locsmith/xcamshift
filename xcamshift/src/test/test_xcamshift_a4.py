@@ -340,7 +340,7 @@ class TestXcamshiftA4(unittest2.TestCase):
             remote_components = non_bonded_potential._get_component_list('NBRM')
             
             expected_components = dict(ala_4.ala_components_non_bond)
-            for component in non_bonded_potential._get_all_components():
+            for component in non_bonded_potential._get_all_components('NBLT'):
                 #TODO: remove need for component?
                 for exponent in (1,-3):
                     target_component_index, remote_component_index = component[1:3]
@@ -366,7 +366,7 @@ class TestXcamshiftA4(unittest2.TestCase):
         target_components = non_bonded_potential._get_component_list('ATOM')
         remote_components = non_bonded_potential._get_component_list('NBRM')
         
-        for i, component in enumerate( non_bonded_potential._get_all_components()):
+        for i, component in enumerate( non_bonded_potential._get_all_components('NBLT')):
              
             target_component_index, remote_component_index = component[1:3]
                     

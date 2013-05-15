@@ -639,8 +639,8 @@ class Base_potential(object):
 
 
 
-    def _build_active_components_list(self, target_atom_ids, components=None):
-        if not self._freeze  or  self._active_components == None:
+    def _build_active_components_list(self, target_atom_ids, components=None, force=False):
+        if force or not self._freeze  or  self._active_components == None:
             if self._verbose:
                 print '   filtering components %s' % self.get_abbreviated_name(),
             
@@ -652,11 +652,14 @@ class Base_potential(object):
             if components == None: 
                 components =  self._get_component_list() 
                  
-            self._active_components =  components.build_selection_list(test)
+            result  =  components.build_selection_list(test)
 
             if self._verbose:
                 print ' %i reduced to %i' % (len(components),len(self._active_components))
-                
+        else:
+            result = self._active_components
+        
+        return result
     
     def _get_components(self):
         return self._get_component_list().get_native_components()
@@ -696,7 +699,7 @@ class Base_potential(object):
             self.clear_caches()
             
         if change == TARGET_ATOM_IDS_CHANGED:
-            self._build_active_components_list(data)
+            self._active_components = self._build_active_components_list(data)
             self._update_component_to_result(data)
         
         if self._have_derivative():
@@ -3083,7 +3086,7 @@ class Non_bonded_potential(Distance_based_potential):
         return Distance_based_potential.Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
     
     def _get_target_atom_list_name(self):
-        return 'NBLT'
+        return 'ATOM'
     
     def _get_distance_list_name(self):
         return 'NBLT'
@@ -3098,11 +3101,6 @@ class Non_bonded_potential(Distance_based_potential):
         coefficient_list  = self._get_component_list('COEF')
         updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
         
-        if updated:
-            old_freeze  = self._freeze
-            self._freeze = False
-            self._prepare(TARGET_ATOM_IDS_CHANGED, sorted(target_atom_list.get_component_atom_ids()))
-            self._freeze = old_freeze
         return non_bonded_list
     
     def _prepare(self, change, target_atom_ids):
@@ -3461,19 +3459,17 @@ class Non_bonded_potential(Distance_based_potential):
         num_target_atoms = self._non_bonded_list.get_num_target_atoms()
 
         if num_target_atoms != len(target_atom_ids):
-            self._build_active_components_list(target_atom_ids, non_bonded_list)
-            active_components =  self._active_components
+            active_components  = self._build_active_components_list(target_atom_ids, non_bonded_list)
             active_target_components = array.array('i', range(len(target_component_list)))
         else:
             active_components = array.array('i', range(len(non_bonded_list)))
             active_target_components = active_components[:len(target_component_list)]
-        component_to_result = self._build_component_to_result(active_target_components, target_atom_ids, target_component_list)
-        return component_to_result, active_components
+        return  active_components
 
     #TODO: this is no longer as canonical as the other versions 
     # NB calculator doesn't have a 1:1 correspondence between nb lists elememnts and distance components....
     def _calc_single_atom_shift(self, target_atom_id):
-        components =  self._get_component_list()
+        components =  self._get_component_list('NBLT')
         
         result = 0.0
         for i,component in enumerate(components):
@@ -3492,10 +3488,12 @@ class Non_bonded_potential(Distance_based_potential):
         non_bonded_list =  components['NBLT']
          
         target_atom_ids = [non_bonded_list[index][0],]
-        component_to_result, active_components = self._build_component_to_reult_and_active_list(target_atom_ids, target_component_list, non_bonded_list)
-         
+        
         active_components = array.array('i',[index,])
-  
+        components['OFFS'] = - non_bonded_list[index][3]
+        
+        component_to_result = array.array('i',[0,])
+        
         results = array.array('d',[0.0])
 
         calc(components,results,component_to_result, active_components=active_components)
@@ -3511,21 +3509,14 @@ class Non_bonded_potential(Distance_based_potential):
         target_component_list = self._get_component_list('ATOM')
         non_bonded_list =  components['NBLT']
         
-        component_to_result, active_components = self._build_component_to_reult_and_active_list(target_atom_ids, target_component_list, non_bonded_list)
+        active_components = self._build_component_to_reult_and_active_list(target_atom_ids, target_component_list, non_bonded_list)
         
-        calc(components,results,component_to_result, active_components=active_components)
+        
+        if len(active_components) != len(non_bonded_list) and len(active_components) >0:
+            components['OFFS'] = -non_bonded_list[active_components[0]][3]
+        calc(components,results,self._component_to_result, active_components=active_components)
 
 
-    def _temporary_rebuild_force_factors(self, target_atom_ids, force_factors, target_component_list):
-        if len(force_factors) != len(target_component_list):
-            old_force_factors = force_factors
-            new_force_factors = [0.0] * len(target_component_list)
-            for i, target_atom_id in enumerate(target_atom_ids):
-                atom_offset = target_component_list.get_component_range(target_atom_id)[0]
-                new_force_factors[atom_offset] = force_factors[i]
-            
-            force_factors = array.array('f', new_force_factors)
-        return force_factors
 
     def calc_force_set(self,target_atom_ids,force_factors,forces):
 
@@ -3536,10 +3527,11 @@ class Non_bonded_potential(Distance_based_potential):
         target_component_list = self._get_component_list('ATOM')
         non_bonded_list =  components['NBLT']
         
-        component_to_result, active_components = self._build_component_to_reult_and_active_list(target_atom_ids, target_component_list, non_bonded_list)
-
-        force_factors = self._temporary_rebuild_force_factors(target_atom_ids, force_factors, target_component_list)        
-            
+        
+        active_components = self._build_component_to_reult_and_active_list(target_atom_ids, target_component_list, non_bonded_list)
+        
+        if len(force_factors) != len(target_component_list):
+            components['OFFS'] =  -non_bonded_list[active_components[0]][3]
         calc(components, self._component_to_result, force_factors, forces, active_components=active_components)
          
 class Energy_calculator:

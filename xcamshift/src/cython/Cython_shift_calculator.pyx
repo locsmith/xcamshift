@@ -2453,6 +2453,9 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
     cdef Nonbonded_coefficient_component* _compiled_coefficient_components
     cdef int _num_coefficient_components 
     
+    cdef int _component_offset
+
+    
     
     
     def __cinit__(self):
@@ -2460,7 +2463,8 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._compiled_target_components =  NULL
         self._compiled_remote_components = NULL
         self._compiled_coefficient_components = NULL
-
+        self. _component_offset = 0
+        
     def __init__(self, object indices, bint smoothed, str name):
         super(Fast_non_bonded_shift_calculator, self).__init__(indices,smoothed,name)
         global DEFAULT_NB_CUTOFF
@@ -2494,6 +2498,8 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._bytes_to_target_components(components['ATOM'])
         self._bytes_to_remote_components(components['NBRM'])
         self._bytes_to_nonbonded_coefficient_components(components['COEF'])
+        self._component_offset = components['OFFS']
+
         
         
     @cython.profile(True)
@@ -2528,6 +2534,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         cdef float coefficient,exponent
         
         cdef Nonbonded_coefficient_component* coefficent_component
+        cdef int component_offset
         
         if self._verbose:
             start_time = time()
@@ -2544,6 +2551,8 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
             remote_index = self._compiled_remote_components[remote_component_index].remote_atom_id
             
             distance = calc_distance_simulation(self._simulation, target_index, remote_index)
+            
+            component_offset = self._component_offset + non_bonded_pair[0].component_index
 
             if distance < self._nb_cutoff:
 
@@ -2562,8 +2571,8 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
                     if self._smoothed:
                         ratio = distance / self._cutoff
                         smoothing_factor = 1.0 - ratio ** 8
-                    
-                    results[component_to_target[target_component_index]]  +=  smoothing_factor * pow(distance,  exponent) * coefficient
+
+                    results[component_to_target[component_offset]]  +=  smoothing_factor * pow(distance,  exponent) * coefficient
 
         if self._verbose:
             end_time = time()
