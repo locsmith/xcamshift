@@ -3466,10 +3466,8 @@ class Non_bonded_potential(Distance_based_potential):
 
         if num_target_atoms != len(target_atom_ids):
             active_components  = self._build_active_components_list(target_atom_ids, non_bonded_list)
-            active_target_components = array.array('i', range(len(target_component_list)))
         else:
             active_components = array.array('i', range(len(non_bonded_list)))
-            active_target_components = active_components[:len(target_component_list)]
         return  active_components
 
     #TODO: this is no longer as canonical as the other versions 
