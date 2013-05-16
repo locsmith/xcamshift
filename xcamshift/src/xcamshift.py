@@ -3456,8 +3456,12 @@ class Non_bonded_potential(Distance_based_potential):
         
         return self._component_set
 
+    def _build_non_bonded_active_components(self, target_atom_ids):
+                
+        target_component_list = self._get_component_list('ATOM')
+        non_bonded_list =  self._get_component_list('NBLT')
 
-    def _build_component_to_reult_and_active_list(self, target_atom_ids, target_component_list, non_bonded_list):
+        
         num_target_atoms = self._non_bonded_list.get_num_target_atoms()
 
         if num_target_atoms != len(target_atom_ids):
@@ -3505,26 +3509,24 @@ class Non_bonded_potential(Distance_based_potential):
 
     def calc_shifts(self, target_atom_ids, results):
          
-        calc = self._get_shift_calculator()  
         components = self._get_components()
         
         target_component_list = self._get_component_list('ATOM')
         non_bonded_list =  components['NBLT']
         
-        active_components = self._build_component_to_reult_and_active_list(target_atom_ids, target_component_list, non_bonded_list)
+        active_components = self._build_non_bonded_active_components(target_atom_ids)
         
         
         if len(active_components) != len(non_bonded_list) and len(active_components) >0:
             self._get_components()['OFFS'] = -non_bonded_list[active_components[0]][3]
         else:
             self._get_components()['OFFS'] = 0
-        calc(components,results,self._component_to_result, active_components=active_components)
+        self._shift_calculator(components,results,self._component_to_result, active_components=active_components)
 
 
 
     def calc_force_set(self,target_atom_ids,force_factors,forces):
 
-        calc = self._get_force_calculator()
            
         components = self._get_components()
                 
@@ -3532,13 +3534,13 @@ class Non_bonded_potential(Distance_based_potential):
         non_bonded_list =  components['NBLT']
         
         
-        active_components = self._build_component_to_reult_and_active_list(target_atom_ids, target_component_list, non_bonded_list)
+        active_components = self._build_non_bonded_active_components(target_atom_ids)
         
         if len(force_factors) != len(target_component_list):
            self._get_components()['OFFS'] =  -non_bonded_list[active_components[0]][3]
         else:
            self._get_components()['OFFS'] = 0 
-        calc(components, self._component_to_result, force_factors, forces, active_components=active_components)
+        self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=active_components)
          
 class Energy_calculator:
     def __init__(self):
