@@ -3058,6 +3058,7 @@ class Non_bonded_potential(Distance_based_potential):
         self._add_component_factory(Null_component_factory('NBLT'))
         
         self._non_bonded_list = Non_bonded_list()
+        self._component_set = None
     
     def _get_shift_calculator(self):
         result  = Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
@@ -3437,22 +3438,23 @@ class Non_bonded_potential(Distance_based_potential):
             
 
     def _get_components(self):
-        target_component_list = self._get_component_list('ATOM')
-        native_target_atom_list = target_component_list.get_native_components()
+        if self._component_set ==  None:
+            target_component_list = self._get_component_list('ATOM')
+            native_target_atom_list = target_component_list.get_native_components()
+            
+            remote_component_list = self._get_component_list('NBRM')
+            native_remote_atom_list = remote_component_list.get_native_components()
+            
+            coefficient_list = self._get_component_list('COEF')
+            native_coefficient_list = coefficient_list.get_native_components()
+    
+            non_bonded_list = self._get_component_list('NBLT')
+            
+            self._component_set = {'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
+                          'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
+                          'OFFS' : 0}
         
-        remote_component_list = self._get_component_list('NBRM')
-        native_remote_atom_list = remote_component_list.get_native_components()
-        
-        coefficient_list = self._get_component_list('COEF')
-        native_coefficient_list = coefficient_list.get_native_components()
-
-        non_bonded_list = self._get_component_list('NBLT')
-        
-        components = {'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
-            'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
-            'OFFS' : 0}
-        
-        return components
+        return self._component_set
 
 
     def _build_component_to_reult_and_active_list(self, target_atom_ids, target_component_list, non_bonded_list):
@@ -3513,7 +3515,9 @@ class Non_bonded_potential(Distance_based_potential):
         
         
         if len(active_components) != len(non_bonded_list) and len(active_components) >0:
-            components['OFFS'] = -non_bonded_list[active_components[0]][3]
+            self._get_components()['OFFS'] = -non_bonded_list[active_components[0]][3]
+        else:
+            self._get_components()['OFFS'] = 0
         calc(components,results,self._component_to_result, active_components=active_components)
 
 
@@ -3531,7 +3535,9 @@ class Non_bonded_potential(Distance_based_potential):
         active_components = self._build_component_to_reult_and_active_list(target_atom_ids, target_component_list, non_bonded_list)
         
         if len(force_factors) != len(target_component_list):
-            components['OFFS'] =  -non_bonded_list[active_components[0]][3]
+           self._get_components()['OFFS'] =  -non_bonded_list[active_components[0]][3]
+        else:
+           self._get_components()['OFFS'] = 0 
         calc(components, self._component_to_result, force_factors, forces, active_components=active_components)
          
 class Energy_calculator:
