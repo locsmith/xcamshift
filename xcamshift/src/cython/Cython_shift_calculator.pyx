@@ -1810,9 +1810,14 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
 
         cdef int factor_index
         
-        for factor_index  in range(self._active_components.shape[0]):
-            non_bonded_index = self._active_components[factor_index]
-            self._calc_one_component(factor_index, non_bonded_index, component_to_result, force_factors, force)
+        if self._active_components ==  None:
+            for factor_index  in range(len(self._non_bonded_list)):
+                non_bonded_index  = factor_index
+                self._calc_one_component(factor_index, non_bonded_index, component_to_result, force_factors, force)
+        else:
+            for factor_index  in range(self._active_components.shape[0]):
+                non_bonded_index = self._active_components[factor_index]
+                self._calc_one_component(factor_index, non_bonded_index, component_to_result, force_factors, force)
             
     cdef void _calc_one_component(self, int factor_index, int non_bonded_index, int[:] component_to_result, float[:] force_factors, Out_array force):
         cdef double start_time = 0.0
@@ -1838,14 +1843,13 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         distance = calc_distance_simulation(self._simulation, target_index, remote_index)
         if distance < self._nb_cutoff:
             for i in range(2):
-                    self._cython_build_component(factor_index,i)
+                    self._cython_build_component(non_bonded_index, i)
                     self._distance_calc_single_force_set(0, force_factors[component_offset] , force)
                      
-    def  _build_component(self, factor_index, i):
-        self._cython_build_component(factor_index, i)
+    def  _build_component(self, non_bonded_index, i):
+        self._cython_build_component(non_bonded_index, i)
         
-    cdef void  _cython_build_component(self, int factor_index, int i):
-        cdef int non_bonded_index 
+    cdef void  _cython_build_component(self, int non_bonded_index, int i):
         cdef Component_index_pair* non_bonded_pair 
         
         cdef int target_component_index
@@ -1871,7 +1875,6 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         cdef Nonbonded_coefficient_component* coefficent_component
         cdef bint result
         
-        non_bonded_index = self._active_components[factor_index]
         non_bonded_pair  =  self._non_bonded_list.get(non_bonded_index)
         
         target_component_index = non_bonded_pair[0].target_index

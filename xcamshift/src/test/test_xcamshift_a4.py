@@ -444,7 +444,7 @@ class TestXcamshiftA4(unittest2.TestCase):
                     expected_key = target_atom_key, remote_atom_key, int(exponent)
                     factor = factors[target_atom_key]
     
-                    non_bonded_potential._force_calculator._build_component(0,exponent_index)
+                    non_bonded_potential._force_calculator._build_component(i,exponent_index)
     
                     force_factor = non_bonded_potential._force_calculator._calc_single_force_factor(0, factor)
                     #TODO: check change from 7 to 5 dp is ok
@@ -501,7 +501,7 @@ class TestXcamshiftA4(unittest2.TestCase):
                     expected_key = target_atom_key, remote_atom_key, int(exponent)
                     factor = factors[target_atom_key]
     
-                    non_bonded_potential._force_calculator._build_component(0,exponent_index)
+                    non_bonded_potential._force_calculator._build_component(i,exponent_index)
                     
                     factor = factors[target_atom_key]
 

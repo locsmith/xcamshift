@@ -3538,6 +3538,9 @@ class Non_bonded_potential(Distance_based_potential):
            self._get_components()['OFFS'] =  -non_bonded_list[active_components[0]][3]
         else:
            self._get_components()['OFFS'] = 0 
+        if len(active_components) == len(non_bonded_list):
+            print len(active_components)
+            active_components = None
         self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=active_components)
          
 class Energy_calculator:
