@@ -1807,10 +1807,17 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         
     cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
 
+
+        cdef int factor_index
+        
+        for factor_index  in range(self._active_components.shape[0]):
+            non_bonded_index = self._active_components[factor_index]
+            self._calc_one_component(factor_index, non_bonded_index, component_to_result, force_factors, force)
+            
+    cdef void _calc_one_component(self, int factor_index, int non_bonded_index, int[:] component_to_result, float[:] force_factors, Out_array force):
         cdef double start_time = 0.0
         cdef double end_time = 0.0
         
-        cdef int non_bonded_index
         cdef Component_index_pair* non_bonded_pair 
         
         cdef int target_component_index
@@ -1820,24 +1827,19 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         cdef int remote_index
 
         cdef float distance
+        non_bonded_pair  =  self._non_bonded_list.get(non_bonded_index)
         
-        cdef int factor_index
+        target_component_index = non_bonded_pair[0].target_index
+        remote_component_index = non_bonded_pair[0].remote_index
+        component_offset = self._component_offset + non_bonded_pair[0].component_index
         
-        for factor_index  in range(self._active_components.shape[0]):
-            non_bonded_index = self._active_components[factor_index]
-            non_bonded_pair  =  self._non_bonded_list.get(non_bonded_index)
-            
-            target_component_index = non_bonded_pair[0].target_index
-            remote_component_index = non_bonded_pair[0].remote_index
-            component_offset = self._component_offset + non_bonded_pair[0].component_index
-            
-            target_index  = self._compiled_target_components[target_component_index].target_atom_id
-            remote_index = self._compiled_remote_components[remote_component_index].remote_atom_id
-            distance = calc_distance_simulation(self._simulation, target_index, remote_index)
-            if distance < self._nb_cutoff:
-                for i in range(2):
-                        self._cython_build_component(factor_index,i)
-                        self._distance_calc_single_force_set(0, force_factors[component_offset] , force)
+        target_index  = self._compiled_target_components[target_component_index].target_atom_id
+        remote_index = self._compiled_remote_components[remote_component_index].remote_atom_id
+        distance = calc_distance_simulation(self._simulation, target_index, remote_index)
+        if distance < self._nb_cutoff:
+            for i in range(2):
+                    self._cython_build_component(factor_index,i)
+                    self._distance_calc_single_force_set(0, force_factors[component_offset] , force)
                      
     def  _build_component(self, factor_index, i):
         self._cython_build_component(factor_index, i)
