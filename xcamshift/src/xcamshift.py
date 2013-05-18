@@ -3463,11 +3463,16 @@ class Non_bonded_potential(Distance_based_potential):
 
         
         num_target_atoms = self._non_bonded_list.get_num_target_atoms()
-
+        
+        self._get_components()['OFFS'] = 0
+        
         if num_target_atoms != len(target_atom_ids):
             active_components  = self._build_active_components_list(target_atom_ids, non_bonded_list)
+            if len(active_components) > 0:
+                self._get_components()['OFFS'] = -non_bonded_list[active_components[0]][3]
         else:
-            active_components = array.array('i', range(len(non_bonded_list)))
+            active_components = None
+            
         return  active_components
 
     #TODO: this is no longer as canonical as the other versions 
@@ -3509,19 +3514,8 @@ class Non_bonded_potential(Distance_based_potential):
          
         components = self._get_components()
         
-        target_component_list = self._get_component_list('ATOM')
-        non_bonded_list =  components['NBLT']
-        
         active_components = self._build_non_bonded_active_components(target_atom_ids)
         
-        
-        if len(active_components) != len(non_bonded_list) and len(active_components) >0:
-            self._get_components()['OFFS'] = -non_bonded_list[active_components[0]][3]
-        else:
-            self._get_components()['OFFS'] = 0
-            
-        if len(active_components) == len(non_bonded_list):
-            active_components = None
         self._shift_calculator(components,results,self._component_to_result, active_components=active_components)
 
 
@@ -3531,18 +3525,8 @@ class Non_bonded_potential(Distance_based_potential):
            
         components = self._get_components()
                 
-        target_component_list = self._get_component_list('ATOM')
-        non_bonded_list =  components['NBLT']
-        
-        
         active_components = self._build_non_bonded_active_components(target_atom_ids)
         
-        if len(force_factors) != len(target_component_list):
-           self._get_components()['OFFS'] =  -non_bonded_list[active_components[0]][3]
-        else:
-           self._get_components()['OFFS'] = 0 
-        if len(active_components) == len(non_bonded_list):
-            active_components = None
         self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=active_components)
          
 class Energy_calculator:
