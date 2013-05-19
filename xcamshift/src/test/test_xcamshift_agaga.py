@@ -23,7 +23,6 @@ from common_constants import BACK_BONE
 import sys
 from cython.fast_segment_manager import Segment_Manager
 
-fast = False
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -53,7 +52,6 @@ class TestXcamshiftAGAGA(unittest2.TestCase):
 
     def _get_xcamshift(self):
         xcamshift = Xcamshift()
-        xcamshift.set_fast(True)
         return xcamshift
 
     def test_agaga_shifts(self):
@@ -136,9 +134,7 @@ class TestXcamshiftAGAGA(unittest2.TestCase):
             self.assertAlmostEqual(test_data_sum[key], agaga_shifts[key], places=self.DEFAULT_DECIMAL_PLACES - 2, msg=key)
             
 def run_tests():
-    if fast:
-        print >> sys.stderr, TestXcamshiftAGAGA.__module__,"using fast calculators"
-    unittest2.main(module='test.test_xcamshift_agaga')
+    unittest2.main(module='test.test_xcamshift_agaga',defaultTest='TestXcamshiftAGAGA.test_agaga_shifts')
     
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'TestXcamshifAGA.testName']

@@ -19,7 +19,7 @@ Created on 27 Dec 2011
 
 
 from atomSel import AtomSel,intersection
-from component_list import Component_list
+from component_list import Component_list, Native_component_list
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from math import cos, tanh, cosh, sin
@@ -41,14 +41,39 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_ring_shift_calculator, Fast_ring_data_calculator,          \
                                      Fast_non_bonded_calculator, Fast_energy_calculator,             \
                                      Fast_distance_based_potential_force_calculator,                 \
-                                     Fast_non_bonded_force_calculator,                               \
                                      Fast_dihedral_force_calculator,                                 \
                                      Fast_ring_force_calculator,                                     \
                                      Fast_force_factor_calculator,                                   \
+                                     Out_array, Vec3_list, allocate_array, zero_array,               \
                                      Fast_non_bonded_shift_calculator,                               \
-                                     Out_array
+                                     Fast_non_bonded_force_calculator,                               \
+                                     Non_bonded_interaction_list
 from time import time
+import array#
 
+#TODO: REMOVE!
+class Index_translator(object):
+    def __init__(self, indices):
+        self._indices=indices
+        
+    def __call__(self, component):
+        result = []
+        result.append(component[self._indices.target_atom_index])
+        if len(component) == 4:
+            result.append(component[self._indices.distance_atom_index_1])
+            result.append(component[self._indices.distance_atom_index_2])
+            result.append(component[self._indices.coefficient_index])
+            result.append(component[self._indices.exponent_index])
+        elif len(component) == 5:
+            result.append(component[self._indices.distance_atom_index_1])
+            result.append(component[self._indices.distance_atom_index_2])
+            result.append(component[self._indices.coefficient_index])
+            result.append(component[self._indices.exponent_index])
+        else:
+            raise Exception("bad distance component length %i should be either 4 or 5 " % len(component))
+        
+        return result
+    
 class Component_factory(object):
     __metaclass__ = abc.ABCMeta
     
@@ -590,16 +615,14 @@ class Base_potential(object):
         self._component_factories = {}
         self._cache_list_data = {}
         self._freeze  = False
-        self._filtered_components =  None
     
         #TODO: this can go in the end... we just need some more clever logic in the get
-        self._fast = False
         self._shift_calculator = None
         
         
     
         self._component_to_result = None
-        self._filtered_components = None
+        self._active_components = None
         self._verbose = False
         
     def set_frozen(self,on):
@@ -615,54 +638,76 @@ class Base_potential(object):
         return Base_force_calculator(self)
 
 
-    def set_fast(self, on):
-        self._fast =  (on == True)
-    
-    def _filter_components(self, target_atom_ids):
-        if self._freeze  and not self._filtered_components == None:
-            result = self._filtered_components
-        else:
+
+    def _build_active_components_list(self, target_atom_ids, components=None, force=False):
+        if force or not self._freeze  or  self._active_components == None:
             if self._verbose:
                 print '   filtering components %s' % self.get_abbreviated_name(),
-            components = self._get_all_components()
-            result = Component_list()
             
             if target_atom_ids == None:
-                result.add_components(components)
-            if target_atom_ids != None:
+                test = lambda x:True
+            else:
                 target_atom_ids = sorted(set(target_atom_ids))
-                for component in components:
-                    if component[0] in target_atom_ids:
-                        result.add_component(component)
-    #        print 'components',components[:]
-            self._filtered_components = result
+                test = lambda x:x[0] in target_atom_ids
+            if components == None: 
+                components =  self._get_component_list() 
+                 
+            result  =  components.build_selection_list(test)
+
             if self._verbose:
-                print ' %i reduced to %i' % (len(components),len(self._filtered_components))
-        return result    
+                print ' %i reduced to %i' % (len(components),len(self._active_components))
+        else:
+            result = self._active_components
+        
+        return result
+    
+    def _get_components(self):
+        return self._get_component_list().get_native_components()
     
     def _calc_component_shift(self, index):
-        components = Component_list()
-        components.add_component(self._get_distance_components()[index])
-        results = [0.0]
-        self._shift_calculator(components,results,[0])
+        
+        component_to_result = array.array('i', [0])
+        results = array.array('d',[0.0])
+        components = self._get_components()
+        active_components = array.array('i', [index])
+        self._shift_calculator(components,results,component_to_result, active_components=active_components)
+        
         return results[0]
       
     
-    def _build_component_to_result(self, target_atom_ids):
+
+    def _build_component_to_result(self, active_components, target_atom_ids, components):
+        result = allocate_array(len(active_components), 'i')
+        
+        for i, component_index in enumerate(active_components):
+            out_atom_id = components[component_index][0]
+            if out_atom_id in target_atom_ids:
+                out_index = target_atom_ids.index(out_atom_id)
+            else:
+                out_index =  -1
+            result[i] = out_index
+        
+        return result
+
+    def _update_component_to_result(self, target_atom_ids):
         if not self._freeze:
-            components = self._filter_components(target_atom_ids)
-            self._component_to_result =  [0] *len(components)
-            for i, component in enumerate(components):
-                out_atom_id = component[0]
-                out_index  =  target_atom_ids.index(out_atom_id)
-                self._component_to_result[i] = out_index
+            self._component_to_result = self._build_component_to_result(self._active_components, target_atom_ids, self._get_component_list())
+         
 
     def _prepare(self,change, data):
         if change == STRUCTURE_CHANGED:
             self.clear_caches()
             
         if change == TARGET_ATOM_IDS_CHANGED:
-            self._build_component_to_result(data)
+            self._active_components = self._build_active_components_list(data)
+            self._update_component_to_result(data)
+        
+        if self._have_derivative():
+            self._force_calculator._prepare(change, data)
+            
+        if self._shift_calculator:
+            #TODO: shiftpotential is not lyskov substituable
+           self._shift_calculator._prepare(change, data)
 
     
     def get_component_table_names(self):
@@ -728,19 +773,22 @@ class Base_potential(object):
         
     def _get_cache_list(self,name):
         if not name in self._cache_list_data:
-            self._cache_list_data[name] = Component_list()
+            if name in ('NORM', 'CENT'):
+                self._cache_list_data[name] = Vec3_list()
+            else:
+                self._cache_list_data[name] = Component_list()
         return self._cache_list_data[name]
     
     def clear_caches(self):
         self._cache_list_data = {}
-        self._filtered_components = None
+        self._active_components = None
 
 #    TODO put 'ATOM' in a constant and rename to BB_ATOM?
     def _get_component_list(self,name=None):
         if name == None:
             name  = self._get_target_atom_list_name()
         if not name in self._component_list_data:
-            self._component_list_data[name] = Component_list()
+            self._component_list_data[name] = self._create_component_list(name)
             self._build_component_list(name,"(all)")
         return self._component_list_data[name]
     
@@ -787,30 +835,12 @@ class Base_potential(object):
     
     def calc_force_set(self,target_atom_ids,force_factors,forces):
         if self._have_derivative():
-#            TODO: some of this code could go with careful organisation and wrapping access to component_to result in a accessor
-            if self._filtered_components == None:
-                self._filtered_components = self._filter_components(target_atom_ids)
-                if self._component_to_result ==  None:
-                    print "*****WARNING unexpected build of component to result"
-                    self._build_component_to_result(target_atom_ids)
-            if self._component_to_result == None:
-                raise Exception("component to target must be set")
-            elif len(self._component_to_result) != len(self._filtered_components):
-                if self._verbose:
-                    start_time = time()
-                self._build_component_to_result(target_atom_ids)
-                if self._verbose:
-                    end_time=time()
-                    print "updated component_to result complete in %.8g seconds." % (end_time-start_time)
-                    #print len(self._component_to_result),  len(self._filtered_components), self.get_abbreviated_name()
-            
-            
-            
-            self._force_calculator(self._filtered_components,self._component_to_result, force_factors, forces)
+            components = self._get_components()
+            self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._active_components)
             
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
-        target_atom_ids = [target_atom_id]
+        target_atom_ids = array.array('i',[target_atom_id])
         force_factors = [force_factor]
         self.calc_force_set(target_atom_ids,force_factor,forces)
     
@@ -833,6 +863,17 @@ class Base_potential(object):
             forces[target_offset] = target_forces
         return target_forces
 
+    def _create_component_list(self,name):
+        return Component_list()
+    
+    #TODO: unify with ring random coil and disuphide shift calculators
+    def calc_shifts(self, target_atom_ids, results):
+       
+        components = self._get_components()
+        self._shift_calculator(components,results,self._component_to_result, active_components=self._active_components)
+             
+
+    
 class Base_shift_calculator(object):
     
     def __init__(self,name="not_set"):
@@ -1023,7 +1064,7 @@ class Distance_based_potential(Base_potential):
     def __init__(self,  smoothed = False, fast=False):
         super(Distance_based_potential, self).__init__()
         self._smoothed = smoothed
-        #TODO: sort placement out
+        #TODO: sort placement out, move to non bonded
         #
         self._cutoff = 5.0
         
@@ -1031,11 +1072,6 @@ class Distance_based_potential(Base_potential):
         self._shift_calculator = self._get_shift_calculator()
         self._force_calculator = self._get_force_calculator()
         
-    #TODO: move to base potential
-    def set_fast(self, on):
-        self._fast = (on == True)
-        self._shift_calculator = self._get_shift_calculator()
-        self._force_calculator = self._get_force_calculator()
         
     #TODO: move to base potential
     def _get_shift_calculator(self):
@@ -1053,11 +1089,6 @@ class Distance_based_potential(Base_potential):
 #        result = Distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
         result.set_verbose(self._verbose)
         return result 
-#    TODO: remove to base class
-    def calc_shifts(self, target_atom_ids, results):
-        components  = self._filter_components(target_atom_ids)
-        self._filtered_components = components
-        self._shift_calculator(components,results,self._component_to_result)
                 
     class Indices(object):
         def __init__(self, target_atom_index,distance_atom_index_1,
@@ -1116,8 +1147,16 @@ class Distance_based_potential(Base_potential):
         
         return coefficient, exponent
 
-        
+    #TODO move this to su classes when required   
+    def _create_component_list(self, name):
 
+            
+        if name == 'ATOM':
+            translator = Index_translator(self._get_indices())
+            return Native_component_list(translator=translator,format='iiiff')
+        else:
+            print 'note non native component list for %s %s' % (self.get_abbreviated_name(), name)
+            return Component_list()
     
  
     
@@ -1259,9 +1298,9 @@ class RandomCoilShifts(Base_potential):
         return self._table_manager.get_random_coil_table
 
     def calc_shifts(self, target_atom_ids, result):
-        components  = self._filter_components(target_atom_ids)
-        for i, component in enumerate(components):
-            result[self._component_to_result[i]] += component[1]
+        components = self._get_component_list()
+        for i, component_index in enumerate(self._active_components):
+            result[self._component_to_result[i]] += components[component_index][1]
             
     def _calc_component_shift(self,index):
         components = self._get_component_list()
@@ -1296,11 +1335,12 @@ class Disulphide_shift_calculator(Base_potential):
     
     def _get_table_source(self):
         return self._table_manager.get_disulphide_table
-
+    
+    #TODO: this is the same as for the random coild shifts
     def calc_shifts(self, target_atom_ids, result):
-        components  = self._filter_components(target_atom_ids)
-        for i, component in enumerate(components):
-            result[self._component_to_result[i]] += component[1]
+        components = self._get_component_list()
+        for i, component_index in enumerate(self._active_components):
+            result[self._component_to_result[i]] += components[component_index][1]
             
     def _calc_component_shift(self,index):
         components = self._get_component_list()
@@ -1525,14 +1565,10 @@ class Dihedral_potential(Base_potential):
                     self._calc_single_force_set(index,force_factor,forces)
         return forces
         
-    def set_fast(self, on):
-        self._fast = (on == True)
-        self._shift_calculator = self._get_shift_calculator()
-        self._force_calculator = self._get_force_calculator()
         
-    def calc_shifts(self, target_atom_ids, results):
-        components  = self._filter_components(target_atom_ids)
-        self._shift_calculator(components,results,self._component_to_result)
+#     def calc_shifts(self, target_atom_ids, results):cal
+#         components  = self._filter_components(target_atom_ids)
+#         self._shift_calculator(components,results,self._component_to_result)
         
     def get_abbreviated_name(self):
         return DIHEDRAL
@@ -1551,12 +1587,7 @@ class Dihedral_potential(Base_potential):
     def _get_distance_components(self):
         return self._get_component_list()
     
-    def _calc_component_shift(self, index):
-        components = Component_list()
-        components.add_component(self._get_distance_components()[index])
-        results = [0.0]
-        self._shift_calculator(components,results,[0])
-        return results[0]
+
         
 
 
@@ -1659,7 +1690,10 @@ class Dihedral_potential(Base_potential):
         result.set_verbose(self._verbose)
         return result
 
-    
+    def _create_component_list(self, name):
+        if name == 'ATOM':
+            return Native_component_list(format='iiiiifffffff')
+        
 class Sidechain_potential(Distance_based_potential):
     
     def __init__(self):
@@ -2369,7 +2403,6 @@ class Ring_Potential(Base_potential):
         self._add_component_factory(Ring_backbone_component_factory())
         self._add_component_factory(Ring_coefficient_component_factory())
         self._add_component_factory(Ring_sidechain_atom_factory())
-        self._fast =False
         self._shift_calculator = self._get_shift_calculator()
         self._ring_data_calculator = self._get_ring_data_calculator()
         self._force_calculator = self._get_force_calculator()
@@ -2395,8 +2428,8 @@ class Ring_Potential(Base_potential):
     def _prepare(self, change, target_atom_ids): 
         super(Ring_Potential, self)._prepare(change, target_atom_ids)
         
-        if change == STRUCTURE_CHANGED:
-            self._clear_ring_cache()
+#         if change == STRUCTURE_CHANGED:
+#             self._clear_ring_cache()
             
         if change  == ROUND_CHANGED:
             if self._verbose:
@@ -2405,12 +2438,7 @@ class Ring_Potential(Base_potential):
             self._build_ring_data_cache()
             self._setup_ring_calculator(self._shift_calculator)
          
-    def set_fast(self, on):
-        self._fast = (on == True)
-        self._shift_calculator = self._get_shift_calculator()
-        self._ring_data_calculator =  self._get_ring_data_calculator()
-        self._force_calculator = self._get_force_calculator()
-        
+
     def _setup_ring_calculator(self,calculator):
         calculator._set_coef_components(self._get_component_list('COEF'))
         calculator._set_ring_components(self._get_component_list('RING'))
@@ -2426,11 +2454,14 @@ class Ring_Potential(Base_potential):
         return result
     
     def calc_shifts(self, target_atom_ids, results):
-        components  = self._filter_components(target_atom_ids)
+        #TODO: should only need to filter components when TARGTE_ATOMS etc change
+       
+
+        components = self._get_components()
         if len(components) > 0:
             #TODO: add as general method in base
             self._setup_ring_calculator(self._shift_calculator)
-            self._shift_calculator(components,results, self._component_to_result)
+            self._shift_calculator(components,results, self._component_to_result, active_components=self._active_components)
         
         
     def get_abbreviated_name(self):
@@ -2460,25 +2491,35 @@ class Ring_Potential(Base_potential):
 
     
     def _calc_component_shift(self, index):
-        components = Component_list()
-        components.add_component(self._get_distance_components()[index])
-        results = [0.0]
+        components = self._create_component_list('ATOM')
+        component = self._get_distance_components()[index]
+        components.add_component(component)
+        results = array.array('d',[0.0])
         self._setup_ring_calculator(self._shift_calculator)
-        self._shift_calculator(components,results,[0])
+        self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
+        self._setup_ring_calculator(self._shift_calculator)
+        component_to_result  = array.array('i',[0])
+        self._shift_calculator(components.get_native_components(),results,component_to_result, active_components=array.array('i',[0]))
         return results[0]
     
     
 
-    def _clear_ring_cache(self):
-        normals = self._get_cache_list('NORM')
-        normals.clear()
-        centres = self._get_cache_list('CENT')
-        centres.clear()
-        return normals, centres
+#     def _clear_ring_cache(self):
+#         normals = self._get_cache_list('NORM')
+# #         normals.clear()
+#         centres = self._get_cache_list('CENT')
+# #         centres.clear()
+#         return normals, centres
+#     def _clear_ring_cache(self):
+#         normals = self._get_cache_list('NORM')
+# #         normals.clear()
+#         centres = self._get_cache_list('CENT')
+# #         centres.clear()
+#         return normals, centres
 
     def _build_ring_data_cache(self):
         #TODO: remove double normal calculation
-        self._clear_ring_cache()
+#         self._clear_ring_cache()
         
         normals = self._get_cache_list('NORM')
         centres = self._get_cache_list('CENT')
@@ -2568,6 +2609,12 @@ class Ring_Potential(Base_potential):
 #    
 #    def _translate_atom_name(self, atom_name,context):
 #        return context._table.get_translation(atom_name)
+
+    def _create_component_list(self, name):
+        if name == 'ATOM':
+            return Native_component_list(format='ii')
+        else:
+            return Component_list()
 
 # TODO: it should be the default that all residues are accepted
 class Non_bonded_backbone_component_factory(Ring_backbone_component_factory):
@@ -2757,9 +2804,9 @@ class Non_bonded_list(object):
         self._reset()
         
 
-        self._fast = False
         self._verbose = False 
         self._non_bonded_list_calculator = self._get_non_bonded_calculator()
+
         
     def _reset(self):
         self._box_update_count = self._update_frequency
@@ -2768,6 +2815,7 @@ class Non_bonded_list(object):
         self._non_bonded_call_count = 0
         self._interaction_count = 0
         self._pos_cache = {}
+        self._num_target_atoms = None
         
     def get_cutoff_distance(self):
         return self._cutoff_distance
@@ -2795,6 +2843,7 @@ class Non_bonded_list(object):
         
     def get_boxes(self,component_list_1, component_list_2,target_component_list,coefficient_list):
 #        print self._box_update_count, se        if self._verbose:
+        updated = False
         if self._verbose:
             print '  update, box_count= ',self._box_update_count
 
@@ -2804,13 +2853,24 @@ class Non_bonded_list(object):
         else:
             if self._verbose:
                 print '  update boxes call count = ', self._box_update_count
+
             target_component_list.clear()
             self._box_update_count = -1
             self._non_bonded_calculation_count += 1
-            self._build_boxes(component_list_1, component_list_2, target_component_list,coefficient_list)
             
-        return target_component_list
+            native_target_atom_list = component_list_1.get_native_components()
+            native_remote_atom_list = component_list_2.get_native_components()
+            
+            self._num_target_atoms = len(component_list_1.get_component_atom_ids())
+            self._non_bonded_list_calculator(native_target_atom_list, native_remote_atom_list, target_component_list)
+            
         
+            updated = True
+
+        return updated
+    
+    def get_num_target_atoms(self):
+        return self._num_target_atoms
     
     def _get_cached_pos(self,atom_id):
         if atom_id in  self._pos_cache:
@@ -2829,52 +2889,6 @@ class Non_bonded_list(object):
 
 
 
-    def _build_boxes(self, component_list_1, component_list_2, target_component_list, coefficient_list):
-        
-#        print
-#        for elem in component_list_2:
-#            print elem
-#        print
-        self._pos_cache = {}
-        atom_ids_1 = [component[0] for component in component_list_1[:]]
-        atom_ids_2 = [component[0] for component in component_list_2[:]]
-        non_bonded_lists = self._non_bonded_list_calculator(atom_ids_1,atom_ids_2)
-                    
-
-        for i,non_bonded_list in enumerate(non_bonded_lists):
-            component_1 = component_list_1[i]
-            if len(non_bonded_list) > 0:
-                atom_id_1 = component_1[0]
-                self._interaction_count = 0
-                for j in non_bonded_list:#
-                    component_2 = component_list_2[j]
-                    atom_id_2 = component_2[0]
-                    atom_1_coefficent_offset = component_1[1]
-                    for chem_type_id in component_2[1:]:
-                        #TODO replace with a more direct lookup, we shouldn't need multiple values here
-                        #so only list chem type ids by know chem_types in the sturtcure not all chem types
-        #                    print chem_type_id
-        #                    print coefficient_list
-        #                    print chem_type_id, sphere_id, exponent 
-                        
-                        
-                        
-                            
-                        coefficient_data  = coefficient_list.get_components_for_atom_id(chem_type_id)
-        #                    print coefficient_data
-                        coefficient_data = coefficient_data[0]
-                        coefficients = coefficient_data[3:]
-                        
-                        chem_type_id, sphere_id, exponent = coefficient_data[:3]
-        #                    print chem_type_id, sphere_id, exponent 
-                    
-
-                        result_component = atom_id_1,atom_id_2,coefficients[atom_1_coefficent_offset],exponent 
-                        target_component_list.add_component(result_component)
-                        self._interaction_count += 1
-
-        if self._verbose:
-            print '  build boxes [slow]'
             
     def __str__(self):
         result  = []
@@ -3044,15 +3058,16 @@ class Non_bonded_potential(Distance_based_potential):
         self._add_component_factory(Null_component_factory('NBLT'))
         
         self._non_bonded_list = Non_bonded_list()
+        self._component_set = None
     
     def _get_shift_calculator(self):
-        result  =Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name()) 
+        result  = Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
         result.set_verbose(self._verbose)
         return result
     
     def _get_force_calculator(self):
 #        if self._fast:
-        result = Fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed, name=self.get_abbreviated_name())
+        result = Fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
 #        else:
 #        result = Non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
         result.set_verbose(self._verbose)
@@ -3072,7 +3087,7 @@ class Non_bonded_potential(Distance_based_potential):
         return Distance_based_potential.Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
     
     def _get_target_atom_list_name(self):
-        return 'NBLT'
+        return 'ATOM'
     
     def _get_distance_list_name(self):
         return 'NBLT'
@@ -3081,9 +3096,11 @@ class Non_bonded_potential(Distance_based_potential):
         non_bonded_list = self._get_component_list('NBLT')
         
         target_atom_list = self._get_component_list('ATOM')
+        
         remote_atom_list = self._get_component_list('NBRM')
+        
         coefficient_list  = self._get_component_list('COEF')
-        self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
+        updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
         
         return non_bonded_list
     
@@ -3099,7 +3116,8 @@ class Non_bonded_potential(Distance_based_potential):
     def get_target_atom_ids(self):
         #TODO: this  call is required check why....
         self.update_non_bonded_list(increment=False)
-        return super(Non_bonded_potential, self).get_target_atom_ids()
+        components = self._get_component_list('ATOM')
+        return components.get_component_atom_ids()
     
     def _reset_non_bonded_list(self, increment=True):
         self._non_bonded_list._reset()
@@ -3109,10 +3127,7 @@ class Non_bonded_potential(Distance_based_potential):
             self._non_bonded_list.update()
         self._get_non_bonded_list()
         
-#    TODO add a with prepare construct
-    def _calc_single_atom_shift(self, target_atom_id):
-#        self.update_non_bonded_list()
-        return Distance_based_potential._calc_single_atom_shift(self, target_atom_id)
+
     
     def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
 #        self.update_non_bonded_list()
@@ -3129,14 +3144,7 @@ class Non_bonded_potential(Distance_based_potential):
 #            self._force_calculator._calc_single_force_set(index, factor, forces)
 
     
-    def _calc_component_shift(self, index):
-        target_atom_index,distant_atom_index = self._get_target_and_distant_atom_ids(index)
-        
-        result  = 0.0
-        distance  = Atom_utils._calculate_distance(target_atom_index, distant_atom_index)
-        if distance < 5.0:
-            result = super(Non_bonded_potential, self)._calc_component_shift(index)
-        return result
+
     
     class Base_indexer(object):
         
@@ -3388,7 +3396,139 @@ class Non_bonded_potential(Distance_based_potential):
             
         return '\n'.join(result)
 
+    def _create_component_list(self, name):
+        if name  == 'NBLT':
+            return Non_bonded_interaction_list()
+        elif name == "ATOM":
+            return Native_component_list(format='ii')
+        elif name == 'NBRM':
+            return Native_component_list(format='iii')
+        elif name == 'COEF':
+            def coef_translator(component):
+                result = list()
+                result.extend(component)
+                COEF_COMP_LENGTH = 3 + (3 * 7)
+                extension_length =  COEF_COMP_LENGTH - len(component)
+                result.extend([0.0]*extension_length)
+                for i,elem in enumerate(result):
+                    if elem ==  None:
+                        result[i]=0.0
+                return result
+            
+            def coef_expander(components):
+                keyed_components = {}
+                for component in components:
+                    keyed_components[component[0]]= component
+                
+                result = []
+                last_component_index  =  components[-1][0]
+                for i in range(0,last_component_index+1):
+                    if i in keyed_components:
+                        result.append(keyed_components[i])
+                    else:
+                        num_floats = len(components[0])-2
+                        result.append([0,0] + ([0.0] * num_floats))                
+                return result
+            
+            return Native_component_list('iif'+ ('f'*3*7), translator=coef_translator, preparer=coef_expander)
+        else:
+            return Component_list()
 
+
+            
+
+    def _get_components(self):
+        if self._component_set ==  None:
+            target_component_list = self._get_component_list('ATOM')
+            native_target_atom_list = target_component_list.get_native_components()
+            
+            remote_component_list = self._get_component_list('NBRM')
+            native_remote_atom_list = remote_component_list.get_native_components()
+            
+            coefficient_list = self._get_component_list('COEF')
+            native_coefficient_list = coefficient_list.get_native_components()
+    
+            non_bonded_list = self._get_component_list('NBLT')
+            
+            self._component_set = {'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
+                          'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
+                          'OFFS' : 0}
+        
+        return self._component_set
+
+    def _build_non_bonded_active_components(self, target_atom_ids):
+                
+        target_component_list = self._get_component_list('ATOM')
+        non_bonded_list =  self._get_component_list('NBLT')
+
+        
+        num_target_atoms = self._non_bonded_list.get_num_target_atoms()
+        
+        self._get_components()['OFFS'] = 0
+        
+        if num_target_atoms != len(target_atom_ids):
+            active_components  = self._build_active_components_list(target_atom_ids, non_bonded_list)
+            if len(active_components) > 0:
+                self._get_components()['OFFS'] = -non_bonded_list[active_components[0]][3]
+        else:
+            active_components = None
+            
+        return  active_components
+
+    #TODO: this is no longer as canonical as the other versions 
+    # NB calculator doesn't have a 1:1 correspondence between nb lists elememnts and distance components....
+    def _calc_single_atom_shift(self, target_atom_id):
+        components =  self._get_component_list('NBLT')
+        
+        result = 0.0
+        for i,component in enumerate(components):
+            if component[0] ==  target_atom_id:
+                result += self._calc_component_shift(i)
+        
+        return result    
+    
+    def _calc_component_shift(self, index):
+         
+        calc = self._get_shift_calculator()
+            
+        components = self._get_components()
+         
+        target_component_list = self._get_component_list('ATOM')
+        non_bonded_list =  components['NBLT']
+         
+        target_atom_ids = [non_bonded_list[index][0],]
+        
+        active_components = array.array('i',[index,])
+        components['OFFS'] = - non_bonded_list[index][3]
+        
+        component_to_result = array.array('i',[0,])
+        
+        results = array.array('d',[0.0])
+
+        calc(components,results,component_to_result, active_components=active_components)
+ 
+        return results[0]
+    
+
+    def calc_shifts(self, target_atom_ids, results):
+         
+        components = self._get_components()
+        
+        active_components = self._build_non_bonded_active_components(target_atom_ids)
+        
+        self._shift_calculator(components,results,self._component_to_result, active_components=active_components)
+
+
+
+    def calc_force_set(self,target_atom_ids,force_factors,forces):
+
+           
+        components = self._get_components()
+                
+        active_components = self._build_non_bonded_active_components(target_atom_ids)
+        
+        self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=active_components)
+         
 class Energy_calculator:
     def __init__(self):
         raise Exception ("not used!")
@@ -3581,7 +3721,6 @@ class Xcamshift(PyPot):
         self._verbose=verbose
         self._shift_table = Observed_shift_table()
         self._shift_cache = {}
-        self._fast =  False
         self._out_array =  None
         self._selected_atoms = None
         self._energy_term_cache = self._create_energy_term_cache()
@@ -3591,6 +3730,7 @@ class Xcamshift(PyPot):
         self.set_verbose(verbose)
         self.update_energy_calculator()
         self.update_force_factor_calculator()
+        self._freeze = False
 
     
     
@@ -3613,10 +3753,6 @@ class Xcamshift(PyPot):
 
     def update_force_factor_calculator(self):
         self._update_calculator(self._force_factor_calculator)
- 
-    def set_fast(self,on):
-        self._fast = (on == True)
-        self._set_sub_potetials_fast()
         
     def clear_shift_cache(self):
         self._shift_cache = {}
@@ -3665,7 +3801,7 @@ class Xcamshift(PyPot):
             num_atoms = len(result)
             sub_result  = [0.0] * num_atoms
             potential.set_shifts(sub_result)
-            key = potential.get_abbreviated_name()
+            key = potential.L()
             keys.append(key)
             result_elements[key] = sub_result
         
@@ -3715,8 +3851,8 @@ class Xcamshift(PyPot):
             start_time =  time()
             
         self._shift_cache = {}
-        result_shifts = [0.0]*len(target_atom_ids)
-        self.calc_shifts(target_atom_ids, result_shifts)
+        result_shifts = allocate_array(len(target_atom_ids)) 
+        self._calc_shifts(target_atom_ids, result_shifts)
 
         for target_atom_id, result in zip(target_atom_ids,result_shifts):
             self._shift_cache[target_atom_id] =  result
@@ -3726,37 +3862,46 @@ class Xcamshift(PyPot):
             
             print "shifts completed in ", "%.17g " %  (end_time-start_time),"seconds"
 
-        
     def calc_shifts(self, target_atom_ids=None, result=None):
         def target_atom_ids_as_selection_strings(target_atom_ids):
             result  = []
             for target_atom_id in target_atom_ids:
                 result.append(Atom_utils._get_atom_info_from_index(target_atom_id))
             return tuple(result)
+
+        if target_atom_ids  == None:
+            target_atom_ids = self._get_all_component_target_atom_ids() 
+            
+  
+        if result == None or len(result) < len(target_atom_ids):
+            result = array.array('d',[0.0] *len(target_atom_ids))
+
+
+        
+        self._calc_shifts(target_atom_ids, result)
+        
+        #TODO review whole funtion and resturn types
+        return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(result))
+        
+    #TODO: add standalone mode flag or wrap in a external wrapper that call round changed etc    
+    def _calc_shifts(self, target_atom_ids=None, result=None):
                 
         if self._verbose:
             start_time =  time()
             print 'start calc shifts'
             
-        if target_atom_ids  == None:
-            target_atom_ids = self._get_all_component_target_atom_ids() 
             
-        #todo this could be more elegant
+      #todo this could be more elegant
         reset_selected_atoms = False
         if self._selected_atoms == None:
             self._selected_atoms = target_atom_ids
             reset_selected_atoms =  True
+
+        #TODO: currently needed to generate a component to result remove by making component to result lazy?
+        if not self._freeze:
+            self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
             
-        if result == None or len(result) < len(target_atom_ids):
-            result = [0.0] *len(target_atom_ids)
-
-#        self._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
-#        self._prepare(ROUND_CHANGED,None)
-        
-#        self.set_shifts(result)
-        self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
         for potential in self.potential:
-
             potential.calc_shifts(target_atom_ids, result)
 
         if self._selected_atoms == None:
@@ -3767,16 +3912,14 @@ class Xcamshift(PyPot):
             end_time =  time()
             print 'end calc shifts (calculated shifts in  %.17g seconds) \n' % (end_time-start_time)
         
-        #TODO review whole funtion and resturn types
-        return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(result))
                            
-    #TODO: deprecated remove use calc_shifts
+    #TODO: deprecated remove use _calc_shifts
     def set_shifts(self, result):
-        print 'deprecated remove use calc_shifts'
+        print 'deprecated remove use _calc_shifts'
         target_atom_ids =  self._get_all_component_target_atom_ids()
         self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
-        result_shifts  = [0.0] * len(target_atom_ids)
-        self.calc_shifts(target_atom_ids, result_shifts)
+        result_shifts  = allocate_array(len(target_atom_ids))
+        self._calc_shifts(target_atom_ids, result_shifts)
         for target_atom_id, shift in zip(target_atom_ids,result_shifts):
             result[target_atom_id] =  shift
         
@@ -3790,7 +3933,6 @@ class Xcamshift(PyPot):
         
 
     def _calc_single_atom_shift(self,target_atom_id):
-        self._prepare(TARGET_ATOM_IDS_CHANGED,[ target_atom_id,])
         self._shift_cache = {}
         self._calc_shift_cache([target_atom_id,])
         return  self._shift_cache [target_atom_id]
@@ -3862,7 +4004,7 @@ class Xcamshift(PyPot):
         
     def _calc_single_atom_energy(self, target_atom_index):
         
-        target_atom_ids = [target_atom_index]
+        target_atom_ids = array.array('i',[target_atom_index])
         self._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
         self._calc_single_atom_shift(target_atom_index)
         self.update_energy_calculator()
@@ -3878,7 +4020,7 @@ class Xcamshift(PyPot):
     def _calc_single_atom_force_set_with_potentials(self, target_atom_id, forces, potentials_list):
 #        print 'forces _calc_single_atom_force_set_with_potentials', forces 
 #        self._calc_single_force_factor(target_atom_id, forces)
-        target_atom_ids = [target_atom_id]
+        target_atom_ids = array.array('i',[target_atom_id])
         self._calc_force_set_with_potentials(target_atom_ids, forces, potentials_list)
 
     def _calc_force_set(self,target_atom_ids,forces,potentials=None):
@@ -3921,7 +4063,7 @@ class Xcamshift(PyPot):
         return constants_table.get_tanh_elongation(atom_name)
     
     def _calc_single_factor(self, target_atom_id):
-        target_atom_ids = [target_atom_id]
+        target_atom_ids = array.array('i',[target_atom_id])
         
         if not target_atom_id in self._shift_table.get_atom_indices():
             msg = "requested factor for target [%s] which is not in shift table"
@@ -3959,17 +4101,13 @@ class Xcamshift(PyPot):
         observed_shift_atom_ids = self.get_selected_atom_ids()
         active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
         active_target_atom_ids = list(active_target_atom_ids)
-        return active_target_atom_ids
+         
+         
+        return array.array('i',sorted(active_target_atom_ids))
     
 
-    def _set_sub_potetials_fast(self):
-        for potential in self.potential:
-            potential.set_fast(self._fast)
-        
-        return potential
 
     def _prepare_potentials(self, change, data):
-        self._set_sub_potetials_fast()
         
         for potential in self.potential:
             potential._prepare(change, data)
@@ -4070,7 +4208,6 @@ class Xcamshift(PyPot):
             prepare_start_time =  time()
             
         target_atom_ids = self._get_active_target_atom_ids()
-        self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
         self._prepare(ROUND_CHANGED, None)
         self._calc_shift_cache(target_atom_ids)
         if self._verbose:
@@ -4091,14 +4228,17 @@ class Xcamshift(PyPot):
     def _set_frozen(self,on=True):
         for potential in self.potential:
             potential.set_frozen(on)
+        self._freeze = True
             
     def setup(self):
+        #TODO: do we need a STRUCTURE_CHANGED here
         self._prepare(TARGET_ATOM_IDS_CHANGED, self._get_active_target_atom_ids())
         self._set_frozen()
     
     def reset(self):
         self._prepare(STRUCTURE_CHANGED, None)
         self._prepare(TARGET_ATOM_IDS_CHANGED, None)
+        #TODO: do we need a  set froze here
 
     
 

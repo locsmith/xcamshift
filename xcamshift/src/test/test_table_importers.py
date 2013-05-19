@@ -13,6 +13,7 @@ Created on Apr 10, 2012
 
 @author: garyt
 '''
+import sys
 import unittest2
 from table_manager import Table_manager
 from table_builders.table_extractor import Table_extractor
@@ -20,7 +21,7 @@ from table_builders.xcamshift import Backbone_distance_extractor
 from table_builders.xcamshift.camshift_table_builder import extract
 from common_constants import BACK_BONE, SIDE_CHAIN, BASE, GLY, PRO, C, CA, DATA,\
     N, HN, XTRA, DIHEDRAL, RING, NON_BONDED, CB, SPHERE_1, SP3, HA, SP2, O,\
-    SPHERE_2, CG, CAMSHIFT_RESIDUE_TYPES, RANDOM_COIL, DISULPHIDE, CAMSHIFT_SUB_POTENTIALS
+    SPHERE_2, CG, CAMSHIFT_RESIDUE_TYPES, RANDOM_COIL, DISULPHIDE, CAMSHIFT_SUB_POTENTIALS, HBOND
 from yaml import Loader, load
 import common_constants
 from python_utils import IsMappingType, Dict_walker, value_from_key_path,\
@@ -84,8 +85,10 @@ class Test_table_importers(unittest2.TestCase):
                     yield residue
                 
         sub_potential_subset = list(CAMSHIFT_SUB_POTENTIALS)
-        sub_potential_subset.remove(DISULPHIDE)    # there is no original data for the disulphide subpotential
-        sub_potential_subset.remove(RANDOM_COIL)   # there is no extractor for the random coil subpotential
+        # there is no original data for theses subpotentials
+        for potential_name in DISULPHIDE,RANDOM_COIL,HBOND:
+            sub_potential_subset.remove(potential_name)   
+        
         for sub_potential in sub_potential_subset:
 
             sub_potential_file_id = sub_potential.lower().strip()
@@ -121,6 +124,8 @@ class Test_table_importers(unittest2.TestCase):
         #  2. hydrogen bonds
         #  3. disulphide cystines
         
+        DISU='DISU'
+        CYS='CYS'
         expected = {
                     BACK_BONE : {
                           BASE : {(DATA,-1,N,HA) :  0.1049538,
@@ -192,14 +197,28 @@ class Test_table_importers(unittest2.TestCase):
                                   (DATA, (CA, -1), (CA, 1), CB) :  0.3278771 }   # note this is different from the bpaper value (0.3274878)
                     },
                     
+                    DISULPHIDE : {
+                          BASE : {(DATA, (DISU, CYS), HA)   :      0.01155515,
+                                  (DATA, (DISU, CYS), CA)   :     -2.85170038,
+                                  (DATA, (DISU, CYS), HN)   :     -0.10605545,
+                                  (DATA, (DISU, CYS), N )   :     -1.41314415,
+                                  (DATA, (DISU, CYS), C )   :     -0.37088135,
+                                  (DATA, (DISU, CYS), CB)   :     11.36163737}
+                    }    
         }
         
         sub_potential_subset = list(CAMSHIFT_SUB_POTENTIALS)
-        sub_potential_subset.remove(DISULPHIDE)    # TODO: add test
-        sub_potential_subset.remove(RANDOM_COIL)   # there is no extractor for the random coil subpotential
-        
+        # TODO: add test
+        # there is no extractor for the random coil subpotential
+        for potential_name in RANDOM_COIL,HBOND:
+            sub_potential_subset.remove(potential_name)
+            print >> sys.stderr, 'warning sub potential %s not tested!' % potential_name
+            
         for sub_potential in sub_potential_subset:
             for residue_type in CAMSHIFT_RESIDUE_TYPES:
+                if sub_potential == DISULPHIDE and residue_type != CYS:
+                    continue
+                
                 read_table = extract(CAMSHIFT_DATA_FILES,sub_potential,residue_type)
                 
                 read_table_data = load(read_table[sub_potential, residue_type])

@@ -35,7 +35,6 @@ from common_constants import BACK_BONE, RANDOM_COIL, XTRA, DIHEDRAL, SIDE_CHAIN,
 from common_constants import TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
 TOTAL_ENERGY = 'total'
 
-fast = False
 #def text_keys_to_atom_ids(keys, segment = '*'):
 #    result = []
 #    for key in keys:
@@ -309,9 +308,7 @@ class TestXcamshiftAGFA(unittest2.TestCase):
 
 
     def _get_xcamshift(self):
-        global fast
         xcamshift = Xcamshift()
-        xcamshift.set_fast(fast)
         return xcamshift
     
 
@@ -380,8 +377,6 @@ class TestXcamshiftAGFA(unittest2.TestCase):
 
 
 def run_tests():
-    if fast:
-        print >> sys.stderr, TestXcamshiftAGFA.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift_agfa')
 #    unittest2.main(module='test.test_xcamshift_afa',defaultTest='TestXcamshiftAFA.test_calc_component_shift')
     

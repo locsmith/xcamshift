@@ -33,7 +33,6 @@ from common_constants import TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
 TOTAL_ENERGY = 'total'
 from cython.shift_calculators import Out_array
 
-fast =  False
 
 def text_keys_to_atom_ids(keys, segment = '*'):
     result = []
@@ -232,9 +231,7 @@ class TestXcamshiftAFA(unittest2.TestCase):
             
 
     def make_ring_potential(self):
-        global fast
         ring_potential = Ring_Potential()
-        ring_potential.set_fast(fast)
         return ring_potential
 
     def test_calc_component_forces(self):
@@ -275,8 +272,6 @@ class TestXcamshiftAFA(unittest2.TestCase):
             
 
 def run_tests():
-    if fast:
-        print >> sys.stderr, TestXcamshiftAFA.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift_afa')
 #    unittest2.main(module='test.test_xcamshift_afa',defaultTest='TestXcamshiftAFA.test_calc_component_shift')
     

@@ -9,73 +9,68 @@
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
 '''
-Created on 7 Apr 2012
+Created on 6 Apr 2012
 
 @author: garyt
 '''
-
-from common_constants import h_keys, DATA, RING
+import re
+from common_constants import HA,CA,H,N,C,O, DATA, HBOND
+from common_constants import h_keys
+#
 from collection_backport import OrderedDict
+
+    
 from table_builders.formatters import fixup_null_values,\
     fixup_decimal_spacing, fixup_convert_H_to_HN, fixup_replace_plus_with_space,\
     fixup_tuple_key_spacing, fixup_put_lonely_keys_on_new_line,\
     fixup_complex_key_question_mark,\
     global_fixup_colons_on_same_line_as_tuple_key,\
-    global_fixup_data_dicts_on_same_line_as_key
+    global_fixup_data_dicts_on_same_line_as_key, fixup_spaces_after_colons,\
+    fixup_add_after
+
 from table_builders.table_extractor import Table_extractor
-from table_builders.xcamshift.Dihdedral_distance_extractor import fixup_extra_space_in_data_after_colon
+
+HBOND_V_KEYS_1 = (-1, 'O', 'HN'), (0, 'HN', 'O'), (0, 'O', 'HN'), (1, 'HN', 'O')
+HBOND_V_KEYS_2 = 'DIST', 'ANG1', 'ANG2'        
 
 
-TYR='TYR'
-PHE='PHE'
-TRP='TRP'
-HIS='HIS'
-
-xtra_v_keys = (  
-    (PHE,"6"),
-    (TYR,"6"),
-    (TRP,"5"),
-    (TRP,"6"),
-    (HIS,"5")
-)
-
-RING_DATA = 'RINGS'
-class RING_table_extractor(Table_extractor):
+class HBOND_table_extractor(Table_extractor):
+    
     
     def __init__(self,data):
-        super(RING_table_extractor, self).__init__(data)
-            
+        Table_extractor.__init__(self,data)
+
+
     @classmethod
     def get_name(self):
-        return RING
+        return HBOND
+
 
     def serialize(self,data):
         out_data = OrderedDict()
-        out_data[DATA] =  OrderedDict()
+        out_data[DATA] = OrderedDict()
                 
-        for i,v_key in enumerate(xtra_v_keys):
-    
-            out_line = out_data[DATA].setdefault(v_key,OrderedDict())
-    
-            for h_key in h_keys:
-                out_line[h_key] = data[RING_DATA][h_key][i]
-
+        for i,v_key in enumerate(HBOND_V_KEYS_1):
+            out_data[DATA][v_key] = OrderedDict()
+            for j,parameter in enumerate(HBOND_V_KEYS_2):
+                out_data[DATA][v_key][parameter] = OrderedDict()
+                for h_key in h_keys:
+                    out_data[DATA][v_key][parameter][h_key] = data['HBONDS'][h_key][i*3+j]
         return out_data
     
-
-
     def format_lines(self,lines):
+
         result = []
         lines = global_fixup_colons_on_same_line_as_tuple_key(lines)
         lines = global_fixup_data_dicts_on_same_line_as_key(lines)
         for line in lines.split('\n'):
+            line = fixup_spaces_after_colons(line)
             line = fixup_complex_key_question_mark(line)
             line = fixup_null_values(line)
             line = fixup_tuple_key_spacing(line)
             line = fixup_decimal_spacing(line)
             line = fixup_replace_plus_with_space(line)
             line = fixup_convert_H_to_HN(line)
-            line = fixup_put_lonely_keys_on_new_line(line)
+            line = fixup_add_after(line,'ANG2','\n')
             result.append(line)
         return result
-    

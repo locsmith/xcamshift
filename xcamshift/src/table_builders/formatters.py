@@ -130,3 +130,11 @@ def global_fixup_multi_line_tuple_keys(lines):
     lines = re.sub("\]\,\s+\[", "], [", lines)
     lines = re.sub("\,\s\[\[",", [",lines)
     return lines
+
+def fixup_add_after(line,regex,insertion):
+    
+    if re.search(regex,line):
+        line = line +insertion
+        
+    return line
+        

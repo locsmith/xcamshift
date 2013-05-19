@@ -21,7 +21,8 @@ from atomSel import AtomSel
 from test import gb3, gb3_10_steps
 from test import  util_for_testing
 from observed_chemical_shifts import Observed_shift_table
-from common_constants import  SIDE_CHAIN, NON_BONDED, RING
+from common_constants import  SIDE_CHAIN, NON_BONDED, RING,\
+    CAMSHIFT_SUB_POTENTIALS
 from common_constants import TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
 from test.gb3 import gb3_component_shifts_sc, gb3_component_shifts_ring
 from utils import Atom_utils
@@ -32,8 +33,7 @@ from test.util_for_testing import  _check_shift_results, _shift_cache_as_result,
     get_atom_index, get_key_for_atom_index
 TOTAL_ENERGY = 'total'
 from cython.shift_calculators import Out_array
-fast = False
-
+from array import array
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -434,7 +434,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
         xcamshift._prepare(ROUND_CHANGED, None)
         active_target_atoms_ids = xcamshift._get_active_target_atom_ids()
 
-        result  =  [0.0] * len(active_target_atoms_ids)
+        result  =  array('d',[0.0] * len(active_target_atoms_ids))
+
         xcamshift.calc_shifts(active_target_atoms_ids, result)
         
         _check_shift_results(active_target_atoms_ids, result,gb3.gb3_shifts)
@@ -560,17 +561,15 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
         
     def make_xcamshift(self, shifts):
-        global fast
         xcamshift = self._setup_xcamshift_with_shifts_table(shifts)
-        xcamshift.set_fast(fast)
-
+        xcamshift.setup()
         
-        non_bonded = xcamshift.get_named_sub_potential(NON_BONDED)
-        non_bonded.update_non_bonded_list()
+        #non_bonded = xcamshift.get_named_sub_potential(NON_BONDED)
+        #non_bonded.update_non_bonded_list()
         
 
-        ring_potential = xcamshift.get_named_sub_potential(RING)
-        ring_potential._build_ring_data_cache()
+        #ring_potential = xcamshift.get_named_sub_potential(RING)
+        #ring_potential._build_ring_data_cache()
         
         return xcamshift
 
@@ -652,7 +651,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         xcamshift._calc_shift_cache(xcamshift._get_active_target_atom_ids())
         xcamshift.update_force_factor_calculator()
         
-        for i, potential_name in enumerate(common_constants.CAMSHIFT_SUB_POTENTIALS):
+        for i, potential_name in enumerate(CAMSHIFT_SUB_POTENTIALS):
             out_string = '%s %i/%i:  ' % (potential_name,i+1, len(common_constants.CAMSHIFT_SUB_POTENTIALS))
             out_string = '%-20s' % out_string
             print out_string,
@@ -767,29 +766,25 @@ class TestXcamshiftGB3(unittest2.TestCase):
             target_atom_selection = util_for_testing.translate_atom_key(target_atom_selection)
             shift_diffs.append(expected_shifts[target_atom_selection]-shift)
             self.assertAlmostEqual(expected_shifts[target_atom_selection], shift, self.DEFAULT_DECIMAL_PLACES - 2, target_atom_selection)
-        
-def run_tests():
-    if fast:
-        print >> sys.stderr, TestXcamshiftGB3.__module__,"using fast calculators"
-    unittest2.main(module='test.test_xcamshift_gb3')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_differences')
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
+            
+    def test_atom_id_stability(self):  
+        test = None
+        for i,file in enumerate(gb3_10_steps.gb3_files):
+            PDBTool("test_data/gb3_10_steps/%s" % file).read()
+            print file
+            latest = {}
+            for atom_sel in AtomSel('all'):
+                index  = atom_sel.index()
+                info  = atom_sel.segmentName(), atom_sel.residueNum(), atom_sel.atomName()
+                latest[index] = info
+                
+            if test != None:
+                self.assertDictEqual(latest, test)
+            test=latest
 
 
 if __name__ == "__main__":
-    run_tests()
-#    run_tests()
-    
-#if __name__ == "__main__":
-##    unittest2.main()
-#    cProfile.run('unittest2.main()')
-    
-#    TestXcamshift.list_test_shifts()
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_forces')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_energies')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_component_chemical_shifts')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components_add_up')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components2')
-#    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy')
-    
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
+#     TODO: add a way to run the complete test suite
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
+#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')

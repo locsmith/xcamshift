@@ -8,6 +8,8 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
+from table_builders.Table_modifier import Table_modifier
+from table_builders.yaml_patches import add_access_to_yaml_list_based_keys
 '''
 Created on 30 Mar 2012
 
@@ -28,6 +30,7 @@ from table_builders.xcamshift.Dihdedral_distance_extractor import DIHEDRALS_tabl
 from table_builders.xcamshift.Ring_table_extractor import RING_table_extractor
 from table_builders.xcamshift.Nonbonded_table_extractor import Nonbonded_table_extractor
 from table_builders.xcamshift.Disulphide_data_extractor import  DISU_table_extractor
+from table_builders.xcamshift.hbond_data_extractor import HBOND_table_extractor
 from common_constants import CAMSHIFT_SUB_POTENTIALS
 import argparse
 from yaml import load
@@ -67,6 +70,7 @@ class Camshift_table_reader(object):
         self.files_by_type = {}
         self.data = {}
         self.file_types = set()
+        add_access_to_yaml_list_based_keys()
 
     def read(self):
         self._find_files(self.table_dir)
@@ -146,7 +150,8 @@ def _get_extractor_classes(sub_potential = None):
                   DIHEDRALS_table_extractor, 
                   RING_table_extractor,
                   Nonbonded_table_extractor,
-                  DISU_table_extractor
+                  DISU_table_extractor,
+                  HBOND_table_extractor
                   )
     result  = []
     
@@ -199,6 +204,7 @@ def _build_args_list():
     parser.add_argument('--verbose', action="store_true", default=False)
     parser.add_argument('-o', '--output', default="-", help="where to put the files either a file system path or - for stdout") 
     parser.add_argument('-t', '--template', default='../xcamshift_templates', help='directory where template files are kept: %(default)s}')
+    parser.add_argument('-p', '--patch', default='../xcamshift_patches', help='directory where patch files are kept: %(default)s}')
     parser.add_argument('-s', '--sub-potential', default=None, help='select the sub potential to output (default = ALL)')
     return  parser.parse_args()
 
@@ -259,12 +265,13 @@ def _read_version(table_dir):
     return version_info
 
 
-def _get_template_filename(sub_potential, residue_type,version):
+def _get_template_filename(table_selector, file_name_template='cams_%s_%s_%s_template.txt'):
+    sub_potential, residue_type, version =  table_selector
     if residue_type == '':
         residue_type = 'base'
     sub_potential_name = sub_potential.strip().lower()
     version_string = '%i_%i_%i' % version
-    file_name = 'cams_%s_%s_%s_template.txt' % (version_string, sub_potential_name, residue_type)
+    file_name = file_name_template % (version_string, sub_potential_name, residue_type)
     return file_name
 
 
@@ -285,8 +292,11 @@ def _build_filename_path(dir_path, relative_path, file_name):
     
     return file_path
 
-def _read_template(dir_path,sub_potential,residue_type,version, path='../xcamshift_templates'):
-    file_name = _get_template_filename(sub_potential, residue_type, version)
+#TODO: merge patch and template reading code
+def _read_template(table_selector, table_path):
+    dir_path, path, template = table_path 
+    
+    file_name = _get_template_filename(table_selector, template)
     
     file_path = _build_filename_path(dir_path, path, file_name)
 
@@ -297,8 +307,20 @@ def _read_template(dir_path,sub_potential,residue_type,version, path='../xcamshi
             template  = ''.join(template)
 
     return template
-             
-        
+
+ 
+def _read_patch(table_selector, patch_path):
+    dir_path, path, template = patch_path
+    file_name = _get_template_filename(table_selector,template)            
+
+    file_path = _build_filename_path(dir_path, path, file_name)
+
+    patch = {}
+    if os.path.isfile(file_path):
+        with  open(file_path) as patch_h:
+            patch = load(patch_h)
+
+    return patch        
 #def _filter_table_type_names(table_type_names, sub_potential):
 #    result =  table_type_names
 #    
@@ -406,10 +428,19 @@ if __name__ == '__main__':
                 
                 sub_potential_name  = extractor.get_name()
                 
+                patch_path = table_dir, args.patch, 'cams_%s_%s_%s_patch.txt'
+                table_selector = sub_potential_name, residue_type, camshift_version
+                
+                patch = _read_patch(table_selector, patch_path)
+                
+                modifier = Table_modifier(patch)
+                extractor.set_modifier(modifier)
+                
                 output_data = extractor.extract(residue_type)
                 
-                template = _read_template(table_dir, sub_potential_name, residue_type, camshift_version,path=args.template)
-                template_filename = _get_template_filename(sub_potential_name, residue_type, camshift_version,)
+                table_path =  table_dir, args.template, 'cams_%s_%s_%s_template.txt' 
+                
+                template = _read_template(table_selector, table_path)
                 
                 if template != None:
                     output_data = template % output_data            

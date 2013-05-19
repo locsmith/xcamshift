@@ -42,10 +42,12 @@ cdef extern from "dihedral.hh":
                  Atom&, Atom&)
         float value()
         
-cdef extern from "cdsVector.hh" namespace "CDS":
+cdef extern from "cdsVector.hh":
     cdef cppclass CDSVector[T]:
         T& data(int i)
         int size()
+        CDSVector[T]& resize(int)
+        T& operator[] (int) 
 
 
 cdef extern from 'simulation.hh':

@@ -23,7 +23,6 @@ import sys
 import unittest2
 from cython.fast_segment_manager import Segment_Manager
 
-fast = False
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -55,9 +54,7 @@ class TestXcamshiftVIN(unittest2.TestCase):
         return Xcamshift()
 
     def test_vin_shifts(self):
-        global fast
         xcamshift = self._get_xcamshift()
-        xcamshift.set_fast(fast)
         
         vin_shifts_copy = dict(vin_shifts)
         for key in vin_shifts:
@@ -133,8 +130,6 @@ class TestXcamshiftVIN(unittest2.TestCase):
 #            self.assertAlmostEqual(test_data_sum[key], agaga_shifts[key], places=self.DEFAULT_DECIMAL_PLACES - 2, msg=key)
             
 def run_tests():
-    if fast:
-        print >> sys.stderr, TestXcamshiftVIN.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift_vin')
 #    unittest2.main(module='test.test_xcamshift_afa',defaultTest='TestXcamshiftAFA.test_calc_component_shift')
     
