@@ -29,6 +29,7 @@ import common_constants
 from cython.fast_segment_manager import Segment_Manager
 import cProfile
 import profile
+import time
 
 
 test_function = None
@@ -134,8 +135,11 @@ class Test(unittest2.TestCase):
                     self.result[i]=None
                     
             def __call__(self):
-                energy = self.xcamshift.calcEnergyAndDerivs(self.result)
-                
+                start = time.clock()
+                for i in range(10):
+                    energy = self.xcamshift.calcEnergyAndDerivs(self.result)
+                end =  time.clock()
+                print '%4.3f ms / cycle' % ((end-start)/10.0*1000)
 
         def run():
             def make_result_array_forces():
@@ -144,9 +148,11 @@ class Test(unittest2.TestCase):
                 result = [None] * num_atoms
                 return result
             Test_xcamshift_subpotential(xcamshift, None, make_result_array_forces())()
-
         run()
         cProfile.runctx('run()',globals(),locals(),filename='/home/garyt/test.profile')
+        
+        run()
+        
 
 if __name__ == "__main__":
 #    import sys;sys.argv = ['', 'Test.testName']
