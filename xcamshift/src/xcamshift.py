@@ -2411,11 +2411,6 @@ class Ring_Potential(Base_potential):
         super(Ring_Potential, self).set_verbose(on)
         self._ring_data_calculator.set_verbose(on)
 
-    def calc_force_set(self,target_atom_ids,force_factors,forces):
-        #TODO: is the right place for setup
-        self._setup_ring_calculator(self._force_calculator)
-        super(Ring_Potential, self).calc_force_set(target_atom_ids,force_factors,forces)
-        
         
     def _get_force_calculator(self):
 #        if self._fast:
@@ -2431,12 +2426,14 @@ class Ring_Potential(Base_potential):
 #         if change == STRUCTURE_CHANGED:
 #             self._clear_ring_cache()
             
-        if change  == ROUND_CHANGED:
+        if change  == ROUND_CHANGED or change == TARGET_ATOM_IDS_CHANGED:
             if self._verbose:
                 print "update ring cache"
                 
             self._build_ring_data_cache()
             self._setup_ring_calculator(self._shift_calculator)
+            self._setup_ring_calculator(self._force_calculator)
+
          
 
     def _setup_ring_calculator(self,calculator):
@@ -2453,15 +2450,6 @@ class Ring_Potential(Base_potential):
         result.set_verbose(self._verbose)
         return result
     
-    def calc_shifts(self, target_atom_ids, results):
-        #TODO: should only need to filter components when TARGTE_ATOMS etc change
-       
-
-        components = self._get_components()
-        if len(components) > 0:
-            #TODO: add as general method in base
-            self._setup_ring_calculator(self._shift_calculator)
-            self._shift_calculator(components,results, self._component_to_result, active_components=self._active_components)
         
         
     def get_abbreviated_name(self):
