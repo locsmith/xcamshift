@@ -836,7 +836,7 @@ class Base_potential(object):
     def calc_force_set(self,target_atom_ids,force_factors,forces):
         if self._have_derivative():
             components = self._get_components()
-            self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._active_components)
+            self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._get_active_components())
             
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
@@ -866,11 +866,14 @@ class Base_potential(object):
     def _create_component_list(self,name):
         return Component_list()
     
+    def _get_active_components(self):
+        return self._active_components
+    
     #TODO: unify with ring random coil and disuphide shift calculators
     def calc_shifts(self, target_atom_ids, results):
        
         components = self._get_components()
-        self._shift_calculator(components,results,self._component_to_result, active_components=self._active_components)
+        self._shift_calculator(components,results,self._component_to_result, active_components=self._get_active_components())
              
 
     
@@ -3047,6 +3050,7 @@ class Non_bonded_potential(Distance_based_potential):
         
         self._non_bonded_list = Non_bonded_list()
         self._component_set = None
+        self._selected_components =  None
     
     def _get_shift_calculator(self):
         result  = Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
@@ -3100,6 +3104,10 @@ class Non_bonded_potential(Distance_based_potential):
         
         if change == ROUND_CHANGED:
             self.update_non_bonded_list()
+        
+        if change == TARGET_ATOM_IDS_CHANGED:
+            self._selected_components = self._build_selected_components(target_atom_ids)
+
         
     def get_target_atom_ids(self):
         #TODO: this  call is required check why....
@@ -3443,8 +3451,8 @@ class Non_bonded_potential(Distance_based_potential):
                           'OFFS' : 0}
         
         return self._component_set
-
-    def _build_non_bonded_active_components(self, target_atom_ids):
+    
+    def _build_selected_components(self, target_atom_ids):
                 
         target_component_list = self._get_component_list('ATOM')
         non_bonded_list =  self._get_component_list('NBLT')
@@ -3497,25 +3505,23 @@ class Non_bonded_potential(Distance_based_potential):
  
         return results[0]
     
-
-    def calc_shifts(self, target_atom_ids, results):
-         
-        components = self._get_components()
-        
-        active_components = self._build_non_bonded_active_components(target_atom_ids)
-        
-        self._shift_calculator(components,results,self._component_to_result, active_components=active_components)
-
-
-
-    def calc_force_set(self,target_atom_ids,force_factors,forces):
-
-           
-        components = self._get_components()
-                
-        active_components = self._build_non_bonded_active_components(target_atom_ids)
-        
-        self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=active_components)
+    def _get_active_components(self):
+        return self._selected_components
+    
+#     def calc_shifts(self, target_atom_ids, results):
+#          
+#         components = self._get_components()
+#         
+#         self._shift_calculator(components,results,self._component_to_result, active_components=self._selected_components)
+# 
+# 
+# 
+#     def calc_force_set(self,target_atom_ids,force_factors,forces):
+# 
+#            
+#         components = self._get_components()
+#            
+        self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._selected_components)
          
 class Energy_calculator:
     def __init__(self):
