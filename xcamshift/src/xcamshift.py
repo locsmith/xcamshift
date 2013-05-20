@@ -3722,9 +3722,8 @@ class Xcamshift(PyPot):
         self._force_factor_calculator =  self._get_force_factor_calculator()
 
         self.set_verbose(verbose)
-        self.update_energy_calculator()
-        self.update_force_factor_calculator()
         self._freeze = False
+        self._active_target_atom_ids = None
 
     
     
