@@ -3717,7 +3717,7 @@ class Xcamshift(PyPot):
         self._shift_cache = {}
         self._out_array =  None
         self._selected_atoms = None
-        self._energy_term_cache = self._create_energy_term_cache()
+        self._energy_term_cache = None
         self._energy_calculator = self._get_energy_calculator()
         self._force_factor_calculator =  self._get_force_factor_calculator()
 
