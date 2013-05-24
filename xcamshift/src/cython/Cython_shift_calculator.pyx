@@ -1442,7 +1442,7 @@ cdef class Fast_energy_calculator:
 cdef class Fast_force_factor_calculator(Fast_energy_calculator):
 
     @cython.profile(True)
-    def  __call__(self, int[:] target_atom_ids):
+    def  __call__(self, int[:] target_atom_ids, int[:] active_atom_ids):
         cdef double start_time =0.0
         cdef double end_time =0.0
         if self._verbose:
@@ -1455,7 +1455,8 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
         cdef int i
         cdef float factor, shift_diff
         
-        for i,target_atom_id in enumerate(target_atom_ids):
+        for i,active_atom_id in enumerate(active_atom_ids):
+            target_atom_id = target_atom_ids[active_atom_id]
             factor  = 0.0
                 
             
@@ -1485,7 +1486,7 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
                     factor = weight * tanh_amplitude * tanh_elongation / (cosh(tanh_elongation * (adjusted_shift_diff - end_harmonic)))**2.0 * fact;
 
             result[i] = factor
-            
+        print
         if self._verbose:
             end_time = time()
             print '   force factors : ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
