@@ -4069,8 +4069,7 @@ class Xcamshift(PyPot):
         active_components = None
         
         active_components = None
-        if True:
-#         len(target_atom_ids) != len(self._active_target_atom_ids):
+        if len(target_atom_ids) != len(self._active_target_atom_ids):
             active_components =  []
             for target_atom_id in target_atom_ids:
                 active_components.append(target_atom_ids.index(target_atom_id))
@@ -4103,9 +4102,10 @@ class Xcamshift(PyPot):
         observed_shift_atom_ids = self.get_selected_atom_ids()
         active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
         active_target_atom_ids = list(active_target_atom_ids)
+        
+        self._active_target_atom_ids =  array.array('i',sorted(active_target_atom_ids))
          
-         
-        return array.array('i',sorted(active_target_atom_ids))
+        return self._active_target_atom_ids
     
 
 

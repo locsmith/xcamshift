@@ -1445,54 +1445,66 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
     def  __call__(self, int[:] target_atom_ids, int[:] active_atom_ids):
         cdef double start_time =0.0
         cdef double end_time =0.0
+        
+        cdef int i
+        
         if self._verbose:
             start_time = time()
 
         self.set_simulation()
-        #TODO: shouldn't be allocated each time
         cdef object python_result  = allocate_array(len(target_atom_ids),'f')
+       #TODO: shouldn't be allocated each time
         cdef float[:] result = python_result
-        cdef int i
-        cdef float factor, shift_diff
         
-        for i,active_atom_id in enumerate(active_atom_ids):
-            target_atom_id = target_atom_ids[active_atom_id]
-            factor  = 0.0
-                
-            
-            shift_diff = self._get_shift_difference(target_atom_id)
-            energy_terms = self._get_energy_terms(target_atom_id)
-            
+        if active_atom_ids == None:
+            for i in range(target_atom_ids.shape[0]):
+                target_atom_id = target_atom_ids[i]
+                python_result[i] = self._calc_one_force_factor(target_atom_id, i)
+        else:
+            for i,active_atom_id in enumerate(active_atom_ids):
+                target_atom_id = target_atom_ids[active_atom_id]
+    
+                python_result[i] = self._calc_one_force_factor(target_atom_id, i)
 
-            
-            flat_bottom_shift_limit = energy_terms.flat_bottom_shift_limit
-            
-            if abs(shift_diff) > flat_bottom_shift_limit:
-                adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
-                end_harmonic = energy_terms.end_harmonic
-                scale_harmonic = energy_terms.scale_harmonic
-                sqr_scale_harmonic = scale_harmonic**2
-                
-                weight = energy_terms.weight
-                
-                tanh_amplitude = energy_terms.tanh_amplitude
-                tanh_elongation = energy_terms.tanh_elongation
-                
-                # TODO: add factor and lambda to give fact
-                fact =1.0
-                if adjusted_shift_diff < end_harmonic:
-                    factor = 2.0 * weight * adjusted_shift_diff * fact / sqr_scale_harmonic;
-                else:
-                    factor = weight * tanh_amplitude * tanh_elongation / (cosh(tanh_elongation * (adjusted_shift_diff - end_harmonic)))**2.0 * fact;
-
-            result[i] = factor
-        print
         if self._verbose:
             end_time = time()
             print '   force factors : ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
 
+        return  python_result     
+       
+    cdef inline float _calc_one_force_factor(self, int target_atom_id, int i):
         
-        return  python_result
+        cdef float factor, shift_diff
+        
+        factor  = 0.0
+            
+        
+        shift_diff = self._get_shift_difference(target_atom_id)
+        energy_terms = self._get_energy_terms(target_atom_id)
+        
+
+        
+        flat_bottom_shift_limit = energy_terms.flat_bottom_shift_limit
+        
+        if abs(shift_diff) > flat_bottom_shift_limit:
+            adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
+            end_harmonic = energy_terms.end_harmonic
+            scale_harmonic = energy_terms.scale_harmonic
+            sqr_scale_harmonic = scale_harmonic**2
+            
+            weight = energy_terms.weight
+            
+            tanh_amplitude = energy_terms.tanh_amplitude
+            tanh_elongation = energy_terms.tanh_elongation
+            
+            # TODO: add factor and lambda to give fact
+            fact =1.0
+            if adjusted_shift_diff < end_harmonic:
+                factor = 2.0 * weight * adjusted_shift_diff * fact / sqr_scale_harmonic;
+            else:
+                factor = weight * tanh_amplitude * tanh_elongation / (cosh(tanh_elongation * (adjusted_shift_diff - end_harmonic)))**2.0 * fact;
+        return factor
+
     
 cdef class Base_force_calculator:
     
