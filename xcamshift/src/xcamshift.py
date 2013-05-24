@@ -4066,15 +4066,14 @@ class Xcamshift(PyPot):
         return self. _calc_factors(target_atom_ids)[0]
     
     def _calc_factors(self, target_atom_ids):
-        active_components = None
-        
+        #TODO move to prepare or function called by prepare
         active_components = None
         if len(target_atom_ids) != len(self._active_target_atom_ids):
             active_components =  []
             for target_atom_id in target_atom_ids:
-                active_components.append(target_atom_ids.index(target_atom_id))
+                active_components.append(self._active_target_atom_ids.index(target_atom_id))
             active_components = array.array('i',active_components)
-        return self._force_factor_calculator(target_atom_ids, active_components)
+        return self._force_factor_calculator(self._active_target_atom_ids, active_components)
     
 
     def _calc_single_force_factor(self,target_atom_index,forces):
