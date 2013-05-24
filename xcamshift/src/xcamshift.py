@@ -34,7 +34,7 @@ from vec3 import Vec3, norm, cross, dot
 import abc
 import sys
 from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED, DISULPHIDE
-from common_constants import  TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, STRUCTURE_CHANGED
+from common_constants import  TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, STRUCTURE_CHANGED, SHIFT_DATA_CHANGED
 import itertools
 from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
@@ -3735,11 +3735,16 @@ class Xcamshift(PyPot):
         self._force_factor_calculator.set_verbose(on)
         self._energy_calculator.set_verbose(on)
         self._verbose=on
-        
+    
+    def _get_energy_term_cache(self):
+        if self._energy_term_cache == None:
+            self._energy_term_cache = self._create_energy_term_cache()
+        return self._energy_term_cache
+    
     def _update_calculator(self, calculator):
         calculator.set_calculated_shifts(self._shift_cache)
         calculator.set_observed_shifts(self._shift_table)
-        calculator.set_energy_term_cache(self._energy_term_cache)
+        calculator.set_energy_term_cache(self._get_energy_term_cache())
     
     def update_energy_calculator(self):
         self._update_calculator(self._energy_calculator)
@@ -3921,8 +3926,8 @@ class Xcamshift(PyPot):
     def set_observed_shifts(self, shift_table):
         self._shift_table  =  shift_table
         self._shift_cache =  {}
-        self._energy_term_cache =  self._create_energy_term_cache()
-        self.update_energy_calculator()
+        self._energy_term_cache =  None
+        self._prepare(SHIFT_DATA_CHANGED,None)
         
 
     def _calc_single_atom_shift(self,target_atom_id):
@@ -4124,7 +4129,9 @@ class Xcamshift(PyPot):
             if data ==  None:
                 data  = self._get_active_target_atom_ids()
         
-            
+        if change ==  SHIFT_DATA_CHANGED:
+             self.update_energy_calculator()
+        
         self._prepare_potentials(change, data)
          
         
