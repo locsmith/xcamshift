@@ -3744,7 +3744,7 @@ class Xcamshift(PyPot):
     def _update_calculator(self, calculator):
         calculator.set_calculated_shifts(self._shift_cache)
         calculator.set_observed_shifts(self._shift_table)
-        calculator.set_energy_term_cache(self._get_energy_term_cache())
+        calculator.set_energy_term_cache(self._get_energy_term_cache().get_native_components())
     
     def update_energy_calculator(self):
         self._update_calculator(self._energy_calculator)
@@ -4006,7 +4006,9 @@ class Xcamshift(PyPot):
         self._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
         self._calc_single_atom_shift(target_atom_index)
         self.update_energy_calculator()
-        return self._energy_calculator(target_atom_ids)
+        
+        active_target_indices = array.array('i',[self._active_target_atom_ids.index(target_atom_index)])
+        return self._energy_calculator(self._active_target_atom_ids,active_target_indices)
         
     
     def _calc_force_set_with_potentials(self, target_atom_ids, forces, potentials_list):
@@ -4136,18 +4138,19 @@ class Xcamshift(PyPot):
          
         
     
-    class Constant_cache():
-        def __init__(self, xcamshift, residue_type, atom_name):
-            self.flat_bottom_shift_limit = xcamshift._get_flat_bottom_shift_limit(residue_type, atom_name)
-            self.end_harmonic = xcamshift._get_end_harmonic(residue_type, atom_name)
-            self.scale_harmonic =  xcamshift._get_scale_harmonic(residue_type, atom_name)
-            self.weight = xcamshift._get_weight(residue_type, atom_name)
-            self.tanh_amplitude =  xcamshift._get_tanh_amplitude(residue_type,atom_name)
-            self.tanh_elongation = xcamshift._get_tanh_elongation(residue_type, atom_name)
-            self.tanh_y_offset = xcamshift._get_tanh_y_offset(residue_type, atom_name)
+    def _get_constants(self, residue_type, atom_name):
+        return                                                             \
+            self._get_flat_bottom_shift_limit(residue_type, atom_name),    \
+            self._get_end_harmonic(residue_type, atom_name),               \
+            self._get_scale_harmonic(residue_type, atom_name),             \
+            self._get_weight(residue_type, atom_name),                     \
+            self._get_tanh_amplitude(residue_type,atom_name),              \
+            self._get_tanh_elongation(residue_type, atom_name),            \
+            self._get_tanh_y_offset(residue_type, atom_name)
+        
     
     def _create_energy_term_cache(self):
-        cache = {}
+        cache = Native_component_list(format = 'i' + ('f'*7))
         seen_types = {}
         table_manager =  Table_manager.get_default_table_manager()
         for target_atom_index in self._get_active_target_atom_ids():
@@ -4157,10 +4160,13 @@ class Xcamshift(PyPot):
 
             table = table_manager.get_constants_table(residue_type)
             table_key = table.get_table_residue_type(), atom_name
-            if table_key in seen_types:
-                cache[target_atom_index] = seen_types[table_key]
-            else:
-                cache[target_atom_index] = Xcamshift.Constant_cache(self,residue_type, atom_name)
+            if not table_key in seen_types:
+                seen_types[table_key] =  self._get_constants(residue_type, atom_name)
+            cache_data = [target_atom_index]
+            cache_data.extend(seen_types[table_key])
+            cache_data = tuple(cache_data)
+            cache.add_component(cache_data)
+
         return cache
     
 

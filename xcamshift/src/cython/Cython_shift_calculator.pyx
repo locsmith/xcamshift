@@ -78,6 +78,16 @@ cdef struct Component_index_pair:
     int remote_index
     int component_index
 
+cdef struct Constant_cache:      
+    int     target_atom_id      
+    float   flat_bottom_shift_limit
+    float   end_harmonic
+    float   scale_harmonic
+    float   weight
+    float   tanh_amplitude
+    float   tanh_elongation
+    float   tanh_y_offset
+    
 
 def test_dump_component_index_pair(Non_bonded_interaction_list data, int index):
     cdef Component_index_pair* result =  data.get(index)
@@ -1324,7 +1334,7 @@ cdef class Fast_non_bonded_calculator:
 
 
 cdef class Fast_energy_calculator:
-    cdef object _energy_term_cache 
+    cdef Constant_cache* _energy_term_cache 
     cdef object _theory_shifts
     cdef object _observed_shifts
     cdef bint _verbose 
@@ -1332,7 +1342,7 @@ cdef class Fast_energy_calculator:
     cdef int calls
 
     def __init__(self):
-        self._energy_term_cache =  None
+        self._energy_term_cache =  NULL
         self._theory_shifts =   None
         self._observed_shifts =  None
         self._verbose = False
@@ -1352,10 +1362,10 @@ cdef class Fast_energy_calculator:
         self._theory_shifts =  calculated_shifts
     
     def set_energy_term_cache(self, energy_term_cache ):
-        self._energy_term_cache =  energy_term_cache
+        self._energy_term_cache =  <Constant_cache*> <size_t> ctypes.addressof(energy_term_cache)
         
-    cdef _get_energy_terms(self, int target_atom_index):
-        return self._energy_term_cache[target_atom_index]
+    cdef Constant_cache* _get_energy_terms(self, int target_atom_index):
+        return &self._energy_term_cache[target_atom_index]
     
     cdef inline float  _get_calculated_atom_shift(self, int target_atom_index):
         return self._theory_shifts[target_atom_index]
@@ -1381,62 +1391,80 @@ cdef class Fast_energy_calculator:
         return result
 
     @cython.profile(True)    
-    def __call__(self,int[:] target_atom_ids):
+    def __call__(self,int[:] target_atom_ids, int[:] active_atom_ids=None):
         self.set_simulation()
-        cdef float energy
-        cdef float flat_bottom_shift_limit
-        cdef float adjusted_shift_diff
-        cdef float end_harmonic
-        cdef float scale_harmonic
-        cdef float energy_component
-        cdef float tanh_amplitude
-        cdef float tanh_elongation
-        cdef float tanh_y_offset
-        cdef float tanh_argument
-        
+
         cdef double start_time = 0.0
         cdef double end_time = 0.0 
+        cdef float energy
+        
         if self._verbose:
             start_time = time()
-            
+
         energy = 0.0
-        
-        cdef int target_atom_index
-        cdef float shift_diffs
-         
-        for target_atom_index in target_atom_ids:
-            shift_diff = self._get_shift_difference(target_atom_index)
-            energy_terms = self._get_energy_terms(target_atom_index)
-            
-
-            flat_bottom_shift_limit = energy_terms.flat_bottom_shift_limit
-            
-            
-            if abs(shift_diff) > flat_bottom_shift_limit:
-                adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
-                
-                end_harmonic = energy_terms.end_harmonic
-                scale_harmonic = energy_terms.scale_harmonic
-                
-                
-                energy_component = 0.0
-                if adjusted_shift_diff < end_harmonic:
-                    energy_component = (adjusted_shift_diff/scale_harmonic)**2
-                else:
-                    tanh_amplitude = energy_terms.tanh_amplitude
-                    tanh_elongation = energy_terms.tanh_elongation
-                    tanh_y_offset = energy_terms.tanh_y_offset
                     
-                    tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
-                    energy_component = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset;
-
-                energy += energy_component
-
+        if active_atom_ids == None:
+            for i in range(target_atom_ids.shape[0]):
+                target_atom_id = target_atom_ids[i]
+                energy += self._calc_one_energy(target_atom_id, i)
+        else:
+            for i in  range(active_atom_ids.shape[0]):
+                active_atom_id = active_atom_ids[i]
+                target_atom_id = target_atom_ids[active_atom_id]
+    
+                energy += self._calc_one_energy(target_atom_id, active_atom_id)
+                
         if self._verbose:
             end_time = time()
             print '   energy calculator: ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
         
+        
         self.calls += 1    
+        return energy
+        
+    cdef inline float _calc_one_energy(self, int target_atom_index, int index):  
+        cdef float flat_bottom_shift_limit
+        cdef float adjusted_shift_diff
+        cdef float end_harmonic
+        cdef float scale_harmonic
+        cdef float tanh_amplitude
+        cdef float tanh_elongation
+        cdef float tanh_y_offset
+        cdef float tanh_argument 
+        cdef float energy
+
+
+            
+
+        
+        cdef float shift_diffs
+        cdef Constant_cache* energy_terms
+
+        shift_diff = self._get_shift_difference(target_atom_index)
+        energy_terms = self._get_energy_terms(index)
+        
+        flat_bottom_shift_limit = energy_terms[0].flat_bottom_shift_limit
+        
+        energy = 0.0
+        if abs(shift_diff) > flat_bottom_shift_limit:
+            adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
+            
+            end_harmonic = energy_terms[0].end_harmonic
+            scale_harmonic = energy_terms[0].scale_harmonic
+            
+            
+            energy_component = 0.0
+            if adjusted_shift_diff < end_harmonic:
+                energy += (adjusted_shift_diff/scale_harmonic)**2
+            else:
+                tanh_amplitude = energy_terms[0].tanh_amplitude
+                tanh_elongation = energy_terms[0].tanh_elongation
+                tanh_y_offset = energy_terms[0].tanh_y_offset
+                
+                tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
+                energy += tanh_amplitude * tanh(tanh_argument) + tanh_y_offset;
+
+
         return energy
 
 cdef class Fast_force_factor_calculator(Fast_energy_calculator):
@@ -1461,10 +1489,11 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
                 target_atom_id = target_atom_ids[i]
                 python_result[i] = self._calc_one_force_factor(target_atom_id, i)
         else:
-            for i,active_atom_id in enumerate(active_atom_ids):
+            for i in  range(active_atom_ids.shape[0]):
+                active_atom_id = active_atom_ids[i]
                 target_atom_id = target_atom_ids[active_atom_id]
     
-                python_result[i] = self._calc_one_force_factor(target_atom_id, i)
+                python_result[i] = self._calc_one_force_factor(target_atom_id, active_atom_id)
 
         if self._verbose:
             end_time = time()
@@ -1480,22 +1509,21 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
             
         
         shift_diff = self._get_shift_difference(target_atom_id)
-        energy_terms = self._get_energy_terms(target_atom_id)
-        
+        energy_terms = self._get_energy_terms(i)
 
         
-        flat_bottom_shift_limit = energy_terms.flat_bottom_shift_limit
+        flat_bottom_shift_limit = energy_terms[0].flat_bottom_shift_limit
         
         if abs(shift_diff) > flat_bottom_shift_limit:
             adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
-            end_harmonic = energy_terms.end_harmonic
-            scale_harmonic = energy_terms.scale_harmonic
+            end_harmonic = energy_terms[0].end_harmonic
+            scale_harmonic = energy_terms[0].scale_harmonic
             sqr_scale_harmonic = scale_harmonic**2
             
-            weight = energy_terms.weight
+            weight = energy_terms[0].weight
             
-            tanh_amplitude = energy_terms.tanh_amplitude
-            tanh_elongation = energy_terms.tanh_elongation
+            tanh_amplitude = energy_terms[0].tanh_amplitude
+            tanh_elongation = energy_terms[0].tanh_elongation
             
             # TODO: add factor and lambda to give fact
             fact =1.0
