@@ -1397,6 +1397,8 @@ cdef class Fast_energy_calculator:
         cdef double start_time = 0.0
         cdef double end_time = 0.0 
         cdef float energy
+        cdef int active_atom_id
+        cdef int target_atom_id
         
         if self._verbose:
             start_time = time()
@@ -1406,6 +1408,7 @@ cdef class Fast_energy_calculator:
         if active_atom_ids == None:
             for i in range(target_atom_ids.shape[0]):
                 target_atom_id = target_atom_ids[i]
+                
                 energy += self._calc_one_energy(target_atom_id, i)
         else:
             for i in  range(active_atom_ids.shape[0]):
@@ -1432,6 +1435,7 @@ cdef class Fast_energy_calculator:
         cdef float tanh_y_offset
         cdef float tanh_argument 
         cdef float energy
+        cdef float shift_diff
 
 
             
@@ -1446,14 +1450,13 @@ cdef class Fast_energy_calculator:
         flat_bottom_shift_limit = energy_terms[0].flat_bottom_shift_limit
         
         energy = 0.0
-        if abs(shift_diff) > flat_bottom_shift_limit:
+        if fabs(shift_diff) > flat_bottom_shift_limit:
             adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
             
             end_harmonic = energy_terms[0].end_harmonic
             scale_harmonic = energy_terms[0].scale_harmonic
             
             
-            energy_component = 0.0
             if adjusted_shift_diff < end_harmonic:
                 energy += (adjusted_shift_diff/scale_harmonic)**2
             else:
@@ -1470,7 +1473,7 @@ cdef class Fast_energy_calculator:
 cdef class Fast_force_factor_calculator(Fast_energy_calculator):
 
     @cython.profile(True)
-    def  __call__(self, int[:] target_atom_ids, int[:] active_atom_ids):
+    def __call__(self, int[:] target_atom_ids, int[:] active_atom_ids):
         cdef double start_time =0.0
         cdef double end_time =0.0
         
@@ -1481,19 +1484,21 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
 
         self.set_simulation()
         cdef object python_result  = allocate_array(len(target_atom_ids),'f')
-       #TODO: shouldn't be allocated each time
         cdef float[:] result = python_result
+       #TODO: shouldn't be allocated each time
+        cdef int target_atom_id
+        cdef int active_atom_id
         
         if active_atom_ids == None:
             for i in range(target_atom_ids.shape[0]):
                 target_atom_id = target_atom_ids[i]
-                python_result[i] = self._calc_one_force_factor(target_atom_id, i)
+                result[i] = self._calc_one_force_factor(target_atom_id, i)
         else:
             for i in  range(active_atom_ids.shape[0]):
                 active_atom_id = active_atom_ids[i]
                 target_atom_id = target_atom_ids[active_atom_id]
     
-                python_result[i] = self._calc_one_force_factor(target_atom_id, active_atom_id)
+                result[i] = self._calc_one_force_factor(target_atom_id, active_atom_id)
 
         if self._verbose:
             end_time = time()
@@ -1503,9 +1508,19 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
        
     cdef inline float _calc_one_force_factor(self, int target_atom_id, int i):
         
-        cdef float factor, shift_diff
+        cdef float factor
+        cdef float shift_diff
+        cdef float flat_bottom_shift_limit
+        cdef Constant_cache* energy_terms
+        cdef float adjusted_shift_diff
+        cdef float end_harmonic
+        cdef float scale_harmonic
+        cdef float sqr_scale_harmonic
+        cdef float weight
+        cdef float tanh_amplitude
+        cdef float tanh_elongation
         
-        factor  = 0.0
+        factor = 0.0
             
         
         shift_diff = self._get_shift_difference(target_atom_id)
