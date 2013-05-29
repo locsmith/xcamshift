@@ -3997,9 +3997,16 @@ class Xcamshift(PyPot):
         self._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
         self._calc_single_atom_shift(target_atom_index)
         self.update_energy_calculator()
-        
-        active_target_indices = array.array('i',[self._active_target_atom_ids.index(target_atom_index)])
-        return self._energy_calculator(self._active_target_atom_ids,active_target_indices)
+
+        #TODO: this is a hack remove!        
+        active_target_atom_ids =  self._get_active_target_atom_ids()
+        if active_target_atom_ids == None:
+            
+            active_target_indices = array.array('i',[0])
+            active_target_atom_ids =  array.array('i',[target_atom_index])
+        else:
+            active_target_indices =  array.array('i',[active_target_atom_ids.index(target_atom_index)])
+        return self._energy_calculator(active_target_atom_ids,active_target_indices)
         
     
     def _calc_force_set_with_potentials(self, target_atom_ids, forces, potentials_list):
@@ -4066,12 +4073,13 @@ class Xcamshift(PyPot):
     def _calc_factors(self, target_atom_ids):
         #TODO move to prepare or function called by prepare
         active_components = None
-        if len(target_atom_ids) != len(self._active_target_atom_ids):
+        active_target_atom_ids = self._get_active_target_atom_ids()
+        if len(target_atom_ids) != len(active_target_atom_ids):
             active_components =  []
             for target_atom_id in target_atom_ids:
-                active_components.append(self._active_target_atom_ids.index(target_atom_id))
+                active_components.append(active_target_atom_ids.index(target_atom_id))
             active_components = array.array('i',active_components)
-        return self._force_factor_calculator(self._active_target_atom_ids, active_components)
+        return self._force_factor_calculator(active_target_atom_ids, active_components)
     
 
     def _calc_single_force_factor(self,target_atom_index,forces):
@@ -4093,12 +4101,15 @@ class Xcamshift(PyPot):
         return   self._shift_table.get_atom_indices()
 
     def _get_active_target_atom_ids(self):
-        target_atom_ids = set(self._get_all_component_target_atom_ids())
-        observed_shift_atom_ids = self.get_selected_atom_ids()
-        active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
-        active_target_atom_ids = list(active_target_atom_ids)
         
-        self._active_target_atom_ids =  array.array('i',sorted(active_target_atom_ids))
+        if self._active_target_atom_ids == None:
+            target_atom_ids = set(self._get_all_component_target_atom_ids())
+            observed_shift_atom_ids = self.get_selected_atom_ids()
+            active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
+            active_target_atom_ids = list(active_target_atom_ids)
+            
+            self._active_target_atom_ids =  array.array('i',sorted(active_target_atom_ids))
+        
          
         return self._active_target_atom_ids
     
@@ -4115,13 +4126,16 @@ class Xcamshift(PyPot):
             
         if change == STRUCTURE_CHANGED:
             self.clear_shift_cache()
+            self._active_target_atom_ids = None
             
         if change == TARGET_ATOM_IDS_CHANGED:
+            self._active_target_atom_ids = None
             if data ==  None:
                 data  = self._get_active_target_atom_ids()
         
         if change ==  SHIFT_DATA_CHANGED:
-             self.update_energy_calculator()
+            self._active_target_atom_ids = None
+            self.update_energy_calculator()
         
         self._prepare_potentials(change, data)
          
