@@ -3742,7 +3742,7 @@ class Xcamshift(PyPot):
     
     def _update_calculator(self, calculator):
         calculator.set_calculated_shifts(self._shift_cache)
-        calculator.set_observed_shifts(self._shift_table)
+        calculator.set_observed_shifts(self._shift_table.get_native_shifts(self._get_active_target_atom_ids()))
         calculator.set_energy_term_cache(self._get_energy_term_cache().get_native_components())
     
     def update_energy_calculator(self):

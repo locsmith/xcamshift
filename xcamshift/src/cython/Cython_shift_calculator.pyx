@@ -1336,7 +1336,7 @@ cdef class Fast_non_bonded_calculator:
 cdef class Fast_energy_calculator:
     cdef Constant_cache* _energy_term_cache 
     cdef object _theory_shifts
-    cdef object _observed_shifts
+    cdef float[:] _observed_shifts
     cdef bint _verbose 
     cdef Simulation* _simulation
     cdef int calls
@@ -1355,7 +1355,7 @@ cdef class Fast_energy_calculator:
     def set_verbose(self,on):
         self._verbose = on
         
-    def set_observed_shifts(self, observed_shifts):
+    def set_observed_shifts(self, float[:] observed_shifts):
         self._observed_shifts =  observed_shifts
         
     def set_calculated_shifts(self, calculated_shifts):
@@ -1370,15 +1370,15 @@ cdef class Fast_energy_calculator:
     cdef inline float  _get_calculated_atom_shift(self, int target_atom_index):
         return self._theory_shifts[target_atom_index]
     
-    cdef inline float _get_observed_atom_shift(self, int target_atom_index):
-        return self._observed_shifts.get_chemical_shift(target_atom_index)
+    cdef inline float _get_observed_atom_shift(self, int index):
+        return self._observed_shifts[index]
     
-    cdef inline float  _get_shift_difference(self, int target_atom_index):
+    cdef inline float  _get_shift_difference(self, int target_atom_index, int index):
         cdef float theory_shift
         cdef float observed_shift
         theory_shift = self._get_calculated_atom_shift(target_atom_index)
         
-        observed_shift = self._get_observed_atom_shift(target_atom_index)
+        observed_shift = self._get_observed_atom_shift(index)
         
         return observed_shift - theory_shift
 
@@ -1444,7 +1444,7 @@ cdef class Fast_energy_calculator:
         cdef float shift_diffs
         cdef Constant_cache* energy_terms
 
-        shift_diff = self._get_shift_difference(target_atom_index)
+        shift_diff = self._get_shift_difference(target_atom_index, index)
         energy_terms = self._get_energy_terms(index)
         
         flat_bottom_shift_limit = energy_terms[0].flat_bottom_shift_limit
@@ -1523,7 +1523,7 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
         factor = 0.0
             
         
-        shift_diff = self._get_shift_difference(target_atom_id)
+        shift_diff = self._get_shift_difference(target_atom_id, i)
         energy_terms = self._get_energy_terms(i)
 
         
