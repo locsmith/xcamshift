@@ -3716,7 +3716,6 @@ class Xcamshift(PyPot):
         self._shift_table = Observed_shift_table()
         self._shift_cache = {}
         self._out_array =  None
-        self._selected_atoms = None
         self._energy_term_cache = None
         self._energy_calculator = self._get_energy_calculator()
         self._force_factor_calculator =  self._get_force_factor_calculator()
@@ -3889,11 +3888,6 @@ class Xcamshift(PyPot):
             print 'start calc shifts'
             
             
-      #todo this could be more elegant
-        reset_selected_atoms = False
-        if self._selected_atoms == None:
-            self._selected_atoms = target_atom_ids
-            reset_selected_atoms =  True
 
         #TODO: currently needed to generate a component to result remove by making component to result lazy?
         if not self._freeze:
@@ -3902,9 +3896,6 @@ class Xcamshift(PyPot):
         for potential in self.potential:
             potential.calc_shifts(target_atom_ids, result)
 
-        if self._selected_atoms == None:
-            if reset_selected_atoms:
-                self._selected_atoms = target_atom_ids    
        
         if self._verbose:
             end_time =  time()
@@ -4097,11 +4088,9 @@ class Xcamshift(PyPot):
 
 
     def get_selected_atom_ids(self):
-        if self._selected_atoms == None:
-            observed_shift_atom_ids = self._shift_table.get_atom_indices()
-        else:
-            observed_shift_atom_ids =  self._selected_atoms
-        return observed_shift_atom_ids
+       
+        
+        return   self._shift_table.get_atom_indices()
 
     def _get_active_target_atom_ids(self):
         target_atom_ids = set(self._get_all_component_target_atom_ids())
