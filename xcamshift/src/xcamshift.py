@@ -3714,7 +3714,7 @@ class Xcamshift(PyPot):
                           ]
         self._verbose=verbose
         self._shift_table = Observed_shift_table()
-        self._shift_cache = {}
+        self._shift_cache = None
         self._out_array =  None
         self._energy_term_cache = None
         self._energy_calculator = self._get_energy_calculator()
@@ -3750,9 +3750,11 @@ class Xcamshift(PyPot):
 
     def update_force_factor_calculator(self):
         self._update_calculator(self._force_factor_calculator)
-        
+    
+    #TODO:  might be better to have a prepapre shift cache function    
     def clear_shift_cache(self):
-        self._shift_cache = {}
+        if self._shift_cache != None:
+            zero_array(self._shift_cache)
         
     def get_sub_potential_names(self):
         return [potential.get_abbreviated_name() for potential in self.potential]
@@ -3847,12 +3849,13 @@ class Xcamshift(PyPot):
         if self._verbose:
             start_time =  time()
             
-        self._shift_cache = {}
-        result_shifts = allocate_array(len(target_atom_ids)) 
-        self._calc_shifts(target_atom_ids, result_shifts)
-
-        for target_atom_id, result in zip(target_atom_ids,result_shifts):
-            self._shift_cache[target_atom_id] =  result
+        if self._shift_cache == None:
+            self._shift_cache =  allocate_array(len(target_atom_ids),'d')
+        elif len(self._shift_cache) != len(target_atom_ids):
+            resize_array(self._shift_cache, len(target_atom_ids))
+        
+        self.clear_shift_cache()
+        self._calc_shifts(target_atom_ids, self._shift_cache)
         
         if self._verbose:
             end_time = time()
@@ -3916,15 +3919,17 @@ class Xcamshift(PyPot):
     
     def set_observed_shifts(self, shift_table):
         self._shift_table  =  shift_table
-        self._shift_cache =  {}
+        #TODO: could be better
+        self._shift_cache =  None
         self._energy_term_cache =  None
         self._prepare(SHIFT_DATA_CHANGED,None)
         
 
     def _calc_single_atom_shift(self,target_atom_id):
-        self._shift_cache = {}
+        #TODO: could be better
+        self._shift_cache = allocate_array(1)
         self._calc_shift_cache([target_atom_id,])
-        return  self._shift_cache [target_atom_id]
+        return  self._shift_cache [0]
     
     
     
@@ -3995,7 +4000,9 @@ class Xcamshift(PyPot):
         
         target_atom_ids = array.array('i',[target_atom_index])
         self._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
+        print self._shift_cache
         self._calc_single_atom_shift(target_atom_index)
+        print self._shift_cache
         self.update_energy_calculator()
 
         #TODO: this is a hack remove!        

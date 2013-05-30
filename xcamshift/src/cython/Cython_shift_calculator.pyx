@@ -43,6 +43,9 @@ cpdef array.array allocate_array(int len, type='d'):
 cpdef zero_array(array.array in_array):
      array.zero(in_array)
 
+cpdef resize_array(array.array in_array, int len):
+    array.resize(in_array, len)
+
 cdef struct Nonbonded_coefficient_component:
     int chem_type_id
     int sphere_id
@@ -1335,7 +1338,7 @@ cdef class Fast_non_bonded_calculator:
 
 cdef class Fast_energy_calculator:
     cdef Constant_cache* _energy_term_cache 
-    cdef object _theory_shifts
+    cdef double[:] _theory_shifts
     cdef float[:] _observed_shifts
     cdef bint _verbose 
     cdef Simulation* _simulation
@@ -1358,7 +1361,7 @@ cdef class Fast_energy_calculator:
     def set_observed_shifts(self, float[:] observed_shifts):
         self._observed_shifts =  observed_shifts
         
-    def set_calculated_shifts(self, calculated_shifts):
+    def set_calculated_shifts(self, double[:] calculated_shifts):
         self._theory_shifts =  calculated_shifts
     
     def set_energy_term_cache(self, energy_term_cache ):
@@ -1367,8 +1370,8 @@ cdef class Fast_energy_calculator:
     cdef Constant_cache* _get_energy_terms(self, int target_atom_index):
         return &self._energy_term_cache[target_atom_index]
     
-    cdef inline float  _get_calculated_atom_shift(self, int target_atom_index):
-        return self._theory_shifts[target_atom_index]
+    cdef inline float  _get_calculated_atom_shift(self, int index):
+        return self._theory_shifts[index]
     
     cdef inline float _get_observed_atom_shift(self, int index):
         return self._observed_shifts[index]
@@ -1376,7 +1379,7 @@ cdef class Fast_energy_calculator:
     cdef inline float  _get_shift_difference(self, int target_atom_index, int index):
         cdef float theory_shift
         cdef float observed_shift
-        theory_shift = self._get_calculated_atom_shift(target_atom_index)
+        theory_shift = self._get_calculated_atom_shift(index)
         
         observed_shift = self._get_observed_atom_shift(index)
         
