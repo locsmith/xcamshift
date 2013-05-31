@@ -3731,6 +3731,7 @@ class Xcamshift(PyPot):
         self.set_verbose(verbose)
         self._freeze = False
         self._active_target_atom_ids = None
+        self._factors = None
 
     
     
@@ -4027,9 +4028,14 @@ class Xcamshift(PyPot):
         
     
     def _calc_force_set_with_potentials(self, target_atom_ids, forces, potentials_list):
-        factors  = self._calc_factors(target_atom_ids)
+        if self._factors == None or len(self._factors) < len(target_atom_ids):
+            self._factors = allocate_array(len(target_atom_ids),'f')
+        elif len(self._factors) > len(target_atom_ids):
+            self._factors =  resize_array(self._factors,len(target_atom_ids))
+        
+        self._calc_factors(target_atom_ids, self._factors)
         for potential in potentials_list:
-            potential.calc_force_set(target_atom_ids,factors,forces)
+            potential.calc_force_set(target_atom_ids,self._factors,forces)
         
              
     def _calc_single_atom_force_set_with_potentials(self, target_atom_id, forces, potentials_list):
@@ -4085,9 +4091,11 @@ class Xcamshift(PyPot):
             target_atom_info = Atom_utils._get_atom_info_from_index(target_atom_id)
             raise Exception(msg % target_atom_info)
         
-        return self. _calc_factors(target_atom_ids)[0]
+        result = allocate_array(1,'f')
+        self. _calc_factors(target_atom_ids, result)
+        return  result[0]
     
-    def _calc_factors(self, target_atom_ids):
+    def _calc_factors(self, target_atom_ids, factors):
         #TODO move to prepare or function called by prepare
         active_components = None
         active_target_atom_ids = self._get_active_target_atom_ids()
@@ -4096,7 +4104,9 @@ class Xcamshift(PyPot):
             for target_atom_id in target_atom_ids:
                 active_components.append(active_target_atom_ids.index(target_atom_id))
             active_components = array.array('i',active_components)
-        return self._force_factor_calculator(active_target_atom_ids, active_components)
+            
+        self._force_factor_calculator(active_target_atom_ids, factors, active_components)
+        return factors
     
 
     def _calc_single_force_factor(self,target_atom_index,forces):

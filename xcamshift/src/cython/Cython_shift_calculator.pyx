@@ -1529,7 +1529,7 @@ cdef class Fast_energy_calculator:
 cdef class Fast_force_factor_calculator(Fast_energy_calculator):
 
     @cython.profile(True)
-    def __call__(self, int[:] target_atom_ids, int[:] active_atom_ids):
+    def __call__(self, int[:] target_atom_ids, float[:] result, int[:] active_atom_ids):
         cdef double start_time =0.0
         cdef double end_time =0.0
         
@@ -1539,8 +1539,7 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
             start_time = time()
 
         self.set_simulation()
-        cdef object python_result  = allocate_array(len(target_atom_ids),'f')
-        cdef float[:] result = python_result
+
        #TODO: shouldn't be allocated each time
         cdef int target_atom_id
         cdef int active_atom_id
@@ -1560,7 +1559,6 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
             end_time = time()
             print '   force factors : ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
 
-        return  python_result     
        
     cdef inline float _calc_one_force_factor(self, int target_atom_id, int i):
         
