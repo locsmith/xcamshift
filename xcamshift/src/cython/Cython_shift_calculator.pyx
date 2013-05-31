@@ -46,6 +46,10 @@ cpdef zero_array(array.array in_array):
 cpdef resize_array(array.array in_array, int len):
     array.resize(in_array, len)
 
+cdef struct Random_coil_component:
+    int target_atom
+    float shift
+    
 cdef struct Nonbonded_coefficient_component:
     int chem_type_id
     int sphere_id
@@ -701,7 +705,56 @@ cdef class Base_shift_calculator:
     def _prepare(self,change,data):
         pass
     
+cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):           
+    
+    cdef Random_coil_component* _compiled_components 
+    cdef int _num_components
+    cdef object _raw_data
         
+    def __cinit__(self):
+        self._raw_data = None
+        self._compiled_components  = NULL
+        self._num_components =  0
+                        
+    def __init__(self, str name = "not set"):
+        Base_shift_calculator.__init__(self, name)
+
+#    
+#    TODO: this needs to be removed
+    cdef void _bytes_to_components(self, data):
+
+        self._raw_data =  data 
+        self._compiled_components =  <Random_coil_component*> <size_t> ctypes.addressof(data)
+        self._num_components =  len(data)/ sizeof(Random_coil_component)
+            
+    def _set_components(self,components):
+        self._bytes_to_components(components)
+
+    def _prepare(self, change, data):
+         pass  
+    
+    @cython.profile(False)
+    def __call__(self, object components, double[:] results, int[:] component_to_target,  int[:] active_components):
+        self.set_simulation()
+        self._set_components(components)
+        cdef double start_time = 0.0
+        cdef double end_time = 0.0
+         
+        if self._verbose:
+            start_time=time()
+ 
+        cdef int factor_index = 0
+        cdef int component_index
+         
+        #TODO: note to cython list for componnt_index in active_components produces awful code!
+        for factor_index in range(len(active_components)):
+            component_index = active_components[factor_index]         
+              
+            results[component_to_target[factor_index]]  += self._compiled_components[component_index].shift
+ 
+        if self._verbose:
+            end_time = time()
+            print '   distance shift components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
         
 cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 

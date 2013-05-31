@@ -47,7 +47,8 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Out_array, Vec3_list, allocate_array, zero_array,               \
                                      Fast_non_bonded_shift_calculator,                               \
                                      Fast_non_bonded_force_calculator,                               \
-                                     Non_bonded_interaction_list
+                                     Non_bonded_interaction_list,                                    \
+                                     Fast_random_coil_shift_calculator
 from time import time
 import array#
 
@@ -1288,6 +1289,7 @@ class RandomCoilShifts(Base_potential):
         super(RandomCoilShifts, self).__init__()
         
         self._add_component_factory(Random_coil_component_factory())
+        self._shift_calculator = self._get_shift_calculator()
 
     
     def get_abbreviated_name(self):
@@ -1300,10 +1302,6 @@ class RandomCoilShifts(Base_potential):
     def _get_table_source(self):
         return self._table_manager.get_random_coil_table
 
-    def calc_shifts(self, target_atom_ids, result):
-        components = self._get_component_list()
-        for i, component_index in enumerate(self._active_components):
-            result[self._component_to_result[i]] += components[component_index][1]
             
     def _calc_component_shift(self,index):
         components = self._get_component_list()
@@ -1319,7 +1317,17 @@ class RandomCoilShifts(Base_potential):
             string = template % (i, atom_name,shift)
             result.append(string)
         return '\n'.join(result)
-
+    
+    def _create_component_list(self, name):
+        if name == 'ATOM':
+            return Native_component_list(format='if')
+    
+    def _get_shift_calculator(self):
+        result = Fast_random_coil_shift_calculator(name=self.get_abbreviated_name())
+        result.set_verbose(self._verbose)
+        
+        return result
+        
 class Disulphide_shift_calculator(Base_potential):
     
 
@@ -4000,9 +4008,11 @@ class Xcamshift(PyPot):
         
         target_atom_ids = array.array('i',[target_atom_index])
         self._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
-        print self._shift_cache
-        self._calc_single_atom_shift(target_atom_index)
-        print self._shift_cache
+        
+        #TODO: setting a single atom shift with self._calc_single_atom_shift(target_atom_index) doesn't work as the 
+        # and then using a single index doesn't work as the energy terms are indexed as well
+        self._calc_shift_cache(self._get_active_target_atom_ids())
+#         _single_atom_shift(target_atom_index)
         self.update_energy_calculator()
 
         #TODO: this is a hack remove!        
