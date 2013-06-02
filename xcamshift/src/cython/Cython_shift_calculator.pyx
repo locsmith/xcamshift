@@ -535,29 +535,28 @@ cdef struct Component_Offsets:
     
                 
 cdef class Coef_components:
-    cdef int num_components
+    cdef int _num_components
     cdef Coef_component* _components
     cdef int num_ids
     cdef Component_Offsets* _component_offsets
+    cdef object _raw_data
     
-        
-    def __cinit__(self, object components):
-        self.num_components = len(components)
-        self._components = <Coef_component *>malloc( self.num_components * sizeof(Coef_component))
-        if not self._components:
-            raise MemoryError()
+    cdef void _bytes_to_components(self, data):
+
+        self._raw_data =  data 
+        self._components =  <Coef_component*> <size_t> ctypes.addressof(data)
+        self._num_components =  len(data)/ sizeof(Coef_component)      
+          
+    def __cinit__(self, object coef_components, components):
+
+ 
+        self._bytes_to_components(coef_components)
         
         self. num_ids = len(components.get_component_atom_ids())
         self._component_offsets =  <Component_Offsets*>malloc(self.num_ids * sizeof(Coef_component))
         if not self._component_offsets:
             raise MemoryError()
         
-        self.num_components = len(components)
-        for i,component in enumerate(components):
-            self._components[i].atom_type_id = component[0] 
-            self._components[i].ring_id = component[1]
-            self._components[i].coefficient = component[2]
-            
         
         ids =  components.get_component_atom_ids()
         for i,id in enumerate(ids):
@@ -567,7 +566,7 @@ cdef class Coef_components:
             self._component_offsets[i].length = end-start
 
         
-    def __init__ (self, object components):
+    def __init__ (self, object coef_components, object components):
         pass
         
     
@@ -578,10 +577,6 @@ cdef class Coef_components:
  
         
         
-        if self._components != NULL: 
-            free(self._components)
-            self._components = NULL
-            self.num_components = 0
         
         
         if self._component_offsets != NULL:
@@ -709,7 +704,7 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
     
     cdef Random_coil_component* _compiled_components 
     cdef int _num_components
-    cdef object _raw_data
+    cdef object _raw_data 
         
     def __cinit__(self):
         self._raw_data = None
@@ -996,11 +991,11 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     
     cdef Ring_target_component* _compiled_components 
     cdef int _num_components
+    cdef object raw_data
     
     cdef Ring_component* _compiled_ring_components
     cdef int _num_ring_components
     cdef object _raw_ring_component_data
-    cdef object raw_data
 
     
     cdef Coef_components _compiled_coef_components
@@ -1049,8 +1044,8 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     def _set_centre_cache(self,centres):
         self._centre_cache = <Vec3_list> centres
         
-    def _set_coef_components(self,coef_components):
-        self._compiled_coef_components = Coef_components(coef_components)
+    def _set_coef_components(self,coef_components, components):
+        self._compiled_coef_components = Coef_components(coef_components, components)
 
     cdef void _bytes_to_ring_components(self, data):
         self._raw_ring_component_data =  data 
@@ -2252,8 +2247,8 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         self._bytes_to_components(components)
                             
         
-    def _set_coef_components(self,coef_components):
-        self._compiled_coef_components = Coef_components(coef_components)
+    def _set_coef_components(self,coef_components, components):
+        self._compiled_coef_components = Coef_components(coef_components, components)
             
     def _set_ring_components(self,ring_components):
         self. _bytes_to_ring_components(ring_components)
