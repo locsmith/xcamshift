@@ -154,7 +154,7 @@ class  Test_native_component_list(Test_component_list):
         component_list = self._component_list
         component_list.add_components(TEST_DATA_2)
         
-        result = tuple([component_list._translate_to_native_component(i) for i in range(2)])
+        result = tuple([component_list._translate_to_native_component((i, (i+1)**2)) for i in range(2)])
         EXPECTED = ((0,1),(1,4))
         self.assertEqual(result, EXPECTED)
 
@@ -163,7 +163,7 @@ class  Test_native_component_list(Test_component_list):
         component_list.set_translator(lambda x : (x[0],x[1]+1))
         component_list.add_components(TEST_DATA_2)
         
-        result = tuple([component_list._translate_to_native_component(i) for i in range(2)])
+        result = tuple([component_list._translate_to_native_component((i,(i+1)**2)) for i in range(2)])
         EXPECTED = ((0,2),(1,5))
         self.assertEqual(result, EXPECTED) 
        
