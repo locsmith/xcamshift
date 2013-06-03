@@ -2448,8 +2448,8 @@ class Ring_Potential(Base_potential):
          
 
     def _setup_ring_calculator(self,calculator):
-        calculator._set_coef_components(self._get_component_list('COEF'))
-        calculator._set_ring_components(self._get_component_list('RING'))
+        calculator._set_coef_components(self._get_component_list('COEF').get_native_components(), self._get_component_list('COEF').get_native_component_offsets())
+        calculator._set_ring_components(self._get_component_list('RING').get_native_components())
         calculator._set_normal_cache(self._get_cache_list('NORM'))
         calculator._set_centre_cache(self._get_cache_list('CENT'))
     
@@ -2612,8 +2612,21 @@ class Ring_Potential(Base_potential):
     def _create_component_list(self, name):
         if name == 'ATOM':
             return Native_component_list(format='ii')
+        elif name == 'RING':
+            def ring_translator(component):
+                result = list()
+                result.append(component[0])
+                result.append(len(component[1]))
+                result.extend(component[1])
+                for i in range(8-len(result)):
+                    result.append(0)
+                return result
+            
+            return Native_component_list(format='iiiiiiii', translator=ring_translator)
+        elif name == 'COEF':
+            return Native_component_list(format='iif')
         else:
-            return Component_list()
+            raise Exception('unexpected component %s' % name)
 
 # TODO: it should be the default that all residues are accepted
 class Non_bonded_backbone_component_factory(Ring_backbone_component_factory):

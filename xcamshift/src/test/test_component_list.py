@@ -17,7 +17,7 @@ import unittest2
 from component_list import Component_list, Native_component_list
 from struct import  Struct
 from array import array
-from  cython.shift_calculators import test_dump_dist_comp
+from  cython.shift_calculators import test_dump_dist_comp, test_dump_component_offsets
 import ctypes
 TEST_DATA_1 = ((1,2),
                (2,4),
@@ -154,7 +154,7 @@ class  Test_native_component_list(Test_component_list):
         component_list = self._component_list
         component_list.add_components(TEST_DATA_2)
         
-        result = tuple([component_list._translate_to_native_component(i) for i in range(2)])
+        result = tuple([component_list._translate_to_native_component((i, (i+1)**2)) for i in range(2)])
         EXPECTED = ((0,1),(1,4))
         self.assertEqual(result, EXPECTED)
 
@@ -163,7 +163,7 @@ class  Test_native_component_list(Test_component_list):
         component_list.set_translator(lambda x : (x[0],x[1]+1))
         component_list.add_components(TEST_DATA_2)
         
-        result = tuple([component_list._translate_to_native_component(i) for i in range(2)])
+        result = tuple([component_list._translate_to_native_component((i,(i+1)**2)) for i in range(2)])
         EXPECTED = ((0,2),(1,5))
         self.assertEqual(result, EXPECTED) 
        
@@ -242,6 +242,23 @@ class  Test_native_component_list(Test_component_list):
         result = test_dump_dist_comp(result)
         
         self.assertEqual(result, EXPECTED_7) 
+        
+    def test_get_native_component_offsets(self):
+        self._component_list.set_format('ii')
+        self._component_list.add_components(TEST_DATA_1)
+        
+        EXPECTED_1 = ((1, 0, 2), (2, 2, 1))
+        result  = test_dump_component_offsets(self._component_list.get_native_component_offsets())
+        
+        self.assertEqual(EXPECTED_1, result)
+        
+        self._component_list.add_components(TEST_DATA_2)
+        
+        EXPECTED_2 = ((0, 0, 1), (1, 1, 3), (2, 4, 1))
+        result_2  = test_dump_component_offsets(self._component_list.get_native_component_offsets())
+
+        self.assertEqual(EXPECTED_2, result_2)
+        
         
 if __name__ == "__main__":
     unittest2.main()

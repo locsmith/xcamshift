@@ -100,7 +100,23 @@ def test_dump_component_index_pair(Non_bonded_interaction_list data, int index):
     cdef Component_index_pair* result =  data.get(index)
     
     return result[0].target_atom_id, result[0].target_index, result[0].remote_index, result[0].component_index
-    
+
+def test_dump_component_offsets(data): 
+    cdef size_t  test  = ctypes.addressof(data)
+    cdef Component_Offsets* test2 = <Component_Offsets*> test
+    cdef Component_Offsets[:] dummy_view
+    if len(data) == 0:
+        result = ()
+    else:
+        dummy_view = <Component_Offsets[:len(data)/ sizeof(Component_Offsets)]> &test2[0]
+        
+        result_data = []
+        for i in range(len(data)/ sizeof(Component_Offsets)):
+            result_data.append((dummy_view[i].id,  dummy_view[i].offset,  dummy_view[i].length)) 
+        result = tuple(result_data)
+    return result 
+
+
 def test_dump_dist_comp(data):
     cdef size_t  test  = ctypes.addressof(data)
     cdef Distance_component* test2 = <Distance_component*> test
@@ -535,39 +551,47 @@ cdef struct Component_Offsets:
     
                 
 cdef class Coef_components:
-    cdef int num_components
+    cdef object _raw_data
     cdef Coef_component* _components
-    cdef int num_ids
+    cdef int _num_components
+
+    cdef object _raw_component_offsets_data
     cdef Component_Offsets* _component_offsets
+    cdef int num_ids
     
+    cdef void _bytes_to_components(self, data):
+
+        self._raw_data =  data 
+        self._components =  <Coef_component*> <size_t> ctypes.addressof(data)
+        self._num_components =  len(data)/ sizeof(Coef_component)      
+
+    cdef void _bytes_to_component_offsets(self, data):
+
+        self._raw_component_offsets_data =  data 
+        self._component_offsets =  <Component_Offsets*> <size_t> ctypes.addressof(data)
+        self.num_ids =  len(data)/ sizeof(Component_Offsets)    
+                  
+    def __cinit__(self, object coef_components, component_offsets):
+
+ 
+        self._bytes_to_components(coef_components)
+        self._bytes_to_component_offsets(component_offsets)
         
-    def __cinit__(self, object components):
-        self.num_components = len(components)
-        self._components = <Coef_component *>malloc( self.num_components * sizeof(Coef_component))
-        if not self._components:
-            raise MemoryError()
-        
-        self. num_ids = len(components.get_component_atom_ids())
-        self._component_offsets =  <Component_Offsets*>malloc(self.num_ids * sizeof(Coef_component))
-        if not self._component_offsets:
-            raise MemoryError()
-        
-        self.num_components = len(components)
-        for i,component in enumerate(components):
-            self._components[i].atom_type_id = component[0] 
-            self._components[i].ring_id = component[1]
-            self._components[i].coefficient = component[2]
-            
-        
-        ids =  components.get_component_atom_ids()
-        for i,id in enumerate(ids):
-            start,end = components.get_component_range(id)
-            self._component_offsets[i].id = id
-            self._component_offsets[i].offset = start
-            self._component_offsets[i].length = end-start
+#         self. num_ids = len(components.get_component_atom_ids())
+#         self._component_offsets =  <Component_Offsets*>malloc(self.num_ids * sizeof(Component_Offsets))
+#         if not self._component_offsets:
+#             raise MemoryError()
+#         
+#         
+#         ids =  components.get_component_atom_ids()
+#         for i,id in enumerate(ids):
+#             start,end = components.get_component_range(id)
+#             self._component_offsets[i].id = id
+#             self._component_offsets[i].offset = start
+#             self._component_offsets[i].length = end-start
 
         
-    def __init__ (self, object components):
+    def __init__ (self, object coef_components, object components):
         pass
         
     
@@ -575,19 +599,15 @@ cdef class Coef_components:
         return &self._component_offsets[id]
     
     def __dealloc__(self):
- 
+        pass
         
         
-        if self._components != NULL: 
-            free(self._components)
-            self._components = NULL
-            self.num_components = 0
         
         
-        if self._component_offsets != NULL:
-            free(self._component_offsets)
-            self._component_offsets =  NULL
-            self.num_ids = 0 
+#         if self._component_offsets != NULL:
+#             free(self._component_offsets)
+#             self._component_offsets =  NULL
+#             self.num_ids = 0 
         
     
 #    cdef int _check_offset(self, int offset) except -1:
@@ -709,7 +729,7 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
     
     cdef Random_coil_component* _compiled_components 
     cdef int _num_components
-    cdef object _raw_data
+    cdef object _raw_data 
         
     def __cinit__(self):
         self._raw_data = None
@@ -996,10 +1016,11 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     
     cdef Ring_target_component* _compiled_components 
     cdef int _num_components
+    cdef object raw_data
     
     cdef Ring_component* _compiled_ring_components
     cdef int _num_ring_components
-    cdef object raw_data
+    cdef object _raw_ring_component_data
 
     
     cdef Coef_components _compiled_coef_components
@@ -1011,6 +1032,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         
         self._compiled_ring_components = NULL
         self._num_ring_components = 0
+        self._raw_ring_component_data = None
         
         #note this is not a raw array of structs it's a compiled python class
         self._compiled_coef_components = None
@@ -1031,10 +1053,6 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         self._bytes_to_components(components)
             
             
-    def _free_compiled_ring_components(self):   
-        if self._compiled_ring_components != NULL:
-            free(self._compiled_ring_components)
-            self._compiled_ring_components = NULL
 
     def _free_coef_components(self):
         self._compiled_coef_components = None
@@ -1042,7 +1060,6 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
 
     def _prepare(self, change, data):
         if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
-            self._free_compiled_ring_components()
             self._free_coef_components()
 
             
@@ -1052,28 +1069,19 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     def _set_centre_cache(self,centres):
         self._centre_cache = <Vec3_list> centres
         
-    def _set_coef_components(self,coef_components):
-        self._compiled_coef_components = Coef_components(coef_components)
+    def _set_coef_components(self,coef_components, component_offsets):
+        self._compiled_coef_components = Coef_components(coef_components, component_offsets)
+
+    cdef void _bytes_to_ring_components(self, data):
+        self._raw_ring_component_data =  data 
+        self._compiled_ring_components =  <Ring_component*> <size_t> ctypes.addressof(data)
+        self._num_ring_components =  len(data)/ sizeof(Ring_component)
         
         
     #TODO: not needed ?        
     def _set_ring_components(self,ring_components):
-        if  self._compiled_ring_components ==  NULL:
-            self._compile_ring_components(ring_components)
+        self. _bytes_to_ring_components(ring_components)
 
-    def _compile_ring_components(self,ring_components): 
-        self._compiled_ring_components = <Ring_component*>malloc(len(ring_components) * sizeof(Ring_component))
-        self._num_ring_components = len(ring_components)
-        for i,ring_component in enumerate(ring_components):
-            self._compiled_ring_components[i].ring_id  = ring_components[i][0]
-            self._compiled_ring_components[i].num_atoms  = len(ring_component[1])
-            for j in range(len(ring_component[1])):
-                self._compiled_ring_components[i].atom_ids[j] =ring_component[1][j]
-    
-    def _free_compiled_ring_components(self):   
-        if self._compiled_ring_components != NULL:
-            free(self._compiled_ring_components)
-            self._compiled_ring_components = NULL
 
 
     @cython.profile(False)
@@ -2225,6 +2233,8 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     
     cdef Ring_component* _compiled_ring_components
     cdef int _num_ring_components
+    cdef object _raw_ring_component_data
+    
     cdef object raw_data
 
     cdef Coef_components _compiled_coef_components
@@ -2235,6 +2245,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         self._compiled_components = NULL
         self._num_components = 0
         
+        self._raw_ring_component_data = None
         self._compiled_ring_components = NULL
         self._num_ring_components = 0
 
@@ -2252,31 +2263,21 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         self._compiled_components =  <Ring_target_component*> <size_t> ctypes.addressof(data)
         self._num_components =  len(data)/ sizeof(Ring_target_component)
 
+    cdef void _bytes_to_ring_components(self, data):
+        self._raw_ring_component_data =  data 
+        self._compiled_ring_components =  <Ring_component*> <size_t> ctypes.addressof(data)
+        self._num_ring_components =  len(data)/ sizeof(Ring_component)
          
     def _set_components(self,components):
         self._bytes_to_components(components)
                             
         
-    def _set_coef_components(self,coef_components):
-        self._compiled_coef_components = Coef_components(coef_components)
+    def _set_coef_components(self,coef_components, components):
+        self._compiled_coef_components = Coef_components(coef_components, components)
             
     def _set_ring_components(self,ring_components):
-        if  self._compiled_ring_components ==  NULL:
-            self._compile_ring_components(ring_components)
+        self. _bytes_to_ring_components(ring_components)
             
-    def _compile_ring_components(self,ring_components): 
-        self._compiled_ring_components = <Ring_component*>malloc(len(ring_components) * sizeof(Ring_component))
-        self._num_ring_components = len(ring_components)
-        for i,ring_component in enumerate(ring_components):
-            self._compiled_ring_components[i].ring_id  = ring_components[i][0]
-            self._compiled_ring_components[i].num_atoms  = len(ring_component[1])
-            for j in range(len(ring_component[1])):
-                self._compiled_ring_components[i].atom_ids[j] =ring_component[1][j]
-    
-    def _free_compiled_ring_components(self):  
-        if self._compiled_ring_components != NULL:
-            free(self._compiled_ring_components)
-            self._compiled_ring_components = NULL
 
     def _free_coef_components(self):
         self._compiled_coef_components = None
@@ -2284,7 +2285,6 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
             
     def _prepare(self, change, data):
         if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
-            self._free_compiled_ring_components()
             self._free_coef_components()
                         
     def _set_normal_cache(self,normals):
