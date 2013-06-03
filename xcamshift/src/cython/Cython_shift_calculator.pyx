@@ -100,7 +100,23 @@ def test_dump_component_index_pair(Non_bonded_interaction_list data, int index):
     cdef Component_index_pair* result =  data.get(index)
     
     return result[0].target_atom_id, result[0].target_index, result[0].remote_index, result[0].component_index
-    
+
+def test_dump_component_offsets(data): 
+    cdef size_t  test  = ctypes.addressof(data)
+    cdef Component_Offsets* test2 = <Component_Offsets*> test
+    cdef Component_Offsets[:] dummy_view
+    if len(data) == 0:
+        result = ()
+    else:
+        dummy_view = <Component_Offsets[:len(data)/ sizeof(Component_Offsets)]> &test2[0]
+        
+        result_data = []
+        for i in range(len(data)/ sizeof(Component_Offsets)):
+            result_data.append((dummy_view[i].id,  dummy_view[i].offset,  dummy_view[i].length)) 
+        result = tuple(result_data)
+    return result 
+
+
 def test_dump_dist_comp(data):
     cdef size_t  test  = ctypes.addressof(data)
     cdef Distance_component* test2 = <Distance_component*> test
@@ -535,35 +551,44 @@ cdef struct Component_Offsets:
     
                 
 cdef class Coef_components:
-    cdef int _num_components
-    cdef Coef_component* _components
-    cdef int num_ids
-    cdef Component_Offsets* _component_offsets
     cdef object _raw_data
+    cdef Coef_component* _components
+    cdef int _num_components
+
+    cdef object _raw_component_offsets_data
+    cdef Component_Offsets* _component_offsets
+    cdef int num_ids
     
     cdef void _bytes_to_components(self, data):
 
         self._raw_data =  data 
         self._components =  <Coef_component*> <size_t> ctypes.addressof(data)
         self._num_components =  len(data)/ sizeof(Coef_component)      
-          
-    def __cinit__(self, object coef_components, components):
+
+    cdef void _bytes_to_component_offsets(self, data):
+
+        self._raw_component_offsets_data =  data 
+        self._component_offsets =  <Component_Offsets*> <size_t> ctypes.addressof(data)
+        self.num_ids =  len(data)/ sizeof(Component_Offsets)    
+                  
+    def __cinit__(self, object coef_components, component_offsets):
 
  
         self._bytes_to_components(coef_components)
+        self._bytes_to_component_offsets(component_offsets)
         
-        self. num_ids = len(components.get_component_atom_ids())
-        self._component_offsets =  <Component_Offsets*>malloc(self.num_ids * sizeof(Coef_component))
-        if not self._component_offsets:
-            raise MemoryError()
-        
-        
-        ids =  components.get_component_atom_ids()
-        for i,id in enumerate(ids):
-            start,end = components.get_component_range(id)
-            self._component_offsets[i].id = id
-            self._component_offsets[i].offset = start
-            self._component_offsets[i].length = end-start
+#         self. num_ids = len(components.get_component_atom_ids())
+#         self._component_offsets =  <Component_Offsets*>malloc(self.num_ids * sizeof(Component_Offsets))
+#         if not self._component_offsets:
+#             raise MemoryError()
+#         
+#         
+#         ids =  components.get_component_atom_ids()
+#         for i,id in enumerate(ids):
+#             start,end = components.get_component_range(id)
+#             self._component_offsets[i].id = id
+#             self._component_offsets[i].offset = start
+#             self._component_offsets[i].length = end-start
 
         
     def __init__ (self, object coef_components, object components):
@@ -574,15 +599,15 @@ cdef class Coef_components:
         return &self._component_offsets[id]
     
     def __dealloc__(self):
- 
+        pass
         
         
         
         
-        if self._component_offsets != NULL:
-            free(self._component_offsets)
-            self._component_offsets =  NULL
-            self.num_ids = 0 
+#         if self._component_offsets != NULL:
+#             free(self._component_offsets)
+#             self._component_offsets =  NULL
+#             self.num_ids = 0 
         
     
 #    cdef int _check_offset(self, int offset) except -1:
@@ -1044,8 +1069,8 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     def _set_centre_cache(self,centres):
         self._centre_cache = <Vec3_list> centres
         
-    def _set_coef_components(self,coef_components, components):
-        self._compiled_coef_components = Coef_components(coef_components, components)
+    def _set_coef_components(self,coef_components, component_offsets):
+        self._compiled_coef_components = Coef_components(coef_components, component_offsets)
 
     cdef void _bytes_to_ring_components(self, data):
         self._raw_ring_component_data =  data 

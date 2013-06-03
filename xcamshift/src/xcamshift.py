@@ -2448,7 +2448,7 @@ class Ring_Potential(Base_potential):
          
 
     def _setup_ring_calculator(self,calculator):
-        calculator._set_coef_components(self._get_component_list('COEF').get_native_components(), self._get_component_list('COEF'))
+        calculator._set_coef_components(self._get_component_list('COEF').get_native_components(), self._get_component_list('COEF').get_native_component_offsets())
         calculator._set_ring_components(self._get_component_list('RING').get_native_components())
         calculator._set_normal_cache(self._get_cache_list('NORM'))
         calculator._set_centre_cache(self._get_cache_list('CENT'))
