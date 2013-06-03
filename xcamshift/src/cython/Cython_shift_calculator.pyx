@@ -793,13 +793,8 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         self._compiled_components  = NULL
         self._num_components =  0
                         
-    def __init__(self, indices, smoothed, str name = "not set"):
+    def __init__(self, smoothed, str name = "not set"):
         Base_shift_calculator.__init__(self, name)
-        self._target_atom_index = indices.target_atom_index
-        self._distance_atom_index_1 =  indices.distance_atom_index_1
-        self._distance_atom_index_2 =  indices.distance_atom_index_2
-        self._exponent_index  = indices.exponent_index
-        self._coefficient_index  = indices.coefficient_index
         
         self._smoothed =  smoothed
         self._smoothing_factor =  DEFAULT_SMOOTHING_FACTOR
@@ -856,7 +851,6 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         cdef float smoothing_factor = self._smoothing_factor
         cdef float ratio
         cdef float result
-        cdef target_distant_atom atom_indices
         cdef coefficient_exponent coef_exp
         cdef float coefficent
         cdef float exponent
@@ -1678,13 +1672,8 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         self._compiled_components  = NULL
         self._num_components =  0
         
-    def __init__(self, object indices, bint smoothed, name="Not set"):
+    def __init__(self, bint smoothed, name="Not set"):
         super(Fast_distance_based_potential_force_calculator, self).__init__(name=name)
-        self._target_atom_index = indices.target_atom_index
-        self._distance_atom_index_1 =  indices.distance_atom_index_1
-        self._distance_atom_index_2 =  indices .distance_atom_index_2
-        self._exponent_index  = indices.exponent_index
-        self._coefficient_index  = indices.coefficient_index
         self._smoothed =  smoothed
         self._smoothing_factor =  DEFAULT_SMOOTHING_FACTOR
         self._cutoff =  DEFAULT_CUTOFF
@@ -1858,8 +1847,8 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         self._compiled_coefficient_components = NULL
         self._component_offset = 0
         
-    def __init__(self, object indices, bint smoothed, str name):
-        super(Fast_non_bonded_force_calculator, self).__init__(indices,smoothed,name)
+    def __init__(self, bint smoothed, str name):
+        super(Fast_non_bonded_force_calculator, self).__init__(smoothed,name)
         global DEFAULT_NB_CUTOFF
         self._nb_cutoff = DEFAULT_NB_CUTOFF
         self._compiled_components =  <Distance_component*>malloc(sizeof(Distance_component))
@@ -2554,8 +2543,8 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._compiled_coefficient_components = NULL
         self. _component_offset = 0
         
-    def __init__(self, object indices, bint smoothed, str name):
-        super(Fast_non_bonded_shift_calculator, self).__init__(indices,smoothed,name)
+    def __init__(self, bint smoothed, str name):
+        super(Fast_non_bonded_shift_calculator, self).__init__(smoothed,name)
         global DEFAULT_NB_CUTOFF
         self._nb_cutoff = DEFAULT_NB_CUTOFF
         

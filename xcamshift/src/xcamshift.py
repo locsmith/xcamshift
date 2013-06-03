@@ -850,7 +850,7 @@ class Distance_based_potential(Base_potential):
     #TODO: move to base potential
     def _get_shift_calculator(self):
 #        if self._fast:
-        result  = Fast_distance_shift_calculator(self._get_indices(), self._smoothed, name=self.get_abbreviated_name())
+        result  = Fast_distance_shift_calculator(self._smoothed, name=self.get_abbreviated_name())
         result.set_verbose(self._verbose)
 #       else:
 #        result = self._shift_calculator = Distance_shift_calculator(self._get_indices(), self._smoothed)
@@ -858,7 +858,7 @@ class Distance_based_potential(Base_potential):
     
     def _get_force_calculator(self):
 #        if self._fast:
-        result = Fast_distance_based_potential_force_calculator(self._get_indices(), self._smoothed, name=self.get_abbreviated_name())
+        result = Fast_distance_based_potential_force_calculator(self._smoothed, name=self.get_abbreviated_name())
 #        else:
 #        result = Distance_based_potential_force_calculator(self._get_indices(), self._smoothed)
         result.set_verbose(self._verbose)
@@ -2214,13 +2214,13 @@ class Non_bonded_potential(Distance_based_potential):
         self._selected_components =  None
     
     def _get_shift_calculator(self):
-        result  = Fast_non_bonded_shift_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
+        result  = Fast_non_bonded_shift_calculator(smoothed=self._smoothed, name = self.get_abbreviated_name())
         result.set_verbose(self._verbose)
         return result
     
     def _get_force_calculator(self):
 #        if self._fast:
-        result = Fast_non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed, name = self.get_abbreviated_name())
+        result = Fast_non_bonded_force_calculator( smoothed=self._smoothed, name = self.get_abbreviated_name())
 #        else:
 #        result = Non_bonded_force_calculator(self._get_indices(), smoothed=self._smoothed)
         result.set_verbose(self._verbose)
