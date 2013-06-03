@@ -22,20 +22,14 @@ from atomSel import AtomSel,intersection
 from component_list import Component_list, Native_component_list
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
-from math import cos, tanh, cosh, sin
 from observed_chemical_shifts import Observed_shift_table
-#from cython.fast_segment_manager import Segment_Manager
 from cython.fast_segment_manager import Segment_Manager
 from table_manager import Table_manager
 from python_utils import tupleit
-from utils import Atom_utils, AXES, iter_residue_atoms,\
-    iter_residues_and_segments, iter_residue_types
-from vec3 import Vec3, norm, cross, dot
-import abc
+from utils import Atom_utils, iter_residues_and_segments
 import sys
 from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED, DISULPHIDE
 from common_constants import  TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, STRUCTURE_CHANGED, SHIFT_DATA_CHANGED
-import itertools
 from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
                                      Fast_ring_shift_calculator, Fast_ring_data_calculator,          \
@@ -76,17 +70,17 @@ class Index_translator(object):
         return result
     
 class Component_factory(object):
-    __metaclass__ = abc.ABCMeta
+    __metaclass__ = ABCMeta
     
-    @abc.abstractmethod
+    @abstractmethod
     def is_residue_acceptable(self, segment, residue_number, segment_manager):
         pass
     
-    @abc.abstractmethod
+    @abstractmethod
     def create_components(self, component_list, table_source, segment,target_residue_number,selected_atoms):
         pass
         
-    @abc.abstractmethod
+    @abstractmethod
     def get_table_name(self):
         pass
     
@@ -104,12 +98,12 @@ class Residue_component_factory(Component_factory):
         table = self._get_table_for_residue(segment, target_residue_number, table_source)
         self.create_residue_components(component_list, table, segment, target_residue_number)
     
-    @abc.abstractmethod
+    @abstractmethod
     def create_residue_components(self,component_list,table, segment, residue):
         pass
     
 class Atom_component_factory(Component_factory):
-    __metaclass__ = abc.ABCMeta
+    __metaclass__ = ABCMeta
     
     def is_residue_acceptable(self, segment, residue_number, segment_manager):
         segment_info = segment_manager.get_segment_info(segment)
@@ -123,15 +117,15 @@ class Atom_component_factory(Component_factory):
         table = self._get_table_for_residue(segment, target_residue_number, table_provider)
         self.create_atom_components(component_list, table, selected_atoms)
     
-    @abc.abstractmethod
+    @abstractmethod
     def _build_contexts(self,atom, table):
         pass
     
-    @abc.abstractmethod
+    @abstractmethod
     def _get_component_for_atom(self,atom, context):
         pass
     
-    @abc.abstractmethod
+    @abstractmethod
     def  _translate_atom_name(self, atom_name,context):
         return atom_name
     
@@ -567,7 +561,7 @@ class Sidechain_component_factory(Atom_component_factory):
         
 class Base_potential(object):
     
-    __metaclass__ = abc.ABCMeta
+    __metaclass__ = ABCMeta
     
     ALL = '(all)'
             
@@ -718,11 +712,11 @@ class Base_potential(object):
         self._component_factories[component_factory.get_table_name()] =  component_factory
     
     
-    @abc.abstractmethod
+    @abstractmethod
     def _get_table_source(self):
         pass
         
-    @abc.abstractmethod
+    @abstractmethod
     def get_abbreviated_name(self):
         pass
 
@@ -886,13 +880,13 @@ class Distance_based_potential(Base_potential):
                             self.distance_atom_index_2, self.coefficient_index, self.exponent_index)
             return msg                 
             
-    @abc.abstractmethod
+    @abstractmethod
     def _get_indices(self):
         return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=0,
                                                 distance_atom_index_2=1,coefficent_index=2,
                                                 exponent_index=3)
     
-#    @abc.abstractmethod
+#    @abstractmethod
     def _get_distance_list_name(self):
         return 'ATOM'
 
@@ -1529,7 +1523,7 @@ class Ring_sidechain_component_factory(Residue_component_factory,Ring_factory_ba
                 for ring_id in ring_ids:
                     self.create_ring_components(component_list, table, segment, residue_number, ring_id)
             
-    @abc.abstractmethod
+    @abstractmethod
     def create_ring_components(self, component_list,table, segment, residue, ring_id):
         pass
     
