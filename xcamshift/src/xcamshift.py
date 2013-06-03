@@ -703,12 +703,6 @@ class Base_potential(object):
             self._active_components = self._build_active_components_list(data)
             self._update_component_to_result(data)
         
-        if self._have_derivative():
-            self._force_calculator._prepare(change, data)
-            
-        if self._shift_calculator:
-            #TODO: shiftpotential is not lyskov substituable
-           self._shift_calculator._prepare(change, data)
 
     
     def get_component_table_names(self):
@@ -2495,7 +2489,6 @@ class Ring_Potential(Base_potential):
         components.add_component(component)
         results = array.array('d',[0.0])
         self._setup_ring_calculator(self._shift_calculator)
-        self._shift_calculator._prepare(TARGET_ATOM_IDS_CHANGED,[component[0],])
         self._setup_ring_calculator(self._shift_calculator)
         component_to_result  = array.array('i',[0])
         self._shift_calculator(components.get_native_components(),results,component_to_result, active_components=array.array('i',[0]))

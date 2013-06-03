@@ -722,8 +722,6 @@ cdef class Base_shift_calculator:
     cdef inline void set_simulation(self):
         self._simulation = currentSimulation()
     
-    def _prepare(self,change,data):
-        pass
     
 cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):           
     
@@ -750,8 +748,6 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
     def _set_components(self,components):
         self._bytes_to_components(components)
 
-    def _prepare(self, change, data):
-         pass  
     
     @cython.profile(False)
     def __call__(self, object components, double[:] results, int[:] component_to_target,  int[:] active_components):
@@ -828,8 +824,6 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 
         
             
-    def _prepare(self, change, data):
-         pass  
         
     @cython.profile(False)
     cdef inline target_distant_atom _get_target_and_distant_atom_ids(self, int index):
@@ -1054,13 +1048,6 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
             
             
 
-    def _free_coef_components(self):
-        self._compiled_coef_components = None
-
-
-    def _prepare(self, change, data):
-        if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
-            self._free_coef_components()
 
             
     def _set_normal_cache(self,normals):
@@ -1624,8 +1611,6 @@ cdef class Base_force_calculator:
         
         self._name = name
         
-    def _prepare(self, change, data):
-        pass
     
     def set_verbose(self,on):
         self._verbose = on
@@ -1714,8 +1699,6 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         self._bytes_to_components(components)
         
     
-    def _prepare(self, change, data):
-        pass  
 
     cdef void _bytes_to_components(self, data):
 
@@ -2039,8 +2022,6 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     def _set_components(self,components):
         self._bytes_to_components(components)
                    
-    def _prepare(self, change, data):
-         pass
      
 #     TODO: remove this is no longer needed
     @cython.profile(False)
@@ -2279,13 +2260,6 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         self. _bytes_to_ring_components(ring_components)
             
 
-    def _free_coef_components(self):
-        self._compiled_coef_components = None
-
-            
-    def _prepare(self, change, data):
-        if change == TARGET_ATOM_IDS_CHANGED or change == STRUCTURE_CHANGED:
-            self._free_coef_components()
                         
     def _set_normal_cache(self,normals):
         self._normal_cache = <Vec3_list> normals
