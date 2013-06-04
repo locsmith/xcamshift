@@ -849,14 +849,10 @@ class Distance_based_potential(Base_potential):
         return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=0,
                                                 distance_atom_index_2=1,coefficent_index=2,
                                                 exponent_index=3)
-    
-#    @abstractmethod
-    def _get_distance_list_name(self):
-        return 'ATOM'
+
 
     def _get_target_and_distant_atom_ids(self, index):
-        list_name = self._get_distance_list_name()
-        values  = self._get_component(index,list_name)
+        values  = self._get_component(index,'ATOM')
         
         indices = self._get_indices()
         distance_atom_index_1 = indices.distance_atom_index_1
@@ -865,15 +861,12 @@ class Distance_based_potential(Base_potential):
         distance_atom = values[distance_atom_index_2]
         return target_atom, distance_atom
 
-    def _get_distance_components(self):
-        list_name  = self._get_distance_list_name()
-        return self._get_component_list(list_name)
+
         
         
     def _get_coefficient_and_exponent(self, index):
-        list_name  = self._get_distance_list_name()
         
-        values = self._get_component(index,list_name)
+        values = self._get_component(index,'ATOM')
         
         indices = self._get_indices()
         
@@ -1162,9 +1155,7 @@ class Dihedral_potential(Base_potential):
     def _get_table_source(self):
         return self._table_manager.get_dihedral_table
 
-    def _get_distance_components(self):
-        return self._get_component_list()
-    
+
 
         
 
@@ -1664,14 +1655,10 @@ class Ring_Potential(Base_potential):
     def _get_table_source(self):
         return self._table_manager.get_ring_table
     
-    def _get_distance_components(self):
-        return self._get_component_list('ATOM')
-
-
     
     def _calc_component_shift(self, index):
         components = self._create_component_list('ATOM')
-        component = self._get_distance_components()[index]
+        component = self._get_component_list()[index]
         components.add_component(component)
         results = array.array('d',[0.0])
         self._setup_ring_calculator(self._shift_calculator)
@@ -2040,8 +2027,6 @@ class Non_bonded_potential(Distance_based_potential):
     def _get_indices(self):
         return Distance_based_potential.Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
     
-    def _get_distance_list_name(self):
-        return 'NBLT'
 
     def _get_non_bonded_list(self):
         non_bonded_list = self._get_component_list('NBLT')
