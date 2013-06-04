@@ -710,14 +710,12 @@ class Base_potential(object):
 #    TODO put 'ATOM' in a constant and rename to BB_ATOM?
     def _get_component_list(self,name=None):
         if name == None:
-            name  = self._get_target_atom_list_name()
+            name  = 'ATOM'
         if not name in self._component_list_data:
             self._component_list_data[name] = self._create_component_list(name)
             self._build_component_list(name,"(all)")
         return self._component_list_data[name]
     
-    def _get_target_atom_list_name(self):
-        return 'ATOM'
     
     # TODO: make these internal
     def _get_component(self, index, name=None):
@@ -2041,9 +2039,6 @@ class Non_bonded_potential(Distance_based_potential):
     
     def _get_indices(self):
         return Distance_based_potential.Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
-    
-    def _get_target_atom_list_name(self):
-        return 'ATOM'
     
     def _get_distance_list_name(self):
         return 'NBLT'
