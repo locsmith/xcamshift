@@ -46,7 +46,6 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
 from time import time
 import array#
 
-#TODO: REMOVE!
 
 class Component_factory(object):
     __metaclass__ = ABCMeta
@@ -88,9 +87,6 @@ class Atom_component_factory(Component_factory):
         segment_info = segment_manager.get_segment_info(segment)
         
         return residue_number > segment_info.first_residue and residue_number < segment_info.last_residue
-
-
-
 
     def create_components(self, component_list, table_provider, segment,target_residue_number,selected_atoms):
         table = self._get_table_for_residue(segment, target_residue_number, table_provider)
@@ -136,7 +132,6 @@ class DihedralContext(object):
                 self._get_atom_names(target_atom_1)
                 raise Exception("unexpected number of to atoms selected (> 1) %d" % num_to_atom)
             return target_atom_1
-    
     
         def get_atom_info(self, segment, from_atom, key_1):
             residue_number_1 = from_atom.residueNum() + key_1.offset
@@ -796,12 +791,6 @@ class Base_potential(object):
        
         components = self._get_components()
         self._shift_calculator(components,results,self._component_to_result, active_components=self._get_active_components())
-             
-
-            
-
-            
-
 
 class Distance_based_potential(Base_potential):
     
@@ -860,9 +849,6 @@ class Distance_based_potential(Base_potential):
         target_atom = values[distance_atom_index_1]
         distance_atom = values[distance_atom_index_2]
         return target_atom, distance_atom
-
-
-        
         
     def _get_coefficient_and_exponent(self, index):
         
@@ -927,8 +913,6 @@ class Distance_potential(Distance_based_potential):
         '''
         
         self._add_component_factory(Distance_component_factory())
-
-
     
     def _get_indices(self):
         return super(Distance_potential, self)._get_indices()
@@ -952,11 +936,6 @@ class Distance_potential(Distance_based_potential):
             values = from_atom, to_atom, value, exponent
             result.append( template % values)
         return '\n'.join(result)
-
-    
-
-
-    
 
     
     def dump(self):
@@ -988,8 +967,6 @@ class Extra_potential(Distance_based_potential):
     def _get_table_source(self):
         return self._table_manager.get_extra_table
     
-    
-
 
     def _get_indices(self):
         return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=1,
@@ -1023,9 +1000,6 @@ class Extra_potential(Distance_based_potential):
             result.append(tuple(sub_result))
         return result
     
-
-
-
 
     
 class RandomCoilShifts(Base_potential):
@@ -1103,7 +1077,6 @@ class Disulphide_shift_calculator(Base_potential):
         components = self._get_component_list()
         return components.get_component(index)[1]
 
-
     def __str__(self): 
         result = []
         for i,elem in enumerate(self._get_component_list()):
@@ -1113,9 +1086,6 @@ class Disulphide_shift_calculator(Base_potential):
             string = template % (i, atom_name,shift)
             result.append(string)
         return '\n'.join(result)
-    
-    
-
 
 class Dihedral_potential(Base_potential):
 
@@ -1139,28 +1109,16 @@ class Dihedral_potential(Base_potential):
                     self._calc_single_force_set(index,force_factor,forces)
         return forces
         
-        
-        
     def get_abbreviated_name(self):
         return DIHEDRAL
 
     def _get_shift_calculator(self):
-#        if self._fast:
         result = Fast_dihedral_shift_calculator(name=self.get_abbreviated_name())
         result.set_verbose(self._verbose)
-#        else:
-#            result = Dihedral_shift_calculator()
         return result
     
     def _get_table_source(self):
         return self._table_manager.get_dihedral_table
-
-
-
-        
-
-
-
     
     def dump(self):
         result  = []
@@ -1223,10 +1181,6 @@ class Dihedral_potential(Base_potential):
         
         return Dihedral(atom_1,atom_2,atom_3,atom_4).value();
     
-    
-
-
-
 
     def _get_dihedral_atom_ids(self, index):
         component = self._get_component(index)
@@ -1273,14 +1227,8 @@ class Sidechain_potential(Distance_based_potential):
     def _get_indices(self):
         return super(Sidechain_potential, self)._get_indices()
     
-        
-
-    
     def  get_abbreviated_name(self):
         return SIDE_CHAIN
-    
-
-
     
     def dump(self):
         result  = []
@@ -1315,10 +1263,8 @@ class Backbone_atom_indexer:
         target_atoms = table.get_target_atoms()
         return target_atoms
 
-
     def _get_table_index(self, table):
         return table._table['index']
-
 
     def _get_table_offset(self, table):
         target_atoms = self._get_target_atoms(table)
@@ -1581,10 +1527,6 @@ class Ring_coefficient_component_factory(Ring_sidechain_component_factory,Backbo
                     for ring_id in ring_ids:
                         self.create_ring_components(component_list, table, segment, residue_number, ring_id)
 
-
-
-
-
 class Ring_Potential(Base_potential):
 
     
@@ -1625,8 +1567,6 @@ class Ring_Potential(Base_potential):
             self._setup_ring_calculator(self._shift_calculator)
             self._setup_ring_calculator(self._force_calculator)
 
-         
-
     def _setup_ring_calculator(self,calculator):
         calculator._set_coef_components(self._get_component_list('COEF').get_native_components(), self._get_component_list('COEF').get_native_component_offsets())
         calculator._set_ring_components(self._get_component_list('RING').get_native_components())
@@ -1637,8 +1577,6 @@ class Ring_Potential(Base_potential):
         result = Fast_ring_data_calculator()
         result.set_verbose(self._verbose)
         return result
-    
-        
         
     def get_abbreviated_name(self):
         return RING
@@ -1677,8 +1615,6 @@ class Ring_Potential(Base_potential):
         rings = self._get_component_list('RING')
 
         self._ring_data_calculator(rings, normals, centres)
-    
-
 
     def _create_component_list(self, name):
         if name == 'ATOM':
@@ -1866,10 +1802,6 @@ class Non_bonded_list(object):
         def __nonzero__(self):
             raise Exception("internal error this object should never be used in a boolean comparison!!")
     
-
-
-
-            
     def __str__(self):
         result  = []
         
@@ -2194,9 +2126,6 @@ class Non_bonded_potential(Distance_based_potential):
                     i+= 1
                     yield chem_type,sphere
 
-                         
-            
-                
         
     #TODO centralise table manager (each sub potential has its own table manager at the moment)
     #TODO complete
@@ -2447,10 +2376,6 @@ from pyPot import PyPot
 
 class Xcamshift(PyPot):
 
-    
-    
-    
-
 
     def _get_force_factor_calculator(self):
         result  =  Fast_force_factor_calculator()
@@ -2483,9 +2408,6 @@ class Xcamshift(PyPot):
         self._active_target_atom_ids = None
         self._factors = None
 
-    
-    
-    
 
     def set_verbose(self,on=True):
         for potential in self.potential:
@@ -2519,10 +2441,7 @@ class Xcamshift(PyPot):
         return [potential.get_abbreviated_name() for potential in self.potential]
     
     def _get_energy_calculator(self):
-#        if self._fast:
         result  = Fast_energy_calculator()
-#        else:
-#            result  = Energy_calculator()
         result.set_verbose(self._verbose)
         
         return result
@@ -2944,8 +2863,6 @@ class Xcamshift(PyPot):
         else:
             result.realloc(num_atoms)
         return result
-        
-
 
         
     def calcEnergy(self, prepare =  True, active_target_atom_ids = None):
@@ -3019,7 +2936,4 @@ class Xcamshift(PyPot):
         self._prepare(STRUCTURE_CHANGED, None)
         self._prepare(TARGET_ATOM_IDS_CHANGED, None)
         #TODO: do we need a  set froze here
-
-    
-
 
