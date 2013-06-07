@@ -43,11 +43,11 @@ PyEnsemblePotProxy::run()
 }
 
 float_type PyEnsemblePotProxy::rms(){
-	return 0.0f;
+	return -1.0f;
 }
 int PyEnsemblePotProxy::violations(){
-	return 0;
+	return -1;
 }
 int PyEnsemblePotProxy::numRestraints(){
-	return 0;
+	return -1;
 }
