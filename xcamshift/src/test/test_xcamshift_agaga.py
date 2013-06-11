@@ -19,7 +19,7 @@ from protocol import initStruct
 from pdbTool import PDBTool
 from xcamshift import Xcamshift
 from utils import Atom_utils
-from common_constants import BACK_BONE
+from common_constants import BACK_BONE, ROUND_CHANGED
 import sys
 from cython.fast_segment_manager import Segment_Manager
 
@@ -57,6 +57,7 @@ class TestXcamshiftAGAGA(unittest2.TestCase):
     def test_agaga_shifts(self):
         xcamshift = self._get_xcamshift()
         
+        xcamshift._prepare(ROUND_CHANGED, None)
         agaga_shifts_copy = dict( agaga_shifts)
         for key in agaga_shifts:
             segment, residue_number, atom = key
@@ -73,6 +74,7 @@ class TestXcamshiftAGAGA(unittest2.TestCase):
         
     def test_agaga_component_shifts(self):
         xcamshift = Xcamshift()
+        xcamshift._prepare(ROUND_CHANGED, None)
         
         sub_potential_shifts = dict(agaga_subpotential_shifts)
         for key in agaga_subpotential_shifts:

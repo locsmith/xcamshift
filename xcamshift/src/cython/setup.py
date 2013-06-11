@@ -25,6 +25,7 @@ ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx"],
                                           ('USE_CDS_NAMESPACE', '1')],
                         
                          language="c++",
+                         extra_compile_args=["-O3"],
                          
                          include_dirs=['/home/garyt/programs/xplor-nih/2.31.0/common',
                                        '/home/garyt/programs/xplor-nih/2.31.0/CDSlib',

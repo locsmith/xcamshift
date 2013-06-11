@@ -18,7 +18,7 @@ from test.test_segment_manager import Test_segment_manager
 from test.test_observed_chemical_shifts import TestObservedShiftTable
 from test.test_xcamshift import TestXcamshift
 from test.Test_table_manager import Test_table_manager
-from test.test_component_list import Test_component_list
+from test.test_component_list import Test_component_list,Test_native_component_list
 from test.test_xcamshift_afa import TestXcamshiftAFA
 from test.test_xcamshift_a4 import TestXcamshiftA4
 from test.test_python_utils import Test_python_utils
@@ -28,6 +28,7 @@ from test.test_xcamshift_vin import TestXcamshiftVIN
 from test.test_xcamshift_agfa import TestXcamshiftAGFA
 from test.test_xcamshift_agaga import TestXcamshiftAGAGA
 from test.test_xcamshift_gb3 import TestXcamshiftGB3
+from test.test_cython_non_bonded_list import Test_cython_non_boned_list
 import sys
 
 fast = False
@@ -41,6 +42,7 @@ def load_tests(loader, tests, pattern):
                 TestXcamshift,
                 Test_table_manager,
                 Test_component_list,
+                Test_native_component_list,
                 TestXcamshiftA4,
                 Test_python_utils,
                 Test_table_importers,
@@ -49,6 +51,7 @@ def load_tests(loader, tests, pattern):
                 TestXcamshiftAGFA,
                 TestXcamshift,
                 TestXcamshiftAGAGA,
+                Test_cython_non_boned_list
 #                TestXcamshiftGB3
 )
     
