@@ -5,13 +5,7 @@ cdef extern from "PyEnsemblePotProxy.hh":
     
 
     cdef cppclass PyEnsemblePotProxy:
-        #PyObject *obj
-        #RunFct fct
+
         
-        PyEnsemblePotProxy(String& potName,  String& instanceName, Simulation* simulation, PyObject *obj)
-        void doRun()
-        void run()
-
-    
-
+        PyEnsemblePotProxy(String& potName,  String& instanceName, Simulation* simulation)
 

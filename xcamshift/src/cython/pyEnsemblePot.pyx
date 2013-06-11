@@ -4,25 +4,33 @@ from  xplor_access cimport Simulation, String
 
 from cython.operator cimport dereference as deref
 
-cdef class PyEnsemblePot:
+cdef class PyEnsemblePot:  
     cdef PyEnsemblePotProxy* ensemblePotProxy
     cdef String* _instance_name
     cdef String* _potential_name
     cdef Simulation *_simulation
     
-    def __init__(self, instance_name, potential_name, simulation):
+    def __init__(self, instance_name="test1", potential_name="test2", simulation=None):
         print ("[cy]  PyEnsemblePot.__init__")
         
         self._instance_name = new String(instance_name, len(instance_name))
         self._potential_name = new String(potential_name, len(potential_name))
         self._simulation = currentSimulation()
-        self.ensemblePotProxy = new PyEnsemblePotProxy(self._instance_name[0], self._potential_name[0],self._simulation,
-            <cpy_ref.PyObject*>self)
-            
+        self.ensemblePotProxy = new PyEnsemblePotProxy(self._instance_name[0], self._potential_name[0],self._simulation)
+#,
+#            <cpy_ref.PyObject*>self)
+        
+    def calcEnergy(self):
+        print 'here 1'
+        pass
+    
+    def calcEnergyAndDerivList(self,derivList):
+        print 'here 2'
+        
     #------- non-virutal methods --------
     def doRun(self):
         print ("[cy]  PyEnsemblePot.doRun()")
-        self.ensemblePotProxy.run()
+        #self.ensemblePotProxy.run()
 
 
 #------- virtual methods --------

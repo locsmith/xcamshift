@@ -4,20 +4,14 @@
 
 #include "ensemblePot.hh"
 
-struct _object;
-typedef _object PyObject;
 
+class PyEnsemblePotProxy : public EnsemblePot  {
 
-
-class PyEnsemblePotProxy : public EnsemblePot {
 public:
-  PyObject *m_obj;
+	PyEnsemblePotProxy(const String&, const String&, Simulation*);
 
-  PyEnsemblePotProxy(const String&, const String&, Simulation*, PyObject *obj);
-  virtual ~PyEnsemblePotProxy();
-  void doRun();
-  virtual void run();
 
+public:
   float_type rms();
   int violations();
   int numRestraints();
