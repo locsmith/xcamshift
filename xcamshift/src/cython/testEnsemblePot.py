@@ -9,7 +9,9 @@ class Test(unittest.TestCase):
 
 
     def setUp(self):
-        PyEnsemblePotProxy('test','test',None)
+        class Dummy():
+            pass
+        PyEnsemblePotProxy('test','test',None,Dummy())
  
     def tearDown(self):
         pass

@@ -151,6 +151,9 @@ class PyEnsemblePotProxy(_object):
 
     __swig_destroy__ = _PyEnsemblePotProxy.delete_PyEnsemblePotProxy
     __del__ = lambda self : None;
+    __swig_setmethods__["m_obj"] = _PyEnsemblePotProxy.PyEnsemblePotProxy_m_obj_set
+    __swig_getmethods__["m_obj"] = _PyEnsemblePotProxy.PyEnsemblePotProxy_m_obj_get
+    if _newclass:m_obj = _swig_property(_PyEnsemblePotProxy.PyEnsemblePotProxy_m_obj_get, _PyEnsemblePotProxy.PyEnsemblePotProxy_m_obj_set)
     def rms(self, *args, **kwargs): return _PyEnsemblePotProxy.PyEnsemblePotProxy_rms(self, *args, **kwargs)
     def violations(self, *args, **kwargs): return _PyEnsemblePotProxy.PyEnsemblePotProxy_violations(self, *args, **kwargs)
     def numRestraints(self, *args, **kwargs): return _PyEnsemblePotProxy.PyEnsemblePotProxy_numRestraints(self, *args, **kwargs)
@@ -220,16 +223,19 @@ class PyEnsemblePotProxy_LetterClass(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, PyEnsemblePotProxy_LetterClass, name)
     __repr__ = _swig_repr
+    __swig_setmethods__["m_obj"] = _PyEnsemblePotProxy.PyEnsemblePotProxy_LetterClass_m_obj_set
+    __swig_getmethods__["m_obj"] = _PyEnsemblePotProxy.PyEnsemblePotProxy_LetterClass_m_obj_get
+    if _newclass:m_obj = _swig_property(_PyEnsemblePotProxy.PyEnsemblePotProxy_LetterClass_m_obj_get, _PyEnsemblePotProxy.PyEnsemblePotProxy_LetterClass_m_obj_set)
     def __init__(self, *args, **kwargs): 
         this = _PyEnsemblePotProxy.new_PyEnsemblePotProxy_LetterClass(*args, **kwargs)
         try: self.this.append(this)
         except: self.this = this
+    __swig_destroy__ = _PyEnsemblePotProxy.delete_PyEnsemblePotProxy_LetterClass
+    __del__ = lambda self : None;
     def rms(self, *args, **kwargs): return _PyEnsemblePotProxy.PyEnsemblePotProxy_LetterClass_rms(self, *args, **kwargs)
     def violations(self, *args, **kwargs): return _PyEnsemblePotProxy.PyEnsemblePotProxy_LetterClass_violations(self, *args, **kwargs)
     def numRestraints(self, *args, **kwargs): return _PyEnsemblePotProxy.PyEnsemblePotProxy_LetterClass_numRestraints(self, *args, **kwargs)
     def help(self, *args, **kwargs): return _PyEnsemblePotProxy.PyEnsemblePotProxy_LetterClass_help(self, *args, **kwargs)
-    __swig_destroy__ = _PyEnsemblePotProxy.delete_PyEnsemblePotProxy_LetterClass
-    __del__ = lambda self : None;
 
 class PyEnsemblePotProxy_LetterClassPtr(PyEnsemblePotProxy_LetterClass):
     def __init__(self, this):

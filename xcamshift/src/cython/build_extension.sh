@@ -5,19 +5,19 @@ rm _PyEnsemblePotProxy.so pyEnsemblePotProxy_wrap.cxx pyEnsemblePotProxy_wrap_ne
 
 
 swig -classptr -python -c++  -keyword -shadow                                              \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/python/                                  \
+-I/home/garyt/programs/xplor-nih/2.31.0/python/                                  \
 -I/home/garyt/programs/python/2.6.2/installation/include/python2.6                         \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/CDSlib                                   \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/common                                   \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/intVar                                   \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/nmrPot                                   \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/vmd                                      \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/surfD                                    \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/cminpack                                 \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/sparta                                   \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/devel                                    \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/fortlib                                  \
--I. -I/home/garyt/programs/xplor-nih/2.31.0_test_swig/common                               \
+-I/home/garyt/programs/xplor-nih/2.31.0/CDSlib                                   \
+-I/home/garyt/programs/xplor-nih/2.31.0/common                                   \
+-I/home/garyt/programs/xplor-nih/2.31.0/intVar                                   \
+-I/home/garyt/programs/xplor-nih/2.31.0/nmrPot                                   \
+-I/home/garyt/programs/xplor-nih/2.31.0/vmd                                      \
+-I/home/garyt/programs/xplor-nih/2.31.0/surfD                                    \
+-I/home/garyt/programs/xplor-nih/2.31.0/cminpack                                 \
+-I/home/garyt/programs/xplor-nih/2.31.0/sparta                                   \
+-I/home/garyt/programs/xplor-nih/2.31.0/devel                                    \
+-I/home/garyt/programs/xplor-nih/2.31.0/fortlib                                  \
+-I. -I/home/garyt/programs/xplor-nih/2.31.0/common                               \
 pyEnsemblePotProxy.i
 
 #sed replace
@@ -25,24 +25,24 @@ sed -e 's/SWIG_/SWIGPY_/g' pyEnsemblePotProxy_wrap.cxx > pyEnsemblePotProxy_wrap
 
 #include
 ~/programs/xplor-nih/2.31.0/bin/includeCC pyEnsemblePotProxy_wrap_new.cpp --template-dir  \
-/home/garyt/programs/xplor-nih/2.31.0_test_swig/CDSlib --cc 'c++' -DX_MMAP_FLAGS=0        \
+/home/garyt/programs/xplor-nih/2.31.0/CDSlib --cc 'c++' -DX_MMAP_FLAGS=0        \
 -DFORTRAN_INIT -O3 -DLINUX -D_REENTRANT -DNDEBUG                                          \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/python/                                 \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/arch/Linux_i686/include                 \
+-I/home/garyt/programs/xplor-nih/2.31.0/python/                                 \
+-I/home/garyt/programs/xplor-nih/2.31.0/arch/Linux_i686/include                 \
 -DSWIG_VERSION=20004 -I/usr/share/swig2.0/python -DCPLUSPLUS -DUSE_CDS_NAMESPACE          \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/python/                                 \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/arch/Linux_i686/include -DSWIGPY_GLOBAL \
+-I/home/garyt/programs/xplor-nih/2.31.0/python/                                 \
+-I/home/garyt/programs/xplor-nih/2.31.0/arch/Linux_i686/include -DSWIGPY_GLOBAL \
 -I. -I/home/garyt/programs/python/2.6.2/installation/include/python2.6                    \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/CDSlib                                  \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/common                                  \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/intVar                                  \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/nmrPot                                  \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/vmd                                     \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/surfD                                   \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/cminpack                                \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/sparta                                  \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/devel                                   \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/fortlib                                 \
+-I/home/garyt/programs/xplor-nih/2.31.0/CDSlib                                  \
+-I/home/garyt/programs/xplor-nih/2.31.0/common                                  \
+-I/home/garyt/programs/xplor-nih/2.31.0/intVar                                  \
+-I/home/garyt/programs/xplor-nih/2.31.0/nmrPot                                  \
+-I/home/garyt/programs/xplor-nih/2.31.0/vmd                                     \
+-I/home/garyt/programs/xplor-nih/2.31.0/surfD                                   \
+-I/home/garyt/programs/xplor-nih/2.31.0/cminpack                                \
+-I/home/garyt/programs/xplor-nih/2.31.0/sparta                                  \
+-I/home/garyt/programs/xplor-nih/2.31.0/devel                                   \
+-I/home/garyt/programs/xplor-nih/2.31.0/fortlib                                 \
 -DNIHXPLOR_VERSION='"2.31-custom"' -DPYTHON_VERSION='"2.6"'                               \
 -DSWIGPY_PYTHON_SILENT_MEMLEAK > pyEnsemblePotProxy_wrap_new_2.cpp
 
@@ -59,7 +59,7 @@ gcc -pthread -fno-strict-aliasing -g -O2 -DNDEBUG -g -fwrapv -O3 -Wall          
 -I.                                                                                        \
 -I/home/garyt/programs/xplor-nih/2.31.0/python                                             \
 -I/home/garyt/programs/xplor-nih/2.31.0/intVar                                             \
--I/home/garyt/programs/xplor-nih/2.31.0_test_swig/vmd                                      \
+-I/home/garyt/programs/xplor-nih/2.31.0/vmd                                      \
 -c pyEnsemblePotProxy_wrap_new_2.cpp
 
 #link
