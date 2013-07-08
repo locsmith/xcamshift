@@ -5,7 +5,5 @@ cdef extern from "PyEnsemblePotProxy.hh":
     
 
     cdef cppclass PyEnsemblePotProxy:
-
-        
-        PyEnsemblePotProxy(String& potName,  String& instanceName, Simulation* simulation)
+        PyEnsemblePotProxy(String& potName,  String& instanceName, Simulation* simulation, PyObject *object)
 

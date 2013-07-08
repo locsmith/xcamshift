@@ -15,17 +15,18 @@ cdef class PyEnsemblePot:
         
         self._instance_name = new String(instance_name, len(instance_name))
         self._potential_name = new String(potential_name, len(potential_name))
-        self._simulation = currentSimulation()
-        self.ensemblePotProxy = new PyEnsemblePotProxy(self._instance_name[0], self._potential_name[0],self._simulation)
+        self._simulation = <Simulation*> <size_t> simulation
+        self.ensemblePotProxy = new PyEnsemblePotProxy(self._instance_name[0], self._potential_name[0],self._simulation, <cpy_ref.PyObject*>self)
 #,
 #            <cpy_ref.PyObject*>self)
         
     def calcEnergy(self):
         print 'here 1'
-        pass
+        return 0.0
     
     def calcEnergyAndDerivList(self,derivList):
         print 'here 2'
+        return 0.0
         
     #------- non-virutal methods --------
     def doRun(self):
