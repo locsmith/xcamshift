@@ -1,6 +1,6 @@
 cimport pyEnsemblePot 
 cimport cpython.ref as cpy_ref
-from  xplor_access cimport Simulation, String
+from  xplor_access cimport Simulation, String, DerivList
 
 from cython.operator cimport dereference as deref
 
@@ -25,8 +25,10 @@ cdef class PyEnsemblePot:
         return 0.0
     
     def calcEnergyAndDerivList(self,derivList):
-        print 'here 2'
-        return 0.0
+        pointer = int(derivList.this)
+        result = self.ensemblePotProxy[0].calcEnergyAndDerivs((<DerivList*><size_t>pointer)[0])
+        return result
+
         
     #------- non-virutal methods --------
     def doRun(self):

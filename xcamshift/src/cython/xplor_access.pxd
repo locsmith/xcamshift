@@ -68,7 +68,7 @@ cdef extern from "simulation.hh" namespace "Simulation":
     Simulation* currentSimulation()
     
 
-cdef extern from "pot.hh":
+cdef extern from "derivList.hh":
     cdef cppclass DerivList:
         pass
 
