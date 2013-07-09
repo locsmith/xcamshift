@@ -22,7 +22,7 @@ class XCamshiftEnsemble(PyPot):
         self._proxyPot = PyEnsemblePot(name,"camshift",self.simulation())
         
     def calcEnergy(self):
-        return self._proxyPot.calcEnergy()
+        print 'called calc energy'
     
     def calcEnergyAndDerivList(self, derivList):
         return self._proxyPot.calcEnergyAndDerivList(derivList)

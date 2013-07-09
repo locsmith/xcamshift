@@ -20,9 +20,6 @@ cdef class PyEnsemblePot:
 #,
 #            <cpy_ref.PyObject*>self)
         
-    def calcEnergy(self):
-        print 'here 1'
-        return 0.0
     
     def calcEnergyAndDerivList(self,derivList):
         pointer = int(derivList.this)
