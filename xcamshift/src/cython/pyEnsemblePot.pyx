@@ -17,8 +17,7 @@ cdef class PyEnsemblePot:
         self._potential_name = new String(potential_name, len(potential_name))
         self._simulation = <Simulation*> <size_t> simulation
         self.ensemblePotProxy = new PyEnsemblePotProxy(self._instance_name[0], self._potential_name[0],self._simulation, <cpy_ref.PyObject*>self)
-#,
-#            <cpy_ref.PyObject*>self)
+
         
     
     def calcEnergyAndDerivList(self,derivList):
@@ -27,7 +26,6 @@ cdef class PyEnsemblePot:
         return result
 
         
-    #------- non-virutal methods --------
     def calcEnergyAndDerivsMaybe0(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         return 0.0
 
@@ -43,8 +41,6 @@ cdef class PyEnsemblePot:
     def calcEnergyAndDerivsMaybe4(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         return 0.0
 
-#------- virtual methods --------
-
 cdef public api double cy_call_calc_energy_and_derivs_maybe(object self, int i, DerivList* derivList, EnsembleSimulation* esim, bint calcDerivs, float* result,  int *error):
 
     if i == 0:
@@ -58,7 +54,4 @@ cdef public api double cy_call_calc_energy_and_derivs_maybe(object self, int i, 
     elif i == 4:
         result[0] = self.calcEnergyAndDerivsMaybe4(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)
 
-print("[cy]  pyEnsemblePot module imported")
-
- 
 
