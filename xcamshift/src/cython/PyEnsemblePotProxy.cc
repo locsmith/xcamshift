@@ -25,6 +25,18 @@ PyEnsemblePotProxy::~PyEnsemblePotProxy()
   Py_XDECREF(this->m_obj);
 }
 
+float_type PyEnsemblePotProxy::energyMaybeDerivs0(DerivList& derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 0);}
+float_type PyEnsemblePotProxy::energyMaybeDerivs1(DerivList &derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 1);}
+float_type PyEnsemblePotProxy::energyMaybeDerivs2(DerivList &derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 2);}
+float_type PyEnsemblePotProxy::energyMaybeDerivs3(DerivList &derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 3);}
+float_type PyEnsemblePotProxy::energyMaybeDerivs4(DerivList &derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 4);}
+
+
+float_type PyEnsemblePotProxy::callCyEnergyMaybeDerivs(DerivList& derivList, bool calcDerivs, int i) {
+	printf("proxy called\n");
+	return 0.0;
+}
+
 float_type PyEnsemblePotProxy::rms(){
 	return -1.0f;
 }
