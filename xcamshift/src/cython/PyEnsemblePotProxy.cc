@@ -34,8 +34,18 @@ float_type PyEnsemblePotProxy::energyMaybeDerivs4(DerivList &derivList, bool cal
 
 
 float_type PyEnsemblePotProxy::callCyEnergyMaybeDerivs(DerivList& derivList, bool calcDerivs, int i) {
-	printf("proxy called\n");
-	return 0.0;
+	PyGILState_STATE gstate;
+	gstate = PyGILState_Ensure();
+
+
+	/* evaluate result or handle exception */
+	int error;
+	float result = 0.0;
+	cy_call_calc_energy_and_derivs_maybe(m_obj,i,&derivList, esim, calcDerivs, &result, &error);
+
+	/* Release the thread. No Python API allowed beyond this point. */
+	PyGILState_Release(gstate);
+	return result;
 }
 
 float_type PyEnsemblePotProxy::rms(){

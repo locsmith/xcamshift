@@ -3,8 +3,8 @@
 #include "Python.h"
 #include "pyEnsemblePot.h"
 
-static void (*__pyx_f_13pyEnsemblePot_cy_call_run)(PyObject *, int *) = 0;
-#define cy_call_run __pyx_f_13pyEnsemblePot_cy_call_run
+static double (*__pyx_f_13pyEnsemblePot_cy_call_calc_energy_and_derivs_maybe)(PyObject *, int, DerivList *, EnsembleSimulation *, int, float *, int *) = 0;
+#define cy_call_calc_energy_and_derivs_maybe __pyx_f_13pyEnsemblePot_cy_call_calc_energy_and_derivs_maybe
 #if !defined(__Pyx_PyIdentifier_FromString)
 #if PY_MAJOR_VERSION < 3
   #define __Pyx_PyIdentifier_FromString(s) PyString_FromString(s)
@@ -88,7 +88,7 @@ static int import_pyEnsemblePot(void) {
   PyObject *module = 0;
   module = __Pyx_ImportModule("pyEnsemblePot");
   if (!module) goto bad;
-  if (__Pyx_ImportFunction(module, "cy_call_run", (void (**)(void))&__pyx_f_13pyEnsemblePot_cy_call_run, "void (PyObject *, int *)") < 0) goto bad;
+  if (__Pyx_ImportFunction(module, "cy_call_calc_energy_and_derivs_maybe", (void (**)(void))&__pyx_f_13pyEnsemblePot_cy_call_calc_energy_and_derivs_maybe, "double (PyObject *, int, DerivList *, EnsembleSimulation *, int, float *, int *)") < 0) goto bad;
   Py_DECREF(module); module = 0;
   return 0;
   bad:

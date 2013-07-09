@@ -1,6 +1,6 @@
 cimport pyEnsemblePot 
 cimport cpython.ref as cpy_ref
-from  xplor_access cimport Simulation, String, DerivList
+from  xplor_access cimport Simulation, String, DerivList, EnsembleSimulation
 
 from cython.operator cimport dereference as deref
 
@@ -35,15 +35,8 @@ cdef class PyEnsemblePot:
 
 #------- virtual methods --------
 
-cdef public api void cy_call_run(object self, int *error):
-    print("[cy]  cy_call_run()")
-    try:
-        func = self.virtual_call
-    except AttributeError:
-        error[0] = 1
-    else:
-        error[0] = 0
-        func()
+cdef public api double cy_call_calc_energy_and_derivs_maybe(object self, int i, DerivList* derivList, EnsembleSimulation* esim, bint calcDerivs, float* result,  int *error):
+    print("[cy]  cy_call_calc_energy_and_derivs_maybe()")
 
 
 #
