@@ -24,6 +24,7 @@ PyEnsemblePotProxy::PyEnsemblePotProxy(const String& potName, const String& inst
 PyEnsemblePotProxy::~PyEnsemblePotProxy()
 {
   Py_XDECREF(this->m_obj);
+  unRegister(esim);
 }
 
 float_type PyEnsemblePotProxy::energyMaybeDerivs0(DerivList& derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 0);}
