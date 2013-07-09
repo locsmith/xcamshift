@@ -28,19 +28,36 @@ cdef class PyEnsemblePot:
 
         
     #------- non-virutal methods --------
-    def doRun(self):
-        print ("[cy]  PyEnsemblePot.doRun()")
-        #self.ensemblePotProxy.run()
+    def calcEnergyAndDerivsMaybe0(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
+        return 0.0
 
+    def calcEnergyAndDerivsMaybe1(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
+        return 0.0
+
+    def calcEnergyAndDerivsMaybe2(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
+        return 0.0
+
+    def calcEnergyAndDerivsMaybe3(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
+        return 0.0
+
+    def calcEnergyAndDerivsMaybe4(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
+        return 0.0
 
 #------- virtual methods --------
 
 cdef public api double cy_call_calc_energy_and_derivs_maybe(object self, int i, DerivList* derivList, EnsembleSimulation* esim, bint calcDerivs, float* result,  int *error):
-    print("[cy]  cy_call_calc_energy_and_derivs_maybe()")
 
+    if i == 0:
+        result[0] = self.calcEnergyAndDerivsMaybe0(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)
+    elif i == 1:
+        result[0] = self.calcEnergyAndDerivsMaybe1(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)
+    elif i == 2:
+        result[0] = self.calcEnergyAndDerivsMaybe2(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)        
+    elif i == 3:
+        result[0] = self.calcEnergyAndDerivsMaybe3(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)  
+    elif i == 4:
+        result[0] = self.calcEnergyAndDerivsMaybe4(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)
 
-#
-#
 print("[cy]  pyEnsemblePot module imported")
 
  
