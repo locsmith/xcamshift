@@ -9,8 +9,9 @@
 PyEnsemblePotProxy::PyEnsemblePotProxy(const String& potName, const String& instanceName, Simulation* simulation, PyObject *obj):
   EnsemblePot(potName, instanceName, simulation),  m_obj(obj)
 {
+  // do we need to un register?
+  registerTo(esim);
 
-  printf("initted\n");
 
   if (import_pyEnsemblePot()) {
     printf("[c+]  error in import_pyEnsemblePot!\n");
