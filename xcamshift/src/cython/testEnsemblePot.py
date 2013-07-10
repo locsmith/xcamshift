@@ -5,7 +5,7 @@ Created on 8 Jun 2013
 '''
 import unittest
 import protocol
-from cython.xCamshiftEnsemble import XCamshiftEnsemble
+from cython.pyEnsemblePot import PyEnsemblePot
 from ensembleSimulation import EnsembleSimulation
 import ivm
 
@@ -22,7 +22,7 @@ class Test(unittest.TestCase):
         protocol.torsionTopology(dyn)
         
         potList = PotList("test pot list")
-        pot  = XCamshiftEnsemble('test ensemble pot')
+        pot  = PyEnsemblePot('test ensemble pot')
         potList.append(pot)
         
         protocol.initDynamics(dyn,

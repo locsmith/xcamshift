@@ -12,7 +12,7 @@
   #endif
 #endif
 
-__PYX_EXTERN_C DL_IMPORT(void) cy_call_run(PyObject *, int *);
+__PYX_EXTERN_C DL_IMPORT(double) cy_call_calc_energy_and_derivs_maybe(PyObject *, int, DerivList *, EnsembleSimulation *, int, float *, int *);
 
 #endif /* !__PYX_HAVE_API__pyEnsemblePot */
 
