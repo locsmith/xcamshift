@@ -28,40 +28,13 @@ class PyEnsemblePot(PyPot,PyEnsemblePotData):
     def __init__(self,name):
         PyPot.__init__(self,name)
         PyEnsemblePotData.__init__(self, self.instanceName(),self.potName())
-
-
-
- 
       
     def calcEnergyAndDerivsMaybe0(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
-        cdef EnsembleSimulation* esim 
-        cdef  EnsembleMemberSimulation* sim 
-   
-        cdef int index
-        cdef float result = 0.0
-          
-        with nogil:
-            esim = <EnsembleSimulation*>ensembleSimulationPtr
-            sim = esim[0].member()
-            index = sim[0].memberIndex() 
-            printf('calc energy deriv maybe 0 %i\n', index)
-  
-        return result
+        return 0.0
   
     def calcEnergyAndDerivsMaybe1(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
-        cdef EnsembleSimulation* esim 
-        cdef  EnsembleMemberSimulation* sim 
-   
-        cdef int index
-        cdef float result = 0.0
-          
-        with nogil:
-            esim = <EnsembleSimulation*>ensembleSimulationPtr
-            sim = esim[0].member()
-            index = sim[0].memberIndex() 
-            printf('calc energy deriv maybe 1 %i\n', index)
-        return result
- 
+        return 0.0
+    
     def calcEnergyAndDerivsMaybe2(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         return 0.0
  
