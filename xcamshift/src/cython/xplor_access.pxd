@@ -68,11 +68,15 @@ cdef extern from "simulation.hh" namespace "Simulation":
     Simulation* currentSimulation()
     
 cdef extern from 'ensembleSimulation.hh':
-
+    cdef cppclass EnsembleMemberSimulation:
+        int id()
+        int memberIndex() nogil
         
     cdef cppclass EnsembleSimulation:
          String name()
+         EnsembleMemberSimulation* member() nogil
          int size()
+         
 
 cdef extern from "derivList.hh":
     cdef cppclass DerivList:

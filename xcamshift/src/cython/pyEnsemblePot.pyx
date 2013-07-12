@@ -1,48 +1,78 @@
-cimport pyEnsemblePot 
+
+
+from cython.xPyPot import PyPot
 cimport cpython.ref as cpy_ref
-from  xplor_access cimport Simulation, String, DerivList, EnsembleSimulation
-
-from cython.operator cimport dereference as deref
-
-cdef class PyEnsemblePot:  
+from  xplor_access cimport Simulation, String, DerivList, EnsembleSimulation, EnsembleMemberSimulation
+from libc.stdio cimport printf
+# 
+cdef class PyEnsemblePotData:
     cdef PyEnsemblePotProxy* ensemblePotProxy
     cdef String* _instance_name
     cdef String* _potential_name
-    cdef Simulation *_simulation
-    
-    def __init__(self, instance_name="test1", potential_name="test2", simulation=None):
+    cdef Simulation *_simulation 
+# 
+    def __init__(self, instance_name, potential_name='test'):
+        pass
         print ("[cy]  PyEnsemblePot.__init__")
-        
         self._instance_name = new String(instance_name, len(instance_name))
         self._potential_name = new String(potential_name, len(potential_name))
-        self._simulation = <Simulation*> <size_t> simulation
+        self._simulation = <Simulation*><size_t>self.simulation()
         self.ensemblePotProxy = new PyEnsemblePotProxy(self._instance_name[0], self._potential_name[0],self._simulation, <cpy_ref.PyObject*>self)
-
-        
-    
+     
     def calcEnergyAndDerivList(self,derivList):
         pointer = int(derivList.this)
         result = self.ensemblePotProxy[0].calcEnergyAndDerivs((<DerivList*><size_t>pointer)[0])
         return result
+    
+class PyEnsemblePot(PyPot,PyEnsemblePotData):
+    def __init__(self,name):
+        PyPot.__init__(self,name)
+        PyEnsemblePotData.__init__(self, self.instanceName(),self.potName())
 
-        
+
+
+ 
+      
     def calcEnergyAndDerivsMaybe0(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
-        return 0.0
-
+        cdef EnsembleSimulation* esim 
+        cdef  EnsembleMemberSimulation* sim 
+   
+        cdef int index
+        cdef float result = 0.0
+          
+        with nogil:
+            esim = <EnsembleSimulation*>ensembleSimulationPtr
+            sim = esim[0].member()
+            index = sim[0].memberIndex() 
+            printf('calc energy deriv maybe 0 %i\n', index)
+  
+        return result
+  
     def calcEnergyAndDerivsMaybe1(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
-        return 0.0
-
+        cdef EnsembleSimulation* esim 
+        cdef  EnsembleMemberSimulation* sim 
+   
+        cdef int index
+        cdef float result = 0.0
+          
+        with nogil:
+            esim = <EnsembleSimulation*>ensembleSimulationPtr
+            sim = esim[0].member()
+            index = sim[0].memberIndex() 
+            printf('calc energy deriv maybe 1 %i\n', index)
+        return result
+ 
     def calcEnergyAndDerivsMaybe2(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         return 0.0
-
+ 
     def calcEnergyAndDerivsMaybe3(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         return 0.0
-
+ 
     def calcEnergyAndDerivsMaybe4(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         return 0.0
-
+# 
 cdef public api double cy_call_calc_energy_and_derivs_maybe(object self, int i, DerivList* derivList, EnsembleSimulation* esim, bint calcDerivs, float* result,  int *error):
-
+ 
     if i == 0:
         result[0] = self.calcEnergyAndDerivsMaybe0(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)
     elif i == 1:
