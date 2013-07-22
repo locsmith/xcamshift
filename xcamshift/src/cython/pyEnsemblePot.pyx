@@ -12,8 +12,6 @@ cdef class PyEnsemblePotData:
     cdef Simulation *_simulation 
 # 
     def __init__(self, instance_name, potential_name='test'):
-        pass
-        print ("[cy]  PyEnsemblePot.__init__")
         self._instance_name = new String(instance_name, len(instance_name))
         self._potential_name = new String(potential_name, len(potential_name))
         self._simulation = <Simulation*><size_t>self.simulation()

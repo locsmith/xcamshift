@@ -30,9 +30,8 @@ class Test(unittest.TestCase):
                       initVelocities=1,
                       potList=potList,
                       finalTime=1,
-                      numSteps=10000,
+                      numSteps=1,
                       printInterval=0)
-        print 'start'
         dyn.run()
  
     def tearDown(self):
