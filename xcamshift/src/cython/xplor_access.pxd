@@ -80,7 +80,8 @@ cdef extern from 'ensembleSimulation.hh':
 
 cdef extern from "derivList.hh":
     cdef cppclass DerivList:
-        pass
-	
+        void clear() nogil
+        CDSVector[Vec3]& operator[](const Simulation* defaultSimulation) nogil
+
 cdef extern from "sthead.hh":
     ctypedef double float_type

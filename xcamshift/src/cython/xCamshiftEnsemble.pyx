@@ -17,7 +17,7 @@ Created on 27 Dec 2011
 
 #TODO: add tests to exclude atoms/distances which are not defined
 
-
+from cython.pyEnsemblePot import PyEnsemblePot
 from atomSel import AtomSel,intersection
 from component_list import Component_list, Native_component_list
 from dihedral import Dihedral
@@ -2463,9 +2463,9 @@ class Non_bonded_potential(Distance_based_potential):
          
 
 
-from pyPot import PyPot
+# from pyPot import PyPot
 
-class Xcamshift(PyPot):
+class Xcamshift(PyEnsemblePot):
 
     
     
@@ -2478,8 +2478,8 @@ class Xcamshift(PyPot):
     
             
             
-    def __init__(self, verbose=False):
-        super(Xcamshift, self).__init__("xcamshift")
+    def __init__(self, name="xcamshift_instance", verbose=False):
+        super(Xcamshift, self).__init__(name)
         self.potential = [
                           RandomCoilShifts(),
                           Distance_potential(),
@@ -2998,7 +2998,7 @@ class Xcamshift(PyPot):
         self._calc_force_set(active_target_atom_ids, out_array, potentials)
         out_array.add_forces_to_result(derivs)
 
-    def calcEnergyAndDerivs(self,derivs):
+    def calcEnergyAndDerivList(self,derivs):
         if self._verbose:
             print "start energy and derivatives"
             start_time = time()

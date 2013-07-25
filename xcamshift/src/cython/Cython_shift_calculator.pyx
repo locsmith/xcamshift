@@ -20,11 +20,12 @@ Created on 31 Jul 2012
 
 '''
 
+from derivList import DerivList as PyDerivList
 from math import ceil
 cimport cython
 from vec3 import Vec3 as python_vec3
 from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
-from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector
+from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
@@ -370,24 +371,38 @@ cdef class Out_array:
             self._mask[target_id] = 0
             
     def add_forces_to_result(self, result=None, weight=1.0):
-        if result ==  None:
-            result = [None] * self._length
-        
-        cdef double x = 0.0
-        cdef double y = 0.0
-        cdef double z = 0.0
         cdef long id3
-        for i in range(self._length):
-            if self._mask[i] != 0:
-                if result[i] ==  None:
-                    result[i] = [0.0]*3
-                id3 = i * 3
-                x  = self._data[id3] * weight
-                y  = self._data[id3+1] *weight 
-                z  = self._data[id3+2] * weight  
-                result[i][0] += x
-                result[i][1] += y
-                result[i][2] += z
+        cdef DerivList *derivList
+        cdef Simulation *simulation
+        cdef CDSVector[Vec3]* derivs
+        cdef Vec3* test
+        
+        if isinstance(result,PyDerivList):
+            pointer = int(result.this)
+            derivList = (<DerivList*><size_t>pointer)
+            simulation = currentSimulation()
+            #TODO: references don't work here lots of problems -> cython mailing list
+            derivs  = &derivList[0][simulation]
+            for i in range(self._length): 
+                if self._mask[i] != 0:                  
+                    id3 = i * 3
+                    
+                    derivs[0][i][0]  +=  self._data[id3] * weight
+                    derivs[0][i][1]  +=  self._data[id3+1] *weight 
+                    derivs[0][i][2]  +=  self._data[id3+2] * weight 
+
+
+        else:
+            if result ==  None:
+                result = [None] * self._length
+            for i in range(self._length):
+                if self._mask[i] != 0:
+                    if result[i] ==  None:
+                        result[i] = [0.0]*3
+                    id3 = i * 3
+                    result[i][0] += self._data[id3] * weight
+                    result[i][1] += self._data[id3+1] *weight
+                    result[i][2] += self._data[id3+2] * weight  
 
                 
         return result
