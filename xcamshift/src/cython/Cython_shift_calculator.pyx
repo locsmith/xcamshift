@@ -392,7 +392,7 @@ cdef class Out_array:
                     derivs[0][i][2]  +=  self._data[id3+2] * weight 
 
 
-        else:
+        elif result == None:
             if result ==  None:
                 result = [None] * self._length
             for i in range(self._length):
@@ -403,7 +403,20 @@ cdef class Out_array:
                     result[i][0] += self._data[id3] * weight
                     result[i][1] += self._data[id3+1] *weight
                     result[i][2] += self._data[id3+2] * weight  
-
+        else:
+            # raw pointer
+            pointer = int(result)
+            derivList = (<DerivList*><size_t>pointer)
+            simulation = currentSimulation()
+            #TODO: references don't work here lots of problems -> cython mailing list
+            derivs  = &derivList[0][simulation]
+            for i in range(self._length): 
+                if self._mask[i] != 0:                  
+                    id3 = i * 3
+                    
+                    derivs[0][i][0]  +=  self._data[id3] * weight
+                    derivs[0][i][1]  +=  self._data[id3+1] *weight 
+                    derivs[0][i][2]  +=  self._data[id3+2] * weight             
                 
         return result
     
