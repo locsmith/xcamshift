@@ -25,6 +25,8 @@ public:
   
   float_type callCyEnergyMaybeDerivs(DerivList&, bool, int);
   
+  EnsembleSimulation* ensembleSimulation() {return esim;};
+  
   
   float_type rms();
   int violations();
