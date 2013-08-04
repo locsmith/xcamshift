@@ -60,12 +60,14 @@ cdef extern from 'simulation.hh':
     cdef cppclass Simulation:
         int id()
         int numAtoms()
+        int size()
         Atom atomByID(int index)
 #        CDSVector[Vec3] atomPosArr()
         Vec3 atomPos(int index)
 
 cdef extern from "simulation.hh" namespace "Simulation":
     Simulation* currentSimulation()
+    int numSimulations()
     
 cdef extern from 'ensembleSimulation.hh':
     cdef cppclass EnsembleMemberSimulation:
@@ -75,7 +77,9 @@ cdef extern from 'ensembleSimulation.hh':
     cdef cppclass EnsembleSimulation:
          String name()
          EnsembleMemberSimulation* member() nogil
-         int size()
+         int size() 
+         int id()
+         int rawID()
          
 
 cdef extern from "derivList.hh":
