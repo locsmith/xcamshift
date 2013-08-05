@@ -1,9 +1,11 @@
 
-
+# from pyEnsemblePotProxy cimport PyEnsemblePotProxy  as  CPPPyEnsemblePotProxy
 from cython.xPyPot import PyPot
 cimport cpython.ref as cpy_ref
-from  xplor_access cimport Simulation, String, DerivList, EnsembleSimulation, EnsembleMemberSimulation
+from  xplor_access cimport Simulation, String, DerivList, EnsembleSimulation, EnsembleMemberSimulation, numSimulations
 from libc.stdio cimport printf
+from ensembleSimulation import  Simulation_simulationByID, fromSimulation
+numSimulations
 # 
 cdef class PyEnsemblePotData:
     cdef PyEnsemblePotProxy* ensemblePotProxy
@@ -21,6 +23,23 @@ cdef class PyEnsemblePotData:
         pointer = int(derivList.this)
         result = self.ensemblePotProxy[0].calcEnergyAndDerivs((<DerivList*><size_t>pointer)[0])
         return result
+    
+    def calcEnergy(self):
+        print 'here'
+        return self.ensemblePotProxy[0].calcEnergy()
+    
+    def ensembleSimulation(self): 
+        ensemble_simulation_id = self.ensemblePotProxy[0].ensembleSimulation()[0].rawID()
+        simulation = Simulation_simulationByID(ensemble_simulation_id)
+        if simulation.this != <size_t>self.ensemblePotProxy[0].ensembleSimulation():
+            my_this = <size_t>self.ensemblePotProxy[0].ensembleSimulation()
+            lookup_this = int(Simulation_simulationByID(ensemble_simulation_id).this)
+            msg = "bad ensembleSimulation lookup values of this for the same id differ id-1=%i [%i] vs id-2=%i [%i]"
+            msg = msg %  (ensemble_simulation_id,my_this,simulation.rawID(), lookup_this)
+            raise Exception(msg )
+        
+        return fromSimulation(simulation)
+        
     
 class PyEnsemblePot(PyPot,PyEnsemblePotData):
     def __init__(self,name):
