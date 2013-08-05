@@ -774,7 +774,7 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
         self._num_components =  len(data)/ sizeof(Random_coil_component)
             
     def _set_components(self,components):
-        self._bytes_to_components(components)
+        self._bytes_to_components(components['ATOM'])
 
     
     @cython.profile(False)
@@ -843,7 +843,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         self._num_components =  len(data)/ sizeof(Distance_component)
             
     def _set_components(self,components):
-        self._bytes_to_components(components)
+        self._bytes_to_components(components['ATOM'])
 
         
             
@@ -945,7 +945,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         self._num_components =  len(data)/ sizeof(Dihedral_component)
     
     cdef _set_components(self, object components):
-        self._bytes_to_components(components)
+        self._bytes_to_components(components['ATOM'])
             
     cdef inline _get_component(self,int index):
         return self._components[index]
@@ -1066,7 +1066,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
 
          
     def _set_components(self,components):
-        self._bytes_to_components(components)
+        self._bytes_to_components(components['ATOM'])
             
             
 
@@ -1713,7 +1713,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         self._smoothing_factor = smoothing_factor
         
     def _set_components(self,components):
-        self._bytes_to_components(components)
+        self._bytes_to_components(components['ATOM'])
         
     
 
@@ -2037,7 +2037,7 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         
         
     def _set_components(self,components):
-        self._bytes_to_components(components)
+        self._bytes_to_components(components['ATOM'])
                    
      
 #     TODO: remove this is no longer needed
@@ -2267,7 +2267,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         self._num_ring_components =  len(data)/ sizeof(Ring_component)
          
     def _set_components(self,components):
-        self._bytes_to_components(components)
+        self._bytes_to_components(components['ATOM'])
                             
         
     def _set_coef_components(self,coef_components, components):

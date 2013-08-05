@@ -553,6 +553,7 @@ class Base_potential(object):
         self._component_factories = {}
         self._cache_list_data = {}
         self._freeze  = False
+        self._simulation = None
     
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._shift_calculator = None
@@ -562,6 +563,9 @@ class Base_potential(object):
         self._component_to_result = None
         self._active_components = None
         self._verbose = False
+    
+    def set_simulation(self,simulation):
+        self._simulation = simulation 
         
     def set_frozen(self,on):
         self._freeze =  (on == True)
@@ -598,9 +602,10 @@ class Base_potential(object):
             result = self._active_components
         
         return result
-    
+     
     def _get_components(self):
-        return self._get_component_list().get_native_components()
+        return {'ATOM' : self._get_component_list().get_native_components(),
+                'SIMU' : self._simulation}
     
     def _calc_component_shift(self, index):
         
@@ -2401,7 +2406,7 @@ class Non_bonded_potential(Distance_based_potential):
             
             self._component_set = {'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
                           'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
-                          'OFFS' : 0}
+                          'OFFS' : 0, 'SIMU' : self._simulation}
         
         return self._component_set
     
@@ -2672,6 +2677,7 @@ class Xcamshift(PyEnsemblePot):
             self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
             
         for potential in self.potential:
+            potential.set_simulation(self.ensembleSimulation())
             potential.calc_shifts(target_atom_ids, result)
 
        
@@ -2800,6 +2806,7 @@ class Xcamshift(PyEnsemblePot):
         
         self._calc_factors(target_atom_ids, self._factors)
         for potential in potentials_list:
+            potential.set_simulation(self.ensembleSimulation())
             potential.calc_force_set(target_atom_ids,self._factors,forces)
         
              
