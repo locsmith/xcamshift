@@ -2976,26 +2976,23 @@ class Xcamshift(PyEnsemblePot):
 
 
         
-    def calcEnergy(self, prepare =  True, active_target_atom_ids = None):
+    def _calc_energy(self, prepare =  True, active_target_atom_ids = None):
         if self._verbose:
             start_time = time()
-
+ 
         if active_target_atom_ids == None:
             active_target_atom_ids = self._get_active_target_atom_ids()
-            
-        if prepare:
-            self._prepare(TARGET_ATOM_IDS_CHANGED,active_target_atom_ids)
-            self._prepare(ROUND_CHANGED,None)
-            self._calc_shift_cache(active_target_atom_ids, self._shift_cache)
-            
-
+             
+             
+ 
         self.update_energy_calculator()
+        energy = self._energy_calculator(active_target_atom_ids)
         
         if self._verbose:
             end_time =  time()
             print 'energy calculation completed in %.17g seconds ' % (end_time-start_time), "seconds"
-            
-        return self._energy_calculator(active_target_atom_ids)
+             
+        return energy
     
     
 
@@ -3064,12 +3061,13 @@ class Xcamshift(PyEnsemblePot):
     def calcEnergyAndDerivsMaybe3(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
 
         target_atom_ids = self._get_active_target_atom_ids()
-        energy = self.calcEnergy( active_target_atom_ids=target_atom_ids, prepare=False)
+        energy = self._calc_energy( active_target_atom_ids=target_atom_ids)
         return energy
 
     def calcEnergyAndDerivsMaybe4(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
-        target_atom_ids = self._get_active_target_atom_ids()
-        self._calc_derivs(int(derivListPtr), target_atom_ids)        
+        if calcDerivatives:
+            target_atom_ids = self._get_active_target_atom_ids()
+            self._calc_derivs(int(derivListPtr), target_atom_ids)        
         return 0.0
 
     
