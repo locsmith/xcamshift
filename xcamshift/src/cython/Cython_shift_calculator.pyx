@@ -747,13 +747,11 @@ cdef class Base_shift_calculator:
     def set_verbose(self,bint state):
         self._verbose =  state
         
-    cdef inline void set_simulation(self):
-        self._simulation = currentSimulation()
     
     
     def _set_components(self,components):
         self._bytes_to_components(components['ATOM'])
-        #self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
+        self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
         
 cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):           
     
@@ -780,7 +778,6 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
     
     @cython.profile(False)
     def __call__(self, object components, double[:] results, int[:] component_to_target,  int[:] active_components):
-        self.set_simulation()
         self._set_components(components)
         cdef double start_time = 0.0
         cdef double end_time = 0.0
@@ -867,7 +864,6 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
     
     @cython.profile(False)
     def __call__(self, object components, double[:] results, int[:] component_to_target,  int[:] active_components):
-        self.set_simulation()
         cdef double start_time = 0.0
         cdef double end_time = 0.0
         
@@ -982,7 +978,6 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     #TODO: still uses component to result...
     #TODO: add common force and shift base class
     def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
-        self.set_simulation()
         cdef float angle
         cdef float angle_term
         cdef float shift
@@ -1123,7 +1118,6 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
 
     @cython.profile(True)
     def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
-        self.set_simulation()
         cdef int target_atom_id
         cdef int atom_type_id
         cdef int ring_id
@@ -1177,8 +1171,6 @@ cdef class Fast_ring_data_calculator:
         self._verbose = False
         self._simulation =  currentSimulation()
     
-    def set_simulation(self):
-        self._simulation  = currentSimulation()
         
     def set_verbose(self,on):
         self._verbose =  on
@@ -1261,12 +1253,10 @@ cdef class Fast_ring_data_calculator:
     
     @cython.profile(True)        
     def __call__(self, rings, Vec3_list normals, Vec3_list centres):
-        self.set_simulation()
 #        cdef Vec3_container centre 
 #         cdef Vec3_container normal
         cdef double start_time = 0.0 
         cdef double end_time = 0.0
-        self.set_simulation()
         
         if self._verbose:
             start_time = time()
@@ -1303,8 +1293,6 @@ cdef class Fast_non_bonded_calculator:
         self._verbose =  False
         self._simulation =  currentSimulation()
     
-    def set_simulation(self):
-        self._simulation = currentSimulation()
         
     def set_verbose(self,on):
         self._verbose=on
@@ -1382,7 +1370,6 @@ cdef class Fast_non_bonded_calculator:
             start_time = time()
 
 
-        self.set_simulation()
         cdef int i, atom_id_1, atom_id_2
         
         non_bonded_lists.clear()
@@ -1415,8 +1402,6 @@ cdef class Fast_energy_calculator:
         self._simulation = currentSimulation()
         self.calls = 0
     
-    def set_simulation(self):
-        self._simulation = currentSimulation()
         
     def set_verbose(self,on):
         self._verbose = on
@@ -1458,7 +1443,6 @@ cdef class Fast_energy_calculator:
 
     @cython.profile(True)    
     def __call__(self,int[:] target_atom_ids, int[:] active_atom_ids=None):
-        self.set_simulation()
 
         cdef double start_time = 0.0
         cdef double end_time = 0.0 
@@ -1548,7 +1532,6 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
         if self._verbose:
             start_time = time()
 
-        self.set_simulation()
 
        #TODO: shouldn't be allocated each time
         cdef int target_atom_id
@@ -1630,13 +1613,11 @@ cdef class Base_force_calculator:
     def set_verbose(self,on):
         self._verbose = on
     
-    def set_simulation(self):
-        self._simulation =  currentSimulation()
     
 
     def _set_components(self,components):
         self._bytes_to_components(components['ATOM'])
-        #self._simulation = <Simulation*><size_t>int(components['SIMU'].this)        
+        self._simulation = <Simulation*><size_t>int(components['SIMU'].this)        
         
         
 #    TODO should most probably be a fixed array
@@ -1649,7 +1630,6 @@ cdef class Base_force_calculator:
             start_time = time()
 
         self._set_components(components)
-        self.set_simulation()
 #        TODO rename component to result to something better
         self._active_components = active_components
         self._do_calc_components(component_to_result, force_factors, forces)
@@ -1899,7 +1879,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         
     #TODO: call super?
     def _set_components(self, components):
-        #self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
+        self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
         self._non_bonded_list =  components['NBLT']
         self._bytes_to_target_components(components['ATOM'])
         self._bytes_to_remote_components(components['NBRM'])
@@ -2588,6 +2568,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._num_coefficient_components =  len(data)/ sizeof(Nonbonded_coefficient_component)
         
     def _set_components(self, components):
+        self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
         self._non_bonded_list =  components['NBLT']
         self._bytes_to_target_components(components['ATOM'])
         self._bytes_to_remote_components(components['NBRM'])

@@ -2392,21 +2392,22 @@ class Non_bonded_potential(Distance_based_potential):
             
 
     def _get_components(self):
-        if self._component_set ==  None:
-            target_component_list = self._get_component_list('ATOM')
-            native_target_atom_list = target_component_list.get_native_components()
-            
-            remote_component_list = self._get_component_list('NBRM')
-            native_remote_atom_list = remote_component_list.get_native_components()
-            
-            coefficient_list = self._get_component_list('COEF')
-            native_coefficient_list = coefficient_list.get_native_components()
-    
-            non_bonded_list = self._get_component_list('NBLT')
-            
-            self._component_set = {'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
-                          'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
-                          'OFFS' : 0, 'SIMU' : self._simulation}
+#TODO: check if this has speed implications
+#         if self._component_set ==  None:
+        target_component_list = self._get_component_list('ATOM')
+        native_target_atom_list = target_component_list.get_native_components()
+        
+        remote_component_list = self._get_component_list('NBRM')
+        native_remote_atom_list = remote_component_list.get_native_components()
+        
+        coefficient_list = self._get_component_list('COEF')
+        native_coefficient_list = coefficient_list.get_native_components()
+
+        non_bonded_list = self._get_component_list('NBLT')
+        
+        self._component_set = {'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
+                      'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
+                      'OFFS' : 0, 'SIMU' : self._simulation}
         
         return self._component_set
     
