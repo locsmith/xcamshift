@@ -587,7 +587,7 @@ cdef class Coef_components:
     cdef Component_Offsets* _component_offsets
     cdef int num_ids
     
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
 
         self._raw_data =  data 
         self._components =  <Coef_component*> <size_t> ctypes.addressof(data)
@@ -751,6 +751,10 @@ cdef class Base_shift_calculator:
         self._simulation = currentSimulation()
     
     
+    def _set_components(self,components):
+        self._bytes_to_components(components['ATOM'])
+        #self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
+        
 cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):           
     
     cdef Random_coil_component* _compiled_components 
@@ -767,14 +771,11 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
 
 #    
 #    TODO: this needs to be removed
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
 
         self._raw_data =  data 
         self._compiled_components =  <Random_coil_component*> <size_t> ctypes.addressof(data)
         self._num_components =  len(data)/ sizeof(Random_coil_component)
-            
-    def _set_components(self,components):
-        self._bytes_to_components(components['ATOM'])
 
     
     @cython.profile(False)
@@ -836,14 +837,12 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 #        self._smoothing_factor = smoothing_factor
 #    
 #    TODO: this needs to be removed
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
 
         self._raw_data =  data 
         self._compiled_components =  <Distance_component*> <size_t> ctypes.addressof(data)
         self._num_components =  len(data)/ sizeof(Distance_component)
             
-    def _set_components(self,components):
-        self._bytes_to_components(components['ATOM'])
 
         
             
@@ -938,14 +937,12 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         Base_shift_calculator.__init__(self,name)
         
         
-    cdef void _bytes_to_components(self, data):
+    def  _bytes_to_components(self, data):
         self._raw_data =  data 
         
         self._compiled_components =  <Dihedral_component*> <size_t> ctypes.addressof(data)
         self._num_components =  len(data)/ sizeof(Dihedral_component)
     
-    cdef _set_components(self, object components):
-        self._bytes_to_components(components['ATOM'])
             
     cdef inline _get_component(self,int index):
         return self._components[index]
@@ -1059,16 +1056,12 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     def __init__(self, str name = "not set"):
         Base_shift_calculator.__init__(self,name)
 
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
         self.raw_data =  data 
         self._compiled_components =  <Ring_target_component*> <size_t> ctypes.addressof(data)
         self._num_components =  len(data)/ sizeof(Ring_target_component)
 
          
-    def _set_components(self,components):
-        self._bytes_to_components(components['ATOM'])
-            
-            
 
 
             
@@ -1641,8 +1634,9 @@ cdef class Base_force_calculator:
         self._simulation =  currentSimulation()
     
 
-    
-        
+    def _set_components(self,components):
+        self._bytes_to_components(components['ATOM'])
+        #self._simulation = <Simulation*><size_t>int(components['SIMU'].this)        
         
         
 #    TODO should most probably be a fixed array
@@ -1712,12 +1706,10 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     def set_smoothing_factor(self,smoothing_factor):
         self._smoothing_factor = smoothing_factor
         
-    def _set_components(self,components):
-        self._bytes_to_components(components['ATOM'])
         
     
 
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
 
         self.raw_data =  data 
         self._compiled_components =  <Distance_component*> <size_t> ctypes.addressof(data)
@@ -1905,7 +1897,9 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         self._compiled_coefficient_components =  <Nonbonded_coefficient_component*> <size_t> ctypes.addressof(data)
         self._num_coefficient_components =  len(data)/ sizeof(Nonbonded_coefficient_component)
         
+    #TODO: call super?
     def _set_components(self, components):
+        #self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
         self._non_bonded_list =  components['NBLT']
         self._bytes_to_target_components(components['ATOM'])
         self._bytes_to_remote_components(components['NBRM'])
@@ -2020,7 +2014,7 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     cdef int _num_components 
     cdef object raw_data
     
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
         self.raw_data =  data 
         
         self._compiled_components =  <Dihedral_component*> <size_t> ctypes.addressof(data)
@@ -2036,9 +2030,6 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         self.raw_data =  None
         
         
-    def _set_components(self,components):
-        self._bytes_to_components(components['ATOM'])
-                   
      
 #     TODO: remove this is no longer needed
     @cython.profile(False)
@@ -2256,7 +2247,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     def __init__(self,name="not set"):
         super(Fast_ring_force_calculator, self).__init__(name=name)
         
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
         self.raw_data =  data 
         self._compiled_components =  <Ring_target_component*> <size_t> ctypes.addressof(data)
         self._num_components =  len(data)/ sizeof(Ring_target_component)
@@ -2266,9 +2257,6 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         self._compiled_ring_components =  <Ring_component*> <size_t> ctypes.addressof(data)
         self._num_ring_components =  len(data)/ sizeof(Ring_component)
          
-    def _set_components(self,components):
-        self._bytes_to_components(components['ATOM'])
-                            
         
     def _set_coef_components(self,coef_components, components):
         self._compiled_coef_components = Coef_components(coef_components, components)
