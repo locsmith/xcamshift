@@ -28,6 +28,7 @@ cdef class PyEnsemblePotData:
         print 'here'
         return self.ensemblePotProxy[0].calcEnergy()
     
+    #TODO: should this be simulation? will it conflict with xPyPot
     def ensembleSimulation(self): 
         ensemble_simulation_id = self.ensemblePotProxy[0].ensembleSimulation()[0].rawID()
         simulation = Simulation_simulationByID(ensemble_simulation_id)
