@@ -63,16 +63,21 @@ class PyEnsemblePot(PyPot,PyEnsemblePotData):
         return 0.0
 # 
 cdef public api double cy_call_calc_energy_and_derivs_maybe(object self, int i, DerivList* derivList, EnsembleSimulation* esim, bint calcDerivs, float* result,  int *error):
- 
-    if i == 0:
-        result[0] = self.calcEnergyAndDerivsMaybe0(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)
-    elif i == 1:
-        result[0] = self.calcEnergyAndDerivsMaybe1(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)
-    elif i == 2:
-        result[0] = self.calcEnergyAndDerivsMaybe2(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)        
-    elif i == 3:
-        result[0] = self.calcEnergyAndDerivsMaybe3(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)  
-    elif i == 4:
-        result[0] = self.calcEnergyAndDerivsMaybe4(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)
+    try:
+        if i == 0:
+            result[0] = self.calcEnergyAndDerivsMaybe0(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)
+        elif i == 1:
+            result[0] = self.calcEnergyAndDerivsMaybe1(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)
+        elif i == 2:
+            result[0] = self.calcEnergyAndDerivsMaybe2(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)        
+        elif i == 3:
+            result[0] = self.calcEnergyAndDerivsMaybe3(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)  
+        elif i == 4:
+            result[0] = self.calcEnergyAndDerivsMaybe4(<Py_ssize_t> derivList, <Py_ssize_t> esim, calcDerivs)
+    except Exception as  e:
+        #TODO this needs to be propogated
+        print e
+        import traceback
+        traceback.print_exc()
 
 
