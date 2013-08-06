@@ -9,6 +9,7 @@ cdef extern from "PyEnsemblePotProxy.hh":
     cdef cppclass PyEnsemblePotProxy:
         PyEnsemblePotProxy(String& potName,  String& instanceName, Simulation* simulation, PyObject *object)
         float_type calcEnergyAndDerivs(DerivList&) nogil
+        float calcEnergy() nogil
         EnsembleSimulation *ensembleSimulation() nogil
         
 
