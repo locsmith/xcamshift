@@ -17,7 +17,6 @@ Created on 27 Dec 2011
 
 #TODO: add tests to exclude atoms/distances which are not defined
 
-from xplor_access cimport EnsembleSimulation
 from cython.pyEnsemblePot import PyEnsemblePot
 from atomSel import AtomSel,intersection
 from component_list import Component_list, Native_component_list
@@ -43,7 +42,7 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_non_bonded_shift_calculator,                               \
                                      Fast_non_bonded_force_calculator,                               \
                                      Non_bonded_interaction_list,                                    \
-                                     Fast_random_coil_shift_calculator
+                                     Fast_random_coil_shift_calculator, CDSSharedVectorFloat
 from time import time
 import array#
 
@@ -2528,7 +2527,9 @@ class Xcamshift(PyEnsemblePot):
         return self._energy_term_cache
     
     def _update_calculator(self, calculator):
-        calculator.set_calculated_shifts(self._shift_cache)
+        #TODO: make sure the shift cache is always valid
+        if self._shift_cache !=None:
+            calculator.set_calculated_shifts(self._shift_cache)
         calculator.set_observed_shifts(self._shift_table.get_native_shifts(self._get_active_target_atom_ids()))
         calculator.set_energy_term_cache(self._get_energy_term_cache().get_native_components())
     
@@ -2538,10 +2539,6 @@ class Xcamshift(PyEnsemblePot):
     def update_force_factor_calculator(self):
         self._update_calculator(self._force_factor_calculator)
     
-    #TODO:  might be better to have a prepapre shift cache function    
-    def clear_shift_cache(self, shift_cache):
-        if shift_cache != None:
-            zero_array(shift_cache)
         
     def get_sub_potential_names(self):
         return [potential.get_abbreviated_name() for potential in self.potential]
@@ -2623,11 +2620,11 @@ class Xcamshift(PyEnsemblePot):
         result.sort()
         return result
 
-    def _create_shift_cache(self, shift_cache, cache_size):
+    def _create_shift_cache(self, shift_cache, cache_size, ensembleSimulation):
         if shift_cache == None:
-            shift_cache = allocate_array(cache_size, 'd')
+            shift_cache = CDSSharedVectorFloat(cache_size,ensembleSimulation)
         elif len(shift_cache) != cache_size:
-            resize_array(shift_cache, cache_size)
+            shift_cache.resize(cache_size)
         return shift_cache
 
     def _calc_shift_cache(self,target_atom_ids, shift_cache):
@@ -2635,7 +2632,7 @@ class Xcamshift(PyEnsemblePot):
             start_time =  time()
             
         
-        self.clear_shift_cache(shift_cache)
+        shift_cache.clear()
         self._calc_shifts(target_atom_ids, shift_cache)
         
         if self._verbose:
@@ -2924,7 +2921,9 @@ class Xcamshift(PyEnsemblePot):
             print 'do prepare %s' % change
             
         if change == STRUCTURE_CHANGED:
-            self.clear_shift_cache(self._ensemble_shift_cache)
+            #TODO: make sure shift cache is always valid
+            if self._ensemble_shift_cache != None:
+                self._ensemble_shift_cache.clear()
             self._active_target_atom_ids = None
             
         if change == TARGET_ATOM_IDS_CHANGED:
@@ -3054,7 +3053,7 @@ class Xcamshift(PyEnsemblePot):
         
         ensemble_size =  self.ensembleSimulation().size()
         cache_size = len(target_atom_ids) * ensemble_size
-        self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, cache_size)
+        self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, cache_size, self.ensembleSimulation())
 
         self._calc_shift_cache(target_atom_ids, self._ensemble_shift_cache)
         

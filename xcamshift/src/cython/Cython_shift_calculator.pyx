@@ -25,7 +25,7 @@ from math import ceil
 cimport cython
 from vec3 import Vec3 as python_vec3
 from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
-from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList
+from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList, clearVector, EnsembleSimulation, createSharedVec 
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
@@ -153,6 +153,33 @@ def test_dump_dihedral_comp(data):
                       compiled_components[i].parameters[6]
                       
 
+cdef class CDSSharedVectorFloat:
+    cdef CDSVector[double]*  data
+
+    
+    def __cinit__(self, int size=0, object ensembleSimulation=None):
+        cdef EnsembleSimulation* cEnsembleSimulation = <EnsembleSimulation*><size_t>int(ensembleSimulation.this)
+        #TODO: get rid of this casting
+        self.data = <CDSVector[double]*>createSharedVec(size, 0.0,  cEnsembleSimulation)
+        self.resize(size)
+    
+#     cpdef int size(self):
+#         return self[0].data.size()
+    
+    cpdef resize(self,int size):
+        self.data[0].resize(size)
+        return self
+    
+    cpdef clear(self):
+        clearVector(self.data)
+        return self
+    
+    #TODO: a bit ugly can we use oper
+    cdef CDSVector[double]* get_data(self):
+        return  self.data
+    
+    def __len__(self):
+        return self.data[0].size()
     
 cdef  class Non_bonded_interaction_list:
     cdef CDSVector[int]  *data
@@ -777,7 +804,8 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
 
     
     @cython.profile(False)
-    def __call__(self, object components, double[:] results, int[:] component_to_target,  int[:] active_components):
+    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components):
+        cdef CDSVector[double]  *results = shift_cache.get_data()
         self._set_components(components)
         cdef double start_time = 0.0
         cdef double end_time = 0.0
@@ -791,8 +819,8 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
         #TODO: note to cython list for componnt_index in active_components produces awful code!
         for factor_index in range(len(active_components)):
             component_index = active_components[factor_index]         
-              
-            results[component_to_target[factor_index]]  += self._compiled_components[component_index].shift
+            
+            results[0][component_to_target[factor_index]]  += self._compiled_components[component_index].shift
  
         if self._verbose:
             end_time = time()
@@ -863,7 +891,9 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         return result
     
     @cython.profile(False)
-    def __call__(self, object components, double[:] results, int[:] component_to_target,  int[:] active_components):
+    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components):
+        cdef CDSVector[double]  *results = shift_cache.get_data()
+
         cdef double start_time = 0.0
         cdef double end_time = 0.0
         
@@ -908,7 +938,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
             if self._smoothed:
                 ratio = distance / self._cutoff
                 smoothing_factor = 1.0 - ratio ** 8
-            results[component_to_target[factor_index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
+            results[0][component_to_target[factor_index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
 
         if self._verbose:
             end_time = time()
@@ -977,7 +1007,9 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     #TODO: architecture different from force calculator no base function/class
     #TODO: still uses component to result...
     #TODO: add common force and shift base class
-    def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
+    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
+        cdef CDSVector[double]  *results = shift_cache.get_data()
+
         cdef float angle
         cdef float angle_term
         cdef float shift
@@ -1011,8 +1043,8 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
                          parameters.param_2 * cos(angle +  parameters.param_3) +      \
                          parameters.param_4
             shift = coefficient * angle_term
-    
-            results[component_to_target[factor_index]] += shift
+
+            results[0][component_to_target[factor_index]] += shift
             
         if self._verbose:
             end_time = time()
@@ -1117,7 +1149,9 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         return contrib * coefficient
 
     @cython.profile(True)
-    def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
+    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
+        cdef CDSVector[double]  *results = shift_cache.get_data()
+        
         cdef int target_atom_id
         cdef int atom_type_id
         cdef int ring_id
@@ -1154,7 +1188,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
                 coefficient = coef_component[0].coefficient
                 shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
             
-            results[component_to_target[factor_index]] += shift
+            results[0][component_to_target[factor_index]] += shift
         
         if self._verbose:
             end_time = time()
@@ -1388,7 +1422,7 @@ cdef class Fast_non_bonded_calculator:
 
 cdef class Fast_energy_calculator:
     cdef Constant_cache* _energy_term_cache 
-    cdef double[:] _theory_shifts
+    cdef CDSVector[double]  *_theory_shifts
     cdef float[:] _observed_shifts
     cdef bint _verbose 
     cdef Simulation* _simulation
@@ -1396,7 +1430,7 @@ cdef class Fast_energy_calculator:
 
     def __init__(self):
         self._energy_term_cache =  NULL
-        self._theory_shifts =   None
+        self._theory_shifts =   NULL
         self._observed_shifts =  None
         self._verbose = False
         self._simulation = currentSimulation()
@@ -1409,8 +1443,8 @@ cdef class Fast_energy_calculator:
     def set_observed_shifts(self, float[:] observed_shifts):
         self._observed_shifts =  observed_shifts
         
-    def set_calculated_shifts(self, double[:] calculated_shifts):
-        self._theory_shifts =  calculated_shifts
+    def set_calculated_shifts(self, CDSSharedVectorFloat calculated_shifts):
+        self._theory_shifts = calculated_shifts.get_data()
     
     def set_energy_term_cache(self, energy_term_cache ):
         self._energy_term_cache =  <Constant_cache*> <size_t> ctypes.addressof(energy_term_cache)
@@ -1419,7 +1453,7 @@ cdef class Fast_energy_calculator:
         return &self._energy_term_cache[target_atom_index]
     
     cdef inline float  _get_calculated_atom_shift(self, int index):
-        return self._theory_shifts[index]
+        return self._theory_shifts[0][index]
     
     cdef inline float _get_observed_atom_shift(self, int index):
         return self._observed_shifts[index]
@@ -2578,7 +2612,8 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         
         
     @cython.profile(True)
-    def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
+    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
+        cdef CDSVector[double]  *results = shift_cache.get_data()
         self._set_components(components)
         
         if active_components == None:
@@ -2592,7 +2627,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
                 self._calc_single_component_shift(factor_index, non_bonded_index, results, component_to_target)
 
         
-    cdef inline void  _calc_single_component_shift(self,int factor_index, int non_bonded_index, double[:] results, int[:] component_to_target):
+    cdef inline void  _calc_single_component_shift(self,int factor_index, int non_bonded_index, CDSVector[double]*  results, int[:] component_to_target):
         cdef Component_index_pair* non_bonded_pair 
         
         cdef int target_component_index
@@ -2651,7 +2686,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
                     ratio = distance / self._cutoff
                     smoothing_factor = 1.0 - ratio ** 8
 
-                results[component_to_target[component_offset]]  +=  smoothing_factor * pow(distance,  exponent) * coefficient
+                results[0][component_to_target[component_offset]]  +=  smoothing_factor * pow(distance,  exponent) * coefficient
 
         if self._verbose:
             end_time = time()
