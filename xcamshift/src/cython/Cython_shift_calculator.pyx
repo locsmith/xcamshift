@@ -768,7 +768,7 @@ cdef class Base_shift_calculator:
     def __init__(self, str name):
             self._verbose = False
             self._name = name
-            self._simulation =  currentSimulation()
+            self._simulation =  NULL
             
     
     def set_verbose(self,bint state):
