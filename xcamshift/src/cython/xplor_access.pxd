@@ -56,6 +56,12 @@ cdef extern from "cdsVector.hh":
         T& operator[] (int) 
 
 
+cdef extern from "sharedCDSVectorFactory.hh" namespace "SharedCDSVectorFactory":
+    void clearVector(CDSVector[double]*)
+    CDSVector[double]* createSharedVec (int size, float& i,  EnsembleSimulation* simulation)
+        
+
+
 cdef extern from 'simulation.hh':
     cdef cppclass Simulation:
         int id()
