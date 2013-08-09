@@ -765,6 +765,8 @@ class Base_potential(object):
     def calc_force_set(self,target_atom_ids,force_factors,forces):
         if self._have_derivative():
             components = self._get_components()
+            #TODO: move simulation outr of components and into constructor (for simplicity and symmetry with shift calculators)
+            #TODO: do shift calculators use components fully?
             self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._get_active_components())
             
     
