@@ -544,7 +544,7 @@ class Base_potential(object):
     
     ALL = '(all)'
             
-    def __init__(self):
+    def __init__(self,simulation):
         self._segment_manager = Segment_Manager.get_segment_manager()
         self._table_manager = Table_manager.get_default_table_manager()
         self._observed_shifts = Observed_shift_table()
@@ -552,7 +552,7 @@ class Base_potential(object):
         self._component_factories = {}
         self._cache_list_data = {}
         self._freeze  = False
-        self._simulation = None
+        self._simulation = simulation
     
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._shift_calculator = None
@@ -812,8 +812,8 @@ class Base_potential(object):
 
 class Distance_based_potential(Base_potential):
     
-    def __init__(self,  smoothed = False, fast=False):
-        super(Distance_based_potential, self).__init__()
+    def __init__(self, simulation, smoothed = False, fast=False):
+        super(Distance_based_potential, self).__init__(simulation)
         self._smoothed = smoothed
         #TODO: sort placement out, move to non bonded
         #
@@ -933,8 +933,8 @@ class Distance_potential(Distance_based_potential):
     '''
 
 
-    def __init__(self, fast=False):
-        super(Distance_potential, self).__init__(smoothed = False, fast=fast)
+    def __init__(self, simulation, fast=False):
+        super(Distance_potential, self).__init__(simulation,smoothed = False, fast=fast)
         
         '''
         Constructor
@@ -990,8 +990,8 @@ class Distance_potential(Distance_based_potential):
 
 
 class Extra_potential(Distance_based_potential):
-    def __init__(self):
-        super(Extra_potential, self).__init__()
+    def __init__(self,simulation):
+        super(Extra_potential, self).__init__(simulation)
         
         self._add_component_factory(Extra_component_factory())
         
@@ -1045,8 +1045,8 @@ class Extra_potential(Distance_based_potential):
 class RandomCoilShifts(Base_potential):
     
 
-    def __init__(self):
-        super(RandomCoilShifts, self).__init__()
+    def __init__(self, simulation):
+        super(RandomCoilShifts, self).__init__(simulation)
         
         self._add_component_factory(Random_coil_component_factory())
         self._shift_calculator = self._get_shift_calculator()
@@ -1091,8 +1091,8 @@ class RandomCoilShifts(Base_potential):
 class Disulphide_shift_calculator(Base_potential):
     
 
-    def __init__(self):
-        super(Disulphide_shift_calculator, self).__init__()
+    def __init__(self,simulation):
+        super(Disulphide_shift_calculator, self).__init__(simulation)
         
         self._add_component_factory(Disulphide_shift_component_factory())
 
@@ -1134,8 +1134,8 @@ class Disulphide_shift_calculator(Base_potential):
 class Dihedral_potential(Base_potential):
 
     
-    def __init__(self):
-        Base_potential.__init__(self)
+    def __init__(self,simulation):
+        Base_potential.__init__(self,simulation)
         self._add_component_factory(Dihedral_component_factory())
     
         self._shift_calculator = self._get_shift_calculator()
@@ -1278,8 +1278,8 @@ class Dihedral_potential(Base_potential):
         
 class Sidechain_potential(Distance_based_potential):
     
-    def __init__(self):
-        super(Sidechain_potential, self).__init__()
+    def __init__(self, simulation):
+        super(Sidechain_potential, self).__init__(simulation)
         self._add_component_factory(Sidechain_component_factory())
         
         
@@ -1606,8 +1606,8 @@ class Ring_Potential(Base_potential):
     
     RING_ATOM_IDS = 1
     
-    def __init__(self):
-        super(Ring_Potential, self).__init__()
+    def __init__(self, simulation):
+        super(Ring_Potential, self).__init__(simulation)
         
         self._add_component_factory(Ring_backbone_component_factory())
         self._add_component_factory(Ring_coefficient_component_factory())
@@ -1650,7 +1650,7 @@ class Ring_Potential(Base_potential):
         calculator._set_centre_cache(self._get_cache_list('CENT'))
     
     def _get_ring_data_calculator(self):
-        result = Fast_ring_data_calculator()
+        result = Fast_ring_data_calculator(self._simulation)
         result.set_verbose(self._verbose)
         return result
     
@@ -1661,7 +1661,7 @@ class Ring_Potential(Base_potential):
 
     def _get_shift_calculator(self):
 #        if self._fast:
-        result = Fast_ring_shift_calculator(name=self.get_abbreviated_name())
+        result = Fast_ring_shift_calculator(self._simulation,name=self.get_abbreviated_name())
         result.set_verbose(self._verbose)
 #        else:
 #            result = Ring_shift_calculator()
@@ -1681,7 +1681,6 @@ class Ring_Potential(Base_potential):
         component = self._get_distance_components()[index]
         components.add_component(component)
         results = array.array('d',[0.0])
-        self._setup_ring_calculator(self._shift_calculator)
         self._setup_ring_calculator(self._shift_calculator)
         component_to_result  = array.array('i',[0])
         self._shift_calculator(components.get_native_components(),results,component_to_result, active_components=array.array('i',[0]))
@@ -1798,12 +1797,12 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
     
 class Non_bonded_list(object):
     
-    def __init__(self,cutoff_distance= 5.0,jitter=0.2,update_frequency=5, min_residue_separation = 2):
+    def __init__(self,simulation,cutoff_distance= 5.0,jitter=0.2,update_frequency=5, min_residue_separation = 2):
         self._cutoff_distance = cutoff_distance
         self._jitter = jitter
         self._update_frequency =update_frequency
         self._min_residue_seperation = min_residue_separation
-        
+        self._simulation=  simulation
         self._reset()
         
 
@@ -1824,7 +1823,7 @@ class Non_bonded_list(object):
         return self._cutoff_distance
     
     def _get_non_bonded_calculator(self):
-        result = Fast_non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
+        result = Fast_non_bonded_calculator(self._simulation,self._min_residue_seperation, self._cutoff_distance, self._jitter)
         return result
     
     def _get_cutoff_distance_2(self):
@@ -2012,20 +2011,20 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
 # remote_atom_type_id exponent coefficient_by target_atom_id
 class Non_bonded_potential(Distance_based_potential):
 
-    def __init__(self,smoothed=True):
-        super(Non_bonded_potential, self).__init__(smoothed=smoothed)
+    def __init__(self,simulation,smoothed=True):
+        super(Non_bonded_potential, self).__init__(simulation,smoothed=smoothed)
         
         self._add_component_factory(Non_bonded_backbone_component_factory())
         self._add_component_factory(Non_bonded_remote_component_factory())
         self._add_component_factory(Non_bonded_coefficient_factory())
         self._add_component_factory(Null_component_factory('NBLT'))
         
-        self._non_bonded_list = Non_bonded_list()
+        self._non_bonded_list = Non_bonded_list(self._simulation)
         self._component_set = None
         self._selected_components =  None
     
     def _get_shift_calculator(self):
-        result  = Fast_non_bonded_shift_calculator(smoothed=self._smoothed, name = self.get_abbreviated_name())
+        result  = Fast_non_bonded_shift_calculator(self._simulation, smoothed=self._smoothed, name = self.get_abbreviated_name())
         result.set_verbose(self._verbose)
         return result
     
@@ -2487,14 +2486,14 @@ class Xcamshift(PyEnsemblePot):
     def __init__(self, name="xcamshift_instance", verbose=False):
         super(Xcamshift, self).__init__(name)
         self.potential = [
-                          RandomCoilShifts(),
-                          Distance_potential(),
-                          Extra_potential(),
-                          Dihedral_potential(),
-                          Sidechain_potential(),
-                          Ring_Potential(),
-                          Non_bonded_potential(),
-                          Disulphide_shift_calculator()
+                          RandomCoilShifts(self.ensembleSimulation()),
+                          Distance_potential(self.ensembleSimulation()),
+                          Extra_potential(self.ensembleSimulation()),
+                          Dihedral_potential(self.ensembleSimulation()),
+                          Sidechain_potential(self.ensembleSimulation()),
+                          Ring_Potential(self.ensembleSimulation()),
+                          Non_bonded_potential(self.ensembleSimulation()),
+                          Disulphide_shift_calculator(self.ensembleSimulation())
                           ]
         self._verbose=verbose
         self._shift_table = Observed_shift_table()
@@ -2675,7 +2674,6 @@ class Xcamshift(PyEnsemblePot):
             self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
             
         for potential in self.potential:
-            potential.set_simulation(self.ensembleSimulation())
             potential.calc_shifts(target_atom_ids, result)
 
        
@@ -2975,7 +2973,7 @@ class Xcamshift(PyEnsemblePot):
         num_atoms = Segment_Manager.get_segment_manager().get_number_atoms()
         result = self._out_array
         if result == None:
-            result = Out_array(num_atoms)
+            result = Out_array(num_atoms,self.ensembleSimulation())
         else:
             result.realloc(num_atoms)
         return result

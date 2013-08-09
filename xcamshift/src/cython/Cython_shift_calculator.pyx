@@ -25,7 +25,7 @@ from math import ceil
 cimport cython
 from vec3 import Vec3 as python_vec3
 from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
-from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList, clearVector, EnsembleSimulation, createSharedVec 
+from  xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList, clearVector, EnsembleSimulation, createSharedVec 
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
@@ -34,6 +34,16 @@ from utils import Atom_utils
 from cpython cimport array
 import ctypes
 from component_list import  Component_list, Native_component_list
+from ensembleSimulation import EnsembleSimulation as pyEnsembleSimulation
+
+#TODO: should be ensembleSimulationAsNative
+cdef inline EnsembleSimulation* simulationAsNative(object simulation) except NULL:
+    #TODO tell charles his __eq__ method has problems
+    if id(None) == id(simulation):
+        raise Exception("_simulation cannot be None!")
+    if not isinstance(simulation, pyEnsembleSimulation):
+        raise Exception("a %s can't be converted to a EnsembleSimulation*" % simulation.__class__.__name__)
+    return <EnsembleSimulation*><size_t>int(simulation.this)
 
 cpdef array.array allocate_array(int len, type='d'):
     result = array.array(type,[0])
@@ -158,7 +168,7 @@ cdef class CDSSharedVectorFloat:
 
     
     def __cinit__(self, int size=0, object ensembleSimulation=None):
-        cdef EnsembleSimulation* cEnsembleSimulation = <EnsembleSimulation*><size_t>int(ensembleSimulation.this)
+        cdef EnsembleSimulation* cEnsembleSimulation = simulationAsNative(ensembleSimulation)
         #TODO: get rid of this casting
         self.data = <CDSVector[double]*>createSharedVec(size, 0.0,  cEnsembleSimulation)
         self.resize(size)
@@ -287,12 +297,14 @@ cdef class Out_array:
     cdef long _length
     cdef double[60000] _data
     cdef int[60000] _mask
+    cdef EnsembleSimulation* _simulation
     
-    def __init__ (self, length):
+    def __init__ (self, length, simulation):
         self._length = length
+        self._simulation = simulationAsNative(simulation)
 
         
-    def __cinit__(self,  length):
+    def __cinit__(self,  length, simulation):
         self._length =  60000
         
         if length > 60000: 
@@ -407,7 +419,6 @@ cdef class Out_array:
         if isinstance(result,PyDerivList):
             pointer = int(result.this)
             derivList = (<DerivList*><size_t>pointer)
-            simulation = currentSimulation()
             #TODO: references don't work here lots of problems -> cython mailing list
             derivs  = &derivList[0][simulation]
             for i in range(self._length): 
@@ -434,9 +445,8 @@ cdef class Out_array:
             # raw pointer
             pointer = int(result)
             derivList = (<DerivList*><size_t>pointer)
-            simulation = currentSimulation()
             #TODO: references don't work here lots of problems -> cython mailing list
-            derivs  = &derivList[0][simulation]
+            derivs  = &derivList[0][self._simulation] 
             for i in range(self._length): 
                 if self._mask[i] != 0:                  
                     id3 = i * 3
@@ -1065,7 +1075,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     
     cdef Coef_components _compiled_coef_components
     
-    def __cinit__(self):
+    def __cinit__(self, simulation, str name = "not set"):
         self.raw_data = None
         self._compiled_components = NULL
         self._num_components = 0
@@ -1080,7 +1090,8 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         self._centre_cache = None
         self._normal_cache = None
     
-    def __init__(self, str name = "not set"):
+    def __init__(self, simulation, str name = "not set"):
+        self._simulation = simulationAsNative(simulation)
         Base_shift_calculator.__init__(self,name)
 
     def _bytes_to_components(self, data):
@@ -1199,11 +1210,11 @@ cdef int RING_ATOM_IDS = 1
     
 cdef class Fast_ring_data_calculator:
     cdef bint _verbose
-    cdef Simulation* _simulation
+    cdef EnsembleSimulation* _simulation
          
-    def __init__(self): 
+    def __init__(self,simulation): 
         self._verbose = False
-        self._simulation =  currentSimulation()
+        self._simulation = simulationAsNative(simulation)
     
         
     def set_verbose(self,on):
@@ -1318,14 +1329,16 @@ cdef class Fast_non_bonded_calculator:
     cdef float _jitter
     cdef float _full_cutoff_distance
     cdef bint _verbose 
-    cdef Simulation* _simulation
-    def __init__(self,min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
+    cdef EnsembleSimulation* _simulation
+    
+    def __init__(self,simulation, min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
+        self._simulation = simulationAsNative(simulation)
+
         self._min_residue_seperation =  min_residue_seperation
         self._cutoff_distance =  cutoff_distance
         self._jitter = jitter
         self._full_cutoff_distance =  self._cutoff_distance + self._jitter
         self._verbose =  False
-        self._simulation =  currentSimulation()
     
         
     def set_verbose(self,on):
@@ -1351,8 +1364,8 @@ cdef class Fast_non_bonded_calculator:
         cdef bint is_non_bonded
         cdef float distance
         
-        atom_1 = currentSimulation().atomByID(atom_id_1)
-        atom_2 = currentSimulation().atomByID(atom_id_2)
+        atom_1 = self._simulation[0].atomByID(atom_id_1)
+        atom_2 = self._simulation[0].atomByID(atom_id_2)
         
         seg_1 =  <char *>atom_1.segmentName()
         residue_1 = atom_1.residueNum()
@@ -1425,7 +1438,6 @@ cdef class Fast_energy_calculator:
     cdef CDSVector[double]  *_theory_shifts
     cdef float[:] _observed_shifts
     cdef bint _verbose 
-    cdef Simulation* _simulation
     cdef int calls
 
     def __init__(self):
@@ -1433,7 +1445,6 @@ cdef class Fast_energy_calculator:
         self._theory_shifts =   NULL
         self._observed_shifts =  None
         self._verbose = False
-        self._simulation = currentSimulation()
         self.calls = 0
     
         
@@ -1639,7 +1650,7 @@ cdef class Base_force_calculator:
     
     def __init__(self,potential=None, name= "not set"):
         self._verbose = False
-        self._simulation =  currentSimulation()
+
         
         self._name = name
         
@@ -2573,8 +2584,9 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._compiled_coefficient_components = NULL
         self. _component_offset = 0
         
-    def __init__(self, bint smoothed, str name):
+    def __init__(self, simulation, bint smoothed, str name):
         super(Fast_non_bonded_shift_calculator, self).__init__(smoothed,name)
+        self._simulation = simulationAsNative(simulation)
         global DEFAULT_NB_CUTOFF
         self._nb_cutoff = DEFAULT_NB_CUTOFF
         
