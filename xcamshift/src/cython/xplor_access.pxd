@@ -80,13 +80,11 @@ cdef extern from 'ensembleSimulation.hh':
         int id()
         int memberIndex() nogil
         
-    cdef cppclass EnsembleSimulation:
+    cdef cppclass EnsembleSimulation(Simulation):
          String name()
          EnsembleMemberSimulation* member() nogil
-         int size() 
-         int id()
          int rawID()
-         
+
 
 cdef extern from "derivList.hh":
     cdef cppclass DerivList:
