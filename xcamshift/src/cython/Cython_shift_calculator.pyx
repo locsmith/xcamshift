@@ -6,7 +6,7 @@
 # http://www.gnu.org/licenses/lgpl-3.0.html
 # 
 # Contributors:
-#     gary thompson - initial API and implementation
+#     gary thompson - initial API and implementation 
 #-------------------------------------------------------------------------------
 # cython: profile=False 
 # cython: boundscheck=False    
@@ -750,7 +750,7 @@ cdef inline float calc_distance_simulation(Simulation* sim, int atom_index_1, in
 
 #TODO how does currentSimulation().atomByID work inside
 @cython.profile(False)
-cdef inline float calc_dihedral_angle_simulation(Simulation* simulation, dihedral_ids dihedral_atom_ids):
+cdef inline float calc_dihedral_angle_simulation(Simulation* simulation, dihedral_ids dihedral_atom_ids) nogil:
     
     
 
@@ -1012,11 +1012,11 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         self._num_components =  len(data)/ sizeof(Dihedral_component)
     
             
-    cdef inline _get_component(self,int index):
-        return self._components[index]
+#     cdef inline _get_component(self,int index) nogil:
+#         return self._components[index]
     
     @cython.profile(False)
-    cdef inline dihedral_ids _get_dihedral_atom_ids(self, int index):
+    cdef inline dihedral_ids _get_dihedral_atom_ids(self, int index) nogil:
         cdef dihedral_ids result
         
         result.atom_id_1 = self._compiled_components[index].dihedral_atoms[0]
@@ -1026,7 +1026,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         
         return result
 
-    cdef inline dihedral_parameters _get_parameters(self, int index):
+    cdef inline dihedral_parameters _get_parameters(self, int index) nogil:
         
         cdef dihedral_parameters result  
 
@@ -1042,7 +1042,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         return result
     
     @cython.profile(False)
-    cdef inline float _get_coefficient(self, int index):
+    cdef inline float _get_coefficient(self, int index) nogil:
         return self._compiled_components[index].coefficient
     
     @cython.profile(True)
@@ -1050,7 +1050,23 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     #TODO: still uses component to result...
     #TODO: add common force and shift base class
     def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
+
+        cdef double start_time = 0.0 
+        cdef double end_time = 0.0
+        if self._verbose:
+            start_time = time()
+
+        self._set_components(components)
+        self.call(shift_cache, component_to_target, active_components)
+            
+        if self._verbose:
+            end_time = time()
+            print '   dihedral shift components ',len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
+
+        
+    cdef void call(self, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components) nogil:    
         cdef CDSVector[double]  *results = shift_cache.get_data()
+    
 
         cdef float angle
         cdef float angle_term
@@ -1058,19 +1074,12 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         cdef float coefficient
         cdef dihedral_parameters parameters
         cdef dihedral_ids dihedral_atom_ids  
-        cdef double start_time = 0.0 
-        cdef double end_time = 0.0
-        
-        
-        
-        if self._verbose:
-            start_time = time()
+
         cdef int factor_index 
         cdef int component_index
         cdef int offset
             
-        self._set_components(components)
-        for factor_index in range(len(active_components)):
+        for factor_index in range(active_components.shape[0]):
             component_index = active_components[factor_index] 
             
             dihedral_atom_ids = self._get_dihedral_atom_ids(component_index)
@@ -1089,9 +1098,6 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
             offset = self.ensemble_array_offset(component_to_target[factor_index])
             results[0][offset] += shift
             
-        if self._verbose:
-            end_time = time()
-            print '   dihedral shift components ',len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
 
 cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     cdef Vec3_list _centre_cache
