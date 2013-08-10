@@ -716,7 +716,7 @@ cdef inline void operator_times (Vec3& vec3, float scale):
      vec3[2] =  vec3[2] * scale
      
 @cython.profile(False)
-cdef inline float calc_distance_simulation(Simulation* sim, int atom_index_1, int atom_index_2):
+cdef inline float calc_distance_simulation(Simulation* sim, int atom_index_1, int atom_index_2) nogil:
 
     cdef Vec3 vec1 = sim[0].atomPos(atom_index_1)
     cdef Vec3 vec2 = sim[0].atomPos(atom_index_2)
@@ -907,7 +907,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
             
         
     @cython.profile(False)
-    cdef inline target_distant_atom _get_target_and_distant_atom_ids(self, int index):
+    cdef inline target_distant_atom _get_target_and_distant_atom_ids(self, int index) nogil:
         cdef target_distant_atom result 
         
         result.target_atom_id = self._compiled_components[index].remote_atom_1
@@ -915,7 +915,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         return result
     
     @cython.profile(False)
-    cdef inline coefficient_exponent _get_coefficient_and_exponent(self, int index):
+    cdef inline coefficient_exponent _get_coefficient_and_exponent(self, int index) nogil:
         cdef coefficient_exponent result
 
         
@@ -926,37 +926,45 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
     
     @cython.profile(False)
     def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components):
-        cdef CDSVector[double]  *results = shift_cache.get_data()
-
         cdef double start_time = 0.0
         cdef double end_time = 0.0
         
         if self._verbose:
             start_time=time()
-        
+            
         self._set_components(components)
+        self.calc(shift_cache, component_to_target, active_components)
+
+        if self._verbose:
+            end_time = time()
+            print '   distance shift components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
+
+    cdef void calc(self, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components) nogil:
+        cdef CDSVector[double]  *results = shift_cache.get_data()
+
+
+        
+        
         cdef float smoothing_factor = self._smoothing_factor
         cdef float ratio
         cdef float result
         cdef coefficient_exponent coef_exp
         cdef float coefficent
         cdef float exponent
-        cdef object component
         cdef int target_atom_id
         cdef int distant_atom_id
         cdef float distance
         
         
 
-        if self._verbose:
-            start_time = time()
+
         
         cdef int factor_index = 0
         cdef int component_index
         cdef int offset
         
         #TODO: note to cython list for componnt_index in active_components produces awful code!
-        for factor_index in range(len(active_components)):
+        for factor_index in range(active_components.shape[0]):
             component_index = active_components[factor_index]         
             
 #             component = components[index]
@@ -977,9 +985,6 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
             offset = self.ensemble_array_offset(component_to_target[factor_index])
             results[0][offset]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
 
-        if self._verbose:
-            end_time = time()
-            print '   distance shift components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
 
     
 
