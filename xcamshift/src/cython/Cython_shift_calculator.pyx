@@ -176,16 +176,14 @@ cdef class CDSSharedVectorFloat:
 #     cpdef int size(self):
 #         return self[0].data.size()
     
-    cpdef resize(self,int size):
+    cdef void resize(self,int size) nogil:
         self.data[0].resize(size)
-        return self
     
-    cpdef clear(self):
-        clearVector(self.data)
-        return self
+    def clear(self):
+        clearVector(self.data) 
     
-    #TODO: a bit ugly can we use oper
-    cdef CDSVector[double]* get_data(self):
+    #TODO: a bit ugly can we use operator
+    cdef CDSVector[double]* get_data(self) nogil:
         return  self.data
     
     def __len__(self):
@@ -792,13 +790,13 @@ cdef class Base_shift_calculator:
         self._simulation = <EnsembleSimulation*><size_t>int(components['SIMU'].this)
         
     
-    cdef inline int ensemble_size(self):
+    cdef inline int ensemble_size(self) nogil:
         return self._simulation[0].size()
     
-    cdef inline int ensemble_member_index(self):
+    cdef inline int ensemble_member_index(self) nogil:
         return self._simulation[0].member()[0].memberIndex()
     
-    cdef inline int ensemble_array_offset(self,int index):
+    cdef inline int ensemble_array_offset(self,int index) nogil:
         return (self.ensemble_size() * index) + self.ensemble_member_index()
     
         
@@ -827,28 +825,40 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
     
     @cython.profile(False)
     def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components):
-        cdef CDSVector[double]  *results = shift_cache.get_data()
-        self._set_components(components)
+
         cdef double start_time = 0.0
         cdef double end_time = 0.0
-         
+
+
         if self._verbose:
             start_time=time()
+        
+        self._set_components(components)
+        self.calc(shift_cache, component_to_target,  active_components)
+        
+        if self._verbose:
+            end_time = time()
+            print '   distance shift components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
+
+
+    cdef void calc(self, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components) nogil:
+        
+        cdef CDSVector[double]  *results = shift_cache.get_data()
+
+
  
         cdef int factor_index = 0
         cdef int component_index
         cdef int offset
 
         #TODO: note to cython list for componnt_index in active_components produces awful code!
-        for factor_index in range(len(active_components)):
+        cdef int size = active_components.shape[0]
+        for factor_index in range(size):
             component_index = active_components[factor_index]         
             
             offset = self.ensemble_array_offset(component_to_target[factor_index])
             results[0][offset]  += self._compiled_components[component_index].shift
  
-        if self._verbose:
-            end_time = time()
-            print '   distance shift components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
         
 cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 
