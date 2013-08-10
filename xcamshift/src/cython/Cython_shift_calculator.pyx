@@ -773,7 +773,7 @@ cdef float DEFAULT_NB_CUTOFF = 5.0
 cdef class Base_shift_calculator:
     cdef bint _verbose 
     cdef str _name
-    cdef Simulation* _simulation
+    cdef EnsembleSimulation* _simulation
 
     def __init__(self, simulation, str name):
             self._verbose = False
@@ -789,14 +789,17 @@ cdef class Base_shift_calculator:
     
     def _set_components(self,components):
         self._bytes_to_components(components['ATOM'])
-        self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
+        self._simulation = <EnsembleSimulation*><size_t>int(components['SIMU'].this)
         
     
-    cdef inline int ensemble_size():
+    cdef inline int ensemble_size(self):
         return self._simulation[0].size()
     
-    cdef inline int ensemble_member_index():
+    cdef inline int ensemble_member_index(self):
         return self._simulation[0].member()[0].memberIndex()
+    
+    cdef inline int ensemble_array_offset(self,int index):
+        return (self.ensemble_size() * index) + self.ensemble_member_index()
     
         
 cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):           
@@ -834,12 +837,14 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
  
         cdef int factor_index = 0
         cdef int component_index
-         
+        cdef int offset
+
         #TODO: note to cython list for componnt_index in active_components produces awful code!
         for factor_index in range(len(active_components)):
             component_index = active_components[factor_index]         
             
-            results[0][component_to_target[factor_index]]  += self._compiled_components[component_index].shift
+            offset = self.ensemble_array_offset(component_to_target[factor_index])
+            results[0][offset]  += self._compiled_components[component_index].shift
  
         if self._verbose:
             end_time = time()
@@ -938,6 +943,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         
         cdef int factor_index = 0
         cdef int component_index
+        cdef int offset
         
         #TODO: note to cython list for componnt_index in active_components produces awful code!
         for factor_index in range(len(active_components)):
@@ -957,7 +963,9 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
             if self._smoothed:
                 ratio = distance / self._cutoff
                 smoothing_factor = 1.0 - ratio ** 8
-            results[0][component_to_target[factor_index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
+                
+            offset = self.ensemble_array_offset(component_to_target[factor_index])
+            results[0][offset]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
 
         if self._verbose:
             end_time = time()
@@ -1044,7 +1052,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
             start_time = time()
         cdef int factor_index 
         cdef int component_index
-        
+        cdef int offset
             
         self._set_components(components)
         for factor_index in range(len(active_components)):
@@ -1063,7 +1071,8 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
                          parameters.param_4
             shift = coefficient * angle_term
 
-            results[0][component_to_target[factor_index]] += shift
+            offset = self.ensemble_array_offset(component_to_target[factor_index])
+            results[0][offset] += shift
             
         if self._verbose:
             end_time = time()
@@ -1189,6 +1198,8 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         
         cdef int factor_index
         cdef int component_index
+        cdef int offset
+        
         for factor_index in range(len(active_components)):
             component_index = active_components[factor_index] 
             
@@ -1206,8 +1217,9 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
                 ring_id = coef_component[0].ring_id
                 coefficient = coef_component[0].coefficient
                 shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
-            
-            results[0][component_to_target[factor_index]] += shift
+                
+            offset = self.ensemble_array_offset(component_to_target[factor_index])
+            results[0][offset] += shift
         
         if self._verbose:
             end_time = time()
@@ -2622,7 +2634,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._num_coefficient_components =  len(data)/ sizeof(Nonbonded_coefficient_component)
         
     def _set_components(self, components):
-        self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
+        self._simulation = <EnsembleSimulation*><size_t>int(components['SIMU'].this)
         self._non_bonded_list =  components['NBLT']
         self._bytes_to_target_components(components['ATOM'])
         self._bytes_to_remote_components(components['NBRM'])
