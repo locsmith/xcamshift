@@ -790,6 +790,13 @@ cdef class Base_shift_calculator:
     def _set_components(self,components):
         self._bytes_to_components(components['ATOM'])
         self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
+        
+    
+    cdef inline int ensemble_size():
+        return self._simulation[0].size()
+    
+    cdef inline int ensemble_member_index():
+        return self._simulation[0].member()[0].memberIndex()
     
         
 cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):           
