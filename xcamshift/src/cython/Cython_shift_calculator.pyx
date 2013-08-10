@@ -412,7 +412,6 @@ cdef class Out_array:
     def add_forces_to_result(self, result=None, weight=1.0):
         cdef long id3
         cdef DerivList *derivList
-        cdef Simulation *simulation
         cdef CDSVector[Vec3]* derivs
         cdef Vec3* test
         
@@ -420,7 +419,7 @@ cdef class Out_array:
             pointer = int(result.this)
             derivList = (<DerivList*><size_t>pointer)
             #TODO: references don't work here lots of problems -> cython mailing list
-            derivs  = &derivList[0][simulation]
+            derivs  = &derivList[0][self._simulation]
             for i in range(self._length): 
                 if self._mask[i] != 0:                  
                     id3 = i * 3
