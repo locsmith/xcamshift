@@ -828,7 +828,7 @@ class Distance_based_potential(Base_potential):
         
     #TODO: move to base potential
     def _get_shift_calculator(self):
-        result  = Fast_distance_shift_calculator(self._smoothed, name=self.get_abbreviated_name())
+        result  = Fast_distance_shift_calculator(self._simulation, self._smoothed, name=self.get_abbreviated_name())
         result.set_verbose(self._verbose)
         return result
     
@@ -1085,7 +1085,7 @@ class RandomCoilShifts(Base_potential):
             return Native_component_list(format='if')
     
     def _get_shift_calculator(self):
-        result = Fast_random_coil_shift_calculator(name=self.get_abbreviated_name())
+        result = Fast_random_coil_shift_calculator(self._simulation, name=self.get_abbreviated_name())
         result.set_verbose(self._verbose)
         
         return result
@@ -1162,7 +1162,7 @@ class Dihedral_potential(Base_potential):
 
     def _get_shift_calculator(self):
 #        if self._fast:
-        result = Fast_dihedral_shift_calculator(name=self.get_abbreviated_name())
+        result = Fast_dihedral_shift_calculator(self._simulation, name=self.get_abbreviated_name())
         result.set_verbose(self._verbose)
 #        else:
 #            result = Dihedral_shift_calculator()

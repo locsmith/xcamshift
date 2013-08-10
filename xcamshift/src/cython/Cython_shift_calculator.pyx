@@ -775,10 +775,11 @@ cdef class Base_shift_calculator:
     cdef str _name
     cdef Simulation* _simulation
 
-    def __init__(self, str name):
+    def __init__(self, simulation, str name):
             self._verbose = False
             self._name = name
-            self._simulation =  NULL
+            self._simulation =  simulationAsNative(simulation)
+        
             
     
     def set_verbose(self,bint state):
@@ -789,6 +790,7 @@ cdef class Base_shift_calculator:
     def _set_components(self,components):
         self._bytes_to_components(components['ATOM'])
         self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
+    
         
 cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):           
     
@@ -796,13 +798,13 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
     cdef int _num_components
     cdef object _raw_data 
         
-    def __cinit__(self):
+    def __cinit__(self, simulation,  str name = "not set"):
         self._raw_data = None
         self._compiled_components  = NULL
         self._num_components =  0
                         
-    def __init__(self, str name = "not set"):
-        Base_shift_calculator.__init__(self, name)
+    def __init__(self, simulation, str name = "not set"):
+        Base_shift_calculator.__init__(self, simulation, name)
 
 #    
 #    TODO: this needs to be removed
@@ -852,13 +854,13 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
     cdef int _num_components
     cdef object _raw_data
         
-    def __cinit__(self):
+    def __cinit__(self, simulation, smoothed, str name = "not set"):
         self._raw_data = None
         self._compiled_components  = NULL
         self._num_components =  0
                         
-    def __init__(self, smoothed, str name = "not set"):
-        Base_shift_calculator.__init__(self, name)
+    def __init__(self, simulation, smoothed, str name = "not set"):
+        Base_shift_calculator.__init__(self, simulation, name)
         
         self._smoothed =  smoothed
         self._smoothing_factor =  DEFAULT_SMOOTHING_FACTOR
@@ -963,14 +965,14 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     cdef int _num_components
     cdef object _raw_data
         
-    def __cinit__(self):
+    def __cinit__(self, simulation, str name = "not set"):
         self._raw_data =  None
         self._compiled_components = NULL
         self._num_components = 0
         
         
-    def __init__(self, str name = "not set"):
-        Base_shift_calculator.__init__(self,name)
+    def __init__(self, simulation, str name = "not set"):
+        Base_shift_calculator.__init__(self, simulation, name)
         
         
     def  _bytes_to_components(self, data):
@@ -1091,8 +1093,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         self._normal_cache = None
     
     def __init__(self, simulation, str name = "not set"):
-        self._simulation = simulationAsNative(simulation)
-        Base_shift_calculator.__init__(self,name)
+        Base_shift_calculator.__init__(self,simulation, name)
 
     def _bytes_to_components(self, data):
         self.raw_data =  data 
@@ -2577,7 +2578,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
     
     
     
-    def __cinit__(self):
+    def __cinit__(self, simulation, bint smoothed, str name):
         self._non_bonded_list = None
         self._compiled_target_components =  NULL
         self._compiled_remote_components = NULL
@@ -2585,7 +2586,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self. _component_offset = 0
         
     def __init__(self, simulation, bint smoothed, str name):
-        super(Fast_non_bonded_shift_calculator, self).__init__(smoothed,name)
+        super(Fast_non_bonded_shift_calculator, self).__init__(simulation, smoothed,name)
         self._simulation = simulationAsNative(simulation)
         global DEFAULT_NB_CUTOFF
         self._nb_cutoff = DEFAULT_NB_CUTOFF
