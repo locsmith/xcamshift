@@ -20,7 +20,7 @@ from Cython.Distutils import build_ext
 import Cython.Compiler.Options
 Cython.Compiler.Options.annotate = True
 
-ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx"],
+ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx", 'sharedCDSVectorFactory.cc'],
                          define_macros = [('CPLUSPLUS', '1') ,
                                           ('USE_CDS_NAMESPACE', '1')],
                         
