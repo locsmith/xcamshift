@@ -223,7 +223,7 @@ cdef  class Non_bonded_interaction_list:
     cdef inline void resize(self):
         self.data[0].resize(self.data[0].size()+self.size_increment*self.RECORD_LENGTH)    
      
-    cdef inline Component_index_pair* get(self,int offset):
+    cdef inline Component_index_pair* get(self,int offset) nogil:
         return <Component_index_pair *> &self.data[0][offset*self.RECORD_LENGTH]      
              
     def get_allocation(self):
@@ -233,8 +233,11 @@ cdef  class Non_bonded_interaction_list:
         return self.size_increment
     
     def __len__(self):
+        return self.size()
+    
+    cdef int get_length(self) nogil:
         return self.length/self.RECORD_LENGTH
-     
+    
     def __getitem__(self, int key):
         if key >= self.length/self.RECORD_LENGTH:
             raise IndexError("index (%i) out of range (%i)" % (key, self.length/self.RECORD_LENGTH)) 
@@ -1995,7 +1998,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         cdef int factor_index
         
         if self._active_components ==  None:
-            for factor_index  in range(len(self._non_bonded_list)):
+            for factor_index  in range(self._non_bonded_list.get_length()):
                 non_bonded_index  = factor_index
                 self._calc_one_component(factor_index, non_bonded_index, component_to_result, force_factors, force)
         else:
@@ -2672,11 +2675,28 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         
     @cython.profile(True)
     def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
-        cdef CDSVector[double]  *results = shift_cache.get_data()
+        
+        cdef double start_time
+        cdef double end_time
+        
+        if self._verbose:
+            start_time = time()
+
         self._set_components(components)
         
+        self.calc(shift_cache, component_to_target, active_components)
+        
+        if self._verbose:
+            end_time = time()
+            print '   distance shift components ' ,self._name,len(self._non_bonded_list), 'in', "%.17g" % (end_time-start_time), "seconds"
+
+    cdef void calc(self,CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components) nogil:
+    
+        cdef CDSVector[double]  *results = shift_cache.get_data()
+        cdef int non_bonded_index
+         
         if active_components == None:
-            for non_bonded_index in range(len(self._non_bonded_list)):
+            for non_bonded_index in range(self._non_bonded_list.get_length()):
 #                 print non_bonded_index
                 self._calc_single_component_shift(non_bonded_index, non_bonded_index, results, component_to_target)
         else:         
@@ -2686,7 +2706,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
                 self._calc_single_component_shift(factor_index, non_bonded_index, results, component_to_target)
 
         
-    cdef inline void  _calc_single_component_shift(self,int factor_index, int non_bonded_index, CDSVector[double]*  results, int[:] component_to_target):
+    cdef inline void  _calc_single_component_shift(self,int factor_index, int non_bonded_index, CDSVector[double]*  results, int[:] component_to_target) nogil:
         cdef Component_index_pair* non_bonded_pair 
         
         cdef int target_component_index
@@ -2711,9 +2731,6 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         cdef Nonbonded_coefficient_component* coefficent_component
         cdef int component_offset
         cdef int offset
-        
-        if self._verbose:
-            start_time = time()
 
 
         non_bonded_pair  =  self._non_bonded_list.get(non_bonded_index)
@@ -2750,8 +2767,5 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
                 results[0][offset]  +=  smoothing_factor * pow(distance,  exponent) * coefficient
 
 
-        if self._verbose:
-            end_time = time()
-            print '   distance shift components ' ,self._name,len(self._non_bonded_list), 'in', "%.17g" % (end_time-start_time), "seconds"
 
 
