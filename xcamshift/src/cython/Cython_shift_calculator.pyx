@@ -268,7 +268,7 @@ cdef class Vec3_list:
         self.data.resize(length)
         
     @cython.profile(False)   
-    cdef inline Vec3*  get(self, int offset): 
+    cdef inline Vec3*  get(self, int offset) nogil: 
         return &self.data[0][offset]
     
     @cython.profile(False)    
@@ -657,7 +657,7 @@ cdef class Coef_components:
         pass
         
     
-    cdef inline Component_Offsets* get_id_offsets(self,int id):
+    cdef inline Component_Offsets* get_id_offsets(self,int id) nogil:
         return &self._component_offsets[id]
     
     def __dealloc__(self):
@@ -683,7 +683,7 @@ cdef class Coef_components:
      
 
     @cython.profile(False)
-    cdef inline Coef_component* get_component(self,int offset):
+    cdef inline Coef_component* get_component(self,int offset) nogil:
 #        self._check_offset(offset)
         return &self._components[offset] 
 
@@ -1162,19 +1162,19 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
 
 
     @cython.profile(False)
-    cdef inline Vec3* _get_ring_normal(self, int ring_id):
+    cdef inline Vec3* _get_ring_normal(self, int ring_id) nogil:
         return  self._normal_cache.get(ring_id)
     
     @cython.profile(False)
-    cdef inline Vec3* _get_ring_centre(self, int ring_id):
-        return  self._centre_cache.get(ring_id)
+    cdef inline Vec3* _get_ring_centre(self, int ring_id) nogil:
+        return  self._centre_cache.get(ring_id) 
     
-    cpdef float  _calc_sub_component_shift(self, int target_atom_id, int ring_id, float coefficient):
+    cdef float _calc_sub_component_shift(self, int target_atom_id, int ring_id, float coefficient) nogil:
         
         cdef Vec3 target_atom_pos
         cdef Vec3 ring_centre
         cdef Vec3 ring_normal
-        cdef float lenght_normal
+        cdef float length_normal
         cdef Vec3 direction_vector
         cdef float distance, distance3, angle, contrib
         
@@ -1184,43 +1184,53 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         #TODO add this to a cache the same way that camshift does
         ring_normal = self._get_ring_normal(ring_id)[0]
         length_normal = norm(ring_normal)
-    
+#     
         #correct name?
         direction_vector = target_atom_pos - ring_centre
-        
+         
         distance = norm(direction_vector)
         distance3 = distance ** 3
-        
+         
         angle = dot(direction_vector, ring_normal) / (distance * length_normal)
         contrib = (1.0 - 3.0 * angle ** 2) / distance3
-        
+         
         return contrib * coefficient
 
     @cython.profile(True)
     def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
-        cdef CDSVector[double]  *results = shift_cache.get_data()
-        
-        cdef int target_atom_id
-        cdef int atom_type_id
-        cdef int ring_id
-        cdef float coefficient
         cdef double start_time = 0.0 
         cdef double end_time =0.0
-        cdef Component_Offsets* coeff_offset
-        cdef Coef_component* coef_component
         
         if self._verbose:
             start_time = time()
         
-        
-        
         self._set_components(components)
+        self.calc(shift_cache, component_to_target, active_components)
+
+        if self._verbose:
+            end_time = time()
+            print '   ring shift components ' ,self._name,len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
+
+        
+    cdef void calc (self, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components) nogil: 
+        cdef CDSVector[double]  *results = shift_cache.get_data()
+        cdef int target_atom_id
+        cdef int atom_type_id
+        cdef int ring_id
+        cdef float coefficient
+        cdef Component_Offsets* coeff_offset
+        cdef Coef_component* coef_component
+        
+
+        
+        
+
         
         cdef int factor_index
         cdef int component_index
         cdef int offset
         
-        for factor_index in range(len(active_components)):
+        for factor_index in range(active_components.shape[0]):
             component_index = active_components[factor_index] 
             
             target_atom_id = self._compiled_components[component_index].target_atom_id
@@ -1241,9 +1251,6 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
             offset = self.ensemble_array_offset(component_to_target[factor_index])
             results[0][offset] += shift
         
-        if self._verbose:
-            end_time = time()
-            print '   ring shift components ' ,self._name,len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
 
 #   
 cdef int RING_ATOM_IDS = 1
@@ -2339,11 +2346,11 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 
     
     @cython.profile(False)        
-    cdef inline Vec3* _get_ring_normal(self, int ring_id):
+    cdef inline Vec3* _get_ring_normal(self, int ring_id) nogil:
         return  self._normal_cache.get(ring_id)
     
     @cython.profile(False)
-    cdef inline Vec3* _get_ring_centre(self, int ring_id):
+    cdef inline Vec3* _get_ring_centre(self, int ring_id) nogil:
         return  self._centre_cache.get(ring_id)
         
 
