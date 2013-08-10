@@ -2683,6 +2683,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         
         cdef Nonbonded_coefficient_component* coefficent_component
         cdef int component_offset
+        cdef int offset
         
         if self._verbose:
             start_time = time()
@@ -2717,8 +2718,10 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
                 if self._smoothed:
                     ratio = distance / self._cutoff
                     smoothing_factor = 1.0 - ratio ** 8
+                
+                offset = self.ensemble_array_offset(component_to_target[component_offset])
+                results[0][offset]  +=  smoothing_factor * pow(distance,  exponent) * coefficient
 
-                results[0][component_to_target[component_offset]]  +=  smoothing_factor * pow(distance,  exponent) * coefficient
 
         if self._verbose:
             end_time = time()
