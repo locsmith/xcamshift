@@ -560,8 +560,7 @@ class Base_potential(object):
         self._active_components = None
         self._verbose = False
     
-    def set_simulation(self,simulation):
-        self._simulation = simulation 
+
         
     def set_frozen(self,on):
         self._freeze =  (on == True)
@@ -2471,8 +2470,24 @@ class Non_bonded_potential(Distance_based_potential):
 
 class Xcamshift(PyEnsemblePot):
 
+    def __init__(self, name="xcamshift_instance", verbose=False):
+        self.contents = Xcamshift_contents()
+        super(Xcamshift, self).__init__(name,self.contents)
+        self.contents._set_ensemble_simulation(self.ensembleSimulation())
+        self.contents.set_verbose(verbose)
+        
+    def set_observed_shifts(self, shift_table):
+        self.contents.set_observed_shifts(shift_table)
+        
+    def setup(self,):
+        self.contents.setup()
+        
+    def reset(self,):
+        self.contents.reset()
+
     
     
+class Xcamshift_contents:
     
 
 
@@ -2482,20 +2497,11 @@ class Xcamshift(PyEnsemblePot):
     
             
             
-    def __init__(self, name="xcamshift_instance", verbose=False):
-        super(Xcamshift, self).__init__(name,self)
+    def __init__(self):
         
-        self.potential = [
-                          RandomCoilShifts(self.ensembleSimulation()),
-                          Distance_potential(self.ensembleSimulation()),
-                          Extra_potential(self.ensembleSimulation()),
-                          Dihedral_potential(self.ensembleSimulation()),
-                          Sidechain_potential(self.ensembleSimulation()),
-                          Ring_Potential(self.ensembleSimulation()),
-                          Non_bonded_potential(self.ensembleSimulation()),
-                          Disulphide_shift_calculator(self.ensembleSimulation())
-                          ]
-        self._verbose=verbose
+        self._potentials = None
+        self._ensemble_simulation = None
+        self._verbose=False
         self._shift_table = Observed_shift_table()
         self._shift_cache = None
         self._ensemble_shift_cache = None 
@@ -2504,17 +2510,30 @@ class Xcamshift(PyEnsemblePot):
         self._energy_calculator = self._get_energy_calculator()
         self._force_factor_calculator =  self._get_force_factor_calculator()
 
-        self.set_verbose(verbose)
         self._freeze = False
         self._active_target_atom_ids = None
         self._factors = None
 
-    
-    
-    
+    def _set_ensemble_simulation(self,ensemble_simulation):
+        self._ensemble_simulation = ensemble_simulation
+        
+    def _get_potentials(self):
+        if self._potentials == None: 
+            ensemble_simulation =  self._ensemble_simulation
+            self._potentials = [
+                  RandomCoilShifts(ensemble_simulation),
+                  Distance_potential(ensemble_simulation),
+                  Extra_potential(ensemble_simulation),
+                  Dihedral_potential(ensemble_simulation),
+                  Sidechain_potential(ensemble_simulation),
+                  Ring_Potential(ensemble_simulation),
+                  Non_bonded_potential(ensemble_simulation),
+                  Disulphide_shift_calculator(ensemble_simulation)
+            ]
+        return self._potentials
 
     def set_verbose(self,on=True):
-        for potential in self.potential:
+        for potential in self._get_potentials():
             potential.set_verbose(on)
         self._force_factor_calculator.set_verbose(on)
         self._energy_calculator.set_verbose(on)
@@ -2540,7 +2559,7 @@ class Xcamshift(PyEnsemblePot):
     
         
     def get_sub_potential_names(self):
-        return [potential.get_abbreviated_name() for potential in self.potential]
+        return [potential.get_abbreviated_name() for potential in self._get_potentials()]
     
     def _get_energy_calculator(self):
 #        if self._fast:
@@ -2553,7 +2572,7 @@ class Xcamshift(PyEnsemblePot):
     
     def get_named_sub_potential(self,name):
         result =  None
-        for potential in self.potential:
+        for potential in self._get_potentials():
             if potential.get_abbreviated_name() ==  name:
                 result = potential
                 break
@@ -2570,7 +2589,7 @@ class Xcamshift(PyEnsemblePot):
         result_elements = {}
         
         keys = []
-        for potential in self.potential:
+        for potential in self._get_potentials():
             num_atoms = len(result)
             sub_result  = [0.0] * num_atoms
             potential.set_shifts(sub_result)
@@ -2613,7 +2632,7 @@ class Xcamshift(PyEnsemblePot):
         
     def _get_all_component_target_atom_ids(self):
         result  = set()
-        for potential in self.potential:
+        for potential in self._get_potentials():
             result.update(potential.get_target_atom_ids())
         result = list(result)
         result.sort()
@@ -2673,7 +2692,7 @@ class Xcamshift(PyEnsemblePot):
         if not self._freeze:
             self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
             
-        for potential in self.potential:
+        for potential in self._get_potentials():
             potential.calc_shifts(target_atom_ids, result)
 
        
@@ -2802,7 +2821,6 @@ class Xcamshift(PyEnsemblePot):
         
         self._calc_factors(target_atom_ids, self._factors)
         for potential in potentials_list:
-            potential.set_simulation(self.ensembleSimulation())
             potential.calc_force_set(target_atom_ids,self._factors,forces)
         
              
@@ -2814,7 +2832,7 @@ class Xcamshift(PyEnsemblePot):
 
     def _calc_force_set(self,target_atom_ids,forces,potentials=None):
         if potentials ==  None:
-            potentials =  self.potential
+            potentials =  self._get_potentials()
         self._calc_force_set_with_potentials(target_atom_ids, forces, potentials)
          
     def _calc_single_atom_force_set(self,target_atom_id,forces,potentials=None):
@@ -2878,7 +2896,7 @@ class Xcamshift(PyEnsemblePot):
 
     def _calc_single_force_factor(self,target_atom_index,forces):
         factor = 1.0
-        for potential in self.potential:
+        for potential in self._get_potentials():
             if potential._have_derivative():
                 potential.set_observed_shifts(self._shift_table)
                 
@@ -2911,7 +2929,7 @@ class Xcamshift(PyEnsemblePot):
 
     def _prepare_potentials(self, change, data):
         
-        for potential in self.potential:
+        for potential in self._get_potentials():
             potential._prepare(change, data)
 
     def _prepare(self, change, data):
@@ -2973,7 +2991,7 @@ class Xcamshift(PyEnsemblePot):
         num_atoms = Segment_Manager.get_segment_manager().get_number_atoms()
         result = self._out_array
         if result == None:
-            result = Out_array(num_atoms,self.ensembleSimulation())
+            result = Out_array(num_atoms,self._ensemble_simulation)
         else:
             result.realloc(num_atoms)
         return result
@@ -3002,8 +3020,7 @@ class Xcamshift(PyEnsemblePot):
     
 
     def _average_shift_cache(self):
-        ensemble_simulation = self.ensembleSimulation()
-        if ensemble_simulation.size() ==  1:
+        if self._ensemble_simulation.size() ==  1:
             self._shift_cache = self._ensemble_shift_cache
         else:
             raise Exception("implement me")
@@ -3049,9 +3066,9 @@ class Xcamshift(PyEnsemblePot):
     def calcEnergyAndDerivsMaybe1(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         target_atom_ids = self._get_active_target_atom_ids()
         
-        ensemble_size =  self.ensembleSimulation().size()
+        ensemble_size =  self._ensemble_simulation.size()
         cache_size = len(target_atom_ids) * ensemble_size
-        self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, cache_size, self.ensembleSimulation())
+        self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, cache_size, self._ensemble_simulation)
 
         self._calc_shift_cache(target_atom_ids, self._ensemble_shift_cache)
         
@@ -3077,7 +3094,7 @@ class Xcamshift(PyEnsemblePot):
 
     
     def _set_frozen(self,on=True):
-        for potential in self.potential:
+        for potential in self._get_potentials():
             potential.set_frozen(on)
         self._freeze = True
             
