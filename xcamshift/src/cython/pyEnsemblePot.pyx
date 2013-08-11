@@ -13,11 +13,11 @@ cdef class PyEnsemblePotData:
     cdef String* _potential_name
     cdef Simulation *_simulation 
 # 
-    def __init__(self, instance_name, potential_name='test'):
+    def __init__(self, instance_name, target, potential_name='test'):
         self._instance_name = new String(instance_name, len(instance_name))
         self._potential_name = new String(potential_name, len(potential_name))
         self._simulation = <Simulation*><size_t>self.simulation()
-        self.ensemblePotProxy = new PyEnsemblePotProxy(self._instance_name[0], self._potential_name[0],self._simulation, <cpy_ref.PyObject*>self)
+        self.ensemblePotProxy = new PyEnsemblePotProxy(self._instance_name[0], self._potential_name[0],self._simulation, <cpy_ref.PyObject*>target)
      
     def calcEnergyAndDerivList(self,derivList):
         pointer = int(derivList.this)
@@ -45,7 +45,7 @@ cdef class PyEnsemblePotData:
 class PyEnsemblePot(PyPot,PyEnsemblePotData):
     def __init__(self,name):
         PyPot.__init__(self,name)
-        PyEnsemblePotData.__init__(self, self.instanceName(),self.potName())
+        PyEnsemblePotData.__init__(self, self.instanceName(),self, self.potName())
       
     def calcEnergyAndDerivsMaybe0(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         return 0.0
