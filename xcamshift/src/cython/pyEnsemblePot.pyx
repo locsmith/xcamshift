@@ -13,10 +13,10 @@ cdef class PyEnsemblePotData:
     cdef String* _potential_name
     cdef Simulation *_simulation 
 # 
-    def __init__(self, instance_name, target, potential_name='test'):
+    def __init__(self, instance_name, target, simulation, potential_name='test'):
         self._instance_name = new String(instance_name, len(instance_name))
         self._potential_name = new String(potential_name, len(potential_name))
-        self._simulation = <Simulation*><size_t>self.simulation()
+        self._simulation = <Simulation*><size_t>simulation
         self.ensemblePotProxy = new PyEnsemblePotProxy(self._instance_name[0], self._potential_name[0],self._simulation, <cpy_ref.PyObject*>target)
      
     def calcEnergyAndDerivList(self,derivList):
@@ -42,11 +42,18 @@ cdef class PyEnsemblePotData:
         return fromSimulation(simulation)
         
     
-class PyEnsemblePot(PyPot,PyEnsemblePotData):
-    def __init__(self,name):
+class PyEnsemblePot(PyPot):
+    
+    def __init__(self,name,target): 
         PyPot.__init__(self,name)
-        PyEnsemblePotData.__init__(self, self.instanceName(),self, self.potName())
-      
+        self.host = PyEnsemblePotData(self.instanceName(),target,self.simulation(), self.potName())
+    
+    def calcEnergyAndDerivList(self,derivs):
+        return self.host.calcEnergyAndDerivList(derivs)
+        
+    def ensembleSimulation(self):
+        return self.host.ensembleSimulation()  
+    
     def calcEnergyAndDerivsMaybe0(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         return 0.0
   

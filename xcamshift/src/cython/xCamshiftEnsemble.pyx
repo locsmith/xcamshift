@@ -17,34 +17,31 @@ Created on 27 Dec 2011
 
 #TODO: add tests to exclude atoms/distances which are not defined
 
-from cython.pyEnsemblePot import PyEnsemblePot
-from atomSel import AtomSel,intersection
+from abc import abstractmethod, ABCMeta
+from atomSel import AtomSel, intersection
+from common_constants import BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, \
+    RING, NON_BONDED, DISULPHIDE, TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, \
+    STRUCTURE_CHANGED, SHIFT_DATA_CHANGED
 from component_list import Component_list, Native_component_list
+from cython.fast_segment_manager import Segment_Manager
+from cython.pyEnsemblePot import PyEnsemblePot
+from cython.shift_calculators import Fast_distance_shift_calculator, \
+    Fast_dihedral_shift_calculator, Fast_ring_shift_calculator, \
+    Fast_ring_data_calculator, Fast_non_bonded_calculator, Fast_energy_calculator, \
+    Fast_distance_based_potential_force_calculator, Fast_dihedral_force_calculator, \
+    Fast_ring_force_calculator, Fast_force_factor_calculator, Out_array, Vec3_list, \
+    allocate_array, zero_array, resize_array, Fast_non_bonded_shift_calculator, \
+    Fast_non_bonded_force_calculator, Non_bonded_interaction_list, \
+    Fast_random_coil_shift_calculator, CDSSharedVectorFloat
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from observed_chemical_shifts import Observed_shift_table
-from cython.fast_segment_manager import Segment_Manager
-from table_manager import Table_manager
 from python_utils import tupleit
-from utils import Atom_utils, iter_residues_and_segments
-import sys
-from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED, DISULPHIDE
-from common_constants import  TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, STRUCTURE_CHANGED, SHIFT_DATA_CHANGED
-from abc import abstractmethod, ABCMeta
-from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
-                                     Fast_ring_shift_calculator, Fast_ring_data_calculator,          \
-                                     Fast_non_bonded_calculator, Fast_energy_calculator,             \
-                                     Fast_distance_based_potential_force_calculator,                 \
-                                     Fast_dihedral_force_calculator,                                 \
-                                     Fast_ring_force_calculator,                                     \
-                                     Fast_force_factor_calculator,                                   \
-                                     Out_array, Vec3_list, allocate_array, zero_array, resize_array, \
-                                     Fast_non_bonded_shift_calculator,                               \
-                                     Fast_non_bonded_force_calculator,                               \
-                                     Non_bonded_interaction_list,                                    \
-                                     Fast_random_coil_shift_calculator, CDSSharedVectorFloat
+from table_manager import Table_manager
 from time import time
-import array#
+from utils import Atom_utils, iter_residues_and_segments
+import array #
+import sys
 
 #TODO: REMOVE!
 
@@ -2468,7 +2465,7 @@ class Non_bonded_potential(Distance_based_potential):
         return self._selected_components
         self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._selected_components)
          
-
+ 
 
 # from pyPot import PyPot
 
@@ -2486,7 +2483,8 @@ class Xcamshift(PyEnsemblePot):
             
             
     def __init__(self, name="xcamshift_instance", verbose=False):
-        super(Xcamshift, self).__init__(name)
+        super(Xcamshift, self).__init__(name,self)
+        
         self.potential = [
                           RandomCoilShifts(self.ensembleSimulation()),
                           Distance_potential(self.ensembleSimulation()),
@@ -3022,7 +3020,7 @@ class Xcamshift(PyEnsemblePot):
             print "start energy and derivatives"
             start_time = time() 
             
-        energy = PyEnsemblePot.calcEnergyAndDerivList(self,derivs) 
+        energy = PyEnsemblePot.calcEnergyAndDerivList(self,derivs)  
 
 
         
