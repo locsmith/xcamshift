@@ -17,6 +17,7 @@ Created on 27 Dec 2011
 
 #TODO: add tests to exclude atoms/distances which are not defined
 
+
 from abc import abstractmethod, ABCMeta
 from atomSel import AtomSel, intersection
 from common_constants import BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, \
@@ -42,6 +43,7 @@ from time import time
 from utils import Atom_utils, iter_residues_and_segments
 import array #
 import sys
+from cython.view cimport array as carray
 
 #TODO: REMOVE!
 
@@ -2508,6 +2510,7 @@ cdef class Xcamshift_contents:
         #self.set_verbose(verbose)
     cdef object _freeze
     cdef object _active_target_atom_ids 
+    cdef int[:] _native_active_target_atom_ids
     cdef object _factors
             
     def __init__(self):
@@ -2935,6 +2938,9 @@ cdef class Xcamshift_contents:
             active_target_atom_ids = list(active_target_atom_ids)
             
             self._active_target_atom_ids =  array.array('i',sorted(active_target_atom_ids))
+            self._native_active_target_atom_ids = carray(shape=(len(active_target_atom_ids),), itemsize=sizeof(int), format="i")
+            for i,value in enumerate(self._active_target_atom_ids):
+                self._native_active_target_atom_ids[i] = value
         
          
         return self._active_target_atom_ids
@@ -3013,7 +3019,7 @@ cdef class Xcamshift_contents:
 
 
         
-    def _calc_energy(self, prepare =  True, active_target_atom_ids = None):
+    def _calc_energy(self, prepare =  True, int[:] active_target_atom_ids = None):
         if self._verbose:
             start_time = time()
  
@@ -3078,13 +3084,12 @@ cdef class Xcamshift_contents:
         return 0.0 
 
     def calcEnergyAndDerivsMaybe1(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
-        target_atom_ids = self._get_active_target_atom_ids()
         
         ensemble_size =  self._ensemble_simulation.size()
-        cache_size = len(target_atom_ids) * ensemble_size
+        cache_size = self._native_active_target_atom_ids.shape[0] * ensemble_size
         self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, cache_size, self._ensemble_simulation)
 
-        self._calc_shift_cache(target_atom_ids, self._ensemble_shift_cache)
+        self._calc_shift_cache(self._native_active_target_atom_ids, self._ensemble_shift_cache)
         
         return 0.0 
 
@@ -3096,14 +3101,12 @@ cdef class Xcamshift_contents:
 
     def calcEnergyAndDerivsMaybe3(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
 
-        target_atom_ids = self._get_active_target_atom_ids()
-        energy = self._calc_energy( active_target_atom_ids=target_atom_ids)
+        energy = self._calc_energy( active_target_atom_ids=self._native_active_target_atom_ids)
         return energy
 
     def calcEnergyAndDerivsMaybe4(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         if calcDerivatives:
-            target_atom_ids = self._get_active_target_atom_ids()
-            self._calc_derivs(int(derivListPtr), target_atom_ids)        
+            self._calc_derivs(int(derivListPtr), self._native_active_target_atom_ids)
         return 0.0
 
     
