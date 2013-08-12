@@ -1510,16 +1510,16 @@ cdef class Fast_energy_calculator:
     def set_energy_term_cache(self, energy_term_cache ):
         self._energy_term_cache =  <Constant_cache*> <size_t> ctypes.addressof(energy_term_cache)
         
-    cdef Constant_cache* _get_energy_terms(self, int target_atom_index):
+    cdef Constant_cache* _get_energy_terms(self, int target_atom_index) nogil:
         return &self._energy_term_cache[target_atom_index]
     
-    cdef inline float  _get_calculated_atom_shift(self, int index):
+    cdef inline float  _get_calculated_atom_shift(self, int index) nogil:
         return self._theory_shifts[0][index]
     
-    cdef inline float _get_observed_atom_shift(self, int index):
+    cdef inline float _get_observed_atom_shift(self, int index) nogil:
         return self._observed_shifts[index]
     
-    cdef inline float  _get_shift_difference(self, int target_atom_index, int index):
+    cdef inline float  _get_shift_difference(self, int target_atom_index, int index) nogil:
         cdef float theory_shift
         cdef float observed_shift
         theory_shift = self._get_calculated_atom_shift(index)
@@ -1528,7 +1528,7 @@ cdef class Fast_energy_calculator:
         
         return observed_shift - theory_shift
 
-    cdef inline float _adjust_shift(self, float shift_diff, float flat_bottom_shift_limit):
+    cdef inline float _adjust_shift(self, float shift_diff, float flat_bottom_shift_limit) nogil:
         result  = 0.0
         if (shift_diff > 0.0):
             result = shift_diff-flat_bottom_shift_limit
@@ -1626,8 +1626,14 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
         
         if self._verbose:
             start_time = time()
+            
+        self.calc( target_atom_ids, result,  active_atom_ids)
+        
+        if self._verbose:
+            end_time = time()
+            print '   force factors : ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
 
-
+    cdef void calc(self, int[:] target_atom_ids, float[:] result, int[:] active_atom_ids) nogil:
        #TODO: shouldn't be allocated each time
         cdef int target_atom_id
         cdef int active_atom_id
@@ -1643,12 +1649,9 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
     
                 result[i] = self._calc_one_force_factor(target_atom_id, active_atom_id)
 
-        if self._verbose:
-            end_time = time()
-            print '   force factors : ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
 
        
-    cdef inline float _calc_one_force_factor(self, int target_atom_id, int i):
+    cdef inline float _calc_one_force_factor(self, int target_atom_id, int i) nogil:
         
         cdef float factor
         cdef float shift_diff
@@ -1671,7 +1674,7 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
         
         flat_bottom_shift_limit = energy_terms[0].flat_bottom_shift_limit
         
-        if abs(shift_diff) > flat_bottom_shift_limit:
+        if fabs(shift_diff) > flat_bottom_shift_limit:
             adjusted_shift_diff = self._adjust_shift(shift_diff, flat_bottom_shift_limit)
             end_harmonic = energy_terms[0].end_harmonic
             scale_harmonic = energy_terms[0].scale_harmonic
