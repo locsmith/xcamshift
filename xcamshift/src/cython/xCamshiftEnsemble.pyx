@@ -2487,15 +2487,28 @@ class Xcamshift(PyEnsemblePot):
 
     
     
-class Xcamshift_contents:
+cdef class Xcamshift_contents:
     
-
 
     def _get_force_factor_calculator(self):
         result  =  Fast_force_factor_calculator()
         return result
     
-            
+    cdef object _potentials
+    cdef object _ensemble_simulation 
+    cdef object _verbose
+    cdef object _shift_table
+    cdef object _shift_cache 
+    cdef object _ensemble_shift_cache  
+    cdef object _out_array 
+    cdef object _energy_term_cache 
+    cdef object _energy_calculator 
+    cdef object _force_factor_calculator 
+
+        #self.set_verbose(verbose)
+    cdef object _freeze
+    cdef object _active_target_atom_ids 
+    cdef object _factors
             
     def __init__(self):
         
@@ -2510,6 +2523,7 @@ class Xcamshift_contents:
         self._energy_calculator = self._get_energy_calculator()
         self._force_factor_calculator =  self._get_force_factor_calculator()
 
+        #self.set_verbose(verbose)
         self._freeze = False
         self._active_target_atom_ids = None
         self._factors = None
