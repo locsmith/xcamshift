@@ -23,22 +23,28 @@ Cython.Compiler.Options.annotate = True
 # change path and architecture to match local installation
 xplor_path ='/home/garyt/programs/xplor-nih/2.31.0'
 architecture = 'Linux_i686'
+python_version = '2.6'
 
+params = {'path'           : xplor_path,
+          'architecture'   : architecture,
+          'python_version' : python_version}
 
-params = {'path'         : xplor_path,
-          'architecture' : architecture}
-
-templates=[ '{path}/common',
+include_templates=[ '{path}/common',
             '{path}/CDSlib',
             '{path}/arch/{architecture}/include']
-include_dirs = [template.format(**params) for template in templates]
-                                       
+include_dirs = [template.format(**params) for template in include_templates]
+
+extra_link_arg_templates=['-L{path}/python/bin.{architecture}/lib/python{python_version}/config']
+extra_link_args =  [template.format(**params) for template in extra_link_arg_templates]
+
+print extra_link_args
 ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx"],
                          define_macros = [('CPLUSPLUS', '1') ,
                                           ('USE_CDS_NAMESPACE', '1')],
                         
                          language="c++",
                          extra_compile_args=["-O3"],
+                         extra_link_args=extra_link_args,
                          include_dirs=include_dirs),
   
                Extension("fast_segment_manager",  ["Cython_segment_manager.pyx"],
@@ -47,6 +53,7 @@ ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx"],
                         
                          language="c++",
                          extra_compile_args=["-O3"],
+                         extra_link_args=extra_link_args,
                          include_dirs=include_dirs)
               ]
 
