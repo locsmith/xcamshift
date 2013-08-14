@@ -37,7 +37,6 @@ include_dirs = [template.format(**params) for template in include_templates]
 extra_link_arg_templates=['-L{path}/python/bin.{architecture}/lib/python{python_version}/config']
 extra_link_args =  [template.format(**params) for template in extra_link_arg_templates]
 
-print extra_link_args
 ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx"],
                          define_macros = [('CPLUSPLUS', '1') ,
                                           ('USE_CDS_NAMESPACE', '1')],
