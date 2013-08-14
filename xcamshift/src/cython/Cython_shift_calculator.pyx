@@ -8,7 +8,7 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
-# cython: profile=False 
+# cython: profile=False  
 # cython: boundscheck=False    
 # cython: wraparound=False
 # cython: cdivision=True 
@@ -269,17 +269,6 @@ cdef class Out_array:
         
         if length > 60000: 
             raise MemoryError("couldn't allocate array beyond length %i" % 60000)
-#        self._data = <double *>malloc(length * sizeof(double))
-#        if not self._data:
-#            raise MemoryError("couldn't allocate array of length %i" % length)
-#        
-#        self._mask = <long *>malloc(length * sizeof(long))
-#        if not self._mask:
-#            raise MemoryError("couldn't allocate array of length %i" % length)
-#        
-#        if  self._data  and self._mask:
-#            self._clear(length)
-#        print 'allocated'
             
     cpdef get_length(self): 
         return self._length 
@@ -312,24 +301,9 @@ cdef class Out_array:
     
     cpdef bint realloc(self,long length) except -1:
         if length <60000:
-#            free(self._data)
-#            self._data = NULL
-#            self._data = <double *>malloc(3 *(length+1) * sizeof(double))
-#            if not self._data:
-#                raise MemoryError("couldn't allocate array of length %i" % length)
-#            if  self._data:
-#                self._length =length
             self._clear(length)
         else:
             raise MemoryError("couldn't beyond of length %i" % 60000)
-#
-#            free(self._mask)
-#            self._mask = NULL                        
-#            self._mask = <int *>malloc((length+1) * sizeof(int))
-#            if not self._mask:
-#                raise MemoryError("couldn't allocate array of length %i" % length)
-#            if  self._mask:
-#                self._clear_mask(length)
             
     cdef inline bint _check_state(self) except -1:
         if self._data is NULL:
@@ -348,7 +322,6 @@ cdef class Out_array:
         
     @cython.profile(False)
     cdef inline void  add(self,long offset, Vec3& value):
-#        self._check_offset(offset)
         cdef long id3 = offset *3
         
         self._data[id3]   += value[0]
@@ -428,44 +401,6 @@ cdef class Out_array:
                 result.append('%5i %4.7f,%4.7f,%4.7f' % (i,self._data[id3],self._data[id3+1],self._data[id3+2]))
         return '\n'.join(result)
 
-
-#cdef float* out_array = null
-#cdef long out_array_length = -1
-#cdef bint allocate_out_array_for_forces(long length) except -1:
-#    global out_array
-#    global out_array_length
-#    cdef long required_length = length*3
-#    cdef bint allocate =  False
-#    if out_array ==  null:
-#        out_array = <float*> malloc*(required_length *sizeof(float))
-#        if out_array  == null:
-#            Raise
-#        allocate=True
-#        out_array_length = 
-#        elif  len(out_array) < required_length
-#    return allocate
-#    
-#def _clear_out_array_for_forces(self, length):
-#    
-#    
-#    is_new  = self.allocate_out_array_for_forces(length)
-#    
-#    if not is_new:
-#        length = length*3
-#        for i in range(length):
-#            self._out_array[i] =0.0
-#    return self._out_array
-#    
-#def _copy_back_forces(self, data_dict, data_array, target_atom_ids):
-#    for id in target_atom_ids:
-#        result =  dict.setdefault(id,[0.0,0.0,0.0])
-#        id3 = id*3
-#        result[0] = data_array[id3]
-#        result[1] = data_array[id3+1]
-#        result[2] = data_array[id3+2]
-
-
- 
 cdef object vec3_as_tuple(Vec3& vec_3):
     return vec_3.x(), vec_3.y(), vec_3.z()
     
@@ -531,8 +466,6 @@ cdef struct Ring_force_sub_terms:
 cdef class Python_ring_force_sub_terms:
     cdef Ring_force_sub_terms _terms
     
-#    def __cinit__(self):
-#        self._terms = NULL
         
     def __init__(self):
         pass
@@ -577,18 +510,6 @@ cdef class Coef_components:
         self._bytes_to_components(coef_components)
         self._bytes_to_component_offsets(component_offsets)
         
-#         self. num_ids = len(components.get_component_atom_ids())
-#         self._component_offsets =  <Component_Offsets*>malloc(self.num_ids * sizeof(Component_Offsets))
-#         if not self._component_offsets:
-#             raise MemoryError()
-#         
-#         
-#         ids =  components.get_component_atom_ids()
-#         for i,id in enumerate(ids):
-#             start,end = components.get_component_range(id)
-#             self._component_offsets[i].id = id
-#             self._component_offsets[i].offset = start
-#             self._component_offsets[i].length = end-start
 
         
     def __init__ (self, object coef_components, object components):
@@ -601,24 +522,6 @@ cdef class Coef_components:
     def __dealloc__(self):
         pass
         
-        
-        
-        
-#         if self._component_offsets != NULL:
-#             free(self._component_offsets)
-#             self._component_offsets =  NULL
-#             self.num_ids = 0 
-        
-    
-#    cdef int _check_offset(self, int offset) except -1:
-#    
-#        if not offset < self.num_components:
-#            raise IndexError("tried to access object at %i length is %i" % (offset,self._num_components))
-#        if self._components is NULL:
-#            raise AttributeError("trying to access deallocated memory!")
-#        return 0
-
-     
 
     @cython.profile(False)
     cdef inline Coef_component* get_component(self,int offset):
@@ -642,9 +545,6 @@ cdef struct dihedral_parameters:
     float param_4
     
     
-#cdef float sum(Vec3 vec3):
-#    return vec3.x()+vec3.y()+vec3.z()
-
 
 @cython.profile(False)
 cdef inline void operator_times (Vec3& vec3, float scale):
@@ -660,30 +560,6 @@ cdef inline float calc_distance_simulation(Simulation* sim, int atom_index_1, in
     cdef Vec3 result =  vec2 - vec1
     return norm(result)
 
-
-
-#
-#
-#cdef inline bint distance_less_than(int atom_index_1, atom_index_2, float target):
-#    cdef float total = 0.0
-#    cdef float diff
-#    cdef float target2  = target*target
-#    
-#    cdef Vec3 vec1 = currentSimulation().atomPosArr().data(atom_index_1)
-#    cdef Vec3 vec2 = currentSimulation().atomPosArr().data(atom_index_2)
-#    cdef bint result  =  True
-#    for i in range(3):
-#        diff = vec1[i] - vec2[i]
-#        total += diff * diff
-#        
-#        if total > target2:
-#            result = False
-#            break
-#    return result 
-        
-        
-    
-    
 
 #TODO how does currentSimulation().atomByID work inside
 @cython.profile(False)
@@ -800,13 +676,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         self._smoothing_factor =  DEFAULT_SMOOTHING_FACTOR
 #        
         self._cutoff =  DEFAULT_CUTOFF
-#    
-#    def set_cutoff(self, cutoff):
-#        self._cutoff =  cutoff
-#    
-#    def set_smoothing_factor(self,smoothing_factor):
-#        self._smoothing_factor = smoothing_factor
-#    
+
 #    TODO: this needs to be removed
     cdef void _bytes_to_components(self, data):
 
@@ -871,16 +741,12 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         for factor_index in range(len(active_components)):
             component_index = active_components[factor_index]         
             
-#             component = components[index]
-
-            
             target_atom_id = self._compiled_components[component_index].remote_atom_1
             distant_atom_id  = self._compiled_components[component_index].remote_atom_2
             
             
             coef_exp = self._get_coefficient_and_exponent(component_index)
             distance =calc_distance_simulation(self._simulation, target_atom_id, distant_atom_id)
-    #        Atom_utils._calculate_distance(target_atom_index, sidechain_atom_index)
             
             if self._smoothed:
                 ratio = distance / self._cutoff
@@ -1040,10 +906,6 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     def _set_components(self,components):
         self._bytes_to_components(components)
             
-            
-
-
-            
     def _set_normal_cache(self,normals):
         self._normal_cache = <Vec3_list> normals
         
@@ -1114,9 +976,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         
         if self._verbose:
             start_time = time()
-        
-        
-        
+
         self._set_components(components)
         
         cdef int factor_index
@@ -1175,18 +1035,6 @@ cdef class Fast_ring_data_calculator:
         
         operator_times(result[0],1.0/float(num_atom_ids))
         
-#       
-        
-    
-    
-#    def _check_ring_size_ok(self, atom_ids):
-#        num_atom_ids = len(atom_ids)
-#        if num_atom_ids < 5 or num_atom_ids > 6:
-#            template = "ring normals function is only implemented for 5 or six member rings i got %d atoms"
-#            msg = template % num_atom_ids
-#            raise Exception(msg)
-#
-
     cdef inline void  _calculate_normal(self, int[3] atom_id_triplet, Vec3* result):
     
         cdef Vec3 normal
@@ -1325,13 +1173,6 @@ cdef class Fast_non_bonded_calculator:
             is_non_bonded =  distance < self._full_cutoff_distance
         return is_non_bonded
     
-#     cdef struct Non_bonded_target_component:
-#       int target_atom_id
-#       int atom_type_id
-#         
-# cdef struct Non_bonded_remote_atom_component:
-#       int remote_atom
-#       int chem_type[2] # one for each sphere
 
     cdef   int _bytes_to_target_components(self, data, Non_bonded_target_component** target_pointer):
 
@@ -1482,9 +1323,6 @@ cdef class Fast_energy_calculator:
         cdef float energy
         cdef float shift_diff
 
-
-            
-
         
         cdef float shift_diffs
         cdef Constant_cache* energy_terms
@@ -1632,15 +1470,6 @@ cdef class Base_force_calculator:
         self._active_components = active_components
         self._do_calc_components(component_to_result, force_factors, forces)
 
-#        component_target_atom_ids = components.get_component_atom_ids()
-#        for i,target_atom_id in enumerate(target_atom_ids):
-#            if target_atom_id in component_target_atom_ids:
-#                try:
-#                    index_range = components.get_component_range(target_atom_id)
-#                except ValueError:
-#                    print "warning atom is not in list", target_atom_id, Atom_utils._get_atom_info_from_index(target_atom_id),self._name
-#                    index_range = []
-#                for index in range(*index_range):
                     
         if self._verbose:
             end_time = time()
@@ -1748,23 +1577,17 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
             component_index = self._active_components[factor_index] 
             self._distance_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
 
-#         for i in range(self._num_components):
-#             self._distance_calc_single_force_set(i,force_factors[component_to_result[i]],force)
-            
     
     @cython.profile(False)
     cdef inline float _cython_calc_single_force_factor(self, int index, float factor):
         cdef target_distant_atom atom_ids
-#        cdef coefficient_exponent coef_exp
         cdef float exponent 
         
         cdef float full_factor, force_factor
         cdef float ratio, pre_exponent, reduced_exponent, sum_xyz_distances_2
         
-#        atom_ids = self._get_target_and_distant_atom_ids(index)
         
         sum_xyz_distances_2 = self._sum_xyz_distances_2(self._compiled_components[index].remote_atom_1, self._compiled_components[index].remote_atom_2)
-#
         full_factor= factor *  self._compiled_components[index].coefficient
         
         exponent =  self._compiled_components[index].exponent
@@ -1782,23 +1605,13 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         return force_factor
 
 
- 
-
-    
-#    def _calc_single_force_set(self, int index, float factor, object forces):
-#        self._cython_calc_single_force_set(index, factor, forces)
-        
     @cython.profile(False)
     cdef inline void _distance_calc_single_force_set(self,int index, float factor, Out_array forces):
         
-#        cdef target_distant_atom atom_ids
         cdef Vec3 xyz_distances
         cdef float force_factor, distance
         cdef Vec3 result
  
-#        atom_ids =  self._get_target_and_distant_atom_ids(index)
-#        
-##        print atom_ids.target_atom_id,atom_ids.distant_atom_id
         xyz_distances  = self._xyz_distances(self._compiled_components[index].remote_atom_1,self._compiled_components[index].remote_atom_2)
         
         force_factor  = self._cython_calc_single_force_factor(index, factor)
@@ -1812,9 +1625,6 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         forces.add(self._compiled_components[index].remote_atom_1,target_forces)
         forces.add(self._compiled_components[index].remote_atom_2,distant_forces) 
          
-
-
- 
 
 cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_calculator): 
      
@@ -1853,7 +1663,6 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         self._nb_cutoff = DEFAULT_NB_CUTOFF
         self._compiled_components =  <Distance_component*>malloc(sizeof(Distance_component))
     
-#     todo free!!    
     def set_verbose(self,on):
         self._verbose = on
     
@@ -2119,8 +1928,6 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         
         r4 = v4 - v3
 
-#        print vec3_as_tuple(r1), vec3_as_tuple(r2), vec3_as_tuple(r3), vec3_as_tuple(r4)
-        
         # compute normal vector to plane containing v1, v2, and v3
         n1 = cross(r1, r2)
         # compute normal vector to plane containing v2, v3, and v4
@@ -2164,13 +1971,6 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
 
         F3 = T1 + T2
 
-#        print vec3_as_tuple(F1), vec3_as_tuple(F2), vec3_as_tuple(F3), vec3_as_tuple(F4)
-#        // assign forces
-#        force_triplet_1 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_1)
-#        force_triplet_2 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_2)
-#        force_triplet_3 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_3)
-#        force_triplet_4 = self._get_or_make_target_force_triplet(forces, atom_ids.atom_id_4)
-        
         operator_times(F1, weight) 
         operator_times(F2, weight)
         operator_times(F3, weight)
@@ -2266,15 +2066,6 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         return  self._centre_cache.get(ring_id)
         
 
-#    @cython.profile(False)
-#    cdef inline target_type _get_target_and_type(self,int index):
-#        component = self._get_component(index)
-##        TODO: this needs to contain better names a union?
-#        cdef target_type result
-#        result.target_atom_id = component[0]
-#        result.atom_type_id = component[1]
-#        
-#        return result#
     
     
     cdef inline void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
@@ -2373,7 +2164,6 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         result.dL6 = dL6
         result.ring_normal =  ring_normal[0]
         
-#        return  dL3, u, dL6, ring_normal,  atom_type_id, coefficient, d, factor, dn, dL3nL3, dL, nL, dLnL
 ##    ---
 #
     def _calc_target_atom_forces(self, int target_atom_id, float force_factor, Python_ring_force_sub_terms python_sub_terms, Out_array forces):
@@ -2402,8 +2192,9 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     cdef inline void _cython_calculate_ring_forces(self, int atom_type_id, int ring_id, float force_factor, Ring_force_sub_terms force_terms, Out_array forces):
         cdef Vec3 temp_normal =  Vec3(force_terms.ring_normal)
         cdef Vec3 nSum = temp_normal
-        operator_times(nSum,2.0)  #            float_type g [3], ab [3], c [3]
-    #// 2 for a 5-membered ring, 3 for a 6-membered ring
+        operator_times(nSum,2.0) 
+
+        #// 2 for a 5-membered ring, 3 for a 6-membered ring
         cdef int num_ring_atoms = self._compiled_ring_components[ring_id].num_atoms 
         cdef int limit = num_ring_atoms - 3
 
@@ -2533,8 +2324,6 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
     
     cdef int _component_offset
 
-    
-    
     
     def __cinit__(self):
         self._non_bonded_list = None
