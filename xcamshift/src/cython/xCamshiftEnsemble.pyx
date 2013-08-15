@@ -3102,12 +3102,22 @@ cdef class Xcamshift_contents:
 
     def calcEnergyAndDerivsMaybe3(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
 
+<<<<<<< HEAD
         energy = self._calc_energy( active_target_atom_ids=self._native_active_target_atom_ids)
+=======
+        target_atom_ids = self._get_active_target_atom_ids()
+        energy = self._calc_energy( active_target_atom_ids=target_atom_ids)
+>>>>>>> refs/remotes/xcamshift/ensemble
         return energy
 
     def calcEnergyAndDerivsMaybe4(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         if calcDerivatives:
+<<<<<<< HEAD
             self._calc_derivs(int(derivListPtr), self._native_active_target_atom_ids)
+=======
+            target_atom_ids = self._get_active_target_atom_ids()
+            self._calc_derivs(int(derivListPtr), target_atom_ids)        
+>>>>>>> refs/remotes/xcamshift/ensemble
         return 0.0
 
     

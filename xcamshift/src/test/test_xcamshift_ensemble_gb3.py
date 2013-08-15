@@ -804,5 +804,5 @@ class TestXcamshiftGB3(unittest2.TestCase):
 if __name__ == "__main__":
 #     TODO: add a way to run the complete test suite
     unittest2.main(module='test.test_xcamshift_ensemble_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
-    unittest2.main(module='test.test_xcamshift_ensemble_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
+#     unittest2.main(module='test.test_xcamshift_ensemble_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
