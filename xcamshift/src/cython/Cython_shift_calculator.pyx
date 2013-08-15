@@ -19,7 +19,7 @@ Created on 31 Jul 2012
 @author: garyt
 
 '''
-
+from shift_calculators cimport Fast_energy_calculator, Constant_cache 
 from derivList import DerivList as PyDerivList
 from math import ceil
 cimport cython
@@ -96,15 +96,7 @@ cdef struct Component_index_pair:
     int remote_index
     int component_index
 
-cdef struct Constant_cache:      
-    int     target_atom_id      
-    float   flat_bottom_shift_limit
-    float   end_harmonic
-    float   scale_harmonic
-    float   weight
-    float   tanh_amplitude
-    float   tanh_elongation
-    float   tanh_y_offset
+
     
 
 def test_dump_component_index_pair(Non_bonded_interaction_list data, int index):
@@ -1484,11 +1476,7 @@ cdef class Fast_non_bonded_calculator:
 
 
 cdef class Fast_energy_calculator:
-    cdef Constant_cache* _energy_term_cache 
-    cdef CDSVector[double]  *_theory_shifts
-    cdef float[:] _observed_shifts
-    cdef bint _verbose 
-    cdef int calls
+
 
     def __init__(self):
         self._energy_term_cache =  NULL
@@ -1581,7 +1569,7 @@ cdef class Fast_energy_calculator:
         cdef float tanh_argument 
         cdef float energy
         cdef float shift_diff
-
+ 
 
             
 
