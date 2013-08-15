@@ -1610,8 +1610,6 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
         cdef double start_time =0.0
         cdef double end_time =0.0
         
-        cdef int i
-        
         if self._verbose:
             start_time = time()
             
@@ -1625,6 +1623,7 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
        #TODO: shouldn't be allocated each time
         cdef int target_atom_id
         cdef int active_atom_id
+        cdef int i
         
         if active_atom_ids == None:
             for i in range(target_atom_ids.shape[0]):
