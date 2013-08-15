@@ -20,6 +20,8 @@ Created on 31 Dec 2011
 @author: garyt
 '''
 
+cdef extern from "instantiate.hh":
+    pass
 
 from textwrap import dedent
 from  xplor_access cimport currentSimulation, Atom

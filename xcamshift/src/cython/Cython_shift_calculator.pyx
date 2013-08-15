@@ -19,6 +19,8 @@ Created on 31 Jul 2012
 @author: garyt
 
 '''
+cdef extern from "instantiate.hh":
+    pass
 
 from math import ceil
 cimport cython
