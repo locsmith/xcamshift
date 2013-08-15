@@ -30,10 +30,11 @@ from cython.shift_calculators import Fast_distance_shift_calculator, \
     Fast_dihedral_shift_calculator, Fast_ring_shift_calculator, \
     Fast_ring_data_calculator, Fast_non_bonded_calculator, Fast_energy_calculator, \
     Fast_distance_based_potential_force_calculator, Fast_dihedral_force_calculator, \
-    Fast_ring_force_calculator, Fast_force_factor_calculator, Out_array, Vec3_list, \
+    Fast_ring_force_calculator, Out_array, Vec3_list, \
     allocate_array, zero_array, resize_array, Fast_non_bonded_shift_calculator, \
     Fast_non_bonded_force_calculator, Non_bonded_interaction_list, \
     Fast_random_coil_shift_calculator, CDSSharedVectorFloat
+from shift_calculators cimport Fast_force_factor_calculator 
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from observed_chemical_shifts import Observed_shift_table
@@ -41,9 +42,9 @@ from python_utils import tupleit
 from table_manager import Table_manager
 from time import time
 from utils import Atom_utils, iter_residues_and_segments
-import array #
+
 import sys
-from cython.view cimport array as carray
+from cpython cimport array
 
 #TODO: REMOVE!
 
@@ -2505,13 +2506,13 @@ cdef class Xcamshift_contents:
     cdef object _out_array 
     cdef object _energy_term_cache 
     cdef object _energy_calculator 
-    cdef object _force_factor_calculator 
+    cdef Fast_force_factor_calculator _force_factor_calculator 
 
         #self.set_verbose(verbose)
     cdef object _freeze
     cdef object _active_target_atom_ids 
     cdef int[:] _native_active_target_atom_ids
-    cdef object _factors
+    cdef float[:] _factors
             
     def __init__(self):
         
@@ -2830,7 +2831,7 @@ cdef class Xcamshift_contents:
         return self._energy_calculator(active_target_atom_ids,active_target_indices)
         
     
-    def _calc_force_set_with_potentials(self, target_atom_ids, forces, potentials_list):
+    def _calc_force_set_with_potentials(self, int[:] target_atom_ids, forces, potentials_list):
         if self._factors == None or len(self._factors) < len(target_atom_ids):
             self._factors = allocate_array(len(target_atom_ids),'f')
         elif len(self._factors) > len(target_atom_ids):
@@ -2897,7 +2898,7 @@ cdef class Xcamshift_contents:
         self. _calc_factors(target_atom_ids, result)
         return  result[0]
     
-    def _calc_factors(self, target_atom_ids, factors):
+    def _calc_factors(self, int[:] target_atom_ids, float[:] factors):
         #TODO move to prepare or function called by prepare
         active_components = None
         active_target_atom_ids = self._get_active_target_atom_ids()
@@ -2906,8 +2907,8 @@ cdef class Xcamshift_contents:
             for target_atom_id in target_atom_ids:
                 active_components.append(active_target_atom_ids.index(target_atom_id))
             active_components = array.array('i',active_components)
-            
-        self._force_factor_calculator(active_target_atom_ids, factors, active_components)
+        with nogil:
+            self._force_factor_calculator.calc(self._native_active_target_atom_ids, factors, active_components)
         return factors
     
 
@@ -2938,7 +2939,7 @@ cdef class Xcamshift_contents:
             active_target_atom_ids = list(active_target_atom_ids)
             
             self._active_target_atom_ids =  array.array('i',sorted(active_target_atom_ids))
-            self._native_active_target_atom_ids = carray(shape=(len(active_target_atom_ids),), itemsize=sizeof(int), format="i")
+            self._native_active_target_atom_ids = array(shape=(len(active_target_atom_ids),), itemsize=sizeof(int), format="i")
             for i,value in enumerate(self._active_target_atom_ids):
                 self._native_active_target_atom_ids[i] = value
         
@@ -3045,7 +3046,7 @@ cdef class Xcamshift_contents:
         else:
             raise Exception("implement me")
 
-    def _calc_derivs(self, derivs, active_target_atom_ids ,potentials=None):
+    cdef void  _calc_derivs(self, Py_ssize_t derivs, int[:] active_target_atom_ids ,potentials=None):
         
         out_array = self._get_out_array()
         self.update_force_factor_calculator()
