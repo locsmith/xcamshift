@@ -8,6 +8,7 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
+# cython: c_string_encoding=ascii
 '''
 Created on 11 Aug 2012
 
