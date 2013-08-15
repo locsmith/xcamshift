@@ -50,6 +50,7 @@ cdef extern from "dihedral.hh":
         
 cdef extern from "cdsVector.hh":
     cdef cppclass CDSVector[T]:
+        CDSVector() nogil
         T& data(int i) nogil
         int size() nogil
         CDSVector[T]& resize(int) nogil

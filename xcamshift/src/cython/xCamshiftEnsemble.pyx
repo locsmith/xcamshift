@@ -42,6 +42,7 @@ from python_utils import tupleit
 from table_manager import Table_manager
 from time import time
 from utils import Atom_utils, iter_residues_and_segments
+from xplor_access cimport CDSVector
 
 import sys
 from cpython cimport array
@@ -2900,15 +2901,29 @@ cdef class Xcamshift_contents:
     
     def _calc_factors(self, int[:] target_atom_ids, float[:] factors):
         #TODO move to prepare or function called by prepare
-        active_components = None
-        active_target_atom_ids = self._get_active_target_atom_ids()
-        if len(target_atom_ids) != len(active_target_atom_ids):
-            active_components =  []
-            for target_atom_id in target_atom_ids:
-                active_components.append(active_target_atom_ids.index(target_atom_id))
-            active_components = array.array('i',active_components)
+        cdef CDSVector[int] *active_components = NULL
+        
+        cdef int[:] active_target_atom_ids = self._get_active_target_atom_ids()
+        cdef int num_target_atom_ids = len(active_target_atom_ids)
+        cdef int num_active_target_atom_ids = len(active_target_atom_ids)
+        cdef int i,j
+        cdef int target_atom_id, active_target_atom_id
         with nogil:
+            if num_target_atom_ids != num_active_target_atom_ids:
+                active_components =  new CDSVector[int]()
+                active_components.resize(num_target_atom_ids)
+                
+                for i in range(target_atom_ids.shape[0]):
+                    target_atom_id  = target_atom_ids[i]
+                    #TODO: turn this into an index function
+                    for j in range(active_target_atom_ids.shape[0]):
+                        active_target_atom_id = active_target_atom_ids[j]
+                        if target_atom_id == active_target_atom_id:
+                            active_components[0][i] = j
+                            break
+       
             self._force_factor_calculator.calc(self._native_active_target_atom_ids, factors, active_components)
+            del active_components
         return factors
     
 
