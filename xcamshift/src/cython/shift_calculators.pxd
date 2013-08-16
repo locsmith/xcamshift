@@ -27,7 +27,7 @@ cdef class Fast_energy_calculator:
     
         
 cdef class Fast_force_factor_calculator(Fast_energy_calculator):
-    cdef void calc(Fast_force_factor_calculator self, int[:] target_atom_ids, float[:] result, CDSVector[int] *active_atom_ids) nogil
+    cdef void calc(Fast_force_factor_calculator self, CDSVector[int] *target_atom_ids, float[:] result, CDSVector[int] *active_atom_ids) nogil
     cdef inline float _calc_one_force_factor(Fast_force_factor_calculator self, int target_atom_id, int i) nogil
 
 

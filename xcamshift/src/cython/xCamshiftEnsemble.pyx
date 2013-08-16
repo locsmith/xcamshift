@@ -2512,7 +2512,7 @@ cdef class Xcamshift_contents:
         #self.set_verbose(verbose)
     cdef object _freeze
     cdef object _active_target_atom_ids 
-    cdef int[:] _native_active_target_atom_ids
+    cdef CDSVector[int] _native_active_target_atom_ids
     cdef float[:] _factors
             
     def __init__(self):
@@ -2954,7 +2954,8 @@ cdef class Xcamshift_contents:
             active_target_atom_ids = list(active_target_atom_ids)
             
             self._active_target_atom_ids =  array.array('i',sorted(active_target_atom_ids))
-            self._native_active_target_atom_ids = array(shape=(len(active_target_atom_ids),), itemsize=sizeof(int), format="i")
+            self._native_active_target_atom_ids = CDSvector[int]()
+            self._native_active_target_atom_ids.resize_array(len(active_target_atom_ids))
             for i,value in enumerate(self._active_target_atom_ids):
                 self._native_active_target_atom_ids[i] = value
         

@@ -1605,21 +1605,34 @@ cdef class Fast_energy_calculator:
 
 cdef class Fast_force_factor_calculator(Fast_energy_calculator):
 
-     @cython.profile(True)
-    cdef void calc(self, int[:] target_atom_ids, float[:] result, CDSVector[int] *active_atom_ids) nogil:
+#     @cython.profile(True)
+#     def __call__(self, int[:] target_atom_ids, float[:] result, CDSVector[int] *active_atom_ids):
+#         cdef double start_time =0.0
+#         cdef double end_time =0.0
+#         
+#         if self._verbose:
+#             start_time = time()
+#             
+#         self.calc( target_atom_ids, result,  active_atom_ids)
+#         
+#         if self._verbose:
+#             end_time = time()
+#             print '   force factors : ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
+
+    cdef void calc(self, CDSVector[int] *target_atom_ids, float[:] result, CDSVector[int] *active_atom_ids) nogil:
        #TODO: shouldn't be allocated each time
         cdef int target_atom_id
         cdef int active_atom_id
         cdef int i
         
         if active_atom_ids == NULL:
-            for i in range(target_atom_ids.shape[0]):
-                target_atom_id = target_atom_ids[i]
+            for i in range(target_atom_ids[0].size()):
+                target_atom_id = target_atom_ids[0][i]
                 result[i] = self._calc_one_force_factor(target_atom_id, i)
         else:
             for i in  range(active_atom_ids.size()):
                 active_atom_id = active_atom_ids[0][i]
-                target_atom_id = target_atom_ids[active_atom_id]
+                target_atom_id = target_atom_ids[0][active_atom_id]
     
                 result[i] = self._calc_one_force_factor(target_atom_id, active_atom_id)
 
