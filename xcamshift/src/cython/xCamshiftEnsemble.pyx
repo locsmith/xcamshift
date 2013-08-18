@@ -2954,8 +2954,7 @@ cdef class Xcamshift_contents:
             active_target_atom_ids = list(active_target_atom_ids)
             
             self._active_target_atom_ids =  array.array('i',sorted(active_target_atom_ids))
-            self._native_active_target_atom_ids = CDSvector[int]()
-            self._native_active_target_atom_ids.resize_array(len(active_target_atom_ids))
+            self._native_active_target_atom_ids.resize(len(active_target_atom_ids))
             for i,value in enumerate(self._active_target_atom_ids):
                 self._native_active_target_atom_ids[i] = value
         
@@ -3103,10 +3102,10 @@ cdef class Xcamshift_contents:
     def calcEnergyAndDerivsMaybe1(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         
         ensemble_size =  self._ensemble_simulation.size()
-        cache_size = self._native_active_target_atom_ids.shape[0] * ensemble_size
+        cache_size = self._native_active_target_atom_ids.size() * ensemble_size
         self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, cache_size, self._ensemble_simulation)
 
-        self._calc_shift_cache(self._native_active_target_atom_ids, self._ensemble_shift_cache)
+        self._calc_shift_cache(self._active_target_atom_ids, self._ensemble_shift_cache)
         
         return 0.0 
 
@@ -3118,12 +3117,12 @@ cdef class Xcamshift_contents:
 
     def calcEnergyAndDerivsMaybe3(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
 
-        energy = self._calc_energy( active_target_atom_ids=self._native_active_target_atom_ids)
+        energy = self._calc_energy( active_target_atom_ids=self._active_target_atom_ids)
         return energy
 
     def calcEnergyAndDerivsMaybe4(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         if calcDerivatives:
-            self._calc_derivs(int(derivListPtr), self._native_active_target_atom_ids)
+            self._calc_derivs(int(derivListPtr), self._active_target_atom_ids)
         return 0.0
 
     
