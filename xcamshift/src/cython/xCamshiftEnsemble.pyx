@@ -801,7 +801,7 @@ class Base_potential(object):
         return self._active_components
     
     #TODO: unify with ring random coil and disuphide shift calculators
-    def calc_shifts(self, target_atom_ids, results):
+    def calc_shifts(self, results):
        
         components = self._get_components()
         self._shift_calculator(components,results,self._component_to_result, active_components=self._get_active_components())
@@ -1110,7 +1110,7 @@ class Disulphide_shift_calculator(Base_potential):
         return self._table_manager.get_disulphide_table
     
     #TODO: this is the same as for the random coild shifts
-    def calc_shifts(self, target_atom_ids, result):
+    def calc_shifts(self, result):
         components = self._get_component_list()
         for i, component_index in enumerate(self._active_components):
             result[self._component_to_result[i]] += components[component_index][1]
@@ -2712,7 +2712,7 @@ cdef class Xcamshift_contents:
             self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
             
         for potential in self._get_potentials():
-            potential.calc_shifts(target_atom_ids, result)
+            potential.calc_shifts(result)
 
        
         if self._verbose:
