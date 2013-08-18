@@ -2904,8 +2904,8 @@ cdef class Xcamshift_contents:
         cdef CDSVector[int] *active_components = NULL
         
         cdef int[:] active_target_atom_ids = self._get_active_target_atom_ids()
-        cdef int num_target_atom_ids = len(active_target_atom_ids)
-        cdef int num_active_target_atom_ids = len(active_target_atom_ids)
+        cdef int num_target_atom_ids = target_atom_ids.shape[0]
+        cdef int num_active_target_atom_ids = self._native_active_target_atom_ids.size()
         cdef int i,j
         cdef int target_atom_id, active_target_atom_id
         with nogil:
