@@ -17,6 +17,8 @@ Created on 27 Dec 2011
 
 #TODO: add tests to exclude atoms/distances which are not defined
 
+cdef extern from "instantiate.hh":
+    pass
 
 from abc import abstractmethod, ABCMeta
 from atomSel import AtomSel, intersection
