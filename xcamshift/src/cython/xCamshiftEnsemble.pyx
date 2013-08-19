@@ -49,6 +49,14 @@ from xplor_access cimport CDSVector
 import sys
 from cpython cimport array
 
+cdef CDSVector[int] int_memory_view_as_cds_vector(int[:] data):
+    cdef CDSVector[int] result
+    result.resize(data.shape[0])
+    for i,j in enumerate(data):
+        result[i] = j
+    return result
+
+
 #TODO: REMOVE!
 
 class Component_factory(object):
@@ -2840,7 +2848,7 @@ cdef class Xcamshift_contents:
         elif len(self._factors) > len(target_atom_ids):
             self._factors =  resize_array(self._factors,len(target_atom_ids))
         
-        self._calc_factors(target_atom_ids, self._factors)
+        self._calc_factors(int_memory_view_as_cds_vector(target_atom_ids), self._factors)
         for potential in potentials_list:
             potential.calc_force_set(target_atom_ids,self._factors,forces)
         
@@ -2898,15 +2906,15 @@ cdef class Xcamshift_contents:
             raise Exception(msg % target_atom_info)
         
         result = allocate_array(1,'f')
-        self. _calc_factors(target_atom_ids, result)
+        self. _calc_factors(int_memory_view_as_cds_vector(target_atom_ids), result)
         return  result[0]
     
-    def _calc_factors(self, int[:] target_atom_ids, float[:] factors):
+    cdef float[:] _calc_factors(self, CDSVector[int] target_atom_ids, float[:] factors):
         #TODO move to prepare or function called by prepare
         cdef CDSVector[int] *active_components = NULL
         
         cdef int[:] active_target_atom_ids = self._get_active_target_atom_ids()
-        cdef int num_target_atom_ids = target_atom_ids.shape[0]
+        cdef int num_target_atom_ids = target_atom_ids.size()
         cdef int num_active_target_atom_ids = self._native_active_target_atom_ids.size()
         cdef int i,j
         cdef int target_atom_id, active_target_atom_id
@@ -2915,7 +2923,7 @@ cdef class Xcamshift_contents:
                 active_components =  new CDSVector[int]()
                 active_components.resize(num_target_atom_ids)
                 
-                for i in range(target_atom_ids.shape[0]):
+                for i in range(target_atom_ids.size()):
                     target_atom_id  = target_atom_ids[i]
                     #TODO: turn this into an index function
                     for j in range(active_target_atom_ids.shape[0]):
