@@ -2522,9 +2522,12 @@ cdef class Xcamshift_contents:
         #self.set_verbose(verbose)
     cdef object _freeze
     cdef object _active_target_atom_ids 
-    cdef CDSVector[int] _native_active_target_atom_ids
+    cdef CDSVector[int] *_native_active_target_atom_ids
     cdef float[:] _factors
-            
+    
+    def __cinit__(self):
+        self._native_active_target_atom_ids = NULL    
+           
     def __init__(self):
         
         self._potentials = None
@@ -2932,7 +2935,7 @@ cdef class Xcamshift_contents:
                             active_components[0][i] = j
                             break
        
-            self._force_factor_calculator.calc(self._native_active_target_atom_ids, factors, active_components)
+            self._force_factor_calculator.calc(self._native_active_target_atom_ids[0], factors, active_components)
             del active_components
         return factors
     
@@ -2964,9 +2967,10 @@ cdef class Xcamshift_contents:
             active_target_atom_ids = list(active_target_atom_ids)
             
             self._active_target_atom_ids =  array.array('i',sorted(active_target_atom_ids))
+            self._native_active_target_atom_ids =  new CDSVector[int]()
             self._native_active_target_atom_ids.resize(len(active_target_atom_ids))
             for i,value in enumerate(self._active_target_atom_ids):
-                self._native_active_target_atom_ids[i] = value
+                self._native_active_target_atom_ids[0][i] = value
         
          
         return self._active_target_atom_ids
