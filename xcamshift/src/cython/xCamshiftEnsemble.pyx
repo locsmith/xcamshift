@@ -2960,7 +2960,7 @@ cdef class Xcamshift_contents:
 
     def _get_active_target_atom_ids(self):
         
-        if self._active_target_atom_ids == None:
+        if self._native_active_target_atom_ids == NULL:
             target_atom_ids = set(self._get_all_component_target_atom_ids())
             observed_shift_atom_ids = self.get_selected_atom_ids()
             active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
@@ -2990,20 +2990,23 @@ cdef class Xcamshift_contents:
             #TODO: make sure shift cache is always valid
             if self._ensemble_shift_cache != None:
                 self._ensemble_shift_cache.clear()
-            self._active_target_atom_ids = None
+            self._clear_target_atom_ids()
             
         if change == TARGET_ATOM_IDS_CHANGED:
-            self._active_target_atom_ids = None
+            self._clear_target_atom_ids()
             if data ==  None:
                 data  = self._get_active_target_atom_ids()
         
         if change ==  SHIFT_DATA_CHANGED:
-            self._active_target_atom_ids = None
+            self._clear_target_atom_ids()
             self.update_energy_calculator()
         
         self._prepare_potentials(change, data)
          
         
+    def _clear_target_atom_ids(self):
+        del self._native_active_target_atom_ids
+        self._native_active_target_atom_ids = NULL
     
     def _get_constants(self, residue_type, atom_name):
         return                                                             \
