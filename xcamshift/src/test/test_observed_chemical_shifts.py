@@ -15,7 +15,7 @@ Created on 24 Jan 2012
 '''
 import unittest2
 from test import ala_3
-from observed_chemical_shifts import Observed_shift_table
+from cython.observed_chemical_shifts import Observed_shift_table
 from protocol import initStruct
 from pdbTool import PDBTool
 from test.ala_3 import ala_3_test_shifts_harmonic
@@ -24,6 +24,48 @@ from cython.fast_segment_manager import Segment_Manager
 
 
 class TestObservedShiftTable(unittest2.TestCase):
+    def assertLengthIs(self, components_0, length):
+        return self.assertEqual(len(components_0), length)
+
+
+    # TODO add extra places
+    DEFAULT_DECIMAL_PLACES = 5
+    
+
+    def check_almost_equal(self, list_1, list_2, delta = 1e-7):
+        difference_offset = -1
+        for i, (elem_1, elem_2) in enumerate(zip(list_1, list_2)):
+            diff = abs(elem_1 - elem_2)
+            if diff > delta:
+                difference_offset = i
+        
+        return difference_offset
+
+    def are_almost_equal_sequences(self, list_1, list_2, delta =  1e-7):
+        result = True
+        if self.check_almost_equal(list_1, list_2, delta) > 0:
+            result = False
+        return result
+        
+    def assertSequenceAlmostEqual(self,result,expected, delta = 1e-7, msg=""):
+        len_result = len(result)
+        len_expected = len(expected)
+        if len_result != len_expected:
+            raise AssertionError("the two lists are of different length %i and %i" % (len_result,len_expected))
+        
+        difference_offset = self.check_almost_equal(result, expected, delta)
+        
+            
+        if difference_offset > 0:
+            if msg != "":
+                msg = msg + " "
+                
+            template = "%slists differ at item %i: %s - %s > %s"
+            elem_1 = result[difference_offset]
+            elem_2 = expected[difference_offset]
+            message = template % (msg,difference_offset, `elem_1`,`elem_2`,delta)
+            raise AssertionError(message)
+            
     
     EXPECTED_ALA_3_KEYS_SHORT = ala_3.ala_3_test_shifts_harmonic.keys()
     EXPECTED_ALA_3_KEYS_LONG =  [('',key[0],key[1]) for key in EXPECTED_ALA_3_KEYS_SHORT]
@@ -84,7 +126,7 @@ class TestObservedShiftTable(unittest2.TestCase):
             value = elem[1]
             
             expected = ala_3_test_shifts_harmonic[short_atom_key]
-            self.assertAlmostEqual(expected, value)
+            self.assertAlmostEqual(expected, value,places=4)
             
     def testIndexToAtomId(self):
         shift_table = self.create_ala_3_shift_table()
@@ -98,7 +140,13 @@ class TestObservedShiftTable(unittest2.TestCase):
             del atom_id_indices[atom_id]
         self.assertEmpty(atom_id_indices)
 #            short_atom_key = elem[0][1:]
-            
+
+    def test_native_shifts(self):
+        shift_table = self.create_ala_3_shift_table()
+        native_shifts  = shift_table.py_get_native_shifts([12,13,14,15,16,20])
+        keys =   (2, "N"), (2, "HN"), (2, "CA"), (2, "HA"), (2, "CB"), (2, "C")
+        expected_shifts = [ala_3.ala_3_test_shifts_harmonic[key] for key in keys]
+        self.assertSequenceAlmostEqual(native_shifts, expected_shifts, delta = 0.1**4)
 
 if __name__ == "__main__":
     unittest2.main()

@@ -13,21 +13,29 @@ Created on 24 Jan 2012
 
 @author: garyt
 '''
+
+cdef extern from "instantiate.hh":
+    pass
+
 from python_utils import tupleit
 from utils import Atom_utils
-from  cython.shift_calculators import allocate_array
+from cython.shift_calculators import allocate_array
+from xplor_access cimport  CDSVector
+from libcpp.map cimport map 
 
-class Observed_shift_table(object):
+cdef class Observed_shift_table(object):
     '''
     classdocs
     '''
 
+    def __cinit__(self):
+        self._native_shifts_set = False
+    
     def __init__(self,shift_data={}):
         self._chemical_shifts = self.process_observed_shifts(shift_data)
-        self._native_shifts = None
         
     def process_observed_shifts(self,shift_data):
-        result  = {}
+        cdef map[int,float]  result   
         for key in shift_data:
             if len(key) == 2:
                 search_key = '*',key[0],key[1]
@@ -61,22 +69,40 @@ class Observed_shift_table(object):
     #TODO add more generic dump capabilities
     def dump_observed_shifts(self):
         results = []
-        for atom_index in self._chemical_shifts:
+        for atom_index, value in self._chemical_shifts:
             sub_result  = []
             results.append(sub_result)
             sub_result.append(Atom_utils._get_atom_info_from_index(atom_index))
-            sub_result.append(self._chemical_shifts[atom_index])
+            sub_result.append(value)
         return tupleit(results)
     
-    def get_native_shifts(self, target_atom_ids):
-        if self._native_shifts == None:
-            self._native_shifts = allocate_array(len(target_atom_ids),'f')
-            for i,target_atom_id in enumerate(target_atom_ids):
-                self._native_shifts[i] = self.get_chemical_shift(target_atom_id)
+    cdef CDSVector[float] get_native_shifts(self, CDSVector[int] target_atom_ids):
+        if not self._native_shifts_set:
+            self._native_shifts.resize(target_atom_ids.size())
+            for i in range(target_atom_ids.size()):
+                target_atom_id = target_atom_ids[i]
+                self._native_shifts[i] = self._chemical_shifts[target_atom_id]
                 
         return self._native_shifts
             
-    
+    def py_get_native_shifts(self, target_atom_ids):
+        cdef CDSVector[int] native_target_atom_ids
+        cdef CDSVector[float] native_result
+        
+        native_target_atom_ids.resize(len(target_atom_ids))
+                      
+        for i in range(len(target_atom_ids)):
+           native_target_atom_ids[i] = target_atom_ids[i]
+        
+        native_result = self.get_native_shifts(native_target_atom_ids)
+        
+        result = []
+        for i in range(len(target_atom_ids)):
+            result.append(native_result[i])
+        
+        return result
+        
+        
     def __str__(self): 
         
         result  = ["shift table", "-----------",""]
