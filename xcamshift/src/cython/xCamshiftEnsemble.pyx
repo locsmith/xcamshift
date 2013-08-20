@@ -56,7 +56,16 @@ cdef CDSVector[int] int_memory_view_as_cds_vector(int[:] data):
         result[i] = j
     return result
 
+cdef int[:] cds_vector_int_as_array(CDSVector[int] data):
+    iresult = []
+    for i in range(data.size()):
+        iresult.append(data[i])
+    cdef result = array.array("i",iresult)
+    return result
 
+cdef list cds_vector_int_as_list(CDSVector[int] data):
+    
+    return list(cds_vector_int_as_array(data))
 #TODO: REMOVE!
 
 class Component_factory(object):
@@ -2521,12 +2530,11 @@ cdef class Xcamshift_contents:
 
         #self.set_verbose(verbose)
     cdef object _freeze
-    cdef object _active_target_atom_ids 
-    cdef CDSVector[int] *_native_active_target_atom_ids
+    cdef CDSVector[int] *_active_target_atom_ids
     cdef float[:] _factors
     
     def __cinit__(self):
-        self._native_active_target_atom_ids = NULL    
+        self._active_target_atom_ids = NULL    
            
     def __init__(self):
         
@@ -2543,7 +2551,6 @@ cdef class Xcamshift_contents:
 
         #self.set_verbose(verbose)
         self._freeze = False
-        self._active_target_atom_ids = None
         self._factors = None
 
     def _set_ensemble_simulation(self,ensemble_simulation):
@@ -2580,7 +2587,7 @@ cdef class Xcamshift_contents:
         #TODO: make sure the shift cache is always valid
         if self._shift_cache !=None:
             calculator.set_calculated_shifts(self._shift_cache)
-        calculator.set_observed_shifts(self._shift_table.get_native_shifts(self._get_active_target_atom_ids()))
+        calculator.set_observed_shifts(self._shift_table.get_native_shifts(cds_vector_int_as_array(self._get_active_target_atom_ids()[0])))
         calculator.set_energy_term_cache(self._get_energy_term_cache().get_native_components())
     
     def update_energy_calculator(self):
@@ -2831,11 +2838,11 @@ cdef class Xcamshift_contents:
         # and then using a single index doesn't work as the energy terms are indexed as well
         
         raise Exception("not ensembled!")
-        self._calc_shift_cache(self._get_active_target_atom_ids())
+        self._calc_shift_cache(cds_vector_int_as_array(self._get_active_target_atom_ids()))
         self.update_energy_calculator()
 
         #TODO: this is a hack remove!        
-        active_target_atom_ids =  self._get_active_target_atom_ids()
+        active_target_atom_ids =  cds_vector_int_as_array(self._get_active_target_atom_ids())
         if active_target_atom_ids == None:
             
             active_target_indices = array.array('i',[0])
@@ -2916,9 +2923,9 @@ cdef class Xcamshift_contents:
         #TODO move to prepare or function called by prepare
         cdef CDSVector[int] *active_components = NULL
         
-        cdef int[:] active_target_atom_ids = self._get_active_target_atom_ids()
+        cdef CDSVector[int] active_target_atom_ids = self._get_active_target_atom_ids()[0]
         cdef int num_target_atom_ids = target_atom_ids.size()
-        cdef int num_active_target_atom_ids = self._native_active_target_atom_ids.size()
+        cdef int num_active_target_atom_ids = active_target_atom_ids.size()
         cdef int i,j
         cdef int target_atom_id, active_target_atom_id
         with nogil:
@@ -2929,13 +2936,13 @@ cdef class Xcamshift_contents:
                 for i in range(target_atom_ids.size()):
                     target_atom_id  = target_atom_ids[i]
                     #TODO: turn this into an index function
-                    for j in range(active_target_atom_ids.shape[0]):
+                    for j in range(active_target_atom_ids.size()):
                         active_target_atom_id = active_target_atom_ids[j]
                         if target_atom_id == active_target_atom_id:
                             active_components[0][i] = j
                             break
        
-            self._force_factor_calculator.calc(self._native_active_target_atom_ids[0], factors, active_components)
+            self._force_factor_calculator.calc(active_target_atom_ids, factors, active_components)
             del active_components
         return factors
     
@@ -2958,19 +2965,18 @@ cdef class Xcamshift_contents:
         
         return   self._shift_table.get_atom_indices()
 
-    def _get_active_target_atom_ids(self):
+    cdef CDSVector[int]* _get_active_target_atom_ids(self):
         
-        if self._native_active_target_atom_ids == NULL:
+        if self._active_target_atom_ids == NULL:
             target_atom_ids = set(self._get_all_component_target_atom_ids())
             observed_shift_atom_ids = self.get_selected_atom_ids()
             active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
-            active_target_atom_ids = list(active_target_atom_ids)
+            active_target_atom_ids = sorted(list(active_target_atom_ids))
             
-            self._active_target_atom_ids =  array.array('i',sorted(active_target_atom_ids))
-            self._native_active_target_atom_ids =  new CDSVector[int]()
-            self._native_active_target_atom_ids.resize(len(active_target_atom_ids))
-            for i,value in enumerate(self._active_target_atom_ids):
-                self._native_active_target_atom_ids[0][i] = value
+            self._active_target_atom_ids =  new CDSVector[int]()
+            self._active_target_atom_ids.resize(len(active_target_atom_ids))
+            for i,value in enumerate(active_target_atom_ids):
+                self._active_target_atom_ids[0][i] = value
         
          
         return self._active_target_atom_ids
@@ -2995,7 +3001,7 @@ cdef class Xcamshift_contents:
         if change == TARGET_ATOM_IDS_CHANGED:
             self._clear_target_atom_ids()
             if data ==  None:
-                data  = self._get_active_target_atom_ids()
+                data  = cds_vector_int_as_array(self._get_active_target_atom_ids()[0])
         
         if change ==  SHIFT_DATA_CHANGED:
             self._clear_target_atom_ids()
@@ -3005,8 +3011,8 @@ cdef class Xcamshift_contents:
          
         
     def _clear_target_atom_ids(self):
-        del self._native_active_target_atom_ids
-        self._native_active_target_atom_ids = NULL
+        del self._active_target_atom_ids
+        self._active_target_atom_ids = NULL
     
     def _get_constants(self, residue_type, atom_name):
         return                                                             \
@@ -3023,7 +3029,7 @@ cdef class Xcamshift_contents:
         cache = Native_component_list(format = 'i' + ('f'*7))
         seen_types = {}
         table_manager =  Table_manager.get_default_table_manager()
-        for target_atom_index in self._get_active_target_atom_ids():
+        for target_atom_index in cds_vector_int_as_array(self._get_active_target_atom_ids()[0]):
             residue_type = Atom_utils._get_residue_type_from_atom_id(target_atom_index)
             atom_name = Atom_utils._get_atom_name_from_index(target_atom_index)
             
@@ -3057,7 +3063,7 @@ cdef class Xcamshift_contents:
             start_time = time()
  
         if active_target_atom_ids == None:
-            active_target_atom_ids = self._get_active_target_atom_ids()
+            active_target_atom_ids = cds_vector_int_as_array(self._get_active_target_atom_ids()[0])
              
              
  
@@ -3119,10 +3125,10 @@ cdef class Xcamshift_contents:
     def calcEnergyAndDerivsMaybe1(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         
         ensemble_size =  self._ensemble_simulation.size()
-        cache_size = self._native_active_target_atom_ids.size() * ensemble_size
+        cache_size = self._get_active_target_atom_ids()[0].size() * ensemble_size
         self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, cache_size, self._ensemble_simulation)
 
-        self._calc_shift_cache(self._active_target_atom_ids, self._ensemble_shift_cache)
+        self._calc_shift_cache(cds_vector_int_as_array(self._get_active_target_atom_ids()[0]), self._ensemble_shift_cache)
         
         return 0.0 
 
@@ -3134,12 +3140,12 @@ cdef class Xcamshift_contents:
 
     def calcEnergyAndDerivsMaybe3(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
 
-        energy = self._calc_energy( active_target_atom_ids=self._active_target_atom_ids)
+        energy = self._calc_energy( active_target_atom_ids=cds_vector_int_as_array(self._get_active_target_atom_ids()[0]))
         return energy
 
     def calcEnergyAndDerivsMaybe4(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         if calcDerivatives:
-            self._calc_derivs(int(derivListPtr), self._active_target_atom_ids)
+            self._calc_derivs(int(derivListPtr), cds_vector_int_as_array(self._get_active_target_atom_ids()[0]))
         return 0.0
 
     
@@ -3150,7 +3156,7 @@ cdef class Xcamshift_contents:
             
     def setup(self):
         #TODO: do we need a STRUCTURE_CHANGED here
-        self._prepare(TARGET_ATOM_IDS_CHANGED, self._get_active_target_atom_ids())
+        self._prepare(TARGET_ATOM_IDS_CHANGED, cds_vector_int_as_list(self._get_active_target_atom_ids()[0]))
         self._set_frozen()
     
     def reset(self):
