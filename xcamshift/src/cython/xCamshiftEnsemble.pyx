@@ -8,6 +8,7 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
+from xcamshift import Xcamshift
 '''
 Created on 27 Dec 2011
 
@@ -30,13 +31,13 @@ from cython.fast_segment_manager import Segment_Manager
 from cython.pyEnsemblePot import PyEnsemblePot
 from cython.shift_calculators import Fast_distance_shift_calculator, \
     Fast_dihedral_shift_calculator, Fast_ring_shift_calculator, \
-    Fast_ring_data_calculator, Fast_non_bonded_calculator, Fast_energy_calculator, \
+    Fast_ring_data_calculator, Fast_non_bonded_calculator, \
     Fast_distance_based_potential_force_calculator, Fast_dihedral_force_calculator, \
     Fast_ring_force_calculator, Out_array, Vec3_list, \
     allocate_array, zero_array, resize_array, Fast_non_bonded_shift_calculator, \
     Fast_non_bonded_force_calculator, Non_bonded_interaction_list, \
     Fast_random_coil_shift_calculator, CDSSharedVectorFloat
-from shift_calculators cimport Fast_force_factor_calculator 
+from shift_calculators cimport Fast_force_factor_calculator,  Fast_energy_calculator 
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from observed_chemical_shifts import Observed_shift_table
@@ -2525,7 +2526,7 @@ cdef class Xcamshift_contents:
     cdef object _ensemble_shift_cache  
     cdef object _out_array 
     cdef object _energy_term_cache 
-    cdef object _energy_calculator 
+    cdef Fast_energy_calculator _energy_calculator 
     cdef Fast_force_factor_calculator _force_factor_calculator 
 
         #self.set_verbose(verbose)
@@ -2849,7 +2850,7 @@ cdef class Xcamshift_contents:
             active_target_atom_ids =  array.array('i',[target_atom_index])
         else:
             active_target_indices =  array.array('i',[active_target_atom_ids.index(target_atom_index)])
-        return self._energy_calculator(active_target_atom_ids,active_target_indices)
+        return self._energy_calculator.calcEnergy(active_target_atom_ids,active_target_indices)
         
     
     def _calc_force_set_with_potentials(self, int[:] target_atom_ids, forces, potentials_list):
@@ -2942,7 +2943,7 @@ cdef class Xcamshift_contents:
                             active_components[0][i] = j
                             break
        
-            self._force_factor_calculator.calc(active_target_atom_ids, factors, active_components)
+            self._force_factor_calculator.calcFactors(active_target_atom_ids, factors, active_components)
             del active_components
         return factors
     
@@ -3058,17 +3059,17 @@ cdef class Xcamshift_contents:
 
 
         
-    def _calc_energy(self, prepare =  True, int[:] active_target_atom_ids = None):
+    cdef float _calc_energy(Xcamshift_contents self, CDSVector[int]* active_target_atom_ids = NULL):
         if self._verbose:
             start_time = time()
  
-        if active_target_atom_ids == None:
-            active_target_atom_ids = cds_vector_int_as_array(self._get_active_target_atom_ids()[0])
+        if active_target_atom_ids == NULL:
+            active_target_atom_ids = self._get_active_target_atom_ids()
              
              
  
         self.update_energy_calculator()
-        energy = self._energy_calculator(active_target_atom_ids)
+        energy = self._energy_calculator.calcEnergy(active_target_atom_ids[0])
         
         if self._verbose:
             end_time =  time()
@@ -3140,7 +3141,7 @@ cdef class Xcamshift_contents:
 
     def calcEnergyAndDerivsMaybe3(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
 
-        energy = self._calc_energy( active_target_atom_ids=cds_vector_int_as_array(self._get_active_target_atom_ids()[0]))
+        energy = self._calc_energy(self._get_active_target_atom_ids())
         return energy
 
     def calcEnergyAndDerivsMaybe4(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):

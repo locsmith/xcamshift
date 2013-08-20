@@ -24,10 +24,11 @@ cdef class Fast_energy_calculator:
     cdef inline float  _get_shift_difference(Fast_energy_calculator self, int target_atom_index, int index) nogil
     cdef inline float _adjust_shift(Fast_energy_calculator self, float shift_diff, float flat_bottom_shift_limit) nogil
     cdef inline float _calc_one_energy(Fast_energy_calculator self, int target_atom_index, int index)
+    cdef        float calcEnergy(Fast_energy_calculator self, CDSVector[int] target_atom_ids, CDSVector[int] *active_atom_ids=?)
     
         
 cdef class Fast_force_factor_calculator(Fast_energy_calculator):
-    cdef void calc(Fast_force_factor_calculator self, CDSVector[int] target_atom_ids, float[:] result, CDSVector[int] *active_atom_ids) nogil
+    cdef void calcFactors(Fast_force_factor_calculator self, CDSVector[int] target_atom_ids, float[:] result, CDSVector[int] *active_atom_ids=?) nogil
     cdef inline float _calc_one_force_factor(Fast_force_factor_calculator self, int target_atom_id, int i) nogil
 
 

@@ -1524,35 +1524,44 @@ cdef class Fast_energy_calculator:
             result = shift_diff + flat_bottom_shift_limit
         return result
 
-    @cython.profile(True)    
-    def __call__(self,int[:] target_atom_ids, int[:] active_atom_ids=None):
+#     @cython.profile(True)    
+#     def __call__(self, CDSVector[int] target_atom_ids, int[:] active_atom_ids=None):
+#         cdef double start_time = 0.0
+#         cdef double end_time = 0.0 
+#         
+#         if self._verbose:
+#             start_time = time()
+#             
+#         result = self.calc(target_atom_ids, active_atom_ids)
+#         
+#         if self._verbose:
+#             end_time = time()
+#             print '   energy calculator: ',target_atom_ids.size(),' in', "%.17g" %  (end_time-start_time), "seconds"
+#         
+#         return result       
+    
+    cdef float calcEnergy(Fast_energy_calculator self, CDSVector[int] target_atom_ids, CDSVector[int] *active_atom_ids=NULL):
 
-        cdef double start_time = 0.0
-        cdef double end_time = 0.0 
         cdef float energy
         cdef int active_atom_id
         cdef int target_atom_id
         
-        if self._verbose:
-            start_time = time()
+        
 
         energy = 0.0
                     
-        if active_atom_ids == None:
-            for i in range(target_atom_ids.shape[0]):
+        if active_atom_ids == NULL:
+            for i in range(target_atom_ids.size()):
                 target_atom_id = target_atom_ids[i]
                 
                 energy += self._calc_one_energy(target_atom_id, i)
         else:
-            for i in  range(active_atom_ids.shape[0]):
-                active_atom_id = active_atom_ids[i]
+            for i in  range(active_atom_ids[0].size()):
+                active_atom_id = active_atom_ids[0][i]
                 target_atom_id = target_atom_ids[active_atom_id]
     
                 energy += self._calc_one_energy(target_atom_id, active_atom_id)
                 
-        if self._verbose:
-            end_time = time()
-            print '   energy calculator: ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
         
         
         self.calls += 1    
@@ -1619,7 +1628,7 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
 #             end_time = time()
 #             print '   force factors : ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
 
-    cdef void calc(self, CDSVector[int] target_atom_ids, float[:] result, CDSVector[int] *active_atom_ids) nogil:
+    cdef void calcFactors(self, CDSVector[int] target_atom_ids, float[:] result, CDSVector[int] *active_atom_ids=NULL) nogil:
        #TODO: shouldn't be allocated each time
         cdef int target_atom_id
         cdef int active_atom_id
