@@ -147,6 +147,24 @@ class TestObservedShiftTable(unittest2.TestCase):
         keys =   (2, "N"), (2, "HN"), (2, "CA"), (2, "HA"), (2, "CB"), (2, "C")
         expected_shifts = [ala_3.ala_3_test_shifts_harmonic[key] for key in keys]
         self.assertSequenceAlmostEqual(native_shifts, expected_shifts, delta = 0.1**4)
+        
+    def test_native_shifts_not_cached(self):
+        shift_table = self.create_ala_3_shift_table()
+        
+        atom_ids_1 = [12,13,14,15,16,20]
+        atom_ids_2 = [12,13,14]
+        
+        native_shifts_1  = shift_table.py_get_native_shifts(atom_ids_1)
+        native_shifts_2  = shift_table.py_get_native_shifts(atom_ids_2)
+        
+        keys_1 =   (2, "N"), (2, "HN"), (2, "CA"), (2, "HA"), (2, "CB"), (2, "C")
+        keys_2 =  (2, "N"), (2, "HN"), (2, "CA")
+        
+        expected_shifts_1 = [ala_3.ala_3_test_shifts_harmonic[key] for key in keys_1]
+        expected_shifts_2 = [ala_3.ala_3_test_shifts_harmonic[key] for key in keys_2]
+        
+        self.assertSequenceAlmostEqual(native_shifts_1, expected_shifts_1, delta = 0.1**4)
+        self.assertSequenceAlmostEqual(native_shifts_2, expected_shifts_2, delta = 0.1**4)
 
 if __name__ == "__main__":
     unittest2.main()

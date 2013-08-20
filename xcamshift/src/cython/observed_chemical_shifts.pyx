@@ -28,9 +28,6 @@ cdef class Observed_shift_table(object):
     classdocs
     '''
 
-    def __cinit__(self):
-        self._native_shifts_set = False
-    
     def __init__(self,shift_data={}):
         self._chemical_shifts = self.process_observed_shifts(shift_data)
         
@@ -77,13 +74,13 @@ cdef class Observed_shift_table(object):
         return tupleit(results)
     
     cdef CDSVector[float] get_native_shifts(self, CDSVector[int] target_atom_ids) nogil:
-        if not self._native_shifts_set:
-            self._native_shifts.resize(target_atom_ids.size())
-            for i in range(target_atom_ids.size()):
-                target_atom_id = target_atom_ids[i]
-                self._native_shifts[i] = self._chemical_shifts[target_atom_id]
+        cdef CDSVector[float] results
+        results.resize(target_atom_ids.size())
+        for i in range(target_atom_ids.size()):
+            target_atom_id = target_atom_ids[i]
+            results[i] = self._chemical_shifts[target_atom_id]
                 
-        return self._native_shifts
+        return results
             
     def py_get_native_shifts(self, target_atom_ids):
         cdef CDSVector[int] native_target_atom_ids
