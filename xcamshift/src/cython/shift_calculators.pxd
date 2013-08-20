@@ -34,5 +34,10 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator_base):
     cdef inline float _calc_one_force_factor(Fast_force_factor_calculator self, int target_atom_id, int i) nogil
 
 
-   
+cdef class CDSSharedVectorFloat:
+    cdef CDSVector[double]*  data
+
+    cdef void resize(self,int size) nogil
+    cdef CDSVector[double]* get_data(self) nogil
+ 
    

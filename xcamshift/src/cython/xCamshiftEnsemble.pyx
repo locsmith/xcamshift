@@ -36,8 +36,8 @@ from cython.shift_calculators import Fast_distance_shift_calculator, \
     Fast_ring_force_calculator, Out_array, Vec3_list, \
     allocate_array, zero_array, resize_array, Fast_non_bonded_shift_calculator, \
     Fast_non_bonded_force_calculator, Non_bonded_interaction_list, \
-    Fast_random_coil_shift_calculator, CDSSharedVectorFloat
-from shift_calculators cimport Fast_force_factor_calculator,  Fast_energy_calculator 
+    Fast_random_coil_shift_calculator
+from shift_calculators cimport Fast_force_factor_calculator,  Fast_energy_calculator, CDSSharedVectorFloat
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from observed_chemical_shifts import Observed_shift_table
@@ -2522,8 +2522,8 @@ cdef class Xcamshift_contents:
     cdef object _ensemble_simulation 
     cdef object _verbose
     cdef object _shift_table
-    cdef object _shift_cache 
-    cdef object _ensemble_shift_cache  
+    cdef CDSSharedVectorFloat _shift_cache 
+    cdef CDSSharedVectorFloat _ensemble_shift_cache  
     cdef object _out_array 
     cdef object _energy_term_cache 
     cdef Fast_energy_calculator _energy_calculator 
@@ -2543,8 +2543,7 @@ cdef class Xcamshift_contents:
         self._ensemble_simulation = None
         self._verbose=False
         self._shift_table = Observed_shift_table()
-        self._shift_cache = None
-        self._ensemble_shift_cache = None 
+
         self._out_array =  None
         self._energy_term_cache = None
         self._energy_calculator = self._get_energy_calculator()
