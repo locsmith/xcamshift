@@ -76,7 +76,7 @@ cdef class Observed_shift_table(object):
             sub_result.append(value)
         return tupleit(results)
     
-    cdef CDSVector[float] get_native_shifts(self, CDSVector[int] target_atom_ids):
+    cdef CDSVector[float] get_native_shifts(self, CDSVector[int] target_atom_ids) nogil:
         if not self._native_shifts_set:
             self._native_shifts.resize(target_atom_ids.size())
             for i in range(target_atom_ids.size()):
