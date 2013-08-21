@@ -156,7 +156,6 @@ def test_dump_dihedral_comp(data):
                       
 
 cdef class CDSSharedVectorFloat:
-    cdef CDSVector[double]*  data
 
     
     def __cinit__(self, int size=0, object ensembleSimulation=None):
