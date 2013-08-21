@@ -19,6 +19,10 @@ Created on 31 Jul 2012
 @author: garyt
 
 '''
+
+cdef extern from "instantiate.hh":
+    pass
+
 from shift_calculators cimport Fast_energy_calculator, Constant_cache 
 from derivList import DerivList as PyDerivList
 from math import ceil
@@ -1480,7 +1484,6 @@ cdef class Fast_energy_calculator_base:
     def __init__(self):
         self._energy_term_cache =  NULL
         self._theory_shifts =   NULL
-        self._observed_shifts =  None
         self._verbose = False
         self.calls = 0
     
@@ -1488,7 +1491,7 @@ cdef class Fast_energy_calculator_base:
     def set_verbose(self,on):
         self._verbose = on
         
-    def set_observed_shifts(self, float[:] observed_shifts):
+    cdef void set_observed_shifts(self, CDSVector[float] observed_shifts):
         self._observed_shifts =  observed_shifts
         
     def set_calculated_shifts(self, CDSSharedVectorFloat calculated_shifts):

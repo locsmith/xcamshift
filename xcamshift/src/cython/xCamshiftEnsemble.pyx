@@ -40,7 +40,7 @@ from cython.shift_calculators import Fast_distance_shift_calculator, \
 from shift_calculators cimport Fast_force_factor_calculator,  Fast_energy_calculator, CDSSharedVectorFloat, Fast_energy_calculator_base
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
-from observed_chemical_shifts import Observed_shift_table
+from observed_chemical_shifts cimport Observed_shift_table
 from python_utils import tupleit
 from table_manager import Table_manager
 from time import time
@@ -2521,7 +2521,7 @@ cdef class Xcamshift_contents:
     cdef object _potentials
     cdef object _ensemble_simulation 
     cdef object _verbose
-    cdef object _shift_table
+    cdef Observed_shift_table _shift_table
     cdef CDSSharedVectorFloat _shift_cache 
     cdef CDSSharedVectorFloat _ensemble_shift_cache  
     cdef object _out_array 
@@ -2587,7 +2587,7 @@ cdef class Xcamshift_contents:
         #TODO: make sure the shift cache is always valid
         if self._shift_cache !=None:
             calculator.set_calculated_shifts(self._shift_cache)
-        calculator.set_observed_shifts(self._shift_table.get_native_shifts(cds_vector_int_as_array(self._get_active_target_atom_ids()[0])))
+        calculator.set_observed_shifts(self._shift_table.get_native_shifts(self._get_active_target_atom_ids()[0]))
         calculator.set_energy_term_cache(self._get_energy_term_cache().get_native_components())
     
     def update_energy_calculator(self):
