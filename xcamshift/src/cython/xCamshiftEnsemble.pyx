@@ -37,7 +37,7 @@ from cython.shift_calculators import Fast_distance_shift_calculator, \
     allocate_array, zero_array, resize_array, Fast_non_bonded_shift_calculator, \
     Fast_non_bonded_force_calculator, Non_bonded_interaction_list, \
     Fast_random_coil_shift_calculator
-from shift_calculators cimport Fast_force_factor_calculator,  Fast_energy_calculator, CDSSharedVectorFloat
+from shift_calculators cimport Fast_force_factor_calculator,  Fast_energy_calculator, CDSSharedVectorFloat, Fast_energy_calculator_base
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from observed_chemical_shifts import Observed_shift_table
@@ -2583,7 +2583,7 @@ cdef class Xcamshift_contents:
             self._energy_term_cache = self._create_energy_term_cache()
         return self._energy_term_cache
     
-    def _update_calculator(self, calculator):
+    def _update_calculator(self, Fast_energy_calculator_base calculator):
         #TODO: make sure the shift cache is always valid
         if self._shift_cache !=None:
             calculator.set_calculated_shifts(self._shift_cache)

@@ -1475,7 +1475,7 @@ cdef class Fast_non_bonded_calculator:
             print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"
 
 
-cdef class Fast_energy_calculator:
+cdef class Fast_energy_calculator_base:
 
 
     def __init__(self):
@@ -1539,7 +1539,11 @@ cdef class Fast_energy_calculator:
 #             print '   energy calculator: ',target_atom_ids.size(),' in', "%.17g" %  (end_time-start_time), "seconds"
 #         
 #         return result       
-    
+
+cdef class Fast_energy_calculator(Fast_energy_calculator_base):
+    def __init__(self):
+        Fast_energy_calculator_base.__init__(self)
+        
     cdef float calcEnergy(Fast_energy_calculator self, CDSVector[int] target_atom_ids, CDSVector[int] *active_atom_ids=NULL):
 
         cdef float energy
@@ -1612,7 +1616,7 @@ cdef class Fast_energy_calculator:
 
         return energy
 
-cdef class Fast_force_factor_calculator(Fast_energy_calculator):
+cdef class Fast_force_factor_calculator(Fast_energy_calculator_base):
 
 #     @cython.profile(True)
 #     def __call__(self, int[:] target_atom_ids, float[:] result, CDSVector[int] *active_atom_ids):
