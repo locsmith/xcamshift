@@ -228,7 +228,7 @@ cdef  class Non_bonded_interaction_list:
         return self.size_increment
     
     def __len__(self):
-        return self.size()
+        return self.get_length()
     
     cdef int get_length(self) nogil:
         return self.length/self.RECORD_LENGTH
