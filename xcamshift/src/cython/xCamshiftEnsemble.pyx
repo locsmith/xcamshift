@@ -8,7 +8,6 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
-from xcamshift import Xcamshift
 '''
 Created on 27 Dec 2011
 
@@ -37,7 +36,7 @@ from cython.shift_calculators import Fast_distance_shift_calculator, \
     allocate_array, zero_array, resize_array, Fast_non_bonded_shift_calculator, \
     Fast_non_bonded_force_calculator, Non_bonded_interaction_list, \
     Fast_random_coil_shift_calculator
-from shift_calculators cimport Fast_force_factor_calculator,  Fast_energy_calculator, CDSSharedVectorFloat, Fast_energy_calculator_base
+from shift_calculators cimport Fast_force_factor_calculator, Fast_energy_calculator, CDSSharedVectorFloat, Fast_energy_calculator_base
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from observed_chemical_shifts cimport Observed_shift_table
@@ -2532,10 +2531,12 @@ cdef class Xcamshift_contents:
         #self.set_verbose(verbose)
     cdef object _freeze
     cdef CDSVector[int] *_active_target_atom_ids
+    cdef CDSVector[float] *_observed_shift_cache
     cdef float[:] _factors
     
     def __cinit__(self):
         self._active_target_atom_ids = NULL    
+        self._observed_shift_cache = NULL
            
     def __init__(self):
         
@@ -2583,11 +2584,16 @@ cdef class Xcamshift_contents:
             self._energy_term_cache = self._create_energy_term_cache()
         return self._energy_term_cache
     
+    cdef CDSVector[float]* _get_observed_shift_cache(self):
+        if self._observed_shift_cache == NULL:
+            self._observed_shift_cache = self._shift_table.get_native_shifts(self._get_active_target_atom_ids()[0])
+        return self._observed_shift_cache 
+    
     def _update_calculator(self, Fast_energy_calculator_base calculator):
         #TODO: make sure the shift cache is always valid
         if self._shift_cache !=None:
             calculator.set_calculated_shifts(self._shift_cache)
-        calculator.set_observed_shifts(self._shift_table.get_native_shifts(self._get_active_target_atom_ids()[0]))
+        calculator.set_observed_shifts(self._get_observed_shift_cache()[0])
         calculator.set_energy_term_cache(self._get_energy_term_cache().get_native_components())
     
     def update_energy_calculator(self):
@@ -3013,6 +3019,8 @@ cdef class Xcamshift_contents:
     def _clear_target_atom_ids(self):
         del self._active_target_atom_ids
         self._active_target_atom_ids = NULL
+        del self._observed_shift_cache
+        self._observed_shift_cache = NULL
     
     def _get_constants(self, residue_type, atom_name):
         return                                                             \
