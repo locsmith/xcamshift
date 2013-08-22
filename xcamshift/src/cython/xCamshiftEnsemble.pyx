@@ -2858,30 +2858,35 @@ cdef class Xcamshift_contents:
         return self._energy_calculator.calcEnergy(active_target_atom_ids,active_target_indices)
         
     
-    def _calc_force_set_with_potentials(self, int[:] target_atom_ids, forces, potentials_list):
-        if self._factors == None or len(self._factors) < len(target_atom_ids):
-            self._factors = allocate_array(len(target_atom_ids),'f')
-        elif len(self._factors) > len(target_atom_ids):
-            self._factors =  resize_array(self._factors,len(target_atom_ids))
+    cdef void _calc_force_set_with_potentials(self, CDSVector[int] target_atom_ids, forces, potentials_list):
+        num_target_atom_ids = target_atom_ids.size()
+        if self._factors == None or len(self._factors) < num_target_atom_ids:
+            self._factors = allocate_array(num_target_atom_ids,'f')
+        elif len(self._factors) > num_target_atom_ids:
+            self._factors =  resize_array(self._factors,num_target_atom_ids)
         
-        self._calc_factors(int_memory_view_as_cds_vector(target_atom_ids), self._factors)
+        self._calc_factors(target_atom_ids, self._factors)
         for potential in potentials_list:
-            potential.calc_force_set(target_atom_ids,self._factors,forces)
+            potential.calc_force_set(cds_vector_int_as_array(target_atom_ids),self._factors,forces)
         
              
     def _calc_single_atom_force_set_with_potentials(self, target_atom_id, forces, potentials_list):
 #        print 'forces _calc_single_atom_force_set_with_potentials', forces 
 #        self._calc_single_force_factor(target_atom_id, forces)
-        target_atom_ids = array.array('i',[target_atom_id])
+        cdef CDSVector[int] target_atom_ids
+        target_atom_ids.resize(1)
+        target_atom_ids[0] = target_atom_id
         self._calc_force_set_with_potentials(target_atom_ids, forces, potentials_list)
 
-    def _calc_force_set(self,target_atom_ids,forces,potentials=None):
+    cdef void _calc_force_set(self,CDSVector[int] target_atom_ids,forces,potentials=None):
         if potentials ==  None:
             potentials =  self._get_potentials()
         self._calc_force_set_with_potentials(target_atom_ids, forces, potentials)
          
-    def _calc_single_atom_force_set(self,target_atom_id,forces,potentials=None):
-        target_atom_ids = [target_atom_id]
+    def _calc_single_atom_force_set(self, target_atom_id,forces,potentials=None):
+        cdef CDSVector[int] target_atom_ids 
+        target_atom_ids.resize(1)
+        target_atom_ids[0] = target_atom_id
         self._calc_force_set(target_atom_ids, forces, potentials)
         
 
@@ -3092,7 +3097,7 @@ cdef class Xcamshift_contents:
         else:
             raise Exception("implement me")
 
-    cdef void  _calc_derivs(self, Py_ssize_t derivs, int[:] active_target_atom_ids ,potentials=None):
+    cdef void  _calc_derivs(self, Py_ssize_t derivs, CDSVector[int] active_target_atom_ids ,potentials=None):
         
         out_array = self._get_out_array()
         self.update_force_factor_calculator()
@@ -3153,7 +3158,7 @@ cdef class Xcamshift_contents:
 
     def calcEnergyAndDerivsMaybe4(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         if calcDerivatives:
-            self._calc_derivs(int(derivListPtr), cds_vector_int_as_array(self._get_active_target_atom_ids()[0]))
+            self._calc_derivs(int(derivListPtr), self._get_active_target_atom_ids()[0])
         return 0.0
 
     
