@@ -67,7 +67,13 @@ cdef list cds_vector_int_as_list(CDSVector[int] data):
     
     return list(cds_vector_int_as_array(data))
 #TODO: REMOVE!
-
+cdef CDSVector[int] _build_single_int_vector(int target_atom_id):
+        cdef CDSVector[int] target_atom_ids 
+        target_atom_ids.resize(1)
+        target_atom_ids[0] = target_atom_id
+        
+        return target_atom_ids
+        
 class Component_factory(object):
     __metaclass__ = ABCMeta
     
@@ -558,10 +564,23 @@ class Sidechain_component_factory(Atom_component_factory):
     
 
         
-class Base_potential(object):
+cdef class Base_potential(object):
     
-    __metaclass__ = ABCMeta
-    
+#     __metaclass__ = ABCMeta
+    cdef object  _segment_manager
+    cdef object  _table_manager
+    cdef object  _observed_shifts
+    cdef object  _component_list_data
+    cdef object  _component_factories
+    cdef object  _cache_list_data
+    cdef object  _freeze
+    cdef object  _simulation
+    cdef object  _shift_calculator
+    cdef object _force_calculator
+    cdef object  _component_to_result
+    cdef object  _active_components
+    cdef object  _verbose
+        
     ALL = '(all)'
             
     def __init__(self,simulation):
@@ -708,11 +727,11 @@ class Base_potential(object):
         self._component_factories[component_factory.get_table_name()] =  component_factory
     
     
-    @abstractmethod
+#     @abstractmethod
     def _get_table_source(self):
         pass
         
-    @abstractmethod
+#     @abstractmethod
     def get_abbreviated_name(self):
         pass
 
@@ -781,7 +800,7 @@ class Base_potential(object):
         
         return result
     
-    def calc_force_set(self,target_atom_ids,force_factors,forces):
+    cdef calc_force_set(self, CDSVector[int] target_atom_ids,force_factors,forces):
         if self._have_derivative():
             components = self._get_components()
             #TODO: move simulation outr of components and into constructor (for simplicity and symmetry with shift calculators)
@@ -790,7 +809,7 @@ class Base_potential(object):
             
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
-        target_atom_ids = array.array('i',[target_atom_id])
+        cdef CDSVector[int] target_atom_ids = _build_single_int_vector(target_atom_id)
         force_factors = [force_factor]
         self.calc_force_set(target_atom_ids,force_factor,forces)
     
@@ -828,10 +847,28 @@ class Base_potential(object):
 
             
 
-            
+class Indices(object):
+    def __init__(self, target_atom_index,distance_atom_index_1,
+                 distance_atom_index_2, coefficent_index, exponent_index):
+        self.target_atom_index =  target_atom_index
+        self.distance_atom_index_1 = distance_atom_index_1
+        self.distance_atom_index_2 =  distance_atom_index_2
+        self.exponent_index = exponent_index
+        self.coefficient_index = coefficent_index
+        
+        
+    def __str__(self):
+        result = 'indices target= %i distance atom index 1 = %i index 2 = %i coefficent = %i exponent = %i'
+        msg = result % (self.target_atom_index, self.distance_atom_index_1,
+                        self.distance_atom_index_2, self.coefficient_index, self.exponent_index)
+        return msg                 
+        
 
 
-class Distance_based_potential(Base_potential):
+cdef class Distance_based_potential(Base_potential):
+    cdef object _smoothed
+    cdef object _cutoff
+
     
     def __init__(self, simulation, smoothed = False, fast=False):
         super(Distance_based_potential, self).__init__(simulation)
@@ -856,25 +893,10 @@ class Distance_based_potential(Base_potential):
         result.set_verbose(self._verbose)
         return result 
                 
-    class Indices(object):
-        def __init__(self, target_atom_index,distance_atom_index_1,
-                     distance_atom_index_2, coefficent_index, exponent_index):
-            self.target_atom_index =  target_atom_index
-            self.distance_atom_index_1 = distance_atom_index_1
-            self.distance_atom_index_2 =  distance_atom_index_2
-            self.exponent_index = exponent_index
-            self.coefficient_index = coefficent_index
             
-            
-        def __str__(self):
-            result = 'indices target= %i distance atom index 1 = %i index 2 = %i coefficent = %i exponent = %i'
-            msg = result % (self.target_atom_index, self.distance_atom_index_1,
-                            self.distance_atom_index_2, self.coefficient_index, self.exponent_index)
-            return msg                 
-            
-    @abstractmethod
+#     @abstractmethod
     def _get_indices(self):
-        return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=0,
+        return Indices(target_atom_index=0,distance_atom_index_1=0,
                                                 distance_atom_index_2=1,coefficent_index=2,
                                                 exponent_index=3)
     
@@ -948,7 +970,7 @@ class Distance_based_potential(Base_potential):
     
  
     
-class Distance_potential(Distance_based_potential):
+cdef class Distance_potential(Distance_based_potential):
     '''
     classdocs
     '''
@@ -1010,7 +1032,7 @@ class Distance_potential(Distance_based_potential):
         return result   
 
 
-class Extra_potential(Distance_based_potential):
+cdef class Extra_potential(Distance_based_potential):
     def __init__(self,simulation):
         super(Extra_potential, self).__init__(simulation)
         
@@ -1027,7 +1049,7 @@ class Extra_potential(Distance_based_potential):
 
 
     def _get_indices(self):
-        return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=1,
+        return Indices(target_atom_index=0,distance_atom_index_1=1,
                                                 distance_atom_index_2=2,coefficent_index=3,
                                                 exponent_index=4)    
     
@@ -1063,7 +1085,7 @@ class Extra_potential(Distance_based_potential):
 
 
     
-class RandomCoilShifts(Base_potential):
+cdef class RandomCoilShifts(Base_potential):
     
 
     def __init__(self, simulation):
@@ -1109,7 +1131,7 @@ class RandomCoilShifts(Base_potential):
         
         return result
         
-class Disulphide_shift_calculator(Base_potential):
+cdef class Disulphide_shift_calculator(Base_potential):
     
 
     def __init__(self,simulation):
@@ -1152,9 +1174,9 @@ class Disulphide_shift_calculator(Base_potential):
     
 
 
-class Dihedral_potential(Base_potential):
+cdef class Dihedral_potential(Base_potential):
 
-    
+       
     def __init__(self,simulation):
         Base_potential.__init__(self,simulation)
         self._add_component_factory(Dihedral_component_factory())
@@ -1297,7 +1319,7 @@ class Dihedral_potential(Base_potential):
         if name == 'ATOM':
             return Native_component_list(format='iiiiifffffff')
         
-class Sidechain_potential(Distance_based_potential):
+cdef class Sidechain_potential(Distance_based_potential):
     
     def __init__(self, simulation):
         super(Sidechain_potential, self).__init__(simulation)
@@ -1622,10 +1644,11 @@ class Ring_coefficient_component_factory(Ring_sidechain_component_factory,Backbo
 
 
 
-class Ring_Potential(Base_potential):
+cdef class Ring_Potential(Base_potential):
 
     
     RING_ATOM_IDS = 1
+    cdef object _ring_data_calculator
     
     def __init__(self, simulation):
         super(Ring_Potential, self).__init__(simulation)
@@ -1752,7 +1775,7 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
             self._residue_types = self._table_manager.get_residue_types_for_table(NON_BONDED)
 
             self._all_spheres = self._get_all_spheres(self._table_manager, self._residue_types)
-            self._chem_type_indexer = Non_bonded_potential.Chem_type_indexer(Table_manager.get_default_table_manager())
+            self._chem_type_indexer = Chem_type_indexer(Table_manager.get_default_table_manager())
 
     def is_residue_acceptable(self, segment, residue_number, segment_manager):
         return True
@@ -1763,7 +1786,7 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
         
         def __init__(self, atom, spheres, table):
             
-            chem_type_indexer = Non_bonded_potential.Chem_type_indexer(Table_manager.get_default_table_manager())
+            chem_type_indexer = Chem_type_indexer(Table_manager.get_default_table_manager())
         #            self.exponent  =  table.get_exponent(sphere)
             
             raw_chem_type = Atom_utils._get_chem_type(atom)
@@ -1944,7 +1967,7 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
     
     def __init__(self):
         self._seen_spheres_and_chem_types =  set()
-        self._chem_type_indexer = Non_bonded_potential.Chem_type_indexer(Table_manager.get_default_table_manager())
+        self._chem_type_indexer = Chem_type_indexer(Table_manager.get_default_table_manager())
         self._table_manager = Table_manager.get_default_table_manager() 
         
     
@@ -1952,8 +1975,8 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
         
         def __init__(self, chem_type, sphere, non_bonded_tables):
             table_manager = Table_manager.get_default_table_manager()
-            chem_type_indexer  = Non_bonded_potential.Chem_type_indexer(table_manager)
-            sphere_indexer =  Non_bonded_potential.Sphere_indexer(table_manager)
+            chem_type_indexer  = Chem_type_indexer(table_manager)
+            sphere_indexer =  Sphere_indexer(table_manager)
             
             self.sphere_id =  sphere_indexer.get_index_for_key(sphere)
             
@@ -2026,12 +2049,135 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
 
 
 
+class Base_indexer(object):
+    
+    __metaclass__ = ABCMeta
+    
+    def __init__(self,table_manager):
+        self._index = {}
+        self._inverted_index = {}
+        self._max_index = 0
+        
+        self._build_index(table_manager)
+        
+    @abstractmethod
+    def iter_keys(self,table):
+        pass
+    
+    @abstractmethod
+    def get_name(self):
+        pass
+    
+    def _get_tables_by_index(self, table_manager):
+        table_index_map = {}
+        
+        for residue_type in table_manager.get_residue_types_for_table(NON_BONDED):
+            table = table_manager.get_non_bonded_table(residue_type)
+            index  = table._table['index']
+            table_index_map[index]=table
+        
+        keys = table_index_map.keys()
+        keys.sort()
+        result = []
+        
+        for key in keys:
+            result.append(table_index_map[key])
+        
+        return tuple(result) 
+               
+    def _build_index(self, table_manager):
+        table_manager.get_non_bonded_table('base')
+        tables_by_index = self._get_tables_by_index(table_manager)
+        
+        i = 0
+        for table in tables_by_index:
+            for key in self.iter_keys(table):
+                
+                if not key in self._index:
+                    self._index[key] = i
+                    self._inverted_index[i] = key
+                    self._max_index = i
+                    i += 1
+                    
+
+    def get_index_for_key(self,key):
+        return self._index[key]
+    
+    def get_key_for_index(self,index):
+        return self._inverted_index[index]
+    
+    def get_max_index(self):
+        return self._max_index
+        
+
+    def _flatten(self, lst):
+        for el in lst:
+            if hasattr(el, '__iter__') and not isinstance(el, basestring):
+                for x in self._flatten(el):
+                    yield x
+            else:
+                yield el
+
+
+    def get_key_str(self, index):
+        key = self.get_key_for_index(index)
+        flat_key = tuple([elem for elem in self._flatten(key)])
+        format_string = '[%s, %-4s, %8s]'
+        key_str = format_string % flat_key
+        return key_str
+
+    def __str__(self):
+        result  = []
+        
+        name = self.get_name()
+        result.append('%s index (%i entries)' % (name,self.get_max_index()))
+        result.append('')
+        keys = self._inverted_index.keys()
+        keys.sort()
+        for index in keys:
+            key_str = self.get_key_str(index)
+            index_str = '%3i.' %( index+1) 
+            result.append(index_str + ' '  + key_str)
+        return '\n'.join(result)
+
+
+class Sphere_indexer(Base_indexer):
+    def __init__(self,table_manager):
+        super(Sphere_indexer, self).__init__(table_manager)
+        
+    def iter_keys(self,table):
+        for sphere in table.get_spheres():
+            yield sphere           
             
+    def get_name(self):
+        return 'sphere'
+    
+    
+class Chem_type_indexer(Base_indexer):
+
+    def __init__(self,table_manager):
+        super(Chem_type_indexer, self).__init__(table_manager)
+        
+    def get_name(self):
+        return 'chem type'
+      
+    def iter_keys(self, table):
+        i = 0
+        for sphere in table.get_spheres():
+            for chem_type in table.get_remote_atom_types(sphere):  
+                i+= 1
+                yield chem_type,sphere
+
+
 # target_atom_id, target_atom_type_id
 # remote_atom_id  remote_atom_type_id 
 # remote_atom_type_id exponent coefficient_by target_atom_id
-class Non_bonded_potential(Distance_based_potential):
-
+cdef class Non_bonded_potential(Distance_based_potential):
+    
+    cdef object  _non_bonded_list
+    cdef object _component_set 
+    cdef object _selected_components
+    
     def __init__(self,simulation,smoothed=True):
         super(Non_bonded_potential, self).__init__(simulation,smoothed=smoothed)
         
@@ -2065,7 +2211,7 @@ class Non_bonded_potential(Distance_based_potential):
         return NON_BONDED
     
     def _get_indices(self):
-        return Distance_based_potential.Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
+        return Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
     
     def _get_target_atom_list_name(self):
         return 'ATOM'
@@ -2120,125 +2266,6 @@ class Non_bonded_potential(Distance_based_potential):
     
 
     
-    class Base_indexer(object):
-        
-        __metaclass__ = ABCMeta
-        
-        def __init__(self,table_manager):
-            self._index = {}
-            self._inverted_index = {}
-            self._max_index = 0
-            
-            self._build_index(table_manager)
-            
-        @abstractmethod
-        def iter_keys(self,table):
-            pass
-        
-        @abstractmethod
-        def get_name(self):
-            pass
-        
-        def _get_tables_by_index(self, table_manager):
-            table_index_map = {}
-            
-            for residue_type in table_manager.get_residue_types_for_table(NON_BONDED):
-                table = table_manager.get_non_bonded_table(residue_type)
-                index  = table._table['index']
-                table_index_map[index]=table
-            
-            keys = table_index_map.keys()
-            keys.sort()
-            result = []
-            
-            for key in keys:
-                result.append(table_index_map[key])
-            
-            return tuple(result) 
-                   
-        def _build_index(self, table_manager):
-            table_manager.get_non_bonded_table('base')
-            tables_by_index = self._get_tables_by_index(table_manager)
-            
-            i = 0
-            for table in tables_by_index:
-                for key in self.iter_keys(table):
-                    
-                    if not key in self._index:
-                        self._index[key] = i
-                        self._inverted_index[i] = key
-                        self._max_index = i
-                        i += 1
-                        
-
-        def get_index_for_key(self,key):
-            return self._index[key]
-        
-        def get_key_for_index(self,index):
-            return self._inverted_index[index]
-        
-        def get_max_index(self):
-            return self._max_index
-            
-
-        def _flatten(self, lst):
-            for el in lst:
-                if hasattr(el, '__iter__') and not isinstance(el, basestring):
-                    for x in self._flatten(el):
-                        yield x
-                else:
-                    yield el
-
-
-        def get_key_str(self, index):
-            key = self.get_key_for_index(index)
-            flat_key = tuple([elem for elem in self._flatten(key)])
-            format_string = '[%s, %-4s, %8s]'
-            key_str = format_string % flat_key
-            return key_str
-
-        def __str__(self):
-            result  = []
-            
-            name = self.get_name()
-            result.append('%s index (%i entries)' % (name,self.get_max_index()))
-            result.append('')
-            keys = self._inverted_index.keys()
-            keys.sort()
-            for index in keys:
-                key_str = self.get_key_str(index)
-                index_str = '%3i.' %( index+1) 
-                result.append(index_str + ' '  + key_str)
-            return '\n'.join(result)
-
-    
-    class Sphere_indexer(Base_indexer):
-        def __init__(self,table_manager):
-            super(Non_bonded_potential.Sphere_indexer, self).__init__(table_manager)
-            
-        def iter_keys(self,table):
-            for sphere in table.get_spheres():
-                yield sphere           
-                
-        def get_name(self):
-            return 'sphere'
-        
-        
-    class Chem_type_indexer(Base_indexer):
-
-        def __init__(self,table_manager):
-            super(Non_bonded_potential.Chem_type_indexer, self).__init__(table_manager)
-            
-        def get_name(self):
-            return 'chem type'
-          
-        def iter_keys(self, table):
-            i = 0
-            for sphere in table.get_spheres():
-                for chem_type in table.get_remote_atom_types(sphere):  
-                    i+= 1
-                    yield chem_type,sphere
-
                          
             
                 
@@ -2246,7 +2273,7 @@ class Non_bonded_potential(Distance_based_potential):
     #TODO centralise table manager (each sub potential has its own table manager at the moment)
     #TODO complete
     def __str__(self):
-        non_bonded_indexer = Non_bonded_potential.Chem_type_indexer(Table_manager.get_default_table_manager())
+        non_bonded_indexer = Chem_type_indexer(Table_manager.get_default_table_manager())
         atom_list = self._get_component_list('ATOM')
         
         indexer  = Backbone_atom_indexer()
@@ -2866,8 +2893,10 @@ cdef class Xcamshift_contents:
             self._factors =  resize_array(self._factors,num_target_atom_ids)
         
         self._calc_factors(target_atom_ids, self._factors)
+            
+        cdef Base_potential potential
         for potential in potentials_list:
-            potential.calc_force_set(cds_vector_int_as_array(target_atom_ids),self._factors,forces)
+            potential.calc_force_set(target_atom_ids,self._factors,forces)
         
              
     def _calc_single_atom_force_set_with_potentials(self, target_atom_id, forces, potentials_list):
