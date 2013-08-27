@@ -45,6 +45,9 @@ from table_manager import Table_manager
 from time import time
 from utils import Atom_utils, iter_residues_and_segments
 from xplor_access cimport CDSVector
+from libcpp.set cimport set as cset
+from libcpp.vector cimport vector as vector
+from cython.operator cimport dereference as deref, preincrement as inc
 
 import sys
 from cpython cimport array
@@ -2702,12 +2705,23 @@ cdef class Xcamshift_contents:
             print ' '.join(values)
             
         
-    def _get_all_component_target_atom_ids(self):
-        result  = set()
+    cdef CDSVector[int] _get_all_component_target_atom_ids(self):
+        cdef cset[int] iresult
+        cdef CDSVector[int] result
+        cdef int atom_id
+        
         for potential in self._get_potentials():
-            result.update(potential.get_target_atom_ids())
-        result = list(result)
-        result.sort()
+            atom_ids = potential.get_target_atom_ids()
+            for atom_id in atom_ids:
+                iresult.insert(atom_id)
+
+        result.resize(iresult.size())
+        cdef int i = 0
+        cdef cset[int].iterator it2 =  iresult.begin()
+        while it2 != iresult.end():
+            result[i] = deref(it2)
+            inc(it2)
+            i+=1
         return result
 
     def _create_shift_cache(self, shift_cache, cache_size, ensembleSimulation):
@@ -2730,26 +2744,30 @@ cdef class Xcamshift_contents:
             
             print "shifts completed in ", "%.17g " %  (end_time-start_time),"seconds"
 
-    def calc_shifts(self, target_atom_ids=None, result=None):
-        def target_atom_ids_as_selection_strings(target_atom_ids):
-            result  = []
-            for target_atom_id in target_atom_ids:
-                result.append(Atom_utils._get_atom_info_from_index(target_atom_id))
-            return tuple(result)
-
-        if target_atom_ids  == None:
-            target_atom_ids = self._get_all_component_target_atom_ids() 
+    def target_atom_ids_as_selection_strings(self, target_atom_ids):
+        result  = []
+        for target_atom_id in target_atom_ids:
+            result.append(Atom_utils._get_atom_info_from_index(target_atom_id))
+        return tuple(result)
+ 
+    cdef tuple calc_shifts(self, CDSVector[int]* target_atom_ids=NULL, result=None):
+       
+        cdef CDSVector[int] local_target_atoms
+        if target_atom_ids  == NULL:
+            local_target_atom_ids = self._get_all_component_target_atom_ids() 
+        else:
+            local_target_atom_ids = target_atom_ids[0]
             
   
-        if result == None or len(result) < len(target_atom_ids):
-            result = array.array('d',[0.0] *len(target_atom_ids))
+        if result == None or len(result) < local_target_atom_ids.size():
+            result = array.array('d',[0.0] *local_target_atom_ids.size())
 
 
         
-        self._calc_shifts(target_atom_ids, result)
+        self._calc_shifts(cds_vector_int_as_list(local_target_atom_ids), result)
         
         #TODO review whole funtion and resturn types
-        return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(result))
+        return (self.target_atom_ids_as_selection_strings(cds_vector_int_as_list(local_target_atom_ids)), tuple(result))
         
     #TODO: add standalone mode flag or wrap in a external wrapper that call round changed etc    
     def _calc_shifts(self, target_atom_ids=None, result=None):
@@ -2777,10 +2795,10 @@ cdef class Xcamshift_contents:
     def set_shifts(self, result):
         print 'deprecated remove use _calc_shifts'
         target_atom_ids =  self._get_all_component_target_atom_ids()
-        self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
-        result_shifts  = allocate_array(len(target_atom_ids))
-        self._calc_shifts(target_atom_ids, result_shifts)
-        for target_atom_id, shift in zip(target_atom_ids,result_shifts):
+        self._prepare(TARGET_ATOM_IDS_CHANGED, cds_vector_int_as_list(target_atom_ids))
+        result_shifts  = allocate_array(target_atom_ids.size())
+        self._calc_shifts(cds_vector_int_as_list(target_atom_ids), result_shifts)
+        for target_atom_id, shift in zip(cds_vector_int_as_list(target_atom_ids),result_shifts):
             result[target_atom_id] =  shift
         
         return result
@@ -3008,7 +3026,7 @@ cdef class Xcamshift_contents:
     cdef CDSVector[int]* _get_active_target_atom_ids(self):
         
         if self._active_target_atom_ids == NULL:
-            target_atom_ids = set(self._get_all_component_target_atom_ids())
+            target_atom_ids = set(cds_vector_int_as_list(self._get_all_component_target_atom_ids()))
             observed_shift_atom_ids = self.get_selected_atom_ids()
             active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
             active_target_atom_ids = sorted(list(active_target_atom_ids))
