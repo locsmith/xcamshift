@@ -1,4 +1,22 @@
-from  xplor_access cimport  CDSVector
+from  xplor_access cimport  CDSVector, EnsembleSimulation, Vec3
+
+
+cdef class Out_array:
+    cdef long _length
+    cdef double[60000] _data
+    cdef int[60000] _mask
+    cdef EnsembleSimulation* _simulation
+    
+    cpdef get_length(Out_array self)
+    cpdef add_all(Out_array self, Out_array target_array)
+    cdef inline bint _check_clear_length(Out_array self, long length) nogil
+    cdef inline bint _check_offset(Out_array self, long offset)
+    cdef bint realloc(Out_array self,long length) nogil
+    cdef inline bint _check_state(Out_array self)
+    cdef void  _clear(Out_array self, int length) nogil
+    cdef inline void  add(Out_array self,long offset, Vec3& value)
+
+    
 
 cdef struct Constant_cache:      
     int     target_atom_id      

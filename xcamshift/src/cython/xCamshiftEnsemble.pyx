@@ -26,17 +26,17 @@ from common_constants import BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN,
     RING, NON_BONDED, DISULPHIDE, TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, \
     STRUCTURE_CHANGED, SHIFT_DATA_CHANGED
 from component_list import Component_list, Native_component_list
-from cython.fast_segment_manager import Segment_Manager
+from fast_segment_manager cimport Segment_Manager
 from cython.pyEnsemblePot import PyEnsemblePot
 from cython.shift_calculators import Fast_distance_shift_calculator, \
     Fast_dihedral_shift_calculator, Fast_ring_shift_calculator, \
     Fast_ring_data_calculator, Fast_non_bonded_calculator, \
     Fast_distance_based_potential_force_calculator, Fast_dihedral_force_calculator, \
-    Fast_ring_force_calculator, Out_array, Vec3_list, \
+    Fast_ring_force_calculator, Vec3_list, \
     allocate_array, zero_array, resize_array, Fast_non_bonded_shift_calculator, \
     Fast_non_bonded_force_calculator, Non_bonded_interaction_list, \
     Fast_random_coil_shift_calculator
-from shift_calculators cimport Fast_force_factor_calculator, Fast_energy_calculator, CDSSharedVectorFloat, Fast_energy_calculator_base
+from shift_calculators cimport Fast_force_factor_calculator, Fast_energy_calculator, CDSSharedVectorFloat, Fast_energy_calculator_base, Out_array
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from observed_chemical_shifts cimport Observed_shift_table
@@ -2547,13 +2547,15 @@ cdef class Xcamshift_contents:
         result  =  Fast_force_factor_calculator()
         return result
     
+    cdef Segment_Manager _segment_manager
     cdef object _potentials
     cdef object _ensemble_simulation 
     cdef object _verbose
     cdef Observed_shift_table _shift_table
     cdef CDSSharedVectorFloat _shift_cache 
     cdef CDSSharedVectorFloat _ensemble_shift_cache  
-    cdef object _out_array 
+    #TODO: remove in favour of DerivList
+    cdef Out_array _out_array 
     cdef object _energy_term_cache 
     cdef Fast_energy_calculator _energy_calculator 
     cdef Fast_force_factor_calculator _force_factor_calculator 
@@ -2575,7 +2577,6 @@ cdef class Xcamshift_contents:
         self._verbose=False
         self._shift_table = Observed_shift_table()
 
-        self._out_array =  None
         self._energy_term_cache = None
         self._energy_calculator = self._get_energy_calculator()
         self._force_factor_calculator =  self._get_force_factor_calculator()
@@ -2583,9 +2584,14 @@ cdef class Xcamshift_contents:
         #self.set_verbose(verbose)
         self._freeze = False
         self._factors = None
+        
+        self._out_array = None
+        
+        self._segment_manager = Segment_Manager.get_segment_manager()
 
     def _set_ensemble_simulation(self,ensemble_simulation):
         self._ensemble_simulation = ensemble_simulation
+        self._out_array = Out_array(ensemble_simulation)
         
     def _get_potentials(self):
         if self._potentials == None: 
@@ -3106,14 +3112,10 @@ cdef class Xcamshift_contents:
         return cache
     
 
-    def _get_out_array(self):
-        num_atoms = Segment_Manager.get_segment_manager().get_number_atoms()
-        result = self._out_array
-        if result == None:
-            result = Out_array(num_atoms,self._ensemble_simulation)
-        else:
-            result.realloc(num_atoms)
-        return result
+    cdef void _reset_out_array(Xcamshift_contents self) nogil:
+        cdef int num_atoms = self._segment_manager.cython_get_number_atoms()
+        
+        self._out_array.realloc(num_atoms)
         
 
 
@@ -3146,10 +3148,10 @@ cdef class Xcamshift_contents:
 
     cdef void  _calc_derivs(self, Py_ssize_t derivs, CDSVector[int] active_target_atom_ids ,potentials=None):
         
-        out_array = self._get_out_array()
+        self._reset_out_array()
         self.update_force_factor_calculator()
-        self._calc_force_set(active_target_atom_ids, out_array, potentials)
-        out_array.add_forces_to_result(derivs)
+        self._calc_force_set(active_target_atom_ids, self._out_array, potentials)
+        self._out_array.add_forces_to_result(derivs)
 
     def calcEnergyAndDerivList(self,derivs):
         if self._verbose:

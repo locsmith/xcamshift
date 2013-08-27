@@ -290,21 +290,17 @@ cdef class Vec3_list:
     
     
 cdef class Out_array:
-    cdef long _length
-    cdef double[60000] _data
-    cdef int[60000] _mask
-    cdef EnsembleSimulation* _simulation
     
-    def __init__ (self, length, simulation):
-        self._length = length
+    def __init__ (self, simulation):
+        self._length = 60000
         self._simulation = simulationAsNative(simulation)
 
         
-    def __cinit__(self,  length, simulation):
+    def __cinit__(self, simulation):
         self._length =  60000
         
-        if length > 60000: 
-            raise MemoryError("couldn't allocate array beyond length %i" % 60000)
+#         if length > 60000: 
+#             raise MemoryError("couldn't allocate array beyond length %i" % 60000)
 #        self._data = <double *>malloc(length * sizeof(double))
 #        if not self._data:
 #            raise MemoryError("couldn't allocate array of length %i" % length)
@@ -334,11 +330,13 @@ cdef class Out_array:
 #        free(self._mask)
 #        self._mask = NULL
 
-    cdef inline bint _check_clear_length(self, long length) except -1:
+    cdef inline bint _check_clear_length(self, long length) nogil except -1:
         if not length <= self._length:
-            raise IndexError("tried to clear to %i length is %i" % (length,self._length))
+            with gil:
+                raise IndexError("tried to clear to %i length is %i" % (length,self._length))
         if self._data is NULL:
-            raise AttributeError("trying to access deallocated memory!")
+            with gil:
+                raise AttributeError("trying to access deallocated memory!")
         
     cdef inline bint _check_offset(self, long offset) except -1:
         if not offset < self._length:
@@ -346,7 +344,7 @@ cdef class Out_array:
         if self._data is NULL:
             raise AttributeError("trying to access deallocated memory!")
     
-    cpdef bint realloc(self,long length) except -1:
+    cdef bint realloc(Out_array self,long length) nogil except -1:
         if length <60000:
 #            free(self._data)
 #            self._data = NULL
@@ -357,7 +355,8 @@ cdef class Out_array:
 #                self._length =length
             self._clear(length)
         else:
-            raise MemoryError("couldn't beyond of length %i" % 60000)
+            with gil:
+                raise MemoryError("couldn't go beyond length of %i" % 60000)
 #
 #            free(self._mask)
 #            self._mask = NULL                        
@@ -371,7 +370,7 @@ cdef class Out_array:
         if self._data is NULL:
             raise MemoryError("couldn't reallocate array of length %i" % self._length)
     
-    cdef _clear(self, length):
+    cdef void  _clear(Out_array self, int length) nogil:
         self._check_clear_length(length)
         for i in range(length*3):
             self._data[i] = 0.0
