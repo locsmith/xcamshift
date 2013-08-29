@@ -59,5 +59,6 @@ cdef class CDSSharedVectorFloat:
 
     cdef void resize(self,int size) nogil
     cdef CDSVector[double]* get_data(self) nogil
-
+    cdef int size(self) nogil
+ 
    

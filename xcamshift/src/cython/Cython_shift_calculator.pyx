@@ -168,8 +168,8 @@ cdef class CDSSharedVectorFloat:
         self.data = <CDSVector[double]*>createSharedVec(size, 0.0,  cEnsembleSimulation)
         self.resize(size)
     
-#     cpdef int size(self):
-#         return self[0].data.size()
+    cdef int size(self) nogil:
+         return self.data[0].size()
     
     cdef void resize(self,int size) nogil:
         self.data[0].resize(size)
