@@ -2592,6 +2592,9 @@ cdef class Xcamshift_contents:
     def _set_ensemble_simulation(self,ensemble_simulation):
         self._ensemble_simulation = ensemble_simulation
         self._out_array = Out_array(ensemble_simulation)
+        self._shift_cache = CDSSharedVectorFloat(0,ensemble_simulation)
+        self._ensemble_shift_cache = CDSSharedVectorFloat(0,ensemble_simulation)
+        
         
     def _get_potentials(self):
         if self._potentials == None: 
@@ -2620,22 +2623,25 @@ cdef class Xcamshift_contents:
             self._energy_term_cache = self._create_energy_term_cache()
         return self._energy_term_cache
     
-    cdef CDSVector[float]* _get_observed_shift_cache(self):
+    cdef CDSVector[float]* _get_observed_shift_cache(self) nogil:
+        cdef CDSVector[int] *active_atom_ids
         if self._observed_shift_cache == NULL:
-            self._observed_shift_cache = self._shift_table.get_native_shifts(self._get_active_target_atom_ids()[0])
+            with gil:
+                active_atom_ids  = self._get_active_target_atom_ids()
+            self._observed_shift_cache = self._shift_table.get_native_shifts(active_atom_ids[0])
         return self._observed_shift_cache 
     
-    def _update_calculator(self, Fast_energy_calculator_base calculator):
+    cdef void _update_calculator(Xcamshift_contents self, Fast_energy_calculator_base calculator) nogil:
         #TODO: make sure the shift cache is always valid
-        if self._shift_cache !=None:
-            calculator.set_calculated_shifts(self._shift_cache)
+        calculator.set_calculated_shifts(self._shift_cache)
         calculator.set_observed_shifts(self._get_observed_shift_cache()[0])
-        calculator.set_energy_term_cache(self._get_energy_term_cache().get_native_components())
+        with gil:
+            calculator.set_energy_term_cache(self._get_energy_term_cache().get_native_components())
     
     def update_energy_calculator(self):
         self._update_calculator(self._energy_calculator)
 
-    def update_force_factor_calculator(self):
+    cdef void update_force_factor_calculator(Xcamshift_contents self):
         self._update_calculator(self._force_factor_calculator)
     
         
@@ -2730,12 +2736,6 @@ cdef class Xcamshift_contents:
             i+=1
         return result
 
-    def _create_shift_cache(self, shift_cache, cache_size, ensembleSimulation):
-        if shift_cache == None:
-            shift_cache = CDSSharedVectorFloat(cache_size,ensembleSimulation)
-        elif len(shift_cache) != cache_size:
-            shift_cache.resize(cache_size)
-        return shift_cache
 
     def _calc_shift_cache(self,target_atom_ids, shift_cache):
         if self._verbose:
@@ -2812,7 +2812,7 @@ cdef class Xcamshift_contents:
     def set_observed_shifts(self, shift_table):
         self._shift_table  =  shift_table
         #TODO: could be better
-        self._shift_cache =  None
+        self._shift_cache.resize(0)
         self._energy_term_cache =  None
         self._prepare(SHIFT_DATA_CHANGED,None)
         
@@ -3030,7 +3030,7 @@ cdef class Xcamshift_contents:
         return   self._shift_table.get_atom_indices()
 
     cdef CDSVector[int]* _get_active_target_atom_ids(self):
-        
+       
         if self._active_target_atom_ids == NULL:
             target_atom_ids = set(cds_vector_int_as_list(self._get_all_component_target_atom_ids()))
             observed_shift_atom_ids = self.get_selected_atom_ids()
@@ -3058,8 +3058,7 @@ cdef class Xcamshift_contents:
             
         if change == STRUCTURE_CHANGED:
             #TODO: make sure shift cache is always valid
-            if self._ensemble_shift_cache != None:
-                self._ensemble_shift_cache.clear()
+            self._ensemble_shift_cache.resize(0)
             self._clear_target_atom_ids()
             
         if change == TARGET_ATOM_IDS_CHANGED:
@@ -3188,7 +3187,7 @@ cdef class Xcamshift_contents:
         
         ensemble_size =  self._ensemble_simulation.size()
         cache_size = self._get_active_target_atom_ids()[0].size() * ensemble_size
-        self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, cache_size, self._ensemble_simulation)
+        self._ensemble_shift_cache.resize(cache_size)
 
         self._calc_shift_cache(cds_vector_int_as_array(self._get_active_target_atom_ids()[0]), self._ensemble_shift_cache)
         
