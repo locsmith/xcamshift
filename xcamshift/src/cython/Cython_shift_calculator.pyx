@@ -1722,8 +1722,12 @@ cdef class Base_force_calculator:
     
 
     def _set_components(self,components):
-        self._bytes_to_components(components['ATOM'])
-        self._simulation = <Simulation*><size_t>int(components['SIMU'].this) 
+        cdef int ATOM = 0
+        cdef int NATOM = 1
+        cdef int SIMU = 2
+        cdef cmap[int, uintptr_t] *_components = <cmap[int, uintptr_t]*> <size_t> components['NMAP']
+        self._bytes_to_components(_components[0][ATOM], _components[0][NATOM]) 
+        self._simulation = <EnsembleSimulation*><size_t>_components[0][SIMU]
         
         
 #    TODO should most probably be a fixed array
@@ -1795,11 +1799,11 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         
     
 
-    def _bytes_to_components(self, data):
+    def _bytes_to_components(self, data, length):
 
         self.raw_data =  data 
-        self._compiled_components =  <Distance_component*> <size_t> ctypes.addressof(data)
-        self._num_components =  len(data)/ sizeof(Distance_component)
+        self._compiled_components =  <Distance_component*> <size_t> data
+        self._num_components =  length
                 
    
 #   TODO: generalise this based on compiled components
@@ -1964,11 +1968,11 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         self._verbose = on
     
     #TODO: use global version
-    def _bytes_to_components(self,data):
+    def _bytes_to_components(self,data, length):
         self._raw_target_data =  data 
         
-        self._compiled_target_components =  <Non_bonded_target_component*> <size_t> ctypes.addressof(data)
-        self._num_target_components =  len(data)/ sizeof(Non_bonded_target_component)
+        self._compiled_target_components =  <Non_bonded_target_component*> <size_t> data
+        self._num_target_components =  length
 
     #TODO: use global version
     cdef _bytes_to_remote_components(self,data):
@@ -2099,11 +2103,11 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     cdef int _num_components 
     cdef object raw_data
     
-    def _bytes_to_components(self, data):
+    def _bytes_to_components(self, data, length):
         self.raw_data =  data 
         
-        self._compiled_components =  <Dihedral_component*> <size_t> ctypes.addressof(data)
-        self._num_components =  len(data)/ sizeof(Dihedral_component)
+        self._compiled_components =  <Dihedral_component*> <size_t> data
+        self._num_components =  length
         
         
     def __cinit__(self):
@@ -2332,10 +2336,10 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     def __init__(self,name="not set"):
         super(Fast_ring_force_calculator, self).__init__(name=name)
         
-    def _bytes_to_components(self, data):
+    def _bytes_to_components(self, data, length):
         self.raw_data =  data 
-        self._compiled_components =  <Ring_target_component*> <size_t> ctypes.addressof(data)
-        self._num_components =  len(data)/ sizeof(Ring_target_component)
+        self._compiled_components =  <Ring_target_component*> <size_t> data
+        self._num_components =  length
 
     cdef void _bytes_to_ring_components(self, data):
         self._raw_ring_component_data =  data 

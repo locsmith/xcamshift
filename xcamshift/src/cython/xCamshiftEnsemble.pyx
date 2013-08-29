@@ -657,8 +657,7 @@ cdef class Base_potential(object):
         self._components[NATOM] = len(self._get_component_list())
         self._components[SIMU] = <uintptr_t>int(self._simulation.this)
         
-        return {'ATOM' : self._get_component_list().get_native_components(),
-                'SIMU' : self._simulation, 'NMAP' : <int>& self._components}
+        return {'NMAP' : <int>& self._components}
     
     def _calc_component_shift(self, index):
         
@@ -2457,9 +2456,14 @@ cdef class Non_bonded_potential(Distance_based_potential):
     def _get_components(self):
 #TODO: check if this has speed implications
 #         if self._component_set ==  None:
-        target_component_list = self._get_component_list('ATOM')
-        native_target_atom_list = target_component_list.get_native_components()
+        cdef int ATOM = 0
+        cdef int NATOM = 1
+        cdef int SIMU = 2
         
+        self._components[ATOM] = <uintptr_t>ctypes.addressof(self._get_component_list().get_native_components())
+        self._components[NATOM] = len(self._get_component_list())
+        self._components[SIMU] = <uintptr_t>int(self._simulation.this)
+
         remote_component_list = self._get_component_list('NBRM')
         native_remote_atom_list = remote_component_list.get_native_components()
         
@@ -2468,9 +2472,9 @@ cdef class Non_bonded_potential(Distance_based_potential):
 
         non_bonded_list = self._get_component_list('NBLT')
         
-        self._component_set = {'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
-                      'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
-                      'OFFS' : 0, 'SIMU' : self._simulation}
+        self._component_set = {'NBLT':non_bonded_list, 
+                               'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
+                               'OFFS' : 0, 'NMAP' : <int>& self._components}
         
         return self._component_set
     
