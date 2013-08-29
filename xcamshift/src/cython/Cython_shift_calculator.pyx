@@ -789,7 +789,7 @@ cdef class Base_shift_calculator:
         cdef int SIMU = 2
         cdef cmap[int, uintptr_t] *_components = <cmap[int, uintptr_t]*> <size_t> components['NMAP']
         
-        self._bytes_to_components(_components[0][ATOM], _components[0][NATOM])
+        self._bytes_to_components(_components[0][ATOM], _components[0][NATOM]) 
         self._simulation = <EnsembleSimulation*><size_t>_components[0][SIMU]
         
     
@@ -1723,7 +1723,7 @@ cdef class Base_force_calculator:
 
     def _set_components(self,components):
         self._bytes_to_components(components['ATOM'])
-        self._simulation = <Simulation*><size_t>int(components['SIMU'].this)        
+        self._simulation = <Simulation*><size_t>int(components['SIMU'].this) 
         
         
 #    TODO should most probably be a fixed array
@@ -1964,7 +1964,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         self._verbose = on
     
     #TODO: use global version
-    cdef _bytes_to_target_components(self,data):
+    def _bytes_to_components(self,data):
         self._raw_target_data =  data 
         
         self._compiled_target_components =  <Non_bonded_target_component*> <size_t> ctypes.addressof(data)
@@ -1985,9 +1985,8 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         
     #TODO: call super?
     def _set_components(self, components):
-        self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
+        Fast_distance_based_potential_force_calculator._set_components(self,components)
         self._non_bonded_list =  components['NBLT']
-        self._bytes_to_target_components(components['ATOM'])
         self._bytes_to_remote_components(components['NBRM'])
         self._bytes_to_nonbonded_coefficient_components(components['COEF'])
         if 'ACTI' in components:
@@ -2655,11 +2654,11 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._verbose = on
     
     #TODO: use global version
-    cdef _bytes_to_target_components(self,data):
+    def _bytes_to_components(self,data,length):
         self._raw_target_data =  data 
         
-        self._compiled_target_components =  <Non_bonded_target_component*> <size_t> ctypes.addressof(data)
-        self._num_target_components =  len(data)/ sizeof(Non_bonded_target_component)
+        self._compiled_target_components =  <Non_bonded_target_component*> <size_t> data
+        self._num_target_components =  length
 
     #TODO: use global version
     cdef _bytes_to_remote_components(self,data):
@@ -2675,9 +2674,8 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._num_coefficient_components =  len(data)/ sizeof(Nonbonded_coefficient_component)
         
     def _set_components(self, components):
-        self._simulation = <EnsembleSimulation*><size_t>int(components['SIMU'].this)
+        Fast_distance_shift_calculator._set_components(self,components)
         self._non_bonded_list =  components['NBLT']
-        self._bytes_to_target_components(components['ATOM'])
         self._bytes_to_remote_components(components['NBRM'])
         self._bytes_to_nonbonded_coefficient_components(components['COEF'])
         self._component_offset = components['OFFS']
