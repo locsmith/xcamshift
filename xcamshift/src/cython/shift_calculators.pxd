@@ -41,7 +41,8 @@ cdef class Fast_energy_calculator_base:
     cdef inline float _get_observed_atom_shift(Fast_energy_calculator_base self, int index) nogil
     cdef inline float  _get_shift_difference(Fast_energy_calculator_base self, int target_atom_index, int index) nogil
     cdef inline float _adjust_shift(Fast_energy_calculator_base self, float shift_diff, float flat_bottom_shift_limit) nogil
-    cdef void set_observed_shifts(Fast_energy_calculator_base, CDSVector[float] observed_shifts)
+    cdef void set_observed_shifts(Fast_energy_calculator_base, CDSVector[float] observed_shifts) nogil
+    cdef void set_calculated_shifts(self, CDSSharedVectorFloat calculated_shifts) nogil
 
 cdef class Fast_energy_calculator(Fast_energy_calculator_base):
     cdef        float calcEnergy(Fast_energy_calculator self, CDSVector[int] target_atom_ids, CDSVector[int] *active_atom_ids=?)
@@ -58,5 +59,5 @@ cdef class CDSSharedVectorFloat:
 
     cdef void resize(self,int size) nogil
     cdef CDSVector[double]* get_data(self) nogil
- 
+
    

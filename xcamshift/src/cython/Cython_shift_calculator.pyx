@@ -1490,10 +1490,10 @@ cdef class Fast_energy_calculator_base:
     def set_verbose(self,on):
         self._verbose = on
         
-    cdef void set_observed_shifts(self, CDSVector[float] observed_shifts):
+    cdef void set_observed_shifts(self, CDSVector[float] observed_shifts) nogil:
         self._observed_shifts =  observed_shifts
         
-    def set_calculated_shifts(self, CDSSharedVectorFloat calculated_shifts):
+    cdef void set_calculated_shifts(self, CDSSharedVectorFloat calculated_shifts) nogil:
         self._theory_shifts = calculated_shifts.get_data()
     
     def set_energy_term_cache(self, energy_term_cache ):
