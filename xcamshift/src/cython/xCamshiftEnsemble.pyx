@@ -2992,22 +2992,21 @@ cdef class Xcamshift_contents:
         cdef int num_active_target_atom_ids = active_target_atom_ids.size()
         cdef int i,j
         cdef int target_atom_id, active_target_atom_id
-        with nogil:
-            if num_target_atom_ids != num_active_target_atom_ids:
-                active_components =  new CDSVector[int]()
-                active_components.resize(num_target_atom_ids)
-                
-                for i in range(target_atom_ids.size()):
-                    target_atom_id  = target_atom_ids[i]
-                    #TODO: turn this into an index function
-                    for j in range(active_target_atom_ids.size()):
-                        active_target_atom_id = active_target_atom_ids[j]
-                        if target_atom_id == active_target_atom_id:
-                            active_components[0][i] = j
-                            break
-       
-            self._force_factor_calculator.calcFactors(active_target_atom_ids, factors, active_components)
-            del active_components
+        if num_target_atom_ids != num_active_target_atom_ids:
+            active_components =  new CDSVector[int]()
+            active_components.resize(num_target_atom_ids)
+            
+            for i in range(target_atom_ids.size()):
+                target_atom_id  = target_atom_ids[i]
+                #TODO: turn this into an index function
+                for j in range(active_target_atom_ids.size()):
+                    active_target_atom_id = active_target_atom_ids[j]
+                    if target_atom_id == active_target_atom_id:
+                        active_components[0][i] = j
+                        break
+   
+        self._force_factor_calculator.calcFactors(active_target_atom_ids, factors, active_components)
+        del active_components
         return factors
     
 
@@ -3029,18 +3028,19 @@ cdef class Xcamshift_contents:
         
         return   self._shift_table.get_atom_indices()
 
-    cdef CDSVector[int]* _get_active_target_atom_ids(self):
+    cdef CDSVector[int]* _get_active_target_atom_ids(self) nogil:
        
-        if self._active_target_atom_ids == NULL:
-            target_atom_ids = set(cds_vector_int_as_list(self._get_all_component_target_atom_ids()))
-            observed_shift_atom_ids = self.get_selected_atom_ids()
-            active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
-            active_target_atom_ids = sorted(list(active_target_atom_ids))
-            
-            self._active_target_atom_ids =  new CDSVector[int]()
-            self._active_target_atom_ids.resize(len(active_target_atom_ids))
-            for i,value in enumerate(active_target_atom_ids):
-                self._active_target_atom_ids[0][i] = value
+        with gil:
+            if self._active_target_atom_ids == NULL:
+                target_atom_ids = set(cds_vector_int_as_list(self._get_all_component_target_atom_ids()))
+                observed_shift_atom_ids = self.get_selected_atom_ids()
+                active_target_atom_ids = target_atom_ids.intersection(observed_shift_atom_ids)
+                active_target_atom_ids = sorted(list(active_target_atom_ids))
+                
+                self._active_target_atom_ids =  new CDSVector[int]()
+                self._active_target_atom_ids.resize(len(active_target_atom_ids))
+                for i,value in enumerate(active_target_atom_ids):
+                    self._active_target_atom_ids[0][i] = value
         
          
         return self._active_target_atom_ids
