@@ -47,10 +47,14 @@ from utils import Atom_utils, iter_residues_and_segments
 from xplor_access cimport CDSVector
 from libcpp.set cimport set as cset
 from libcpp.vector cimport vector as vector
+from libcpp.map cimport map as cmap
+from libc.stdint cimport uintptr_t 
+
 from cython.operator cimport dereference as deref, preincrement as inc
 
 import sys
 from cpython cimport array
+import ctypes
 
 cdef CDSVector[int] int_memory_view_as_cds_vector(int[:] data):
     cdef CDSVector[int] result
@@ -583,6 +587,7 @@ cdef class Base_potential(object):
     cdef object  _component_to_result
     cdef object  _active_components
     cdef object  _verbose
+    cdef cmap[int, uintptr_t] _components
         
     ALL = '(all)'
             
@@ -644,8 +649,16 @@ cdef class Base_potential(object):
         return result
      
     def _get_components(self):
+        cdef int ATOM = 0
+        cdef int NATOM = 1
+        cdef int SIMU = 2
+        
+        self._components[ATOM] = <uintptr_t>ctypes.addressof(self._get_component_list().get_native_components())
+        self._components[NATOM] = len(self._get_component_list())
+        self._components[SIMU] = <uintptr_t>int(self._simulation.this)
+        
         return {'ATOM' : self._get_component_list().get_native_components(),
-                'SIMU' : self._simulation}
+                'SIMU' : self._simulation, 'NMAP' : <int>& self._components}
     
     def _calc_component_shift(self, index):
         
@@ -803,7 +816,8 @@ cdef class Base_potential(object):
         
         return result
     
-    cdef calc_force_set(self, CDSVector[int] target_atom_ids,force_factors,forces):
+    cdef void  calc_force_set(self, CDSVector[int] target_atom_ids, float[:] force_factors, Out_array forces):
+        cdef int[:] active_components 
         if self._have_derivative():
             components = self._get_components()
             #TODO: move simulation outr of components and into constructor (for simplicity and symmetry with shift calculators)
@@ -824,7 +838,7 @@ cdef class Base_potential(object):
         for target_atom_id in components.get_component_atom_ids():
             result[target_atom_id] +=  self._calc_single_atom_shift(target_atom_id)
             
-    def _have_derivative(self):
+    cdef bint _have_derivative(self) nogil:
         return True
     
 #    TODO remove or make batched now in force calculaor
@@ -1101,8 +1115,8 @@ cdef class RandomCoilShifts(Base_potential):
     def get_abbreviated_name(self):
         return RANDOM_COIL
     
-    def _have_derivative(self):
-        False
+    cdef bint _have_derivative(self) nogil:
+        return False
          
     
     def _get_table_source(self):
@@ -1146,8 +1160,8 @@ cdef class Disulphide_shift_calculator(Base_potential):
     def get_abbreviated_name(self):
         return DISULPHIDE
     
-    def _have_derivative(self):
-        False
+    cdef bint _have_derivative(self) nogil:
+        return False
          
     
     def _get_table_source(self):
@@ -2909,7 +2923,7 @@ cdef class Xcamshift_contents:
         return self._energy_calculator.calcEnergy(active_target_atom_ids,active_target_indices)
         
     
-    cdef void _calc_force_set_with_potentials(self, CDSVector[int] target_atom_ids, forces, potentials_list):
+    cdef void _calc_force_set_with_potentials(self, CDSVector[int] target_atom_ids, Out_array forces, list potentials_list):
         num_target_atom_ids = target_atom_ids.size()
         if self._factors == None or len(self._factors) < num_target_atom_ids:
             self._factors = allocate_array(num_target_atom_ids,'f')

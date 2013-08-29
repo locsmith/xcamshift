@@ -39,6 +39,8 @@ from cpython cimport array
 import ctypes
 from component_list import  Component_list, Native_component_list
 from ensembleSimulation import EnsembleSimulation as pyEnsembleSimulation
+from libcpp.map cimport map as cmap
+from libc.stdint cimport uintptr_t 
 
 #TODO: should be ensembleSimulationAsNative
 cdef inline EnsembleSimulation* simulationAsNative(object simulation) except NULL:
@@ -782,8 +784,13 @@ cdef class Base_shift_calculator:
     
     
     def _set_components(self,components):
-        self._bytes_to_components(components['ATOM'])
-        self._simulation = <EnsembleSimulation*><size_t>int(components['SIMU'].this)
+        cdef int ATOM = 0
+        cdef int NATOM = 1
+        cdef int SIMU = 2
+        cdef cmap[int, uintptr_t] *_components = <cmap[int, uintptr_t]*> <size_t> components['NMAP']
+        
+        self._bytes_to_components(_components[0][ATOM], _components[0][NATOM])
+        self._simulation = <EnsembleSimulation*><size_t>_components[0][SIMU]
         
     
     cdef inline int ensemble_size(self) nogil:
@@ -812,11 +819,11 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
 
 #    
 #    TODO: this needs to be removed
-    def _bytes_to_components(self, data):
+    def _bytes_to_components(self, data, length):
 
         self._raw_data =  data 
-        self._compiled_components =  <Random_coil_component*> <size_t> ctypes.addressof(data)
-        self._num_components =  len(data)/ sizeof(Random_coil_component)
+        self._compiled_components =  <Random_coil_component*> <size_t> data
+        self._num_components =  length
 
     
     @cython.profile(False)
@@ -892,11 +899,11 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 #        self._smoothing_factor = smoothing_factor
 #    
 #    TODO: this needs to be removed
-    def _bytes_to_components(self, data):
+    def _bytes_to_components(self, data, length):
 
         self._raw_data =  data 
-        self._compiled_components =  <Distance_component*> <size_t> ctypes.addressof(data)
-        self._num_components =  len(data)/ sizeof(Distance_component)
+        self._compiled_components =  <Distance_component*> <size_t> data
+        self._num_components =  length
             
 
         
@@ -1001,11 +1008,11 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         Base_shift_calculator.__init__(self, simulation, name)
         
         
-    def  _bytes_to_components(self, data):
+    def  _bytes_to_components(self, data, length):
         self._raw_data =  data 
         
-        self._compiled_components =  <Dihedral_component*> <size_t> ctypes.addressof(data)
-        self._num_components =  len(data)/ sizeof(Dihedral_component)
+        self._compiled_components =  <Dihedral_component*> <size_t> data
+        self._num_components =  length
     
             
 #     cdef inline _get_component(self,int index) nogil:
@@ -1128,10 +1135,10 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     def __init__(self, simulation, str name = "not set"):
         Base_shift_calculator.__init__(self,simulation, name)
 
-    def _bytes_to_components(self, data):
+    def _bytes_to_components(self, data, length):
         self.raw_data =  data 
-        self._compiled_components =  <Ring_target_component*> <size_t> ctypes.addressof(data)
-        self._num_components =  len(data)/ sizeof(Ring_target_component)
+        self._compiled_components =  <Ring_target_component*> <size_t> data
+        self._num_components =  length
 
          
 
