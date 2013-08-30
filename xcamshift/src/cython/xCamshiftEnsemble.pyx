@@ -57,6 +57,8 @@ import sys
 from cpython cimport array
 import ctypes
 
+from cpython cimport PyObject
+
 cdef CDSVector[int] int_memory_view_as_cds_vector(int[:] data):
     cdef CDSVector[int] result
     result.resize(data.shape[0])
@@ -2461,15 +2463,13 @@ cdef class Non_bonded_potential(Distance_based_potential):
     def _get_components(self):
         self._component_set = Distance_based_potential._get_components(self)
         
-        
-        
         self._components[OFFS] = 0
         
         self._add_native_component_to_call_list(NBRM,'NBRM')
         self._add_native_component_to_call_list(COEF,'COEF')
         
         non_bonded_list = self._get_component_list('NBLT')
-        self._component_set['NBLT'] = non_bonded_list
+        self._components[NBLT] = <uintptr_t><PyObject *> non_bonded_list
         
         return self._component_set
     

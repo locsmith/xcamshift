@@ -42,6 +42,17 @@ from ensembleSimulation import EnsembleSimulation as pyEnsembleSimulation
 from libcpp.map cimport map as cmap
 from libc.stdint cimport uintptr_t 
 
+cdef int ATOM = 0
+cdef int NATOM = 1
+cdef int SIMU = 2
+cdef int NBRM = 3
+cdef int NNBRM = 4
+cdef int COEF =  5
+cdef int NCOEF =  6
+cdef int NBLT = 7
+cdef int NNBLT = 8
+cdef int OFFS = 9
+
 #TODO: should be ensembleSimulationAsNative
 cdef inline EnsembleSimulation* simulationAsNative(object simulation) except NULL:
     #TODO tell charles his __eq__ method has problems
@@ -1983,7 +1994,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         Fast_distance_based_potential_force_calculator._set_components(self,components)
         cdef cmap[int, uintptr_t] *_components = <cmap[int, uintptr_t]*> <size_t> components['NMAP']
         
-        self._non_bonded_list =  components['NBLT']
+        self._non_bonded_list =  <Non_bonded_interaction_list>_components[0][NBLT]
         self._bytes_to_remote_components(_components[0][NBRM], _components[0][NNBRM])
         self._bytes_to_nonbonded_coefficient_components(_components[0][COEF],_components[0][NCOEF])
         
@@ -2667,8 +2678,8 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         
     def _set_components(self, components):
         Fast_distance_shift_calculator._set_components(self,components)
-        self._non_bonded_list =  components['NBLT']
         cdef cmap[int, uintptr_t] *_components = <cmap[int, uintptr_t]*> <size_t> components['NMAP']
+        self._non_bonded_list =  <Non_bonded_interaction_list>_components[0][NBLT]
         
         self._bytes_to_remote_components(_components[0][NBRM], _components[0][NNBRM])
         self._bytes_to_nonbonded_coefficient_components(_components[0][COEF],_components[0][NCOEF])
