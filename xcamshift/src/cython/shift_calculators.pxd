@@ -1,5 +1,15 @@
 from  xplor_access cimport  CDSVector, EnsembleSimulation, Vec3
 
+cdef int ATOM = 0
+cdef int NATOM = 1
+cdef int SIMU = 2
+cdef int NBRM = 3
+cdef int NNBRM = 4
+cdef int COEF =  5
+cdef int NCOEF =  6
+cdef int NBLT = 7
+cdef int NNBLT = 8
+cdef int OFFS = 9
 
 cdef class Out_array:
     cdef long _length

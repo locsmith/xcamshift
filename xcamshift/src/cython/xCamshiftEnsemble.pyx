@@ -37,6 +37,7 @@ from cython.shift_calculators import Fast_distance_shift_calculator, \
     Fast_non_bonded_force_calculator, Non_bonded_interaction_list, \
     Fast_random_coil_shift_calculator
 from shift_calculators cimport Fast_force_factor_calculator, Fast_energy_calculator, CDSSharedVectorFloat, Fast_energy_calculator_base, Out_array
+from shift_calculators cimport ATOM,NATOM,SIMU,NBRM,NNBRM,COEF,NCOEF,NBLT,NNBLT,OFFS
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
 from observed_chemical_shifts cimport Observed_shift_table
@@ -587,6 +588,7 @@ cdef class Base_potential(object):
     cdef object  _component_to_result
     cdef object  _active_components
     cdef object  _verbose
+    cdef object _component_set
     cdef cmap[int, uintptr_t] _components
         
     ALL = '(all)'
@@ -647,17 +649,21 @@ cdef class Base_potential(object):
             result = self._active_components
         
         return result
-     
+
+    def _add_native_component_to_call_list(self, id, component_list_id):
+        component_list = self._get_component_list(component_list_id)
+        self._components[id] = <uintptr_t>ctypes.addressof(component_list.get_native_components())
+        self._components[id+1] = len(component_list)
+             
     def _get_components(self):
-        cdef int ATOM = 0
-        cdef int NATOM = 1
-        cdef int SIMU = 2
         
-        self._components[ATOM] = <uintptr_t>ctypes.addressof(self._get_component_list().get_native_components())
-        self._components[NATOM] = len(self._get_component_list())
+        self._add_native_component_to_call_list(ATOM,'ATOM')
         self._components[SIMU] = <uintptr_t>int(self._simulation.this)
         
-        return {'NMAP' : <int>& self._components}
+        self._component_set = {'NMAP' : <int>&self._components}
+        
+        return self._component_set
+        
     
     def _calc_component_shift(self, index):
         
@@ -2190,8 +2196,7 @@ class Chem_type_indexer(Base_indexer):
 # remote_atom_type_id exponent coefficient_by target_atom_id
 cdef class Non_bonded_potential(Distance_based_potential):
     
-    cdef object  _non_bonded_list
-    cdef object _component_set 
+    cdef object  _non_bonded_list 
     cdef object _selected_components
     
     def __init__(self,simulation,smoothed=True):
@@ -2454,27 +2459,17 @@ cdef class Non_bonded_potential(Distance_based_potential):
             
 
     def _get_components(self):
-#TODO: check if this has speed implications
-#         if self._component_set ==  None:
-        cdef int ATOM = 0
-        cdef int NATOM = 1
-        cdef int SIMU = 2
+        self._component_set = Distance_based_potential._get_components(self)
         
-        self._components[ATOM] = <uintptr_t>ctypes.addressof(self._get_component_list().get_native_components())
-        self._components[NATOM] = len(self._get_component_list())
-        self._components[SIMU] = <uintptr_t>int(self._simulation.this)
-
-        remote_component_list = self._get_component_list('NBRM')
-        native_remote_atom_list = remote_component_list.get_native_components()
         
-        coefficient_list = self._get_component_list('COEF')
-        native_coefficient_list = coefficient_list.get_native_components()
-
+        
+        self._components[OFFS] = 0
+        
+        self._add_native_component_to_call_list(NBRM,'NBRM')
+        self._add_native_component_to_call_list(COEF,'COEF')
+        
         non_bonded_list = self._get_component_list('NBLT')
-        
-        self._component_set = {'NBLT':non_bonded_list, 
-                               'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
-                               'OFFS' : 0, 'NMAP' : <int>& self._components}
+        self._component_set['NBLT'] = non_bonded_list
         
         return self._component_set
     
