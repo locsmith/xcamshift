@@ -1918,7 +1918,7 @@ class Non_bonded_list(object):
         if self._verbose:
              print "  BOX COUNT UPDATED TO: ", self._box_update_count
         
-    def get_boxes(self, Native_component_list component_list_1, Native_component_list component_list_2,target_component_list,coefficient_list):
+    def get_boxes(self, Native_component_list component_list_1, Native_component_list component_list_2,target_component_list):
 #        print self._box_update_count, se        if self._verbose:
         updated = False
         if self._verbose:
@@ -2262,8 +2262,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
         
         remote_atom_list = self._get_component_list(NBRM_ID)
         
-        coefficient_list  = self._get_component_list(COEF_ID)
-        updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
+        updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list)
         
         return non_bonded_list
     
