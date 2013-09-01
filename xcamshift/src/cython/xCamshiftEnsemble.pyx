@@ -672,10 +672,13 @@ cdef class Base_potential(object):
 
             
         
-    cdef cmap[int, uintptr_t] *_get_components(self):
+    cdef cmap[int, uintptr_t] *_get_components(self) nogil:
         cdef cmap[int, uintptr_t] * result 
         self._add_native_component_to_call_list(ATOM_ID)
-        self._components[SIMU] = <uintptr_t>int(self._simulation.this)
+        
+        if self._components.count(SIMU) == 0:
+            with gil:
+                self._components[SIMU] = <uintptr_t>int(self._simulation.this)
         
         result = &self._components
         return result
@@ -837,15 +840,14 @@ cdef class Base_potential(object):
         
         return result
     
-    cdef void  calc_force_set(self, CDSVector[int] target_atom_ids, float[:] force_factors, Out_array forces):
+    cdef void  calc_force_set(self, CDSVector[int] target_atom_ids, float[:] force_factors, Out_array forces) nogil:
         cdef int[:] active_components 
         cdef cmap[int,uintptr_t]  *components
         if self._have_derivative():
             components = self._get_components()
             #TODO: move simulation outr of components and into constructor (for simplicity and symmetry with shift calculators)
             #TODO: do shift calculators use components fully?
-            with nogil:
-                self._force_calculator.calc(components, self._component_to_result, force_factors, forces, self._get_active_components())
+            self._force_calculator.calc(components, self._component_to_result, force_factors, forces, self._get_active_components())
             
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
@@ -2472,7 +2474,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
 
             
 
-    cdef cmap[int, uintptr_t] *_get_components(self):
+    cdef cmap[int, uintptr_t] *_get_components(self) nogil:
         cdef cmap[int, uintptr_t] *result = Distance_based_potential._get_components(self)
         
         self._components[OFFS] = 0
@@ -2480,7 +2482,8 @@ cdef class Non_bonded_potential(Distance_based_potential):
         self._add_native_component_to_call_list(NBRM_ID)
         self._add_native_component_to_call_list(COEF_ID)
         
-        non_bonded_list = self._get_non_bonded_interaction_list()
+        with gil:
+            non_bonded_list = self._get_non_bonded_interaction_list()
         self._components[NBLT] = <uintptr_t><PyObject *> non_bonded_list
         
         return result
