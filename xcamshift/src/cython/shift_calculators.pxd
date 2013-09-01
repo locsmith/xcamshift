@@ -1,4 +1,6 @@
-from  xplor_access cimport  CDSVector, EnsembleSimulation, Vec3
+from  xplor_access cimport  CDSVector, EnsembleSimulation, Vec3, Simulation
+from libcpp.map cimport map as cmap
+from libc.stdint cimport uintptr_t
 
 cdef int ATOM = 0
 cdef int NATOM = 1
@@ -71,4 +73,27 @@ cdef class CDSSharedVectorFloat:
     cdef CDSVector[double]* get_data(self) nogil
     cdef int size(self) nogil
  
-   
+cdef class Base_shift_calculator:
+    cdef bint _verbose 
+    cdef str _name
+    cdef EnsembleSimulation* _simulation
+    
+    cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil
+    cdef void _set_components(self, cmap[int, uintptr_t] *components) nogil
+    cdef inline int ensemble_size(self) nogil
+    cdef inline int ensemble_member_index(self) nogil
+    cdef inline int ensemble_array_offset(self,int index) nogil
+    
+    cdef void calc(Base_shift_calculator self, cmap[int,uintptr_t] *components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components) nogil
+
+cdef class Base_force_calculator:
+    
+    cdef bint _verbose 
+    cdef Simulation* _simulation
+    cdef str _name
+    cdef int[:] _active_components 
+    
+    cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil
+    cdef void _set_components(self, cmap[int, uintptr_t] *components) nogil
+    cdef void calc(self, cmap[int,uintptr_t] *components, int[:] component_to_result, float[:] force_factors, Out_array forces, int[:] active_components=?) nogil
+    cdef void _do_calc_components(self, int[:] component_to_result,  float[:] force_factors, Out_array force) nogil
