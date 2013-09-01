@@ -36,7 +36,7 @@ from cython.shift_calculators import Fast_distance_shift_calculator, \
     allocate_array, zero_array, resize_array, Fast_non_bonded_shift_calculator, \
     Fast_non_bonded_force_calculator, Non_bonded_interaction_list, \
     Fast_random_coil_shift_calculator
-from shift_calculators cimport Fast_force_factor_calculator, Fast_energy_calculator, CDSSharedVectorFloat, Fast_energy_calculator_base, Out_array
+from shift_calculators cimport Fast_force_factor_calculator, Fast_energy_calculator, CDSSharedVectorFloat, Fast_energy_calculator_base, Out_array, Base_shift_calculator, Base_force_calculator
 from shift_calculators cimport ATOM,NATOM,SIMU,NBRM,NNBRM,COEF,NCOEF,NBLT,NNBLT,OFFS
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
@@ -585,10 +585,10 @@ cdef class Base_potential(object):
     cdef object  _cache_list_data
     cdef object  _freeze
     cdef object  _simulation
-    cdef object  _shift_calculator
-    cdef object _force_calculator
-    cdef object  _component_to_result
-    cdef object  _active_components
+    cdef Base_shift_calculator _shift_calculator
+    cdef Base_force_calculator _force_calculator
+    cdef int[:]  _component_to_result
+    cdef int[:]  _active_components
     cdef object  _verbose
     cdef object _component_set
     cdef cmap[int, uintptr_t] _components
@@ -657,25 +657,24 @@ cdef class Base_potential(object):
         self._components[id] = <uintptr_t>ctypes.addressof(component_list.get_native_components())
         self._components[id+1] = len(component_list)
              
-    def _get_components(self):
-        
+    cdef cmap[int, uintptr_t] *_get_components(self):
+        cdef cmap[int, uintptr_t] * result 
         self._add_native_component_to_call_list(ATOM,'ATOM')
         self._components[SIMU] = <uintptr_t>int(self._simulation.this)
         
-        self._component_set = {'NMAP' : <int>&self._components}
-        
-        return self._component_set
+        result = &self._components
+        return result
         
     
-    def _calc_component_shift(self, index):
-        
-        component_to_result = array.array('i', [0])
-        results = array.array('d',[0.0])
-        components = self._get_components()
-        active_components = array.array('i', [index])
-        self._shift_calculator(components,results,component_to_result, active_components=active_components)
-        
-        return results[0]
+#     def _calc_component_shift(self, index):
+#         
+#         component_to_result = array.array('i', [0])
+#         results = array.array('d',[0.0])
+#         components = self._get_components()
+#         active_components = array.array('i', [index])
+#         self._shift_calculator.calc(components,results,component_to_result, active_components=active_components)
+#         
+#         return results[0]
       
     
 
@@ -825,11 +824,12 @@ cdef class Base_potential(object):
     
     cdef void  calc_force_set(self, CDSVector[int] target_atom_ids, float[:] force_factors, Out_array forces):
         cdef int[:] active_components 
+        cdef cmap[int,uintptr_t]  *components
         if self._have_derivative():
             components = self._get_components()
             #TODO: move simulation outr of components and into constructor (for simplicity and symmetry with shift calculators)
             #TODO: do shift calculators use components fully?
-            self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._get_active_components())
+            self._force_calculator.calc(components, self._component_to_result, force_factors, forces, self._get_active_components())
             
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
@@ -859,16 +859,13 @@ cdef class Base_potential(object):
     def _create_component_list(self,name):
         return Component_list()
     
-    def _get_active_components(self):
+    cdef int[:] _get_active_components(self):
         return self._active_components
     
     #TODO: unify with ring random coil and disuphide shift calculators
-    def calc_shifts(self, results):
-       
-        components = self._get_components()
-        self._shift_calculator(components,results,self._component_to_result, active_components=self._get_active_components())
-             
-
+    cdef calc_shifts(self, CDSSharedVectorFloat results):
+        cdef cmap[int,uintptr_t] *components = self._get_components()
+        self._shift_calculator.calc(components,results, self._component_to_result, self._get_active_components())
             
 
 class Indices(object):
@@ -1162,6 +1159,7 @@ cdef class Disulphide_shift_calculator(Base_potential):
         super(Disulphide_shift_calculator, self).__init__(simulation)
         
         self._add_component_factory(Disulphide_shift_component_factory())
+        self._shift_calculator = self._get_shift_calculator()
 
     
     def get_abbreviated_name(self):
@@ -1173,16 +1171,14 @@ cdef class Disulphide_shift_calculator(Base_potential):
     
     def _get_table_source(self):
         return self._table_manager.get_disulphide_table
+                
+
     
-    #TODO: this is the same as for the random coild shifts
-    def calc_shifts(self, result):
-        components = self._get_component_list()
-        for i, component_index in enumerate(self._active_components):
-            result[self._component_to_result[i]] += components[component_index][1]
-            
-    def _calc_component_shift(self,index):
-        components = self._get_component_list()
-        return components.get_component(index)[1]
+    def _create_component_list(self, name):
+        if name == "ATOM":
+            return Native_component_list(format='if')
+        else:
+            return Component_list()
 
 
     def __str__(self): 
@@ -1195,7 +1191,11 @@ cdef class Disulphide_shift_calculator(Base_potential):
             result.append(string)
         return '\n'.join(result)
     
-    
+    def _get_shift_calculator(self):
+        result = Fast_random_coil_shift_calculator(self._simulation, name=self.get_abbreviated_name())
+        result.set_verbose(self._verbose)
+        
+        return result
 
 
 cdef class Dihedral_potential(Base_potential):
@@ -2460,8 +2460,8 @@ cdef class Non_bonded_potential(Distance_based_potential):
 
             
 
-    def _get_components(self):
-        self._component_set = Distance_based_potential._get_components(self)
+    cdef cmap[int, uintptr_t] *_get_components(self):
+        cdef cmap[int, uintptr_t] *result = Distance_based_potential._get_components(self)
         
         self._components[OFFS] = 0
         
@@ -2471,7 +2471,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
         non_bonded_list = self._get_component_list('NBLT')
         self._components[NBLT] = <uintptr_t><PyObject *> non_bonded_list
         
-        return self._component_set
+        return result
     
     def _build_selected_components(self, target_atom_ids):
                 
@@ -2481,12 +2481,12 @@ cdef class Non_bonded_potential(Distance_based_potential):
         
         num_target_atoms = self._non_bonded_list.get_num_target_atoms()
         
-        self._get_components()['OFFS'] = 0
+        self._get_components()[0][OFFS] = 0
         
         if num_target_atoms != len(target_atom_ids):
             active_components  = self._build_active_components_list(target_atom_ids, non_bonded_list)
             if len(active_components) > 0:
-                self._get_components()['OFFS'] = -non_bonded_list[active_components[0]][3]
+                self._get_components()[0][OFFS] = -non_bonded_list[active_components[0]][3]
         else:
             active_components = None
             
@@ -2506,29 +2506,29 @@ cdef class Non_bonded_potential(Distance_based_potential):
     
     def _calc_component_shift(self, index):
          
-        calc = self._get_shift_calculator()
+        cdef Base_shift_calculator calc = self._get_shift_calculator()
             
         components = self._get_components()
          
         target_component_list = self._get_component_list('ATOM')
-        non_bonded_list =  components['NBLT']
+        non_bonded_list =  self._get_component_list('NBLT')
          
         target_atom_ids = [non_bonded_list[index][0],]
         
         active_components = array.array('i',[index,])
-        components['OFFS'] = - non_bonded_list[index][3]
+        components[0][OFFS] = - non_bonded_list[index][3]
         
         component_to_result = array.array('i',[0,])
         
         results = array.array('d',[0.0])
 
-        calc(components,results,component_to_result, active_components=active_components)
+        calc.calc(components,results,component_to_result, active_components)
  
         return results[0]
     
-    def _get_active_components(self):
+    cdef int[:] _get_active_components(self):
         return self._selected_components
-        self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._selected_components)
+        self._force_calculator(components, self._component_to_result, force_factors, forces, self._selected_components)
          
  
 
@@ -2801,6 +2801,7 @@ cdef class Xcamshift_contents:
         if not self._freeze:
             self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
             
+        cdef Base_potential potential
         for potential in self._get_potentials():
             potential.calc_shifts(result)
 

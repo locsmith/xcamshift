@@ -41,6 +41,7 @@ from component_list import  Component_list, Native_component_list
 from ensembleSimulation import EnsembleSimulation as pyEnsembleSimulation
 from libcpp.map cimport map as cmap
 from libc.stdint cimport uintptr_t 
+import sys
 
 cdef int ATOM = 0
 cdef int NATOM = 1
@@ -631,7 +632,7 @@ cdef class Coef_components:
     cdef Component_Offsets* _component_offsets
     cdef int num_ids
     
-    def _bytes_to_components(self, data):
+    cdef _bytes_to_components(self, data):
 
         self._raw_data =  data 
         self._components =  <Coef_component*> <size_t> ctypes.addressof(data)
@@ -778,9 +779,6 @@ cdef float DEFAULT_SMOOTHING_FACTOR = 1.0
 cdef float DEFAULT_NB_CUTOFF = 5.0
     
 cdef class Base_shift_calculator:
-    cdef bint _verbose 
-    cdef str _name
-    cdef EnsembleSimulation* _simulation
 
     def __init__(self, simulation, str name):
             self._verbose = False
@@ -792,13 +790,15 @@ cdef class Base_shift_calculator:
     def set_verbose(self,bint state):
         self._verbose =  state
         
+    cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil:
+        with gil:
+            print >> sys.stderr, "please implement _bytes_to_components, this is a pure virtual function"
+            sys.exit(-1)
     
-    
-    def _set_components(self,components):
-        cdef cmap[int, uintptr_t] *_components = <cmap[int, uintptr_t]*> <size_t> components['NMAP']
+    cdef void _set_components(self, cmap[int, uintptr_t] *components) nogil:
         
-        self._bytes_to_components(_components[0][ATOM], _components[0][NATOM]) 
-        self._simulation = <EnsembleSimulation*><size_t>_components[0][SIMU]
+        self._bytes_to_components(components[0][ATOM], components[0][NATOM]) 
+        self._simulation = <EnsembleSimulation*><size_t>components[0][SIMU]
         
     
     cdef inline int ensemble_size(self) nogil:
@@ -809,7 +809,11 @@ cdef class Base_shift_calculator:
     
     cdef inline int ensemble_array_offset(self,int index) nogil:
         return (self.ensemble_size() * index) + self.ensemble_member_index()
-    
+
+    cdef void calc(Base_shift_calculator self, cmap[int,uintptr_t] *components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components) nogil:
+        with gil:
+            print >> sys.stderr, "please implement calc, this is a pure virtual function"
+            sys.exit(-1)
         
 cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):           
     
@@ -827,36 +831,19 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
 
 #    
 #    TODO: this needs to be removed
-    def _bytes_to_components(self, data, length):
+    cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil:
 
-        self._raw_data =  data 
         self._compiled_components =  <Random_coil_component*> <size_t> data
         self._num_components =  length
 
     
-    @cython.profile(False)
-    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components):
-
-        cdef double start_time = 0.0
-        cdef double end_time = 0.0
 
 
-        if self._verbose:
-            start_time=time()
-        
-        self._set_components(components)
-        self.calc(shift_cache, component_to_target,  active_components)
-        
-        if self._verbose:
-            end_time = time()
-            print '   distance shift components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
-
-
-    cdef void calc(self, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components) nogil:
+    cdef void calc(self, cmap[int,uintptr_t] *components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components) nogil:
         
         cdef CDSVector[double]  *results = shift_cache.get_data()
 
-
+        self._set_components(components)
  
         cdef int factor_index = 0
         cdef int component_index
@@ -907,9 +894,8 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 #        self._smoothing_factor = smoothing_factor
 #    
 #    TODO: this needs to be removed
-    def _bytes_to_components(self, data, length):
+    cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil:
 
-        self._raw_data =  data 
         self._compiled_components =  <Distance_component*> <size_t> data
         self._num_components =  length
             
@@ -935,22 +921,10 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
 
         return result
     
-    @cython.profile(False)
-    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components):
-        cdef double start_time = 0.0
-        cdef double end_time = 0.0
-        
-        if self._verbose:
-            start_time=time()
-            
+
+    cdef void calc(self, cmap[int,uintptr_t] *components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components) nogil:
         self._set_components(components)
-        self.calc(shift_cache, component_to_target, active_components)
-
-        if self._verbose:
-            end_time = time()
-            print '   distance shift components ' ,self._name,len(components), 'in', "%.17g" % (end_time-start_time), "seconds"
-
-    cdef void calc(self, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components) nogil:
+        
         cdef CDSVector[double]  *results = shift_cache.get_data()
 
 
@@ -1016,9 +990,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         Base_shift_calculator.__init__(self, simulation, name)
         
         
-    def  _bytes_to_components(self, data, length):
-        self._raw_data =  data 
-        
+    cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil:
         self._compiled_components =  <Dihedral_component*> <size_t> data
         self._num_components =  length
     
@@ -1056,26 +1028,9 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     cdef inline float _get_coefficient(self, int index) nogil:
         return self._compiled_components[index].coefficient
     
-    @cython.profile(True)
-    #TODO: architecture different from force calculator no base function/class
-    #TODO: still uses component to result...
-    #TODO: add common force and shift base class
-    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
-
-        cdef double start_time = 0.0 
-        cdef double end_time = 0.0
-        if self._verbose:
-            start_time = time()
-
-        self._set_components(components)
-        self.call(shift_cache, component_to_target, active_components)
-            
-        if self._verbose:
-            end_time = time()
-            print '   dihedral shift components ',len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
 
         
-    cdef void call(self, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components) nogil:    
+    cdef void calc(self, cmap[int,uintptr_t] *components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components) nogil:
         cdef CDSVector[double]  *results = shift_cache.get_data()
     
 
@@ -1089,6 +1044,8 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
         cdef int factor_index 
         cdef int component_index
         cdef int offset
+        
+        self._set_components(components)
             
         for factor_index in range(active_components.shape[0]):
             component_index = active_components[factor_index] 
@@ -1143,8 +1100,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     def __init__(self, simulation, str name = "not set"):
         Base_shift_calculator.__init__(self,simulation, name)
 
-    def _bytes_to_components(self, data, length):
-        self.raw_data =  data 
+    cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil:
         self._compiled_components =  <Ring_target_component*> <size_t> data
         self._num_components =  length
 
@@ -1208,23 +1164,8 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
          
         return contrib * coefficient
 
-    @cython.profile(True)
-    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
-        cdef double start_time = 0.0 
-        cdef double end_time =0.0
-        
-        if self._verbose:
-            start_time = time()
-        
-        self._set_components(components)
-        self.calc(shift_cache, component_to_target, active_components)
-
-        if self._verbose:
-            end_time = time()
-            print '   ring shift components ' ,self._name,len(components), 'in', "%.17g" %  (end_time-start_time), "seconds"
-
-        
-    cdef void calc (self, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components) nogil: 
+#         
+    cdef void calc (self, cmap[int,uintptr_t] *components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components) nogil: 
         cdef CDSVector[double]  *results = shift_cache.get_data()
         cdef int target_atom_id
         cdef int atom_type_id
@@ -1233,14 +1174,11 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         cdef Component_Offsets* coeff_offset
         cdef Coef_component* coef_component
         
-
-        
-        
-
-        
         cdef int factor_index
         cdef int component_index
         cdef int offset
+        
+        self._set_components(components)
         
         for factor_index in range(active_components.shape[0]):
             component_index = active_components[factor_index] 
@@ -1712,11 +1650,6 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator_base):
     
 cdef class Base_force_calculator:
     
-    cdef bint _verbose 
-    cdef Simulation* _simulation
-    cdef str _name
-    cdef int[:] _active_components
-    
     def __init__(self,potential=None, name= "not set"):
         self._verbose = False
 
@@ -1727,23 +1660,21 @@ cdef class Base_force_calculator:
     def set_verbose(self,on):
         self._verbose = on
     
-    
+    cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil:
+        with gil:
+            print >> sys.stderr, "please implement _bytes_to_components, this is a pure virtual function"
+            sys.exit(-1)
 
-    def _set_components(self,components):
+    cdef void _set_components(self, cmap[int, uintptr_t] *components) nogil:
         
-        cdef cmap[int, uintptr_t] *_components = <cmap[int, uintptr_t]*> <size_t> components['NMAP']
-        self._bytes_to_components(_components[0][ATOM], _components[0][NATOM]) 
-        self._simulation = <EnsembleSimulation*><size_t>_components[0][SIMU]
+        self._bytes_to_components(components[0][ATOM], components[0][NATOM]) 
+        self._simulation = <EnsembleSimulation*><size_t>components[0][SIMU]
         
         
 #    TODO should most probably be a fixed array
     @cython.profile(True)
-    def __call__(self, object components, int[:] component_to_result, float[:] force_factors, Out_array forces, int[:] active_components=None):
+    cdef void calc(self, cmap[int,uintptr_t] *components, int[:] component_to_result, float[:] force_factors, Out_array forces, int[:] active_components=None) nogil:
 
-        cdef double start_time =0.0
-        cdef double end_time =0.0
-        if self._verbose:
-            start_time = time()
 
         self._set_components(components)
 #        TODO rename component to result to something better
@@ -1760,12 +1691,10 @@ cdef class Base_force_calculator:
 #                    index_range = []
 #                for index in range(*index_range):
                     
-        if self._verbose:
-            end_time = time()
-            print '   force calculator: ', self._name ,' ',len(components), ' in', "%.17g" %  (end_time-start_time), "seconds"
 
-    cdef void _do_calc_components(self, int[:] component_to_result,  float[:] force_factors, Out_array force):
-        raise Exception("this should not be called!")
+    cdef void _do_calc_components(self, int[:] component_to_result,  float[:] force_factors, Out_array force) nogil:
+        with gil:
+            raise Exception("this should not be called!")
     
 
 
@@ -1804,10 +1733,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         
         
     
-
-    def _bytes_to_components(self, data, length):
-
-        self.raw_data =  data 
+    cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil:
         self._compiled_components =  <Distance_component*> <size_t> data
         self._num_components =  length
                 
@@ -1856,13 +1782,14 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     def _calc_single_force_factor(self, int index, float factor):
         return self._cython_calc_single_force_factor(index, factor)
     
-    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
+    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force) nogil:
         cdef int factor_index 
         cdef int component_index
         
-        for factor_index in range(len(self._active_components)):
-            component_index = self._active_components[factor_index] 
-            self._distance_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
+        with gil:
+            for factor_index in range(len(self._active_components)):
+                component_index = self._active_components[factor_index] 
+                self._distance_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
 
 #         for i in range(self._num_components):
 #             self._distance_calc_single_force_set(i,force_factors[component_to_result[i]],force)
@@ -1974,33 +1901,32 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         self._verbose = on
     
     #TODO: use global version
-    def _bytes_to_components(self,data, length):
-        self._raw_target_data =  data 
+    cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil:
         
         self._compiled_target_components =  <Non_bonded_target_component*> <size_t> data
         self._num_target_components =  length
 
     #TODO: use global version
-    cdef _bytes_to_remote_components(self,data,length):
+    cdef void _bytes_to_remote_components(self, uintptr_t data, uintptr_t length) nogil:
         self._compiled_remote_components =  <Non_bonded_remote_atom_component*> <size_t> data
         self._num_remote_components =  length
 
-    cdef _bytes_to_nonbonded_coefficient_components(self,data,length):
+    cdef void _bytes_to_nonbonded_coefficient_components(self, uintptr_t data, uintptr_t length) nogil:
         self._compiled_coefficient_components =  <Nonbonded_coefficient_component*> <size_t> data
         self._num_coefficient_components =  length
         
     #TODO: call super?
-    def _set_components(self, components):
+    cdef void _set_components(self, cmap[int, uintptr_t] *components) nogil:
         Fast_distance_based_potential_force_calculator._set_components(self,components)
-        cdef cmap[int, uintptr_t] *_components = <cmap[int, uintptr_t]*> <size_t> components['NMAP']
         
-        self._non_bonded_list =  <Non_bonded_interaction_list>_components[0][NBLT]
-        self._bytes_to_remote_components(_components[0][NBRM], _components[0][NNBRM])
-        self._bytes_to_nonbonded_coefficient_components(_components[0][COEF],_components[0][NCOEF])
+        with gil:
+            self._non_bonded_list =  <Non_bonded_interaction_list>components[0][NBLT]
+        self._bytes_to_remote_components(components[0][NBRM], components[0][NNBRM])
+        self._bytes_to_nonbonded_coefficient_components(components[0][COEF],components[0][NCOEF])
         
-        if 'ACTI' in components:
-            self._active_components = components['ACTI']
-        self._component_offset = _components[0][OFFS]
+#         if 'ACTI' in components:
+#             self._active_components = components['ACTI']
+        self._component_offset = components[0][OFFS]
         
     cdef inline void _set_the_component(self, int target_atom_index,int remote_atom_index, float coefficient,float exponent):
         self._compiled_components[0].target_atom =target_atom_index
@@ -2011,19 +1937,19 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
             
         
         
-    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
-
+    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force) nogil:
 
         cdef int factor_index
-        
-        if self._active_components ==  None:
-            for factor_index  in range(self._non_bonded_list.get_length()):
-                non_bonded_index  = factor_index
-                self._calc_one_component(factor_index, non_bonded_index, component_to_result, force_factors, force)
-        else:
-            for factor_index  in range(self._active_components.shape[0]):
-                non_bonded_index = self._active_components[factor_index]
-                self._calc_one_component(factor_index, non_bonded_index, component_to_result, force_factors, force)
+        with gil:
+            
+            if self._active_components ==  None:
+                for factor_index  in range(self._non_bonded_list.get_length()):
+                    non_bonded_index  = factor_index
+                    self._calc_one_component(factor_index, non_bonded_index, component_to_result, force_factors, force)
+            else:
+                for factor_index  in range(self._active_components.shape[0]):
+                    non_bonded_index = self._active_components[factor_index]
+                    self._calc_one_component(factor_index, non_bonded_index, component_to_result, force_factors, force)
             
     cdef void _calc_one_component(self, int factor_index, int non_bonded_index, int[:] component_to_result, float[:] force_factors, Out_array force):
         cdef double start_time = 0.0
@@ -2108,8 +2034,7 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     cdef int _num_components 
     cdef object raw_data
     
-    def _bytes_to_components(self, data, length):
-        self.raw_data =  data 
+    cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil:
         
         self._compiled_components =  <Dihedral_component*> <size_t> data
         self._num_components =  length
@@ -2162,14 +2087,15 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     def _calc_single_force_factor(self, int index):
         return self._cython_calc_single_force_factor(index)
 
-    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
+    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force) nogil:
         cdef int factor_index 
         cdef int component_index
         
-        for factor_index in range(len(self._active_components)):
-            component_index = self._active_components[factor_index] 
-            self._dihedral_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
-            
+        with gil:
+            for factor_index in range(len(self._active_components)):
+                component_index = self._active_components[factor_index] 
+                self._dihedral_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
+                
             
 
     cdef inline float _cython_calc_single_force_factor(self, int index):
@@ -2341,8 +2267,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     def __init__(self,name="not set"):
         super(Fast_ring_force_calculator, self).__init__(name=name)
         
-    def _bytes_to_components(self, data, length):
-        self.raw_data =  data 
+    cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil:
         self._compiled_components =  <Ring_target_component*> <size_t> data
         self._num_components =  length
 
@@ -2387,13 +2312,13 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 #        return result#
     
     
-    cdef inline void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force):
+    cdef inline void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force) nogil:
         cdef int factor_index 
         cdef int component_index
-        
-        for factor_index in range(len(self._active_components)):
-            component_index = self._active_components[factor_index] 
-            self._ring_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
+        with gil:
+            for factor_index in range(len(self._active_components)):
+                component_index = self._active_components[factor_index] 
+                self._ring_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
             
     cdef inline void _ring_calc_single_force_set(self,  int index, float force_factor, Out_array forces): 
         cdef int atom_type_id  = self._compiled_components[index].atom_type_id
@@ -2663,50 +2588,36 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._verbose = on
     
     #TODO: use global version
-    def _bytes_to_components(self,data,length):
+    cdef void _bytes_to_components(self,uintptr_t data, uintptr_t length) nogil:
         self._compiled_target_components =  <Non_bonded_target_component*> <size_t> data
         self._num_target_components =  length
 
     #TODO: use global version
-    cdef _bytes_to_remote_components(self,data,length):
+    cdef void _bytes_to_remote_components(self, uintptr_t data, uintptr_t length) nogil:
         self._compiled_remote_components =  <Non_bonded_remote_atom_component*> <size_t> data
         self._num_remote_components =  length
 
-    cdef _bytes_to_nonbonded_coefficient_components(self,data,length):
+    cdef void _bytes_to_nonbonded_coefficient_components(self, uintptr_t data, uintptr_t length) nogil:
         self._compiled_coefficient_components =  <Nonbonded_coefficient_component*> <size_t> data
         self._num_coefficient_components =  length
         
-    def _set_components(self, components):
+    cdef void _set_components(self, cmap[int, uintptr_t] *components) nogil:
         Fast_distance_shift_calculator._set_components(self,components)
-        cdef cmap[int, uintptr_t] *_components = <cmap[int, uintptr_t]*> <size_t> components['NMAP']
-        self._non_bonded_list =  <Non_bonded_interaction_list>_components[0][NBLT]
+        with gil:
+            self._non_bonded_list =  <Non_bonded_interaction_list>components[0][NBLT]
         
-        self._bytes_to_remote_components(_components[0][NBRM], _components[0][NNBRM])
-        self._bytes_to_nonbonded_coefficient_components(_components[0][COEF],_components[0][NCOEF])
+        self._bytes_to_remote_components(components[0][NBRM], components[0][NNBRM])
+        self._bytes_to_nonbonded_coefficient_components(components[0][COEF],components[0][NCOEF])
         
-        self._component_offset = _components[0][OFFS]
+        self._component_offset = components[0][OFFS]
 
         
         
-    @cython.profile(True)
-    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
-        
-        cdef double start_time
-        cdef double end_time
-        
-        if self._verbose:
-            start_time = time()
 
+    cdef void calc(self, cmap[int,uintptr_t] *components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components) nogil:
+        
         self._set_components(components)
         
-        self.calc(shift_cache, component_to_target, active_components)
-        
-        if self._verbose:
-            end_time = time()
-            print '   distance shift components ' ,self._name,len(self._non_bonded_list), 'in', "%.17g" % (end_time-start_time), "seconds"
-
-    cdef void calc(self,CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components) nogil:
-    
         cdef CDSVector[double]  *results = shift_cache.get_data()
         cdef int non_bonded_index
          
