@@ -658,11 +658,20 @@ cdef class Base_potential(object):
         
         return result
 
-    def _add_native_component_to_call_list(self, id):
-        component_list = self._get_component_list(id)
-        self._components[id] = <uintptr_t>ctypes.addressof(component_list.get_native_components())
-        self._components[id+1] = len(component_list)
-             
+    cdef void _add_native_component_to_call_list(self, int id) nogil:
+        cdef uintptr_t component_address
+        cdef int number_components
+        if self._components.count(id) == 0:
+            with gil:
+                component_list = self._get_component_list(id)
+                component_address = <uintptr_t>ctypes.addressof(component_list.get_native_components())
+                number_components = len(component_list)
+            
+            self._components[id] = component_address
+            self._components[id+1] = number_components
+
+            
+        
     cdef cmap[int, uintptr_t] *_get_components(self):
         cdef cmap[int, uintptr_t] * result 
         self._add_native_component_to_call_list(ATOM_ID)
