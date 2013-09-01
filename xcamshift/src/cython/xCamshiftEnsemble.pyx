@@ -20,12 +20,13 @@ Created on 27 Dec 2011
 cdef extern from "instantiate.hh":
     pass
 
+from traceback import print_exception
 from abc import abstractmethod, ABCMeta
 from atomSel import AtomSel, intersection
 from common_constants import BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, \
     RING, NON_BONDED, DISULPHIDE, TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, \
     STRUCTURE_CHANGED, SHIFT_DATA_CHANGED
-from component_list import Component_list, Native_component_list
+from component_list cimport Component_list, Native_component_list
 from fast_segment_manager cimport Segment_Manager
 from cython.pyEnsemblePot import PyEnsemblePot
 from cython.shift_calculators import Fast_distance_shift_calculator, \
@@ -34,9 +35,9 @@ from cython.shift_calculators import Fast_distance_shift_calculator, \
     Fast_distance_based_potential_force_calculator, Fast_dihedral_force_calculator, \
     Fast_ring_force_calculator, Vec3_list, \
     allocate_array, zero_array, resize_array, Fast_non_bonded_shift_calculator, \
-    Fast_non_bonded_force_calculator, Non_bonded_interaction_list, \
+    Fast_non_bonded_force_calculator, \
     Fast_random_coil_shift_calculator
-from shift_calculators cimport Fast_force_factor_calculator, Fast_energy_calculator, CDSSharedVectorFloat, Fast_energy_calculator_base, Out_array, Base_shift_calculator, Base_force_calculator
+from shift_calculators cimport Fast_force_factor_calculator, Fast_energy_calculator, CDSSharedVectorFloat, Fast_energy_calculator_base, Out_array, Base_shift_calculator, Base_force_calculator,  Non_bonded_interaction_list
 from shift_calculators cimport ATOM,NATOM,SIMU,NBRM,NNBRM,COEF,NCOEF,NBLT,NNBLT,OFFS
 from dihedral import Dihedral
 from keys import Atom_key, Dihedral_key
@@ -773,7 +774,7 @@ cdef class Base_potential(object):
         self._active_components = None
 
 #    TODO put 'ATOM' in a constant and rename to BB_ATOM?
-    def _get_component_list(self,name=None):
+    cdef Native_component_list _get_component_list(self,name=None):
         if name == None:
             name  = self._get_target_atom_list_name()
         if not name in self._component_list_data:
@@ -921,12 +922,10 @@ cdef class Distance_based_potential(Base_potential):
                                                 distance_atom_index_2=1,coefficent_index=2,
                                                 exponent_index=3)
     
-#    @abstractmethod
-    def _get_distance_list_name(self):
-        return 'ATOM'
+
 
     def _get_target_and_distant_atom_ids(self, index):
-        list_name = self._get_distance_list_name()
+        list_name = 'ATOM'
         values  = self._get_component(index,list_name)
         
         indices = self._get_indices()
@@ -937,14 +936,12 @@ cdef class Distance_based_potential(Base_potential):
         return target_atom, distance_atom
 
     def _get_distance_components(self):
-        list_name  = self._get_distance_list_name()
-        return self._get_component_list(list_name)
+        return self._get_component_list('ATOM')
         
+    def _get_coefficient_and_exponent(self, index):        
+        list_name  = self._get_distance_list_name('ATOM')
         
-    def _get_coefficient_and_exponent(self, index):
-        list_name  = self._get_distance_list_name()
-        
-        values = self._get_component(index,list_name)
+        values = self._get_component(index,'ATOM')
         
         indices = self._get_indices()
         
@@ -1908,7 +1905,7 @@ class Non_bonded_list(object):
         if self._verbose:
              print "  BOX COUNT UPDATED TO: ", self._box_update_count
         
-    def get_boxes(self,component_list_1, component_list_2,target_component_list,coefficient_list):
+    def get_boxes(self, Native_component_list component_list_1, Native_component_list component_list_2,target_component_list,coefficient_list):
 #        print self._box_update_count, se        if self._verbose:
         updated = False
         if self._verbose:
@@ -2200,6 +2197,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
     
     cdef object  _non_bonded_list 
     cdef object _selected_components
+    cdef object _non_bonded_interaction_list
     
     def __init__(self,simulation,smoothed=True):
         super(Non_bonded_potential, self).__init__(simulation,smoothed=smoothed)
@@ -2207,9 +2205,10 @@ cdef class Non_bonded_potential(Distance_based_potential):
         self._add_component_factory(Non_bonded_backbone_component_factory())
         self._add_component_factory(Non_bonded_remote_component_factory())
         self._add_component_factory(Non_bonded_coefficient_factory())
-        self._add_component_factory(Null_component_factory('NBLT'))
         
         self._non_bonded_list = Non_bonded_list(self._simulation)
+        self._non_bonded_interaction_list = Non_bonded_interaction_list()
+        
         self._component_set = None
         self._selected_components =  None
     
@@ -2239,11 +2238,12 @@ cdef class Non_bonded_potential(Distance_based_potential):
     def _get_target_atom_list_name(self):
         return 'ATOM'
     
-    def _get_distance_list_name(self):
-        return 'NBLT'
-
+    
+    cdef Non_bonded_interaction_list _get_non_bonded_interaction_list(self):
+        return self._non_bonded_interaction_list
+    
     def _get_non_bonded_list(self):
-        non_bonded_list = self._get_component_list('NBLT')
+        non_bonded_list = self._get_non_bonded_interaction_list()
         
         target_atom_list = self._get_component_list('ATOM')
         
@@ -2396,7 +2396,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
             result.append(self._non_bonded_list.__str__())
             result.append('')
             
-            non_bonded_list = self._get_component_list('NBLT')
+            non_bonded_list = self._get_non_bonded_interaction_list()
             result.append('distances (%i)' %  (len(non_bonded_list)/2))
             result.append('')
             
@@ -2420,9 +2420,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
         return '\n'.join(result)
 
     def _create_component_list(self, name):
-        if name  == 'NBLT':
-            return Non_bonded_interaction_list()
-        elif name == "ATOM":
+        if name == "ATOM":
             return Native_component_list(format='ii')
         elif name == 'NBRM':
             return Native_component_list(format='iii')
@@ -2468,7 +2466,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
         self._add_native_component_to_call_list(NBRM,'NBRM')
         self._add_native_component_to_call_list(COEF,'COEF')
         
-        non_bonded_list = self._get_component_list('NBLT')
+        non_bonded_list = self._get_non_bonded_interaction_list()
         self._components[NBLT] = <uintptr_t><PyObject *> non_bonded_list
         
         return result
@@ -2476,7 +2474,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
     def _build_selected_components(self, target_atom_ids):
                 
         target_component_list = self._get_component_list('ATOM')
-        non_bonded_list =  self._get_component_list('NBLT')
+        non_bonded_list =  self._get_non_bonded_interaction_list()
 
         
         num_target_atoms = self._non_bonded_list.get_num_target_atoms()
@@ -2495,7 +2493,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
     #TODO: this is no longer as canonical as the other versions 
     # NB calculator doesn't have a 1:1 correspondence between nb lists elememnts and distance components....
     def _calc_single_atom_shift(self, target_atom_id):
-        components =  self._get_component_list('NBLT')
+        components =  self._get_non_bonded_interaction_list()
         
         result = 0.0
         for i,component in enumerate(components):
@@ -2511,7 +2509,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
         components = self._get_components()
          
         target_component_list = self._get_component_list('ATOM')
-        non_bonded_list =  self._get_component_list('NBLT')
+        non_bonded_list =  self._get_non_bonded_interaction_list()
          
         target_atom_ids = [non_bonded_list[index][0],]
         
@@ -2631,7 +2629,7 @@ cdef class Xcamshift_contents:
         self._energy_calculator.set_verbose(on)
         self._verbose=on
     
-    def _get_energy_term_cache(self):
+    cdef Native_component_list  _get_energy_term_cache(self):
         if self._energy_term_cache == None:
             self._energy_term_cache = self._create_energy_term_cache()
         return self._energy_term_cache

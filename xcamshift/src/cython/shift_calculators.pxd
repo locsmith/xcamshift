@@ -97,3 +97,21 @@ cdef class Base_force_calculator:
     cdef void _set_components(self, cmap[int, uintptr_t] *components) nogil
     cdef void calc(self, cmap[int,uintptr_t] *components, int[:] component_to_result, float[:] force_factors, Out_array forces, int[:] active_components=?) nogil
     cdef void _do_calc_components(self, int[:] component_to_result,  float[:] force_factors, Out_array force) nogil
+
+cdef struct Component_index_pair:
+    int target_atom_id
+    int target_index
+    int remote_index
+    int component_index
+    
+cdef  class Non_bonded_interaction_list:
+    cdef CDSVector[int]  *data
+    cdef int length
+    cdef int size_increment
+    cdef int RECORD_LENGTH 
+ 
+    cdef inline void append(self, int target_atom_id, int target_id, int remote_id, int component_index)
+    cdef inline void resize(self)   
+    cdef inline Component_index_pair* get(self,int offset) nogil     
+    cdef int get_length(self) nogil
+

@@ -20,7 +20,7 @@ import ctypes
 from copy import copy
 import array
 
-class Component_list(object):
+cdef class Component_list(object):
     def __init__(self):
         self._components = []
         self._component_offsets = None
@@ -137,7 +137,7 @@ class Component_list(object):
         return array.array('i',result)
                             
 
-class Native_component_list(Component_list):
+cdef class Native_component_list(Component_list):
     def __init__(self, format, translator = lambda x : x, preparer = lambda x : x):
         super(Native_component_list, self).__init__()
         #TODO remove and simplifiy!
@@ -195,7 +195,7 @@ class Native_component_list(Component_list):
         
         return bytes
 
-    def get_native_components(self):
+    cdef get_native_components(self):
         if self._native_components == None:
             self._native_components = self._build_native_components()
         bytes = self._native_components 

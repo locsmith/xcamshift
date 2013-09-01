@@ -108,11 +108,6 @@ cdef struct Non_bonded_remote_atom_component:
       int remote_atom_id
       int chem_type[2] # one for each sphere
       
-cdef struct Component_index_pair:
-    int target_atom_id
-    int target_index
-    int remote_index
-    int component_index
 
 
     
@@ -199,10 +194,6 @@ cdef class CDSSharedVectorFloat:
         return self.data[0].size()
     
 cdef  class Non_bonded_interaction_list:
-    cdef CDSVector[int]  *data
-    cdef int length
-    cdef int size_increment
-    cdef int RECORD_LENGTH 
  
     def __cinit__(self, int length=0, double fill_factor=1.0):
         self.data = new CDSVector[int]() 
