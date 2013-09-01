@@ -60,6 +60,11 @@ import ctypes
 
 from cpython cimport PyObject
 
+cdef int ATOM_ID = 0
+cdef int NBRM_ID = 3
+cdef int COEF_ID = 5
+cdef int RING_ID = 10
+
 cdef CDSVector[int] int_memory_view_as_cds_vector(int[:] data):
     cdef CDSVector[int] result
     result.resize(data.shape[0])
@@ -155,7 +160,7 @@ class Atom_component_factory(Component_factory):
                         component_list.add_component(value)
 
     def get_table_name(self):
-        return 'ATOM'
+        return ATOM_ID
 
 class DihedralContext(object):
     
@@ -204,7 +209,7 @@ class DihedralContext(object):
 class Dihedral_component_factory(Atom_component_factory):
 
     def get_table_name(self):
-        return 'ATOM'
+        return ATOM_ID
     
     def _translate_atom_name_to_table(self, residue_type, atom_name,table):
         
@@ -347,7 +352,7 @@ class Distance_component_factory(Atom_component_factory):
 
     
     def get_table_name(self):
-        return 'ATOM'
+        return ATOM_ID
     
 #TODO: check if previous residue offsets are included
 class Random_coil_context :
@@ -414,7 +419,7 @@ class Random_coil_component_factory(Atom_component_factory):
         return contexts
 
     def get_table_name(self):
-        return 'ATOM'
+        return ATOM_ID
     
 class ExtraContext(object):
 
@@ -497,7 +502,7 @@ class Extra_component_factory(Atom_component_factory):
         return result
     
     def get_table_name(self):
-        return 'ATOM'
+        return ATOM_ID
     
 class Sidechain_context():
     
@@ -571,7 +576,7 @@ class Sidechain_component_factory(Atom_component_factory):
         return result
     
     def get_table_name(self):
-        return 'ATOM'
+        return ATOM_ID
     
 
         
@@ -653,14 +658,14 @@ cdef class Base_potential(object):
         
         return result
 
-    def _add_native_component_to_call_list(self, id, component_list_id):
-        component_list = self._get_component_list(component_list_id)
+    def _add_native_component_to_call_list(self, id):
+        component_list = self._get_component_list(id)
         self._components[id] = <uintptr_t>ctypes.addressof(component_list.get_native_components())
         self._components[id+1] = len(component_list)
              
     cdef cmap[int, uintptr_t] *_get_components(self):
         cdef cmap[int, uintptr_t] * result 
-        self._add_native_component_to_call_list(ATOM,'ATOM')
+        self._add_native_component_to_call_list(ATOM_ID)
         self._components[SIMU] = <uintptr_t>int(self._simulation.this)
         
         result = &self._components
@@ -783,7 +788,7 @@ cdef class Base_potential(object):
         return self._component_list_data[name]
     
     def _get_target_atom_list_name(self):
-        return 'ATOM'
+        return ATOM_ID
     
     # TODO: make these internal
     def _get_component(self, index, name=None):
@@ -800,7 +805,7 @@ cdef class Base_potential(object):
         components =  self._get_component_list(name)
         return components.get_all_components()
     
-    def _get_number_components(self,name='ATOM'):
+    def _get_number_components(self,name=ATOM_ID):
         components = self._get_component_list(name)
         
         return components.get_number_components()
@@ -925,8 +930,7 @@ cdef class Distance_based_potential(Base_potential):
 
 
     def _get_target_and_distant_atom_ids(self, index):
-        list_name = 'ATOM'
-        values  = self._get_component(index,list_name)
+        values  = self._get_component(index,ATOM_ID)
         
         indices = self._get_indices()
         distance_atom_index_1 = indices.distance_atom_index_1
@@ -936,12 +940,12 @@ cdef class Distance_based_potential(Base_potential):
         return target_atom, distance_atom
 
     def _get_distance_components(self):
-        return self._get_component_list('ATOM')
+        return self._get_component_list(ATOM_ID)
         
     def _get_coefficient_and_exponent(self, index):        
-        list_name  = self._get_distance_list_name('ATOM')
+        list_name  = self._get_distance_list_name(ATOM_ID)
         
-        values = self._get_component(index,'ATOM')
+        values = self._get_component(index,ATOM_ID)
         
         indices = self._get_indices()
         
@@ -957,7 +961,7 @@ cdef class Distance_based_potential(Base_potential):
     def _create_component_list(self, name):
 
             
-        if name == 'ATOM':
+        if name == ATOM_ID:
             class Index_translator(object):
                 def __init__(self, indices):
                     self._indices=indices
@@ -1140,7 +1144,7 @@ cdef class RandomCoilShifts(Base_potential):
         return '\n'.join(result)
     
     def _create_component_list(self, name):
-        if name == 'ATOM':
+        if name == ATOM_ID:
             return Native_component_list(format='if')
     
     def _get_shift_calculator(self):
@@ -1172,7 +1176,7 @@ cdef class Disulphide_shift_calculator(Base_potential):
 
     
     def _create_component_list(self, name):
-        if name == "ATOM":
+        if name == ATOM_ID:
             return Native_component_list(format='if')
         else:
             return Component_list()
@@ -1337,7 +1341,7 @@ cdef class Dihedral_potential(Base_potential):
         return result
 
     def _create_component_list(self, name):
-        if name == 'ATOM':
+        if name == ATOM_ID:
             return Native_component_list(format='iiiiifffffff')
         
 cdef class Sidechain_potential(Distance_based_potential):
@@ -1506,7 +1510,7 @@ class Disulphide_shift_component_factory(Atom_component_factory, Ring_factory_ba
         return contexts
 
     def get_table_name(self):
-        return 'ATOM'
+        return ATOM_ID
 
     
 class Ring_backbone_component_factory (Atom_component_factory, Ring_factory_base):
@@ -1582,7 +1586,7 @@ class Ring_sidechain_atom_factory(Ring_sidechain_component_factory):
         
         
     def get_table_name(self):
-        return 'RING'
+        return RING_ID
 
     #TODO: hang everything off ring_id?
     def create_ring_components(self, component_list,table, segment, residue_number, ring_id):
@@ -1615,7 +1619,7 @@ class Ring_coefficient_component_factory(Ring_sidechain_component_factory,Backbo
         self._seen_tables  = set()
         
     def get_table_name(self):
-        return 'COEF'
+        return COEF_ID
 
     def create_ring_components(self, component_list, table, segment, residue_number, ring_id):
         residue_type = Atom_utils._get_residue_type(segment, residue_number)
@@ -1709,8 +1713,8 @@ cdef class Ring_Potential(Base_potential):
          
 
     def _setup_ring_calculator(self,calculator):
-        calculator._set_coef_components(self._get_component_list('COEF').get_native_components(), self._get_component_list('COEF').get_native_component_offsets())
-        calculator._set_ring_components(self._get_component_list('RING').get_native_components())
+        calculator._set_coef_components(self._get_component_list(COEF_ID).get_native_components(), self._get_component_list(COEF_ID).get_native_component_offsets())
+        calculator._set_ring_components(self._get_component_list(RING_ID).get_native_components())
         calculator._set_normal_cache(self._get_cache_list('NORM'))
         calculator._set_centre_cache(self._get_cache_list('CENT'))
     
@@ -1737,7 +1741,7 @@ cdef class Ring_Potential(Base_potential):
         return self._table_manager.get_ring_table
     
     def _get_distance_components(self):
-        return self._get_component_list('ATOM')
+        return self._get_component_list(ATOM_ID)
 
 
     
@@ -1758,16 +1762,16 @@ cdef class Ring_Potential(Base_potential):
         
         normals = self._get_cache_list('NORM')
         centres = self._get_cache_list('CENT')
-        rings = self._get_component_list('RING')
+        rings = self._get_component_list(RING_ID)
 
         self._ring_data_calculator(rings, normals, centres)
     
 
 
     def _create_component_list(self, name):
-        if name == 'ATOM':
+        if name == ATOM_ID:
             return Native_component_list(format='ii')
-        elif name == 'RING':
+        elif name == RING_ID:
             def ring_translator(component):
                 result = list()
                 result.append(component[0])
@@ -1778,7 +1782,7 @@ cdef class Ring_Potential(Base_potential):
                 return result
             
             return Native_component_list(format='iiiiiiii', translator=ring_translator)
-        elif name == 'COEF':
+        elif name == COEF_ID:
             return Native_component_list(format='iif')
         else:
             raise Exception('unexpected component %s' % name)
@@ -1856,7 +1860,7 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
         return atom_name
     
     def get_table_name(self):
-        return 'NBRM'
+        return NBRM_ID
     
 
     
@@ -2066,7 +2070,7 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
         return atom_name
     
     def get_table_name(self):
-        return 'COEF'
+        return COEF_ID
 
 
 
@@ -2236,7 +2240,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
         return Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
     
     def _get_target_atom_list_name(self):
-        return 'ATOM'
+        return ATOM_ID
     
     
     cdef Non_bonded_interaction_list _get_non_bonded_interaction_list(self):
@@ -2245,11 +2249,11 @@ cdef class Non_bonded_potential(Distance_based_potential):
     def _get_non_bonded_list(self):
         non_bonded_list = self._get_non_bonded_interaction_list()
         
-        target_atom_list = self._get_component_list('ATOM')
+        target_atom_list = self._get_component_list(ATOM_ID)
         
-        remote_atom_list = self._get_component_list('NBRM')
+        remote_atom_list = self._get_component_list(NBRM_ID)
         
-        coefficient_list  = self._get_component_list('COEF')
+        coefficient_list  = self._get_component_list(COEF_ID)
         updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
         
         return non_bonded_list
@@ -2270,7 +2274,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
     def get_target_atom_ids(self):
         #TODO: this  call is required check why....
         self.update_non_bonded_list(increment=False)
-        components = self._get_component_list('ATOM')
+        components = self._get_component_list(ATOM_ID)
         return components.get_component_atom_ids()
     
     def _reset_non_bonded_list(self, increment=True):
@@ -2297,7 +2301,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
     #TODO complete
     def __str__(self):
         non_bonded_indexer = Chem_type_indexer(Table_manager.get_default_table_manager())
-        atom_list = self._get_component_list('ATOM')
+        atom_list = self._get_component_list(ATOM_ID)
         
         indexer  = Backbone_atom_indexer()
         table_manager = self._table_manager
@@ -2338,7 +2342,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
             all_elem=i_elem + offset_names[atom_type]
             result.append('%-5s [%-4i %2i] : %s - [%-4s,%-2s]' % all_elem)
         
-        non_bonded_remote_list = self._get_component_list('NBRM')
+        non_bonded_remote_list = self._get_component_list(NBRM_ID)
         result.append('')
         result.append('non bonded remote list (%i entries)' % len(non_bonded_remote_list) )
         for remote_elem in non_bonded_remote_list:
@@ -2354,7 +2358,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
             result.append('%s %s %s'  % (sub_result_1,' '.join(sub_result_3),  '.'.join(sub_result_2)))
             
 
-        non_bonded_coefficient_list  = self._get_component_list('COEF')
+        non_bonded_coefficient_list  = self._get_component_list(COEF_ID)
         result.append('')
         result.append('coefficient table (%i entries)' % len(non_bonded_coefficient_list))
         result.append('')
@@ -2420,11 +2424,12 @@ cdef class Non_bonded_potential(Distance_based_potential):
         return '\n'.join(result)
 
     def _create_component_list(self, name):
-        if name == "ATOM":
+        if name == ATOM_ID:
             return Native_component_list(format='ii')
-        elif name == 'NBRM':
+        elif name == NBRM_ID:
             return Native_component_list(format='iii')
-        elif name == 'COEF':
+        elif name == COEF_ID:
+            print 1
             def coef_translator(component):
                 result = list()
                 result.extend(component)
@@ -2463,8 +2468,8 @@ cdef class Non_bonded_potential(Distance_based_potential):
         
         self._components[OFFS] = 0
         
-        self._add_native_component_to_call_list(NBRM,'NBRM')
-        self._add_native_component_to_call_list(COEF,'COEF')
+        self._add_native_component_to_call_list(NBRM_ID)
+        self._add_native_component_to_call_list(COEF_ID)
         
         non_bonded_list = self._get_non_bonded_interaction_list()
         self._components[NBLT] = <uintptr_t><PyObject *> non_bonded_list
@@ -2473,7 +2478,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
     
     def _build_selected_components(self, target_atom_ids):
                 
-        target_component_list = self._get_component_list('ATOM')
+        target_component_list = self._get_component_list(ATOM_ID)
         non_bonded_list =  self._get_non_bonded_interaction_list()
 
         
@@ -2508,7 +2513,7 @@ cdef class Non_bonded_potential(Distance_based_potential):
             
         components = self._get_components()
          
-        target_component_list = self._get_component_list('ATOM')
+        target_component_list = self._get_component_list(ATOM_ID)
         non_bonded_list =  self._get_non_bonded_interaction_list()
          
         target_atom_ids = [non_bonded_list[index][0],]
@@ -2702,11 +2707,11 @@ cdef class Xcamshift_contents:
         result_elements['TOTL'] = total
         residues  = []
         atoms = []
-        result_elements['ATOM'] =  atoms
+        result_elements[ATOM_ID] =  atoms
         result_elements['RESD'] =  residues
         
         keys.insert(0, 'RESD')
-        keys.insert(0,'ATOM')
+        keys.insert(0,ATOM_ID)
         
         for i in range(num_atoms):
             segments,residue,atom = Atom_utils._get_atom_info_from_index(i)
