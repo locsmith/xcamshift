@@ -844,7 +844,8 @@ cdef class Base_potential(object):
             components = self._get_components()
             #TODO: move simulation outr of components and into constructor (for simplicity and symmetry with shift calculators)
             #TODO: do shift calculators use components fully?
-            self._force_calculator.calc(components, self._component_to_result, force_factors, forces, self._get_active_components())
+            with nogil:
+                self._force_calculator.calc(components, self._component_to_result, force_factors, forces, self._get_active_components())
             
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
@@ -874,7 +875,7 @@ cdef class Base_potential(object):
     def _create_component_list(self,name):
         return Component_list()
     
-    cdef int[:] _get_active_components(self):
+    cdef int[:] _get_active_components(self) nogil:
         return self._active_components
     
     #TODO: unify with ring random coil and disuphide shift calculators
@@ -2537,9 +2538,8 @@ cdef class Non_bonded_potential(Distance_based_potential):
  
         return results[0]
     
-    cdef int[:] _get_active_components(self):
+    cdef int[:] _get_active_components(self) nogil:
         return self._selected_components
-        self._force_calculator(components, self._component_to_result, force_factors, forces, self._selected_components)
          
  
 
