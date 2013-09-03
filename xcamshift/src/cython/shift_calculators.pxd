@@ -1,6 +1,7 @@
-from  xplor_access cimport  CDSVector, EnsembleSimulation, Vec3, Simulation
+from  xplor_access cimport  CDSVector, EnsembleSimulation, Vec3, Simulation, DerivList
 from libcpp.map cimport map as cmap
 from libc.stdint cimport uintptr_t
+
 
 cdef int ATOM = 0
 cdef int NATOM = 1
@@ -27,6 +28,8 @@ cdef class Out_array:
     cdef inline bint _check_state(Out_array self)
     cdef void  _clear(Out_array self, int length) nogil
     cdef inline void  add(Out_array self,long offset, Vec3& value)
+    cdef void add_forces_to_result(self, DerivList *result) nogil
+    
 
     
 

@@ -46,7 +46,7 @@ from python_utils import tupleit
 from table_manager import Table_manager
 from time import time
 from utils import Atom_utils, iter_residues_and_segments
-from xplor_access cimport CDSVector
+from xplor_access cimport CDSVector,DerivList
 from libcpp.set cimport set as cset
 from libcpp.vector cimport vector as vector
 from libcpp.map cimport map as cmap
@@ -2688,7 +2688,7 @@ cdef class Xcamshift_contents:
     def update_energy_calculator(self):
         self._update_calculator(self._energy_calculator)
 
-    cdef void update_force_factor_calculator(Xcamshift_contents self):
+    cdef void update_force_factor_calculator(Xcamshift_contents self) nogil:
         self._update_calculator(self._force_factor_calculator)
     
         
@@ -2979,16 +2979,15 @@ cdef class Xcamshift_contents:
         target_atom_ids[0] = target_atom_id
         self._calc_force_set_with_potentials(target_atom_ids, forces, potentials_list)
 
-    cdef void _calc_force_set(self,CDSVector[int] target_atom_ids,forces,potentials=None):
-        if potentials ==  None:
-            potentials =  self._get_potentials()
-        self._calc_force_set_with_potentials(target_atom_ids, forces, potentials)
+    cdef void _calc_force_set(self,CDSVector[int] target_atom_ids,forces) nogil:
+        with gil:
+            self._calc_force_set_with_potentials(target_atom_ids, forces, self._get_potentials())
          
-    def _calc_single_atom_force_set(self, target_atom_id,forces,potentials=None):
+    def _calc_single_atom_force_set(self, target_atom_id,forces):
         cdef CDSVector[int] target_atom_ids 
         target_atom_ids.resize(1)
         target_atom_ids[0] = target_atom_id
-        self._calc_force_set(target_atom_ids, forces, potentials)
+        self._calc_force_set(target_atom_ids, forces)
         
 
     def _get_weight(self, residue_type, atom_name):
@@ -3193,12 +3192,11 @@ cdef class Xcamshift_contents:
         else:
             raise Exception("implement me")
 
-    cdef void  _calc_derivs(self, Py_ssize_t derivs, CDSVector[int] active_target_atom_ids ,potentials=None):
-        
+    cdef void  _calc_derivs(self, Py_ssize_t derivs, CDSVector[int] active_target_atom_ids) nogil:
         self._reset_out_array()
         self.update_force_factor_calculator()
-        self._calc_force_set(active_target_atom_ids, self._out_array, potentials)
-        self._out_array.add_forces_to_result(derivs)
+        self._calc_force_set(active_target_atom_ids, self._out_array)
+        self._out_array.add_forces_to_result(<DerivList*><size_t>derivs)
 
     def calcEnergyAndDerivList(self,derivs):
         if self._verbose:

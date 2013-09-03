@@ -25,12 +25,11 @@ cdef extern from "instantiate.hh":
 
 
 from shift_calculators cimport Fast_energy_calculator, Constant_cache 
-from derivList import DerivList as PyDerivList
 from math import ceil
 cimport cython
 from vec3 import Vec3 as python_vec3
 from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
-from  xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList, clearVector, EnsembleSimulation, createSharedVec 
+from  xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList, clearVector, EnsembleSimulation, createSharedVec
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
@@ -410,52 +409,24 @@ cdef class Out_array:
         
             self._mask[target_id] = 0
             
-    def add_forces_to_result(self, result=None, weight=1.0):
+    cdef void add_forces_to_result(self, DerivList *derivList) nogil:
         cdef long id3
-        cdef DerivList *derivList
         cdef CDSVector[Vec3]* derivs
         cdef Vec3* test
+        cdef float weight =1.0
+        cdef int i
         
-        if isinstance(result,PyDerivList):
-            pointer = int(result.this)
-            derivList = (<DerivList*><size_t>pointer)
-            #TODO: references don't work here lots of problems -> cython mailing list
-            derivs  = &derivList[0][self._simulation]
-            for i in range(self._length): 
-                if self._mask[i] != 0:                  
-                    id3 = i * 3
-                    
-                    derivs[0][i][0]  +=  self._data[id3] * weight
-                    derivs[0][i][1]  +=  self._data[id3+1] *weight 
-                    derivs[0][i][2]  +=  self._data[id3+2] * weight 
 
-
-        elif result == None:
-            if result ==  None:
-                result = [None] * self._length
-            for i in range(self._length):
-                if self._mask[i] != 0:
-                    if result[i] ==  None:
-                        result[i] = [0.0]*3
-                    id3 = i * 3
-                    result[i][0] += self._data[id3] * weight
-                    result[i][1] += self._data[id3+1] *weight
-                    result[i][2] += self._data[id3+2] * weight  
-        else:
-            # raw pointer
-            pointer = int(result)
-            derivList = (<DerivList*><size_t>pointer)
-            #TODO: references don't work here lots of problems -> cython mailing list
-            derivs  = &derivList[0][self._simulation] 
-            for i in range(self._length): 
-                if self._mask[i] != 0:                  
-                    id3 = i * 3
-                    
-                    derivs[0][i][0]  +=  self._data[id3] * weight
-                    derivs[0][i][1]  +=  self._data[id3+1] *weight 
-                    derivs[0][i][2]  +=  self._data[id3+2] * weight             
+        #TODO: references don't work here lots of problems -> cython mailing list
+        derivs  = &derivList[0][self._simulation] 
+        for i in range(self._length): 
+            if self._mask[i] != 0:                  
+                id3 = i * 3
                 
-        return result
+                derivs[0][i][0]  +=  self._data[id3] * weight
+                derivs[0][i][1]  +=  self._data[id3+1] *weight 
+                derivs[0][i][2]  +=  self._data[id3+2] * weight             
+            
     
     def add_forces_to_result_by_id(self, list target_atom_ids, list result=None):
         if result ==  None:
