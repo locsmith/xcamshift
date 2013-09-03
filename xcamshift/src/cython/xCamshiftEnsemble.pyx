@@ -612,7 +612,7 @@ cdef class Base_potential(object):
     cdef object  _component_list_data
     cdef object  _component_factories
     cdef object  _cache_list_data
-    cdef object  _freeze
+    cdef bint  _freeze
     cdef object  _simulation
     cdef Base_shift_calculator _shift_calculator
     cdef Base_force_calculator _force_calculator
@@ -904,7 +904,7 @@ cdef class Base_potential(object):
         return self._active_components
     
     #TODO: unify with ring random coil and disuphide shift calculators
-    cdef calc_shifts(self, CDSSharedVectorFloat results):
+    cdef void calc_shifts(self, CDSSharedVectorFloat results) nogil:
         cdef cmap[int,uintptr_t] *components = self._get_components()
         self._shift_calculator.calc(components,results, self._component_to_result, self._get_active_components())
             
@@ -2612,7 +2612,7 @@ cdef class Xcamshift_contents:
     cdef Fast_force_factor_calculator _force_factor_calculator 
 
         #self.set_verbose(verbose)
-    cdef object _freeze
+    cdef bint _freeze
     cdef CDSVector[int] *_active_target_atom_ids
     cdef CDSVector[float] *_observed_shift_cache
     cdef CDSVector[float] _factors
@@ -2788,18 +2788,20 @@ cdef class Xcamshift_contents:
         return result
 
 
-    def _calc_shift_cache(self,target_atom_ids, shift_cache):
+    cdef void _calc_shift_cache(self, CDSVector[int] *target_atom_ids, CDSSharedVectorFloat shift_cache) nogil:
         if self._verbose:
-            start_time =  time()
+            with gil:
+                start_time =  time()
             
         
         shift_cache.clear()
         self._calc_shifts(target_atom_ids, shift_cache)
         
         if self._verbose:
-            end_time = time()
+            with gil:
+                end_time = time()
             
-            print "shifts completed in ", "%.17g " %  (end_time-start_time),"seconds"
+                print "shifts completed in ", "%.17g " %  (end_time-start_time),"seconds"
 
     def target_atom_ids_as_selection_strings(self, target_atom_ids):
         result  = []
@@ -2807,9 +2809,9 @@ cdef class Xcamshift_contents:
             result.append(Atom_utils._get_atom_info_from_index(target_atom_id))
         return tuple(result)
  
-    cdef tuple calc_shifts(self, CDSVector[int]* target_atom_ids=NULL, result=None):
+    cdef tuple calc_shifts(self, CDSVector[int]* target_atom_ids=NULL, CDSSharedVectorFloat result=None):
        
-        cdef CDSVector[int] local_target_atoms
+        cdef CDSVector[int] local_target_atom_ids
         if target_atom_ids  == NULL:
             local_target_atom_ids = self._get_all_component_target_atom_ids() 
         else:
@@ -2821,32 +2823,36 @@ cdef class Xcamshift_contents:
 
 
         
-        self._calc_shifts(cds_vector_int_as_list(local_target_atom_ids), result)
+        self._calc_shifts(&local_target_atom_ids, result)
         
         #TODO review whole funtion and resturn types
         return (self.target_atom_ids_as_selection_strings(cds_vector_int_as_list(local_target_atom_ids)), tuple(result))
         
     #TODO: add standalone mode flag or wrap in a external wrapper that call round changed etc    
-    def _calc_shifts(self, target_atom_ids=None, result=None):
-                
+    cdef void _calc_shifts(self, CDSVector[int] *target_atom_ids=NULL, CDSSharedVectorFloat result=None) nogil:
         if self._verbose:
-            start_time =  time()
-            print 'start calc shifts'
+            with gil:
+                start_time =  time()
+                print 'start calc shifts'
             
             
 
         #TODO: currently needed to generate a component to result remove by making component to result lazy?
         if not self._freeze:
-            self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
+            with gil:
+                
+                self._prepare(TARGET_ATOM_IDS_CHANGED,cds_vector_int_as_list(target_atom_ids[0]))
             
-        cdef Base_potential potential
-        for potential in self._get_potentials():
-            potential.calc_shifts(result)
+        with gil:
+            for potential in self._get_potentials():
+                with nogil:
+                    (<Base_potential>potential).calc_shifts(result)
 
        
         if self._verbose:
-            end_time =  time()
-            print 'end calc shifts (calculated shifts in  %.17g seconds) \n' % (end_time-start_time)
+            with gil:
+                end_time =  time()
+                print 'end calc shifts (calculated shifts in  %.17g seconds) \n' % (end_time-start_time)
         
                            
     #TODO: deprecated remove use _calc_shifts
@@ -2854,12 +2860,13 @@ cdef class Xcamshift_contents:
         print 'deprecated remove use _calc_shifts'
         target_atom_ids =  self._get_all_component_target_atom_ids()
         self._prepare(TARGET_ATOM_IDS_CHANGED, cds_vector_int_as_list(target_atom_ids))
-        result_shifts  = allocate_array(target_atom_ids.size())
-        self._calc_shifts(cds_vector_int_as_list(target_atom_ids), result_shifts)
-        for target_atom_id, shift in zip(cds_vector_int_as_list(target_atom_ids),result_shifts):
+        cdef CDSSharedVectorFloat result_shifts   = CDSSharedVectorFloat()
+        result_shifts.resize(target_atom_ids.size())
+        self._calc_shifts(&target_atom_ids, result_shifts)
+        for target_atom_id, shift in zip(cds_vector_int_as_list(target_atom_ids),result_shifts.as_python()):
             result[target_atom_id] =  shift
         
-        return result
+        return 
     
     def set_observed_shifts(self, shift_table):
         self._shift_table  =  shift_table
@@ -3237,12 +3244,13 @@ cdef class Xcamshift_contents:
         return 0.0 
 
     def calcEnergyAndDerivsMaybe1(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
-        
-        ensemble_size =  self._ensemble_simulation.size()
-        cache_size = self._get_active_target_atom_ids()[0].size() * ensemble_size
-        self._ensemble_shift_cache.resize(cache_size)
+        cdef int ensemble_size
+        with nogil:
+            ensemble_size =  self._ensemble_simulation_ptr[0].size()
+            cache_size = self._get_active_target_atom_ids()[0].size() * ensemble_size
+            self._ensemble_shift_cache.resize(cache_size)
 
-        self._calc_shift_cache(cds_vector_int_as_array(self._get_active_target_atom_ids()[0]), self._ensemble_shift_cache)
+            self._calc_shift_cache(self._get_active_target_atom_ids(), self._ensemble_shift_cache)
         
         return 0.0 
 

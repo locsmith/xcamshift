@@ -183,7 +183,7 @@ cdef class CDSSharedVectorFloat:
     cdef void resize(self,int size) nogil:
         self.data[0].resize(size)
     
-    def clear(self):
+    cdef void clear(self) nogil:
         clearVector(self.data) 
     
     #TODO: a bit ugly can we use operator
@@ -195,6 +195,12 @@ cdef class CDSSharedVectorFloat:
     
     cdef void assign(self, CDSSharedVectorFloat from_data) nogil:
         self.data[0] = from_data.data[0]
+    
+    def as_python(self):
+        result = []
+        for i in range(self.size()):
+            result.append(self.data[0][i])
+        return result
         
 
 cdef  class Non_bonded_interaction_list:
