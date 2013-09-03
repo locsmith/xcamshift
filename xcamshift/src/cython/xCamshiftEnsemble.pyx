@@ -2938,17 +2938,19 @@ cdef class Xcamshift_contents:
         
     
     cdef void _calc_force_set_with_potentials(self, CDSVector[int] target_atom_ids, Out_array forces, list potentials_list):
+        cdef Base_potential potential
         num_target_atom_ids = target_atom_ids.size()
         if self._factors == None or len(self._factors) < num_target_atom_ids:
             self._factors = allocate_array(num_target_atom_ids,'f')
         elif len(self._factors) > num_target_atom_ids:
             self._factors =  resize_array(self._factors,num_target_atom_ids)
         
-        self._calc_factors(target_atom_ids, self._factors)
-            
-        cdef Base_potential potential
-        for potential in potentials_list:
-            potential.calc_force_set(target_atom_ids,self._factors,forces)
+        with nogil:
+            self._calc_factors(target_atom_ids, self._factors)
+            with gil:
+                for potential in potentials_list:
+                    with nogil:
+                        potential.calc_force_set(target_atom_ids,self._factors,forces)
         
              
     def _calc_single_atom_force_set_with_potentials(self, target_atom_id, forces, potentials_list):
@@ -3011,7 +3013,7 @@ cdef class Xcamshift_contents:
         self. _calc_factors(int_memory_view_as_cds_vector(target_atom_ids), result)
         return  result[0]
     
-    cdef float[:] _calc_factors(self, CDSVector[int] target_atom_ids, float[:] factors):
+    cdef float[:] _calc_factors(self, CDSVector[int] target_atom_ids, float[:] factors) nogil:
         #TODO move to prepare or function called by prepare
         cdef CDSVector[int] *active_components = NULL
         
