@@ -75,6 +75,7 @@ cdef class CDSSharedVectorFloat:
     cdef void resize(self,int size) nogil
     cdef CDSVector[double]* get_data(self) nogil
     cdef int size(self) nogil
+    cdef void assign(self, CDSSharedVectorFloat from_data) nogil
  
 cdef class Base_shift_calculator:
     cdef bint _verbose 

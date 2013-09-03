@@ -54,6 +54,8 @@ from libc.stdint cimport uintptr_t
 
 from cython.operator cimport dereference as deref, preincrement as inc
 
+from xplor_access cimport EnsembleSimulation as CEnsembleSimulation
+
 import sys
 from cpython cimport array
 import ctypes
@@ -2597,7 +2599,8 @@ cdef class Xcamshift_contents:
     
     cdef Segment_Manager _segment_manager
     cdef object _potentials
-    cdef object _ensemble_simulation 
+    cdef object _ensemble_simulation
+    cdef CEnsembleSimulation *_ensemble_simulation_ptr  
     cdef bint _verbose
     cdef Observed_shift_table _shift_table
     cdef CDSSharedVectorFloat _shift_cache 
@@ -2638,6 +2641,7 @@ cdef class Xcamshift_contents:
 
     def _set_ensemble_simulation(self,ensemble_simulation):
         self._ensemble_simulation = ensemble_simulation
+        self._ensemble_simulation_ptr  = <CEnsembleSimulation*> <size_t>int(ensemble_simulation.this)
         self._out_array = Out_array(ensemble_simulation)
         self._shift_cache = CDSSharedVectorFloat(0,ensemble_simulation)
         self._ensemble_shift_cache = CDSSharedVectorFloat(0,ensemble_simulation)
@@ -3188,11 +3192,12 @@ cdef class Xcamshift_contents:
     
     
 
-    def _average_shift_cache(self):
-        if self._ensemble_simulation.size() ==  1:
-            self._shift_cache = self._ensemble_shift_cache
+    cdef void  _average_shift_cache(self) nogil:
+        if self._ensemble_simulation_ptr[0].size() ==  1:
+            self._shift_cache.assign(self._ensemble_shift_cache)
         else:
-            raise Exception("implement me")
+            with gil:
+                raise Exception("implement me")
 
     cdef void  _calc_derivs(self, Py_ssize_t derivs, CDSVector[int] active_target_atom_ids) nogil:
         self._reset_out_array()
@@ -3243,7 +3248,8 @@ cdef class Xcamshift_contents:
 
         
     def calcEnergyAndDerivsMaybe2(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
-        self._average_shift_cache()
+        with nogil:
+            self._average_shift_cache()
         
         return 0.0
 

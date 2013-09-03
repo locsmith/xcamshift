@@ -193,6 +193,10 @@ cdef class CDSSharedVectorFloat:
     def __len__(self):
         return self.data[0].size()
     
+    cdef void assign(self, CDSSharedVectorFloat from_data) nogil:
+        self.data[0] = from_data.data[0]
+        
+
 cdef  class Non_bonded_interaction_list:
  
     def __cinit__(self, int length=0, double fill_factor=1.0):
