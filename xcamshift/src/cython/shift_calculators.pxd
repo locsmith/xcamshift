@@ -60,8 +60,8 @@ cdef class Fast_energy_calculator_base:
     cdef void set_calculated_shifts(self, CDSSharedVectorFloat calculated_shifts) nogil
 
 cdef class Fast_energy_calculator(Fast_energy_calculator_base):
-    cdef        float calcEnergy(Fast_energy_calculator self, CDSVector[int] target_atom_ids, CDSVector[int] *active_atom_ids=?)
-    cdef inline float _calc_one_energy(Fast_energy_calculator self, int target_atom_index, int index)
+    cdef        float calcEnergy(Fast_energy_calculator self, CDSVector[int] target_atom_ids, CDSVector[int] *active_atom_ids=?) nogil
+    cdef inline float _calc_one_energy(Fast_energy_calculator self, int target_atom_index, int index) nogil
     
         
 cdef class Fast_force_factor_calculator(Fast_energy_calculator_base):

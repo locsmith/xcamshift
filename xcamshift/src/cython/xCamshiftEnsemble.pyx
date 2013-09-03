@@ -2598,7 +2598,7 @@ cdef class Xcamshift_contents:
     cdef Segment_Manager _segment_manager
     cdef object _potentials
     cdef object _ensemble_simulation 
-    cdef object _verbose
+    cdef bint _verbose
     cdef Observed_shift_table _shift_table
     cdef CDSSharedVectorFloat _shift_cache 
     cdef CDSSharedVectorFloat _ensemble_shift_cache  
@@ -2685,7 +2685,7 @@ cdef class Xcamshift_contents:
         with gil:
             calculator.set_energy_term_cache(self._get_energy_term_cache().get_native_components())
     
-    def update_energy_calculator(self):
+    cdef void update_energy_calculator(self) nogil:
         self._update_calculator(self._energy_calculator)
 
     cdef void update_force_factor_calculator(Xcamshift_contents self) nogil:
@@ -3166,9 +3166,10 @@ cdef class Xcamshift_contents:
 
 
         
-    cdef float _calc_energy(Xcamshift_contents self, CDSVector[int]* active_target_atom_ids = NULL):
+    cdef float _calc_energy(Xcamshift_contents self, CDSVector[int]* active_target_atom_ids = NULL) nogil:
         if self._verbose:
-            start_time = time()
+            with gil:
+                start_time = time()
  
         if active_target_atom_ids == NULL:
             active_target_atom_ids = self._get_active_target_atom_ids()
@@ -3176,11 +3177,12 @@ cdef class Xcamshift_contents:
              
  
         self.update_energy_calculator()
-        energy = self._energy_calculator.calcEnergy(active_target_atom_ids[0])
+        cdef float energy = self._energy_calculator.calcEnergy(active_target_atom_ids[0])
         
         if self._verbose:
-            end_time =  time()
-            print 'energy calculation completed in %.17g seconds ' % (end_time-start_time), "seconds"
+            with gil:
+                end_time =  time()
+                print 'energy calculation completed in %.17g seconds ' % (end_time-start_time), "seconds"
              
         return energy
     
@@ -3246,13 +3248,15 @@ cdef class Xcamshift_contents:
         return 0.0
 
     def calcEnergyAndDerivsMaybe3(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
-
-        energy = self._calc_energy(self._get_active_target_atom_ids())
+        cdef float energy
+        with nogil:
+            energy = self._calc_energy(self._get_active_target_atom_ids())
         return energy
 
     def calcEnergyAndDerivsMaybe4(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
-        if calcDerivatives:
-            self._calc_derivs(int(derivListPtr), self._get_active_target_atom_ids()[0])
+        with nogil:
+            if calcDerivatives:
+                self._calc_derivs(int(derivListPtr), self._get_active_target_atom_ids()[0])
         return 0.0
 
     

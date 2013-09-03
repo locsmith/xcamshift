@@ -1461,7 +1461,7 @@ cdef class Fast_energy_calculator(Fast_energy_calculator_base):
     def __init__(self):
         Fast_energy_calculator_base.__init__(self)
         
-    cdef float calcEnergy(Fast_energy_calculator self, CDSVector[int] target_atom_ids, CDSVector[int] *active_atom_ids=NULL):
+    cdef float calcEnergy(Fast_energy_calculator self, CDSVector[int] target_atom_ids, CDSVector[int] *active_atom_ids=NULL) nogil:
 
         cdef float energy
         cdef int active_atom_id
@@ -1488,7 +1488,7 @@ cdef class Fast_energy_calculator(Fast_energy_calculator_base):
         self.calls += 1    
         return energy
         
-    cdef inline float _calc_one_energy(self, int target_atom_index, int index):  
+    cdef inline float _calc_one_energy(self, int target_atom_index, int index) nogil:
         cdef float flat_bottom_shift_limit
         cdef float adjusted_shift_diff
         cdef float end_harmonic
