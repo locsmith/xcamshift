@@ -23,6 +23,7 @@ Created on 31 Jul 2012
 cdef extern from "instantiate.hh":
     pass
 
+
 from shift_calculators cimport Fast_energy_calculator, Constant_cache 
 from derivList import DerivList as PyDerivList
 from math import ceil
@@ -1577,7 +1578,7 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator_base):
 #             end_time = time()
 #             print '   force factors : ',len(target_atom_ids),' in', "%.17g" %  (end_time-start_time), "seconds"
 
-    cdef void calcFactors(self, CDSVector[int] target_atom_ids, float[:] result, CDSVector[int] *active_atom_ids=NULL) nogil:
+    cdef void calcFactors(self, CDSVector[int] target_atom_ids, CDSVector[float] *result, CDSVector[int] *active_atom_ids=NULL) nogil:
        #TODO: shouldn't be allocated each time
         cdef int target_atom_id
         cdef int active_atom_id
@@ -1586,13 +1587,13 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator_base):
         if active_atom_ids == NULL:
             for i in range(target_atom_ids.size()):
                 target_atom_id = target_atom_ids[i]
-                result[i] = self._calc_one_force_factor(target_atom_id, i)
+                result[0][i] = self._calc_one_force_factor(target_atom_id, i)
         else:
             for i in  range(active_atom_ids.size()):
                 active_atom_id = active_atom_ids[0][i]
                 target_atom_id = target_atom_ids[active_atom_id]
     
-                result[i] = self._calc_one_force_factor(target_atom_id, active_atom_id)
+                result[0][i] = self._calc_one_force_factor(target_atom_id, active_atom_id)
 
 
        
@@ -1664,7 +1665,7 @@ cdef class Base_force_calculator:
         
 #    TODO should most probably be a fixed array
     @cython.profile(True)
-    cdef void calc(self, cmap[int,uintptr_t] *components, int[:] component_to_result, float[:] force_factors, Out_array forces, int[:] active_components=None) nogil:
+    cdef void calc(self, cmap[int,uintptr_t] *components, int[:] component_to_result, CDSVector[float] force_factors, Out_array forces, int[:] active_components=None) nogil:
 
 
         self._set_components(components)
@@ -1683,7 +1684,7 @@ cdef class Base_force_calculator:
 #                for index in range(*index_range):
                     
 
-    cdef void _do_calc_components(self, int[:] component_to_result,  float[:] force_factors, Out_array force) nogil:
+    cdef void _do_calc_components(self, int[:] component_to_result,  CDSVector[float] force_factors, Out_array force) nogil:
         with gil:
             raise Exception("this should not be called!")
     
@@ -1773,7 +1774,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     def _calc_single_force_factor(self, int index, float factor):
         return self._cython_calc_single_force_factor(index, factor)
     
-    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force) nogil:
+    cdef void _do_calc_components(self, int[:] component_to_result, CDSVector[float] force_factors, Out_array force) nogil:
         cdef int factor_index 
         cdef int component_index
         
@@ -1928,9 +1929,10 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
             
         
         
-    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force) nogil:
+    cdef void _do_calc_components(self, int[:] component_to_result, CDSVector[float] force_factors, Out_array force) nogil:
 
         cdef int factor_index
+
         with gil:
             
             if self._active_components ==  None:
@@ -1942,7 +1944,7 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
                     non_bonded_index = self._active_components[factor_index]
                     self._calc_one_component(factor_index, non_bonded_index, component_to_result, force_factors, force)
             
-    cdef void _calc_one_component(self, int factor_index, int non_bonded_index, int[:] component_to_result, float[:] force_factors, Out_array force):
+    cdef void _calc_one_component(self, int factor_index, int non_bonded_index, int[:] component_to_result, CDSVector[float] force_factors, Out_array force):
         cdef double start_time = 0.0
         cdef double end_time = 0.0
         
@@ -2078,7 +2080,7 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     def _calc_single_force_factor(self, int index):
         return self._cython_calc_single_force_factor(index)
 
-    cdef void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force) nogil:
+    cdef void _do_calc_components(self, int[:] component_to_result, CDSVector[float] force_factors, Out_array force) nogil:
         cdef int factor_index 
         cdef int component_index
         
@@ -2303,9 +2305,11 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
 #        return result#
     
     
-    cdef inline void _do_calc_components(self, int[:] component_to_result, float[:] force_factors, Out_array force) nogil:
+    cdef inline void _do_calc_components(self, int[:] component_to_result, CDSVector[float] force_factors, Out_array force) nogil:
         cdef int factor_index 
         cdef int component_index
+        
+        
         with gil:
             for factor_index in range(len(self._active_components)):
                 component_index = self._active_components[factor_index] 

@@ -62,7 +62,7 @@ cdef class Fast_energy_calculator(Fast_energy_calculator_base):
     
         
 cdef class Fast_force_factor_calculator(Fast_energy_calculator_base):
-    cdef void calcFactors(Fast_force_factor_calculator self, CDSVector[int] target_atom_ids, float[:] result, CDSVector[int] *active_atom_ids=?) nogil
+    cdef void calcFactors(Fast_force_factor_calculator self, CDSVector[int] target_atom_ids, CDSVector[float] *result, CDSVector[int] *active_atom_ids=?) nogil
     cdef inline float _calc_one_force_factor(Fast_force_factor_calculator self, int target_atom_id, int i) nogil
 
 
@@ -95,8 +95,8 @@ cdef class Base_force_calculator:
     
     cdef void _bytes_to_components(self, uintptr_t data, uintptr_t length) nogil
     cdef void _set_components(self, cmap[int, uintptr_t] *components) nogil
-    cdef void calc(self, cmap[int,uintptr_t] *components, int[:] component_to_result, float[:] force_factors, Out_array forces, int[:] active_components=?) nogil
-    cdef void _do_calc_components(self, int[:] component_to_result,  float[:] force_factors, Out_array force) nogil
+    cdef void calc(self, cmap[int,uintptr_t] *components, int[:] component_to_result, CDSVector[float] force_factors, Out_array forces, int[:] active_components=?) nogil
+    cdef void _do_calc_components(self, int[:] component_to_result,  CDSVector[float] force_factors, Out_array force) nogil
 
 cdef struct Component_index_pair:
     int target_atom_id

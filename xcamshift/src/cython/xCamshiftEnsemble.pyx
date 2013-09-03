@@ -65,6 +65,20 @@ cdef int NBRM_ID = 3
 cdef int COEF_ID = 5
 cdef int RING_ID = 10
 
+cdef float[:] assign_float_vector_to_array(CDSVector[float] i_factors, float[:] factors) nogil:
+    with gil:
+        for i in range(i_factors.size()):
+            factors[i] = i_factors[i] 
+    return factors
+        
+cdef CDSVector[float] float_memory_view_as_cds_vector(float[:] data) nogil:
+    cdef CDSVector[float] result
+    result.resize(data.shape[0])
+    with gil:
+        for i,j in enumerate(data):
+            result[i] = j
+    return result
+
 cdef CDSVector[int] int_memory_view_as_cds_vector(int[:] data):
     cdef CDSVector[int] result
     result.resize(data.shape[0])
@@ -89,7 +103,14 @@ cdef CDSVector[int] _build_single_int_vector(int target_atom_id):
         target_atom_ids[0] = target_atom_id
         
         return target_atom_ids
+
+cdef CDSVector[float] _build_single_float_vector(float value):
+        cdef CDSVector[float] values 
+        values.resize(1)
+        values[0] = value
         
+        return values
+            
 class Component_factory(object):
     __metaclass__ = ABCMeta
     
@@ -840,7 +861,7 @@ cdef class Base_potential(object):
         
         return result
     
-    cdef void  calc_force_set(self, CDSVector[int] target_atom_ids, float[:] force_factors, Out_array forces) nogil:
+    cdef void  calc_force_set(self, CDSVector[int] target_atom_ids, CDSVector[float] force_factors, Out_array forces) nogil:
         cdef int[:] active_components 
         cdef cmap[int,uintptr_t]  *components
         if self._have_derivative():
@@ -852,8 +873,8 @@ cdef class Base_potential(object):
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
         cdef CDSVector[int] target_atom_ids = _build_single_int_vector(target_atom_id)
-        force_factors = [force_factor]
-        self.calc_force_set(target_atom_ids,force_factor,forces)
+        cdef CDSVector[float] force_factors = _build_single_float_vector(force_factor)
+        self.calc_force_set(target_atom_ids,force_factors,forces)
     
     #TODO: make this just return a list in component order
     #TODO: remove
@@ -2591,7 +2612,7 @@ cdef class Xcamshift_contents:
     cdef object _freeze
     cdef CDSVector[int] *_active_target_atom_ids
     cdef CDSVector[float] *_observed_shift_cache
-    cdef float[:] _factors
+    cdef CDSVector[float] _factors
     
     def __cinit__(self):
         self._active_target_atom_ids = NULL    
@@ -2610,7 +2631,6 @@ cdef class Xcamshift_contents:
 
         #self.set_verbose(verbose)
         self._freeze = False
-        self._factors = None
         
         self._out_array = None
         
@@ -2937,21 +2957,19 @@ cdef class Xcamshift_contents:
         return self._energy_calculator.calcEnergy(active_target_atom_ids,active_target_indices)
         
     
-    cdef void _calc_force_set_with_potentials(self, CDSVector[int] target_atom_ids, Out_array forces, list potentials_list):
-        cdef Base_potential potential
-        num_target_atom_ids = target_atom_ids.size()
-        if self._factors == None or len(self._factors) < num_target_atom_ids:
-            self._factors = allocate_array(num_target_atom_ids,'f')
-        elif len(self._factors) > num_target_atom_ids:
-            self._factors =  resize_array(self._factors,num_target_atom_ids)
+    cdef void _calc_force_set_with_potentials(self, CDSVector[int] target_atom_ids, Out_array forces, list potentials_list) nogil:
+        cdef int num_target_atom_ids = target_atom_ids.size()
+        if self._factors.size() != num_target_atom_ids:
+            self._factors.resize(num_target_atom_ids)
         
-        with nogil:
-            self._calc_factors(target_atom_ids, self._factors)
-            with gil:
-                for potential in potentials_list:
-                    with nogil:
-                        potential.calc_force_set(target_atom_ids,self._factors,forces)
+
+        self._calc_factors(target_atom_ids, &self._factors)
         
+        with gil:
+            for potential in potentials_list:
+                with nogil:
+                    (<Base_potential>potential).calc_force_set(target_atom_ids,self._factors,forces)
+    
              
     def _calc_single_atom_force_set_with_potentials(self, target_atom_id, forces, potentials_list):
 #        print 'forces _calc_single_atom_force_set_with_potentials', forces 
@@ -3002,6 +3020,7 @@ cdef class Xcamshift_contents:
         return constants_table.get_tanh_elongation(atom_name)
     
     def _calc_single_factor(self, target_atom_id):
+        cdef CDSVector[float] result
         target_atom_ids = array.array('i',[target_atom_id])
         
         if not target_atom_id in self._shift_table.get_atom_indices():
@@ -3009,11 +3028,11 @@ cdef class Xcamshift_contents:
             target_atom_info = Atom_utils._get_atom_info_from_index(target_atom_id)
             raise Exception(msg % target_atom_info)
         
-        result = allocate_array(1,'f')
-        self. _calc_factors(int_memory_view_as_cds_vector(target_atom_ids), result)
+        result.resize(1)
+        self. _calc_factors(int_memory_view_as_cds_vector(target_atom_ids), &result)
         return  result[0]
     
-    cdef float[:] _calc_factors(self, CDSVector[int] target_atom_ids, float[:] factors) nogil:
+    cdef void _calc_factors(self, CDSVector[int] target_atom_ids, CDSVector[float] *factors) nogil:
         #TODO move to prepare or function called by prepare
         cdef CDSVector[int] *active_components = NULL
         
@@ -3037,7 +3056,6 @@ cdef class Xcamshift_contents:
    
         self._force_factor_calculator.calcFactors(active_target_atom_ids, factors, active_components)
         del active_components
-        return factors
     
 
     def _calc_single_force_factor(self,target_atom_index,forces):
