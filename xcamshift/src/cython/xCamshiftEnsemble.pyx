@@ -17,6 +17,7 @@ Created on 27 Dec 2011
 
 #TODO: add tests to exclude atoms/distances which are not defined
 
+from xplor_access cimport CDSVector
 from cython.pyEnsemblePot import PyEnsemblePot
 from atomSel import AtomSel,intersection
 from component_list import Component_list, Native_component_list
@@ -42,7 +43,7 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_non_bonded_shift_calculator,                               \
                                      Fast_non_bonded_force_calculator,                               \
                                      Non_bonded_interaction_list,                                    \
-                                     Fast_random_coil_shift_calculator, CDSSharedVectorFloat
+                                     Fast_random_coil_shift_calculator, CDSSharedVectorFloat,CDSVectorFloat
 from time import time
 import array#
 
@@ -2621,9 +2622,12 @@ class Xcamshift(PyEnsemblePot):
         result.sort()
         return result
 
-    def _create_shift_cache(self, shift_cache, cache_size, ensembleSimulation):
+    def _create_shift_cache(self, shift_cache, cache_size, ensembleSimulation=None):
         if shift_cache == None:
-            shift_cache = CDSSharedVectorFloat(cache_size,ensembleSimulation)
+            if None.__class__ == ensembleSimulation.__class__:
+                shift_cache = CDSVectorFloat(cache_size)
+            else:
+                shift_cache = CDSSharedVectorFloat(cache_size,ensembleSimulation)
         elif len(shift_cache) != cache_size:
             shift_cache.resize(cache_size)
         return shift_cache
@@ -3006,7 +3010,7 @@ class Xcamshift(PyEnsemblePot):
     def _average_shift_cache(self):
         ensemble_simulation = self.ensembleSimulation()
         if ensemble_simulation.size() ==  1:
-            self._shift_cache = self._ensemble_shift_cache
+            self._shift_cache.assign(self._ensemble_shift_cache)
         else:
             raise Exception("implement me")
 
@@ -3054,7 +3058,8 @@ class Xcamshift(PyEnsemblePot):
         ensemble_size =  self.ensembleSimulation().size()
         cache_size = len(target_atom_ids) * ensemble_size
         self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, cache_size, self.ensembleSimulation())
-
+        self._shift_cache = self._create_shift_cache(self._shift_cache, 0)
+                                                              
         self._calc_shift_cache(target_atom_ids, self._ensemble_shift_cache)
         
         return 0.0 

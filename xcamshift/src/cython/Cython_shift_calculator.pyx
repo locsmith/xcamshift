@@ -8,7 +8,7 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
-# cython: profile=False 
+# cython: profile=False
 # cython: boundscheck=False    
 # cython: wraparound=False
 # cython: cdivision=True 
@@ -162,19 +162,12 @@ def test_dump_dihedral_comp(data):
                       compiled_components[i].parameters[4], compiled_components[i].parameters[5],\
                       compiled_components[i].parameters[6]
                       
-
-cdef class CDSSharedVectorFloat:
+cdef class CDSVectorFloat:
     cdef CDSVector[double]*  data
-
     
-    def __cinit__(self, int size=0, object ensembleSimulation=None):
-        cdef EnsembleSimulation* cEnsembleSimulation = simulationAsNative(ensembleSimulation)
-        #TODO: get rid of this casting
-        self.data = <CDSVector[double]*>createSharedVec(size, 0.0,  cEnsembleSimulation)
+    def __init__(self, int size=0):
+        self.data = new CDSVector[double]()
         self.resize(size)
-    
-#     cpdef int size(self):
-#         return self[0].data.size()
     
     cpdef resize(self,int size):
         self.data[0].resize(size)
@@ -191,6 +184,22 @@ cdef class CDSSharedVectorFloat:
     def __len__(self):
         return self.data[0].size()
     
+    def assign(self, CDSVectorFloat from_data):
+        self.data[0] = from_data.data[0]
+         
+cdef class CDSSharedVectorFloat(CDSVectorFloat):
+    
+    def __init__(self, int size=0, object ensembleSimulation=None):
+        cdef EnsembleSimulation* cEnsembleSimulation = simulationAsNative(ensembleSimulation)
+        #TODO: get rid of this casting
+        self.data = <CDSVector[double]*>createSharedVec(size, 0.0,  cEnsembleSimulation)
+        self.resize(size)
+    
+#     cpdef int size(self):
+#         return self[0].data.size()
+    
+        
+
 cdef  class Non_bonded_interaction_list:
     cdef CDSVector[int]  *data
     cdef int length
@@ -1473,7 +1482,7 @@ cdef class Fast_energy_calculator:
     def set_observed_shifts(self, float[:] observed_shifts):
         self._observed_shifts =  observed_shifts
         
-    def set_calculated_shifts(self, CDSSharedVectorFloat calculated_shifts):
+    def set_calculated_shifts(self, CDSVectorFloat calculated_shifts):
         self._theory_shifts = calculated_shifts.get_data()
     
     def set_energy_term_cache(self, energy_term_cache ):
