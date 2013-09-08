@@ -2628,8 +2628,9 @@ class Xcamshift(PyEnsemblePot):
                 shift_cache = CDSVectorFloat(cache_size)
             else:
                 shift_cache = CDSSharedVectorFloat(cache_size,ensembleSimulation)
-        elif len(shift_cache) != cache_size:
+        else:
             shift_cache.resize(cache_size)
+            
         return shift_cache
 
     def _calc_shift_cache(self,target_atom_ids, shift_cache):
@@ -3012,7 +3013,7 @@ class Xcamshift(PyEnsemblePot):
         if ensemble_simulation.size() ==  1:
             self._shift_cache.assign(self._ensemble_shift_cache)
         else:
-            raise Exception("implement me")
+            self._ensemble_shift_cache.average_into(self._shift_cache)
 
     def _calc_derivs(self, derivs, active_target_atom_ids ,potentials=None):
         

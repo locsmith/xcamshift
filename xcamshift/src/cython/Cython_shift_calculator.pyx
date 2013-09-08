@@ -164,13 +164,14 @@ def test_dump_dihedral_comp(data):
                       
 cdef class CDSVectorFloat:
     cdef CDSVector[double]*  data
+    cdef int size
     
     def __init__(self, int size=0):
         self.data = new CDSVector[double]()
         self.resize(size)
     
     cpdef resize(self,int size):
-        self.data[0].resize(size)
+        self.data[0].resize(size * self.ensemble_size())
         return self
     
     cpdef clear(self):
@@ -185,18 +186,44 @@ cdef class CDSVectorFloat:
         return self.data[0].size()
     
     def assign(self, CDSVectorFloat from_data):
+        if (self.data[0].size() % self.ensemble_size()) != 0:
+            raise Exception("data size must be a miultiple of ensemble size")
         self.data[0] = from_data.data[0]
+        self.size  = self.data[0].size() / self.ensemble_size()
+    
+    def ensemble_size(self):
+        return 1
+    
+    
+    cdef inline int array_offset(self,int index, int ensemble_index):
+        return (self.ensemble_size() * index) + ensemble_index
+    
+    cdef inline int ensemble_array_offset(self,int index):
+        return self.array_offset(index, self.ensemble_member_index())
+
+
+    cdef inline void average_into(self, CDSVectorFloat target):
+        cdef int i,j
+        cdef int ensemble_size = self._get_ensemble_size()
+        for i in range(self.size):
+            for j in ensemble_size:
+                target[i] += self.data[0][self.array_offset(i,j)]
+        
          
 cdef class CDSSharedVectorFloat(CDSVectorFloat):
     
+    cdef object _simulation
+    
     def __init__(self, int size=0, object ensembleSimulation=None):
+        self._simulation = ensembleSimulation
+        
         cdef EnsembleSimulation* cEnsembleSimulation = simulationAsNative(ensembleSimulation)
         #TODO: get rid of this casting
         self.data = <CDSVector[double]*>createSharedVec(size, 0.0,  cEnsembleSimulation)
         self.resize(size)
     
-#     cpdef int size(self):
-#         return self[0].data.size()
+    def ensemble_size(self):
+        return self._simulation.size()
     
         
 
