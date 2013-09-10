@@ -3010,10 +3010,7 @@ class Xcamshift(PyEnsemblePot):
 
     def _average_shift_cache(self):
         ensemble_simulation = self.ensembleSimulation()
-        if ensemble_simulation.size() ==  1:
-            self._shift_cache.assign(self._ensemble_shift_cache)
-        else:
-            self._ensemble_shift_cache.average_into(self._shift_cache)
+        self._ensemble_shift_cache.average_into(self._shift_cache)
 
     def _calc_derivs(self, derivs, active_target_atom_ids ,potentials=None):
         
@@ -3057,9 +3054,9 @@ class Xcamshift(PyEnsemblePot):
         target_atom_ids = self._get_active_target_atom_ids()
         
         ensemble_size =  self.ensembleSimulation().size()
-        cache_size = len(target_atom_ids) * ensemble_size
+        cache_size = len(target_atom_ids)
         self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, cache_size, self.ensembleSimulation())
-        self._shift_cache = self._create_shift_cache(self._shift_cache, 0)
+        self._shift_cache = self._create_shift_cache(self._shift_cache, cache_size)
                                                               
         self._calc_shift_cache(target_atom_ids, self._ensemble_shift_cache)
         

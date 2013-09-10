@@ -27,7 +27,7 @@ from math import ceil
 cimport cython
 from vec3 import Vec3 as python_vec3
 from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
-from  xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList, clearVector, EnsembleSimulation, createSharedVec 
+from  xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList, clearSharedVector, EnsembleSimulation, createSharedVector, getSharedVectorValue, resizeSharedVector,addToSharedVectorValue 
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
@@ -164,68 +164,74 @@ def test_dump_dihedral_comp(data):
                       compiled_components[i].parameters[4], compiled_components[i].parameters[5],\
                       compiled_components[i].parameters[6]
                       
-cdef class CDSVectorFloat:
-    cdef CDSVector[double]*  data
+cdef class CDSSharedVectorFloat:
+    cdef void *  data
     cdef int size
+    cdef object _simulation
+    cdef int _ensemble_size
     
-    def __init__(self, int size=0):
-        self.data = new CDSVector[double]()
-        self.resize(size)
+    def __init__(self, int size, object ensembleSimulation):
+        self._simulation = ensembleSimulation
+        self._ensemble_size = ensembleSimulation.size()
+        
+        cdef EnsembleSimulation* cEnsembleSimulation = simulationAsNative(ensembleSimulation)
+        self.data = <CDSVector[double]*>createSharedVector(size*self._ensemble_size, 0.0,  cEnsembleSimulation)
+        self.size = size
     
     cpdef resize(self,int size):
-        self.data[0].resize(size * self.ensemble_size())
+        self.size = size * self._ensemble_size
+        resizeSharedVector(self.data,self.size)
         return self
     
     cpdef clear(self):
-        clearVector(self.data)
+        clearSharedVector(self.data)
         return self
     
-    #TODO: a bit ugly can we use oper
-    cdef CDSVector[double]* get_data(self):
-        return  self.data
-    
     def __len__(self):
-        return self.data[0].size()
-    
-    def assign(self, CDSVectorFloat from_data):
-        if (self.data[0].size() % self.ensemble_size()) != 0:
-            raise Exception("data size must be a miultiple of ensemble size")
-        self.data[0] = from_data.data[0]
-        self.size  = self.data[0].size() / self.ensemble_size()
-    
-    def ensemble_size(self):
-        return 1
+        return self.size* self._ensemble_size
     
     
     cdef inline int array_offset(self,int index, int ensemble_index):
-        return (self.ensemble_size() * index) + ensemble_index
+        return (self._ensemble_size * index) + ensemble_index
     
     cdef inline int ensemble_array_offset(self,int index):
         return self.array_offset(index, self.ensemble_member_index())
 
 
-    cdef inline void average_into(self, CDSVectorFloat target):
+    def average_into(self, CDSVectorFloat in_data):
+        in_data.clear()
+        cdef CDSVector[double] *target =  &in_data.data
+        in_data.resize(self.size)
         cdef int i,j
-        cdef int ensemble_size = self._get_ensemble_size()
         for i in range(self.size):
-            for j in ensemble_size:
-                target[i] += self.data[0][self.array_offset(i,j)]
+            for j in range(self._ensemble_size):
+                target[0][i] += getSharedVectorValue(self.data,self.array_offset(i,j))
+                
+    cdef inline void addToResult(self, int offset, double value):
+        addToSharedVectorValue(self.data,offset,value)
         
+cdef class CDSVectorFloat:
+    cdef CDSVector[double] data
+
+    
+    def __init__(self, int size):
+        self.data.resize(size)
+    
+    cpdef resize(self,int size):
+        self.data.resize(size)
+    
+    cpdef clear(self):
+        self.data.set(0.0)
+    
+    def __len__(self):
+        return self.data.size()
+
+    cdef CDSVector[double]* get_data(self):
+        return &self.data
          
-cdef class CDSSharedVectorFloat(CDSVectorFloat):
+
     
-    cdef object _simulation
-    
-    def __init__(self, int size=0, object ensembleSimulation=None):
-        self._simulation = ensembleSimulation
-        
-        cdef EnsembleSimulation* cEnsembleSimulation = simulationAsNative(ensembleSimulation)
-        #TODO: get rid of this casting
-        self.data = <CDSVector[double]*>createSharedVec(size, 0.0,  cEnsembleSimulation)
-        self.resize(size)
-    
-    def ensemble_size(self):
-        return self._simulation.size()
+
     
         
 
@@ -864,7 +870,6 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
     
     @cython.profile(False)
     def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components):
-        cdef CDSVector[double]  *results = shift_cache.get_data()
         self._set_components(components)
         cdef double start_time = 0.0
         cdef double end_time = 0.0
@@ -881,7 +886,7 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
             component_index = active_components[factor_index]         
             
             offset = self.ensemble_array_offset(component_to_target[factor_index])
-            results[0][offset]  += self._compiled_components[component_index].shift
+            shift_cache.addToResult(offset,self._compiled_components[component_index].shift)
  
         if self._verbose:
             end_time = time()
@@ -953,7 +958,6 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
     
     @cython.profile(False)
     def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components):
-        cdef CDSVector[double]  *results = shift_cache.get_data()
 
         cdef double start_time = 0.0
         cdef double end_time = 0.0
@@ -1002,7 +1006,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
                 smoothing_factor = 1.0 - ratio ** 8
                 
             offset = self.ensemble_array_offset(component_to_target[factor_index])
-            results[0][offset]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
+            shift_cache.addToResult(offset, smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient)
 
         if self._verbose:
             end_time = time()
@@ -1072,7 +1076,6 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     #TODO: still uses component to result...
     #TODO: add common force and shift base class
     def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
-        cdef CDSVector[double]  *results = shift_cache.get_data()
 
         cdef float angle
         cdef float angle_term
@@ -1109,7 +1112,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
             shift = coefficient * angle_term
 
             offset = self.ensemble_array_offset(component_to_target[factor_index])
-            results[0][offset] += shift
+            shift_cache.addToResult(offset,shift)
             
         if self._verbose:
             end_time = time()
@@ -1215,7 +1218,6 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
 
     @cython.profile(True)
     def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
-        cdef CDSVector[double]  *results = shift_cache.get_data()
         
         cdef int target_atom_id
         cdef int atom_type_id
@@ -1256,7 +1258,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
                 shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
                 
             offset = self.ensemble_array_offset(component_to_target[factor_index])
-            results[0][offset] += shift
+            shift_cache.addToResult(offset,shift)
         
         if self._verbose:
             end_time = time()
@@ -2682,21 +2684,20 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         
     @cython.profile(True)
     def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
-        cdef CDSVector[double]  *results = shift_cache.get_data()
         self._set_components(components)
         
         if active_components == None:
             for non_bonded_index in range(len(self._non_bonded_list)):
 #                 print non_bonded_index
-                self._calc_single_component_shift(non_bonded_index, non_bonded_index, results, component_to_target)
+                self._calc_single_component_shift(non_bonded_index, non_bonded_index, shift_cache, component_to_target)
         else:         
             for factor_index  in range(active_components.shape[0]):
                 non_bonded_index = active_components[factor_index]
 #                 print factor_index, non_bonded_index
-                self._calc_single_component_shift(factor_index, non_bonded_index, results, component_to_target)
+                self._calc_single_component_shift(factor_index, non_bonded_index, shift_cache, component_to_target)
 
         
-    cdef inline void  _calc_single_component_shift(self,int factor_index, int non_bonded_index, CDSVector[double]*  results, int[:] component_to_target):
+    cdef inline void  _calc_single_component_shift(self,int factor_index, int non_bonded_index, CDSSharedVectorFloat  results, int[:] component_to_target):
         cdef Component_index_pair* non_bonded_pair 
         
         cdef int target_component_index
@@ -2757,7 +2758,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
                     smoothing_factor = 1.0 - ratio ** 8
                 
                 offset = self.ensemble_array_offset(component_to_target[component_offset])
-                results[0][offset]  +=  smoothing_factor * pow(distance,  exponent) * coefficient
+                results.addToResult(offset, smoothing_factor * pow(distance,  exponent) * coefficient)
 
 
         if self._verbose:

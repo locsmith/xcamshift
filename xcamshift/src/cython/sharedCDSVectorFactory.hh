@@ -17,13 +17,18 @@
 
 //TODO: doubles should  float_type
 typedef CDSVector<double,0,EnsembleSimulation::SharedAlloc> SharedVec;
-typedef CDSVector<double> FloatVec;
+//typedef CDSVector<double> FloatVec;
 
 class SharedCDSVectorFactory {
 public:
 
-	static SharedVec* createSharedVec(const int size,const float& i, const EnsembleSimulation* simulation);
-	static void clearVector(FloatVec*);
+	static void* createSharedVector(const int size,const float& i, const EnsembleSimulation* simulation);
+	static void clearSharedVector(void*);
+	static void resizeSharedVector(void*, int size);
+	static inline void setSharedVectorValue(void* sharedVec, int offset ,double value) {(*((SharedVec*)(sharedVec)))[offset]=value;};
+	static inline double getSharedVectorValue(void* sharedVec, int offset) {return (*((SharedVec*)(sharedVec)))[offset];};
+	static inline void addToSharedVectorValue(void* sharedVec, int offset ,double value) {(*((SharedVec*)(sharedVec)))[offset]+=value;};
+
 };
 
 //template <class T>
