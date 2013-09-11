@@ -25,8 +25,7 @@ cdef class PyEnsemblePotData:
         return result
     
     def calcEnergy(self):
-        print 'here'
-        return self.ensemblePotProxy[0].calcEnergy()
+        return  self.ensemblePotProxy[0].calcEnergy()
     
     #TODO: should this be simulation? will it conflict with xPyPot
     def ensembleSimulation(self): 
@@ -43,10 +42,14 @@ cdef class PyEnsemblePotData:
         
     
 class PyEnsemblePot(PyPot,PyEnsemblePotData):
+    
     def __init__(self,name):
         PyPot.__init__(self,name)
         PyEnsemblePotData.__init__(self, self.instanceName(),self.potName())
-      
+    
+    def calcEnergy(self):
+        return PyEnsemblePotData.calcEnergy(self)
+    
     def calcEnergyAndDerivsMaybe0(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
         return 0.0
   
