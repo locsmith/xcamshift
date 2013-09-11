@@ -27,7 +27,7 @@ from math import ceil
 cimport cython
 from vec3 import Vec3 as python_vec3
 from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
-from  xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList, clearSharedVector, EnsembleSimulation, createSharedVector, getSharedVectorValue, resizeSharedVector,addToSharedVectorValue 
+from  xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList, clearSharedVector, EnsembleSimulation, createSharedVector, getSharedVectorValue, resizeSharedVector,addToSharedVectorValue, getSharedVectorValue 
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
@@ -203,9 +203,10 @@ cdef class CDSSharedVectorFloat:
         cdef CDSVector[double] *target =  &in_data.data
         in_data.resize(self.size)
         cdef int i,j
+        cdef double divisor = 1.0/self._ensemble_size
         for i in range(self.size):
             for j in range(self._ensemble_size):
-                target[0][i] += getSharedVectorValue(self.data,self.array_offset(i,j))
+                target[0][i] += getSharedVectorValue(self.data,self.array_offset(i,j)) * divisor
                 
     cdef inline void addToResult(self, int offset, double value):
         addToSharedVectorValue(self.data,offset,value)
