@@ -196,6 +196,13 @@ cdef class CDSSharedVectorFloat:
     
     cdef inline int ensemble_array_offset(self,int index):
         return self.array_offset(index, self.ensemble_member_index())
+    
+    def __str__(self):
+        data = []
+        for i in range(len(self)):
+            value  = getSharedVectorValue(self.data,i)
+            data.append('%7.3f' % value)
+        return 'esim size: ' +`self._ensemble_size` + ', [' + ', '.join(data) + ']'
 
 
     def average_into(self, CDSVectorFloat in_data):
@@ -230,7 +237,11 @@ cdef class CDSVectorFloat:
     cdef CDSVector[double]* get_data(self):
         return &self.data
          
-
+    def __str__(self):
+        result = []
+        for i in range(self.data.size()):
+            result.append('%7.3f' % self.data[i])
+        return '[' + ', '.join(result) + ']'
     
 
     
