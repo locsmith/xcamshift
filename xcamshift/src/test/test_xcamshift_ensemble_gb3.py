@@ -14,12 +14,13 @@ Created on 31 Dec 2011
 @author: garyt
 '''
 from vec3 import Vec3
-from simulation import currentSimulation
+from simulation import currentSimulation,makeCurrent
 from derivList import DerivList
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
 from cython.xCamshiftEnsemble import  Xcamshift 
+from shift_calculators import CDSSharedVectorFloat
 from atomSel import AtomSel
 from test import gb3, gb3_10_steps
 from test import  util_for_testing
@@ -33,10 +34,12 @@ import common_constants
 import sys
 from cython.fast_segment_manager import Segment_Manager
 from test.util_for_testing import  _check_shift_results, _shift_cache_as_result,\
-    get_atom_index, get_key_for_atom_index
+    get_atom_index, get_key_for_atom_index, keyed_atoms_to_list
 TOTAL_ENERGY = 'total'
 from cython.shift_calculators import Out_array
 from array import array
+from ensembleSimulation import EnsembleSimulation
+
  
 def almostEqual(first, second, places = 7):
     result  = False
@@ -800,9 +803,69 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 self.assertDictEqual(latest, test)
             test=latest
  
- 
+    def test_shift_averaging_identical_structures(self):
+        ensembleSize=2
+        esim = EnsembleSimulation('ensemble',ensembleSize)
+        xcamshift = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        energy = xcamshift.calcEnergy()
+        
+        self.assertAlmostEqual(energy, gb3_10_steps.gb3_energies[0][TOTAL_ENERGY], places = 0)
+        active_target_atoms_ids =  xcamshift._get_active_target_atom_ids()
+        measured = xcamshift._shift_cache
+        expected = gb3.gb3_shifts
+        _check_shift_results(active_target_atoms_ids, measured,expected)
+    
+
+    def _get_sim_index(self, esim):
+        member_ids = [esim.members(i).id() for i in range(esim.size())]
+        index = member_ids.index(esim.member().id())
+        return index
+
+    def set_ensemble_member_coords(self, esim,  coordinates):
+        
+        orig_simulation =  currentSimulation()
+        index = self._get_sim_index(esim)
+
+        makeCurrent(esim.member())
+        PDBTool("test_data/gb3_10_steps/%s" % coordinates[index]).read()
+        makeCurrent(orig_simulation)
+
+    def _select_shift_subset(self,esim,ensemble_shift_cache,index):
+        data = [elem for elem in ensemble_shift_cache]
+        result = data[index::esim.size()]
+        return result
+
+    def test_shift_averaging_two_structures(self):
+        ensembleSize=2
+        esim = EnsembleSimulation('ensemble',ensembleSize)
+        index = self._get_sim_index(esim)
+
+        xcamshift = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        
+        files = gb3_10_steps.gb3_files[:ensembleSize]
+        self.set_ensemble_member_coords(esim, files)
+        
+        energy = xcamshift.calcEnergy()
+        
+        active_target_atoms_ids =  xcamshift._get_active_target_atom_ids()
+        measured = self._select_shift_subset(esim, xcamshift._ensemble_shift_cache, index)
+        expected_dict = gb3_10_steps.gb3_shifts[index]
+
+        _check_shift_results(active_target_atoms_ids, measured,expected_dict)
+        
+        measured =  xcamshift._shift_cache
+        expected_1 = keyed_atoms_to_list(active_target_atoms_ids, gb3_10_steps.gb3_shifts[0])
+        expected_2 = keyed_atoms_to_list(active_target_atoms_ids, gb3_10_steps.gb3_shifts[1])
+
+        for atom_id,value_1,value_2 in zip(active_target_atoms_ids,expected_1,expected_2):
+            key =  get_key_for_atom_index(atom_id)
+            expected_dict[key]=(value_1+value_2)/2.0
+        
+        _check_shift_results(active_target_atoms_ids, measured,expected_dict)
+    
 if __name__ == "__main__":
 #     TODO: add a way to run the complete test suite
-    unittest2.main(module='test.test_xcamshift_ensemble_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
-    unittest2.main(module='test.test_xcamshift_ensemble_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_shift_differences')
+#     unittest2.main(module='test.test_xcamshift_ensemble_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
+#     unittest2.main(module='test.test_xcamshift_ensemble_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
+#     unittest2.main(module='test.test_xcamshift_ensemble_gb3',defaultTest='TestXcamshiftGB3.test_shift_averaging_two_structures')
+     unittest2.main(module='test.test_xcamshift_ensemble_gb3',defaultTest='TestXcamshiftGB3.test_shift_averaging_identical_structures')
