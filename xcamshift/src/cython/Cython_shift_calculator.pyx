@@ -217,6 +217,11 @@ cdef class CDSSharedVectorFloat:
                 
     cdef inline void addToResult(self, int offset, double value):
         addToSharedVectorValue(self.data,offset,value)
+    
+    def __getitem__(self, int key):
+        if key >= len(self):
+            raise IndexError("index (%i) out of range (%i)" % (key, len(self)))
+        return getSharedVectorValue(self.data,key)
         
 cdef class CDSVectorFloat:
     cdef CDSVector[double] data
@@ -242,6 +247,12 @@ cdef class CDSVectorFloat:
         for i in range(self.data.size()):
             result.append('%7.3f' % self.data[i])
         return '[' + ', '.join(result) + ']'
+    
+    def __getitem__(self, int key):
+        if key >= self.data.size():
+            raise IndexError("index (%i) out of range (%i)" % (key, self.length/self.RECORD_LENGTH))
+        return self.data[key]
+
     
 
     
