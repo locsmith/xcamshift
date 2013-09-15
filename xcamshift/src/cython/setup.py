@@ -13,17 +13,28 @@ Created on 23 Dec 2011
 
 @author: garyt
 ''' 
+
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
+
+import os
  
 import Cython.Compiler.Options
 Cython.Compiler.Options.annotate = True
 
 # change path and architecture to match local installation
-xplor_path ='/home/garyt/programs/xplor-nih/2.31.0'
-architecture = 'Linux_i686'
-python_version = '2.6'
+xplor_path =      os.environ['xc_xplor_root']          # '/home/garyt/programs/xplor-nih/2.31.0'
+architecture =    os.environ['xc_architecture']        # 'Linux_i686'
+python_version =  os.environ['xc_python_version']      # '2.6'
+
+#xplor_path =      '/home/garyt/programs/xplor-nih/2.31.0'
+#architecture =    'Linux_i686'
+#python_version =  '2.6'
+
+
+#print xplor_path,architecture,python_version
+
 
 params = {'path'           : xplor_path,
           'architecture'   : architecture,
@@ -65,7 +76,7 @@ ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx", '
                          include_dirs=include_dirs),
                
                
-               Extension("xCamshiftEnsemble",  ["xCamshiftEnsemble.pyx"],
+               Extension("xcamshift",  ["xcamshift.pyx"],
                          define_macros = [('CPLUSPLUS', '1') ,
                                           ('USE_CDS_NAMESPACE', '1')],
                         
