@@ -2694,7 +2694,7 @@ class Xcamshift(PyEnsemblePot):
         print 'deprecated remove use _calc_shifts'
         target_atom_ids =  self._get_all_component_target_atom_ids()
         self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
-        result_shifts  = allocate_array(len(target_atom_ids))
+        result_shifts  = CDSSharedVectorFloat(len(target_atom_ids),self.ensembleSimulation())
         self._calc_shifts(target_atom_ids, result_shifts)
         for target_atom_id, shift in zip(target_atom_ids,result_shifts):
             result[target_atom_id] =  shift
