@@ -610,11 +610,12 @@ class Base_potential(object):
     def _calc_component_shift(self, index):
         
         component_to_result = array.array('i', [0])
-        results = array.array('d',[0.0])
+        ensemble_results = CDSSharedVectorFloat(1,self._simulation)
         components = self._get_components()
         active_components = array.array('i', [index])
-        self._shift_calculator(components,results,component_to_result, active_components=active_components)
-        
+        self._shift_calculator(components,ensemble_results,component_to_result, active_components=active_components)
+        results = CDSVectorFloat(1)
+        ensemble_results.average_into(results)
         return results[0]
       
     
@@ -3015,9 +3016,16 @@ class Xcamshift(PyEnsemblePot):
     
     
 
-    def _average_shift_cache(self):
-        ensemble_simulation = self.ensembleSimulation()
-        self._ensemble_shift_cache.average_into(self._shift_cache)
+    def _average_shift_cache(self, enmsemble_shift_cache=None,shift_cache=None):
+        
+        if shift_cache == None:
+            shift_cache = self._shift_cache
+            
+        if enmsemble_shift_cache ==  None:
+            ensemble_shift_cache  = self._ensemble_shift_cache
+            
+        ensemble_shift_cache.average_into(shift_cache)
+        return shift_cache
 
     def _calc_derivs(self, derivs, active_target_atom_ids ,potentials=None):
         
