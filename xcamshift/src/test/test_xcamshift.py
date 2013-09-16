@@ -135,7 +135,7 @@ class TestXcamshift(unittest2.TestCase):
     def make_out_array(self):
 #        TODO: use segment manager
         num_atoms = len(AtomSel('(all)').indices())
-        result = Out_array( num_atoms)
+        result = Out_array(num_atoms,self.get_single_member_ensemble_simulation())
         return result
     
     def make_result_array(self):
@@ -325,7 +325,7 @@ class TestXcamshift(unittest2.TestCase):
         xcamshift_potential =  self._make_xcamshift()
         
         shifts = self.make_result_array()
-        shifts = xcamshift_potential.set_shifts(shifts)
+        shifts = xcamshift_potential.set_shifts(shifts) 
         
         expected  = [0.0] * len(shifts)
         expected[12] = ala_3_total_shifts[2]['N']
@@ -413,7 +413,7 @@ class TestXcamshift(unittest2.TestCase):
         # _calc_single_force_factor is in distance based potential
         #TODO: test the force calculator not the potential
         distance_potential = Distance_potential(self.get_single_member_ensemble_simulation())
-        distance_potential._force_calculator._set_components(distance_potential._get_component_list().get_native_components())
+        distance_potential._force_calculator._set_components(distance_potential._get_components())
             
         expected_force_factors = dict(ala_3.ala_3_distance_forces_well)
         test_force_factors = ala_3.ala_3_factors_harmonic
@@ -450,7 +450,7 @@ class TestXcamshift(unittest2.TestCase):
         expected_forces_dict = dict(expected_forces)
         test_factors = ala_3.ala_3_factors_harmonic
         
-        distance_potential._force_calculator._set_components(distance_potential._get_component_list().get_native_components())
+        distance_potential._force_calculator._set_components(distance_potential._get_components())
         indices = distance_potential._get_indices()
         
         #TODO don't like using dump here
@@ -500,7 +500,7 @@ class TestXcamshift(unittest2.TestCase):
         expected_force_factors = dict(ala_3.ala_3_dihedral_force_factors_tanh)
         potential = Dihedral_potential(self.get_single_member_ensemble_simulation())
         
-        potential._force_calculator._set_components(potential._get_component_list().get_native_components())
+        potential._force_calculator._set_components(potential._get_components())
         for i, data in enumerate(potential.dump()):
             SELECTION_INDEX = 0
             TARGET_ATOM_INDEX = 0
@@ -533,7 +533,7 @@ class TestXcamshift(unittest2.TestCase):
     def _test_dihedral_forces(self, test_factors, potential,expected_forces):
         expected_forces_dict = dict(expected_forces)
         
-        potential._force_calculator._set_components(potential._get_component_list().get_native_components())
+        potential._force_calculator._set_components(potential._get_components())
         for i, data in enumerate(potential.dump()):
             
             
