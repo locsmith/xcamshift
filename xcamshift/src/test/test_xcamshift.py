@@ -13,6 +13,8 @@ Created on 31 Dec 2011
 
 @author: garyt
 '''
+from simulation import currentSimulation
+from derivList import DerivList
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
@@ -33,6 +35,7 @@ from table_manager import Table_manager
 from component_list import Component_list
 from common_constants import TARGET_ATOM_IDS_CHANGED
 from cython.shift_calculators import Out_array
+from ensembleSimulation import   EnsembleSimulation
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -56,9 +59,21 @@ def almostEqual(first, second, places = 7):
 
 #class testSegmentManager(object):
 class TestXcamshift(unittest2.TestCase):
+    
+    def __init__(self,*args,**kwargs):
+        super(TestXcamshift, self).__init__(*args,**kwargs)
+        self._esim = None
+        
     def _make_xcamshift(self, shifts={}):
         xcamshift = self._setup_xcamshift_with_shifts_table(shifts)
         return xcamshift
+    
+    def get_single_member_ensemble_simulation(self):
+        if self._esim.__class__ ==  None.__class__:
+            #TODO note EnsembleSimulation can't have a single member that causes a crash!
+            # therefore a hack
+            self._esim =  Xcamshift().ensembleSimulation()
+        return self._esim
      
     def _prepare_xcamshift(self, xcamshift):
 #            
@@ -129,7 +144,7 @@ class TestXcamshift(unittest2.TestCase):
         return result
 
     def testRandomCoilPotential(self):
-        random_coil_potential = RandomCoilShifts()
+        random_coil_potential = RandomCoilShifts(self.get_single_member_ensemble_simulation())
         result = self.make_result_array() 
         expected  = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
                      123.6, 8.2400000000000002, 52.266440000000003, 4.4328469999999998, 
@@ -140,7 +155,7 @@ class TestXcamshift(unittest2.TestCase):
         self.assertSequenceAlmostEqual(expected, result)
         
     def testDistancePotential(self):
-        distance_potential =  Distance_potential()
+        distance_potential =  Distance_potential(self.get_single_member_ensemble_simulation())
         result=self.make_result_array()
         distance_potential.set_shifts(result)
         
@@ -163,7 +178,7 @@ class TestXcamshift(unittest2.TestCase):
     
     
     def testIndexComponents(self):
-        distance_potential =  Distance_potential()
+        distance_potential =  Distance_potential(self.get_single_member_ensemble_simulation())
         test_elems = []
         for elem in distance_potential._get_all_components():
             test_elems.append(elem[0])
@@ -176,7 +191,7 @@ class TestXcamshift(unittest2.TestCase):
 
 
     def testExtraPotentialComponentsCorrect(self):
-        extra_potential = Extra_potential()
+        extra_potential = Extra_potential(self.get_single_member_ensemble_simulation())
         
         xdists_ala_3_copy = dict(xdists_ala_3)
         for extra_elem in extra_potential.dump():
@@ -188,7 +203,7 @@ class TestXcamshift(unittest2.TestCase):
 
 
     def testExtraPotentialCoefficientsCorrect(self):
-        extra_potential = Extra_potential()
+        extra_potential = Extra_potential(self.get_single_member_ensemble_simulation())
         for extra_elem in extra_potential.dump():
             elem_key = extra_elem[:-1]
             coefficient = xdists_ala_3[elem_key][0]
@@ -197,7 +212,7 @@ class TestXcamshift(unittest2.TestCase):
         
 
     def testExtraPotentialComponentShiftsCorrect(self):
-        extra_potential = Extra_potential()
+        extra_potential = Extra_potential(self.get_single_member_ensemble_simulation())
         
         result=self.make_result_array()
         extra_potential.set_shifts(result)
@@ -212,8 +227,7 @@ class TestXcamshift(unittest2.TestCase):
             self.assertAlmostEqual(shift, expected_shift,places=4)
 
     def testDihdedralPotentialComponentsCorrect(self):
-        dihedral_portential = Dihedral_potential()
-        
+        dihedral_portential = Dihedral_potential(self.get_single_member_ensemble_simulation())
         
         dihedrals_ala_3_copy = dict(dihedrals_ala_3)
         for dihedral_elem in dihedral_portential.dump():
@@ -223,7 +237,7 @@ class TestXcamshift(unittest2.TestCase):
         self.assertEqual(0, len(dihedrals_ala_3_copy))
         
     def testDihedralPotentialCoefficientsCorrect(self):
-        dihedral_potential = Dihedral_potential()
+        dihedral_potential = Dihedral_potential(self.get_single_member_ensemble_simulation())
         for dihedral_elem_key, coeff, param_0,param_1,param_2,param_3,param_4, exponent in  dihedral_potential.dump():
             expected_values = [dihedrals_ala_3[dihedral_elem_key][0]]
             expected_values.extend(dihedrals_ala_3[dihedral_elem_key][1])
@@ -246,7 +260,7 @@ class TestXcamshift(unittest2.TestCase):
         return dihedral_atoms
 
     def testDihedralPotentialAngleCorrect(self):
-        dihedral_potential = Dihedral_potential()
+        dihedral_potential = Dihedral_potential(self.get_single_member_ensemble_simulation())
         
         for dihedral_element in dihedral_potential.dump():
             
@@ -260,7 +274,7 @@ class TestXcamshift(unittest2.TestCase):
 
             
     def testDihedralPotentialComponentShiftsCorrect(self):
-        dihedral_potential = Dihedral_potential()
+        dihedral_potential = Dihedral_potential(self.get_single_member_ensemble_simulation())
         
         for i,dihedral_element in enumerate(dihedral_potential.dump()):
             
@@ -271,7 +285,7 @@ class TestXcamshift(unittest2.TestCase):
 #
 ####
     def testSidechainPotentialComponentsCorrect(self):
-        sidechain_potential = Sidechain_potential()
+        sidechain_potential = Sidechain_potential(self.get_single_member_ensemble_simulation())
         
         sidechains_ala_3_copy = dict(sidechains_ala_3)
         for sidechain_elem  in sidechain_potential.dump():
@@ -282,7 +296,7 @@ class TestXcamshift(unittest2.TestCase):
         self.assertEqual(0, len(sidechains_ala_3_copy))
         
     def testSidechainPotentialCoefficientsCorrect(self):
-        sidechain_potential = Sidechain_potential()
+        sidechain_potential = Sidechain_potential(self.get_single_member_ensemble_simulation())
         for target_atom,distant_atom, coeff, exponent in  sidechain_potential.dump():
             sidechain_potential_key=target_atom,distant_atom
             expected_values = sidechains_ala_3[sidechain_potential_key][:2]
@@ -297,7 +311,7 @@ class TestXcamshift(unittest2.TestCase):
             self.assertAlmostEqual(exponent, 1.0)
          
     def testSidechainlPotentialComponentShiftsCorrect(self):
-        sidechain_potential = Sidechain_potential()
+        sidechain_potential = Sidechain_potential(self.get_single_member_ensemble_simulation())
         
         for i,elem in enumerate(sidechain_potential.dump()):
 
@@ -398,7 +412,7 @@ class TestXcamshift(unittest2.TestCase):
         # TODO make this a dummy distance based potential, 
         # _calc_single_force_factor is in distance based potential
         #TODO: test the force calculator not the potential
-        distance_potential = Distance_potential()
+        distance_potential = Distance_potential(self.get_single_member_ensemble_simulation())
         distance_potential._force_calculator._set_components(distance_potential._get_component_list().get_native_components())
             
         expected_force_factors = dict(ala_3.ala_3_distance_forces_well)
@@ -484,7 +498,7 @@ class TestXcamshift(unittest2.TestCase):
 
     def testDihedralPotentialSingleForceFactor(self):
         expected_force_factors = dict(ala_3.ala_3_dihedral_force_factors_tanh)
-        potential = Dihedral_potential()
+        potential = Dihedral_potential(self.get_single_member_ensemble_simulation())
         
         potential._force_calculator._set_components(potential._get_component_list().get_native_components())
         for i, data in enumerate(potential.dump()):
@@ -550,28 +564,28 @@ class TestXcamshift(unittest2.TestCase):
         
     #TODO for completeness there ought to be tests that the well forces are zero here
     def testDistancePotentialSingleForceHarmonic(self):
-        distance_potential = Distance_potential()
+        distance_potential = Distance_potential(self.get_single_member_ensemble_simulation())
         expected_forces = ala_3.ala_3_distance_real_forces_harmonic
         factors_harmonic = ala_3.ala_3_factors_harmonic
         
         self._test_distance_forces(factors_harmonic, distance_potential,expected_forces)
 
     def testExtraPotentialSingleForceHarmonic(self):
-        extra_potential = Extra_potential()
+        extra_potential = Extra_potential(self.get_single_member_ensemble_simulation())
         expected_forces = ala_3.ala_3_extra_real_forces_harmonic
         factors_harmonic = ala_3.ala_3_factors_harmonic
         
         self._test_distance_forces(factors_harmonic, extra_potential ,expected_forces)
         
     def testSidechainPotentialSingleForceHarmonic(self):
-        sidechain_potential = Sidechain_potential()
+        sidechain_potential = Sidechain_potential(self.get_single_member_ensemble_simulation())
         expected_forces = ala_3.ala_3_sidechain_real_forces_harmonic
         factors_harmonic = ala_3.ala_3_factors_harmonic
 
         self._test_distance_forces(factors_harmonic, sidechain_potential,expected_forces)
         
     def testDihedralPotentialSingleForceTanh(self):
-        dihedral_potential = Dihedral_potential()
+        dihedral_potential = Dihedral_potential(self.get_single_member_ensemble_simulation())
         expected_forces = ala_3.ala_3_dihedral_forces_tanh
         factors_tanh = ala_3.ala_3_factors_tanh
 
@@ -660,7 +674,7 @@ class TestXcamshift(unittest2.TestCase):
         return non_bonded_1, non_bonded_2
 
     def testNonBondedComponents(self):
-        non_bonded_potential = Non_bonded_potential()
+        non_bonded_potential = Non_bonded_potential(self.get_single_member_ensemble_simulation())
         
         non_bonded_table = Table_manager().get_non_bonded_table("ALA")
         target_atom_types = list(non_bonded_table.get_target_atoms())
@@ -728,7 +742,7 @@ class TestXcamshift(unittest2.TestCase):
         non_bonded_list = Non_bonded_list(min_residue_separation=1)
         
         expected_non_bonded_pairs = set(ala_3.ala3_expected_non_bonded_pairs)
-        non_bonded_potential = Non_bonded_potential()
+        non_bonded_potential = Non_bonded_potential(self.get_single_member_ensemble_simulation())
         
         target_atoms = non_bonded_potential._create_component_list('ATOM')
         target_atoms.add_components(non_bonded_potential._get_all_components('ATOM'))
