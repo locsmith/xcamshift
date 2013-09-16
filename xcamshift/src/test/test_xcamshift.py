@@ -741,7 +741,7 @@ class TestXcamshift(unittest2.TestCase):
 
     
     def test_non_bonded_distances_found(self):
-        non_bonded_list = Non_bonded_list(min_residue_separation=1)
+        non_bonded_list = Non_bonded_list(self.get_single_member_ensemble_simulation(),min_residue_separation=1)
         
         expected_non_bonded_pairs = set(ala_3.ala3_expected_non_bonded_pairs)
         non_bonded_potential = Non_bonded_potential(self.get_single_member_ensemble_simulation())
