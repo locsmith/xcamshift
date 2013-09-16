@@ -256,9 +256,7 @@ cdef class CDSVectorFloat:
     def __getitem__(self, int key):
         if key >= self.data[0].size():
             raise IndexError("index (%i) out of range (%i)" % (key, self.data.size()))
-        print 'here'
         result = self.data[0][key]
-        print 'here2'
         return result
 
     def __del__(self):
