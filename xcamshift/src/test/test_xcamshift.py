@@ -78,7 +78,13 @@ class TestXcamshift(unittest2.TestCase):
     def _prepare_xcamshift(self, xcamshift):
 #            
         xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, xcamshift._get_active_target_atom_ids())
-        xcamshift._calc_shift_cache(xcamshift._get_active_target_atom_ids())
+#       TODO:  xcamshift.calc_shifts()
+#       should replace upto BBBB but doesn't work... 
+        xcamshift._ensemble_shift_cache = xcamshift._create_shift_cache(xcamshift._ensemble_shift_cache,len(xcamshift._get_active_target_atom_ids()),xcamshift.ensembleSimulation())
+        xcamshift._calc_shift_cache(xcamshift._get_active_target_atom_ids(), xcamshift._ensemble_shift_cache)
+        xcamshift._shift_cache =  xcamshift._create_shift_cache(xcamshift._shift_cache,len(xcamshift._get_active_target_atom_ids()))
+        xcamshift._average_shift_cache()
+        #BBBB
         xcamshift.update_force_factor_calculator()
         
        
@@ -131,6 +137,7 @@ class TestXcamshift(unittest2.TestCase):
         PDBTool("test_data/3_ala/3ala.pdb").read()
         Segment_Manager.reset_segment_manager()
         Atom_utils.clear_cache()
+#         print "In method", self._testMethodName
 
     def make_out_array(self):
 #        TODO: use segment manager
@@ -803,6 +810,6 @@ def run_tests():
 if __name__ == "__main__":
     run_tests()
 #    TestXcamshift.list_test_shifts()
-#    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testCalcForceSetTanh')
+#     unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testDistances')
 #    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.testSingleFactorHarmonic')
