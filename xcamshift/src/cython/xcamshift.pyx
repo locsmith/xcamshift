@@ -2786,19 +2786,26 @@ class Xcamshift(PyEnsemblePot):
         #TODO: setting a single atom shift with self._calc_single_atom_shift(target_atom_index) doesn't work as the 
         # and then using a single index doesn't work as the energy terms are indexed as well
         
-        raise Exception("not ensembled!")
-        self._calc_shift_cache(self._get_active_target_atom_ids())
-        self.update_energy_calculator()
-
+        active_target_atom_ids = self._get_active_target_atom_ids()
+        
         #TODO: this is a hack remove!        
-        active_target_atom_ids =  self._get_active_target_atom_ids()
         if active_target_atom_ids == None:
             
             active_target_indices = array.array('i',[0])
             active_target_atom_ids =  array.array('i',[target_atom_index])
         else:
             active_target_indices =  array.array('i',[active_target_atom_ids.index(target_atom_index)])
+
+        self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, len(active_target_atom_ids), self.ensembleSimulation())
+        self._shift_cache = self._create_shift_cache(self._shift_cache,len(active_target_atom_ids))
+        
+        self._calc_shift_cache(active_target_atom_ids, self._ensemble_shift_cache)
+        self._average_shift_cache()
+        
+        self.update_energy_calculator()
+        
         return self._energy_calculator(active_target_atom_ids,active_target_indices)
+
         
     
     def _calc_force_set_with_potentials(self, target_atom_ids, forces, potentials_list):
