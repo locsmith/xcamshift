@@ -207,7 +207,7 @@ cdef class CDSSharedVectorFloat:
 
     def average_into(self, CDSVectorFloat in_data):
         in_data.clear()
-        cdef CDSVector[double] *target =  &in_data.data
+        cdef CDSVector[double] *target =  in_data.data
         in_data.resize(self.size)
         cdef int i,j
         cdef double divisor = 1.0/self._ensemble_size
@@ -228,35 +228,41 @@ cdef class CDSSharedVectorFloat:
         self.data = NULL
         
 cdef class CDSVectorFloat:
-    cdef CDSVector[double] data
+    cdef CDSVector[double] *data
 
     
     def __init__(self, int size):
-        self.data.resize(size)
+        self.data = new CDSVector[double]()
+        self.data[0].resize(size)
     
     cpdef resize(self,int size):
-        self.data.resize(size)
+        self.data[0].resize(size)
     
     cpdef clear(self):
-        self.data.set(0.0)
+        self.data[0].set(0.0)
     
     def __len__(self):
-        return self.data.size()
+        return self.data[0].size()
 
     cdef CDSVector[double]* get_data(self):
-        return &self.data
+        return self.data
          
     def __str__(self):
         result = []
-        for i in range(self.data.size()):
-            result.append('%7.3f' % self.data[i])
+        for i in range(self.data[0].size()):
+            result.append('%7.3f' % self.data[0][i])
         return '[' + ', '.join(result) + ']'
     
     def __getitem__(self, int key):
-        if key >= self.data.size():
-            raise IndexError("index (%i) out of range (%i)" % (key, self.length/self.RECORD_LENGTH))
-        return self.data[key]
+        if key >= self.data[0].size():
+            raise IndexError("index (%i) out of range (%i)" % (key, self.data.size()))
+        print 'here'
+        result = self.data[0][key]
+        print 'here2'
+        return result
 
+    def __del__(self):
+        del self.data
     
 
     
