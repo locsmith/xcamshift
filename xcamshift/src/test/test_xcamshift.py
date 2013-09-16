@@ -625,15 +625,17 @@ class TestXcamshift(unittest2.TestCase):
     def _test_force_sets(self, xcamshift, expected_energy, expected_forces):
         expected_forces = dict(expected_forces)
         number_atoms = Segment_Manager().get_number_atoms()
-        derivs = [None] * number_atoms
+        derivs = DerivList()
+        derivs.init(currentSimulation())
         energy = xcamshift.calcEnergyAndDerivs(derivs)
+        derivs_array =  derivs.get(currentSimulation())
         
         self.assertAlmostEqual(energy, expected_energy, self.DEFAULT_DECIMAL_PLACES-1)
         for atom_id in range(number_atoms):
             
             atom_key  =  Atom_utils._get_atom_info_from_index(atom_id)
             if atom_key in expected_forces:
-                force_triplet = derivs[atom_id]
+                force_triplet = derivs_array[atom_id]
                 expected_force_triplet = expected_forces[atom_key]
                 
                 self.assertSequenceAlmostEqual(force_triplet, expected_force_triplet, self.DEFAULT_DECIMAL_PLACES, `atom_key`)
