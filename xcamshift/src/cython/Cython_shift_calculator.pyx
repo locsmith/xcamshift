@@ -27,7 +27,7 @@ from math import ceil
 cimport cython
 from vec3 import Vec3 as python_vec3
 from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
-from  xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList, clearSharedVector, EnsembleSimulation, createSharedVector, getSharedVectorValue, resizeSharedVector,addToSharedVectorValue, getSharedVectorValue 
+from  xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList, clearSharedVector, EnsembleSimulation, createSharedVector, getSharedVectorValue, resizeSharedVector,addToSharedVectorValue, getSharedVectorValue, deleteSharedVector 
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
@@ -222,6 +222,10 @@ cdef class CDSSharedVectorFloat:
         if key >= len(self):
             raise IndexError("index (%i) out of range (%i)" % (key, len(self)))
         return getSharedVectorValue(self.data,key)
+    
+    def __del__(self):
+        deleteSharedVector(self.data)
+        self.data = NULL
         
 cdef class CDSVectorFloat:
     cdef CDSVector[double] data

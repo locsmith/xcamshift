@@ -13,6 +13,11 @@ void* SharedCDSVectorFactory::createSharedVector(const int size,const float& i, 
 	return new SharedVec(size,0.0,EnsembleSimulation::SharedAlloc(simulation));
 }
 
+void SharedCDSVectorFactory::deleteSharedVector(void* vector) {
+
+	delete ((SharedVec*)vector);
+}
+
 //TODO: this need to be moved into cython space but currentlly there are type problems
 void SharedCDSVectorFactory::clearSharedVector(void* vector) {
 	((SharedVec*)vector)->set(0.0);

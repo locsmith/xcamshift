@@ -23,6 +23,7 @@ class SharedCDSVectorFactory {
 public:
 
 	static void* createSharedVector(const int size,const float& i, const EnsembleSimulation* simulation);
+	static void deleteSharedVector(void* sharedVec);
 	static void clearSharedVector(void*);
 	static void resizeSharedVector(void*, int size);
 	static inline void setSharedVectorValue(void* sharedVec, int offset ,double value) {(*((SharedVec*)(sharedVec)))[offset]=value;};
