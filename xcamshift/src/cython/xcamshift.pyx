@@ -1681,13 +1681,17 @@ class Ring_Potential(Base_potential):
 
     
     def _calc_component_shift(self, index):
-        components = self._create_component_list('ATOM')
-        component = self._get_distance_components()[index]
-        components.add_component(component)
-        results = array.array('d',[0.0])
+
         self._setup_ring_calculator(self._shift_calculator)
         component_to_result  = array.array('i',[0])
-        self._shift_calculator(components.get_native_components(),results,component_to_result, active_components=array.array('i',[0]))
+        
+        ensemble_results = CDSSharedVectorFloat(1,self._simulation)
+        components = self._get_components()
+        active_components = array.array('i', [index])
+        self._shift_calculator(components,ensemble_results,component_to_result, active_components=active_components)
+        results = CDSVectorFloat(1)
+        ensemble_results.average_into(results)
+        
         return results[0]
     
     
@@ -2659,11 +2663,11 @@ class Xcamshift(PyEnsemblePot):
             
   
         if result == None or len(result) < len(target_atom_ids):
-            result = array.array('d',[0.0] *len(target_atom_ids))
+            i_result = self._create_shift_cache(None,len(target_atom_ids), self.ensembleSimulation())
+            result =  self._create_shift_cache(None,len(target_atom_ids))
 
-
-        
-        self._calc_shifts(target_atom_ids, result)
+        self._calc_shifts(target_atom_ids, i_result)
+        self._average_shift_cache(i_result,result)
         
         #TODO review whole funtion and resturn types
         return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(result))
@@ -3016,12 +3020,12 @@ class Xcamshift(PyEnsemblePot):
     
     
 
-    def _average_shift_cache(self, enmsemble_shift_cache=None,shift_cache=None):
+    def _average_shift_cache(self, ensemble_shift_cache=None,shift_cache=None):
         
         if shift_cache == None:
             shift_cache = self._shift_cache
             
-        if enmsemble_shift_cache ==  None:
+        if ensemble_shift_cache ==  None:
             ensemble_shift_cache  = self._ensemble_shift_cache
             
         ensemble_shift_cache.average_into(shift_cache)
