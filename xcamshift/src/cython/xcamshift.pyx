@@ -2719,9 +2719,10 @@ class Xcamshift(PyEnsemblePot):
 
     def _calc_single_atom_shift(self,target_atom_id):
         #TODO: could be better
-        raise Exception("not ensembled!")
-        self._shift_cache = allocate_array(1)
-        self._calc_shift_cache([target_atom_id,])
+        self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, 1, self.ensembleSimulation())
+        self._shift_cache = self._create_shift_cache(self._shift_cache, 1)
+        self._calc_shift_cache([target_atom_id,], self._ensemble_shift_cache)
+        self._average_shift_cache()
         return  self._shift_cache [0]
     
     
