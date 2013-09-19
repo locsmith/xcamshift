@@ -2464,10 +2464,13 @@ class Non_bonded_potential(Distance_based_potential):
         
         component_to_result = array.array('i',[0,])
         
-        results = array.array('d',[0.0])
+        i_results = CDSSharedVectorFloat(1,self._simulation)
 
-        calc(components,results,component_to_result, active_components=active_components)
- 
+        calc(components,i_results,component_to_result, active_components=active_components)
+        
+        results = CDSVectorFloat(1)
+        i_results.average_into(results)
+        
         return results[0]
     
     def _get_active_components(self):
