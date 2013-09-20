@@ -597,7 +597,12 @@ class Base_potential(object):
             result  =  components.build_selection_list(test)
 
             if self._verbose:
-                print ' %i reduced to %i' % (len(components),len(self._active_components))
+                
+                if self._active_components != None:
+                    num_active_components = len(self._active_components)
+                else:
+                    num_active_components = len(components)
+                print ' %i reduced to %i' % (len(components),num_active_components)
         else:
             result = self._active_components
         
