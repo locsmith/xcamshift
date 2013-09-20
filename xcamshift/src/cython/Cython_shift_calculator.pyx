@@ -212,6 +212,7 @@ cdef class CDSSharedVectorFloat:
         cdef int i,j
         cdef double divisor = 1.0/self._ensemble_size
         for i in range(self.size):
+            target[0][i]=0.0
             for j in range(self._ensemble_size):
                 target[0][i] += getSharedVectorValue(self.data,self.array_offset(i,j)) * divisor
                 
