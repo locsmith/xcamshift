@@ -2028,7 +2028,7 @@ class Non_bonded_potential(Distance_based_potential):
         self._add_component_factory(Null_component_factory('NBLT'))
         
         self._non_bonded_list = Non_bonded_list(self._simulation)
-        self._component_set = None
+        self._component_set = {}
         self._selected_components =  None
     
     def _get_shift_calculator(self):
@@ -2411,9 +2411,9 @@ class Non_bonded_potential(Distance_based_potential):
 
         non_bonded_list = self._get_component_list('NBLT')
         
-        self._component_set = {'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
-                      'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
-                      'OFFS' : 0, 'SIMU' : self._simulation}
+        self._component_set.update({'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
+                                    'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
+                                    'SIMU' : self._simulation})
         
         return self._component_set
     
