@@ -352,7 +352,10 @@ cdef class Vec3_list:
     @cython.profile(False)    
     cdef inline set(self, int x, Vec3& y):
         self.data[0][x] =  y
-        
+    
+    def __len__(self):
+        return self.data[0].size()
+    
     def __dealloc__(self):
         
         if self.data != NULL:
