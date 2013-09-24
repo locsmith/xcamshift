@@ -2669,13 +2669,26 @@ class Xcamshift(PyEnsemblePot):
         if target_atom_ids  == None:
             target_atom_ids = self._get_all_component_target_atom_ids() 
             
-  
-        if result == None or len(result) < len(target_atom_ids):
-            i_result = self._create_shift_cache(None,len(target_atom_ids), self.ensembleSimulation())
-            result =  self._create_shift_cache(None,len(target_atom_ids))
-
-        self._calc_shifts(target_atom_ids, i_result)
-        self._average_shift_cache(i_result,result)
+#          or len(result) < len(target_atom_ids)
+        if result == None:
+            if self._shift_cache == None:
+                self._shift_cache = self._create_shift_cache(self._shift_cache, len(target_atom_ids))
+            result = self._shift_cache
+        
+        if self._ensemble_shift_cache ==  None:
+            self._ensemble_shift_cache =  self._create_shift_cache(self._ensemble_shift_cache, len(target_atom_ids), self.ensembleSimulation())
+            
+        
+        
+        if len(result) !=  len(target_atom_ids):
+            result.resize(len(target_atom_ids))
+            
+        if len(self._ensemble_shift_cache) !=  len(target_atom_ids):
+            self._ensemble_shift_cache.resize(len(target_atom_ids))
+            
+            
+        self._calc_shifts(target_atom_ids, self._ensemble_shift_cache)
+        self._average_shift_cache(self._ensemble_shift_cache,result)
         
         #TODO review whole funtion and resturn types
         return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(result))
@@ -2961,6 +2974,10 @@ class Xcamshift(PyEnsemblePot):
             self._active_target_atom_ids = None
             self.update_energy_calculator()
         
+        if change ==  ROUND_CHANGED:
+            if self._ensemble_shift_cache != None:
+                self._ensemble_shift_cache.clear()
+                
         self._prepare_potentials(change, data)
          
         
