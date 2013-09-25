@@ -434,6 +434,7 @@ class TestXcamshiftA4(unittest2.TestCase):
         nb_interaction_list = components['NBLT']
         active_array = allocate_array(1,'i')
         components['ACTI'] =  active_array
+        components['OFFS'] = 0
         non_bonded_potential._force_calculator._set_components(components)
         
         for i, component in enumerate(nb_interaction_list):
@@ -491,6 +492,8 @@ class TestXcamshiftA4(unittest2.TestCase):
         nb_interaction_list = components['NBLT']
         active_array = allocate_array(1,'i')
         components['ACTI'] =  active_array
+        #TODO: make this less invasive of the potentials encapsulation
+        components['OFFS'] = 0
         non_bonded_potential._force_calculator._set_components(components)
         
         for i, component in enumerate(nb_interaction_list):
