@@ -6,7 +6,11 @@ from  xplor_access cimport Simulation, String, DerivList, EnsembleSimulation, En
 from libc.stdio cimport printf
 from ensembleSimulation import  Simulation_simulationByID, fromSimulation
 numSimulations
-# 
+#
+
+cdef extern from "instantiate.hh":
+    pass
+ 
 cdef class PyEnsemblePotData:
     cdef PyEnsemblePotProxy* ensemblePotProxy
     cdef String* _instance_name
