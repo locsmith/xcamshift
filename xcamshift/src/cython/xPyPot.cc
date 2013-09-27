@@ -3,6 +3,7 @@
 
 #include <pyConvert.hh>
 #include <derivList.hh>
+#include <instantiate.hh>
 
 static swig_type_info* SWIGTYPE_PyPotPtr=0;
 static swig_type_info* SWIGTYPE_CDSVectorTVec3Ptr=0;
