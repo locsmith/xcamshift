@@ -49,7 +49,6 @@ def load_tests(loader, tests, pattern):
                 TestXcamshiftAGA,
                 TestXcamshiftVIN,
                 TestXcamshiftAGFA,
-                TestXcamshift,
                 TestXcamshiftAGAGA,
                 Test_cython_non_boned_list
 #                TestXcamshiftGB3
