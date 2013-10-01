@@ -291,6 +291,9 @@ class Test_table_manager(unittest2.TestCase):
         table = self.table_manager.get_hydrogen_bond_table('ALA')
 #         
         self.assertSequenceEqual(('HA', 'CA', 'HN', 'N', 'C', 'CB'), table.get_target_atoms())
+        
+        self.assertSequenceEqual(table.get_donors(),['O'])
+        self.assertSequenceEqual(table.get_acceptors(),['HN'])
 
 if __name__ == "__main__":
 #     unittest2.main()
