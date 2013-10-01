@@ -22,6 +22,8 @@ class Hydrogen_bond_table(Table_base):
 
 
     TARGET_ATOMS = "target_atoms"
+    DONORS = 'donors'
+    ACCEPTORS = 'acceptors'
 #     SPHERE_1 = 'sphere_1'
 #     SPHERE_2 = 'sphere_2'
 #     EXPONENT = 'exponent'
@@ -33,11 +35,30 @@ class Hydrogen_bond_table(Table_base):
         super(Hydrogen_bond_table, self).__init__(table)
     
     def get_donors(self):
-        return self._table['donors'][0].keys()
+        return self._table[self.DONORS][0].keys()
     
     def get_acceptors(self):
-        return self._table['acceptors'][0].keys()
+        return self._table[self.ACCEPTORS][0].keys()
+    
+    def _check_donor_or_acceptor(self,donor_or_acceptor):
+        donors_and_acceptors = []
         
+        donors_and_acceptors.extend(self.get_acceptors())
+        donors_and_acceptors.extend(self.get_donors())
+        
+        if donor_or_acceptor not in donors_and_acceptors:
+            message = "the donor or acceptor %s is not known it should be one of %s"
+            raise KeyError(message % (donor_or_acceptor, ','.join(donors_and_acceptors)))
+        
+    def get_bond_vector_atoms(self, donor_or_acceptor):
+        self._check_donor_or_acceptor(donor_or_acceptor)
+        
+        if donor_or_acceptor in self._table[self.DONORS][0]:
+            result  = self._table[self.DONORS][0][donor_or_acceptor]
+        else:
+            result  = self._table[self.ACCEPTORS][0][donor_or_acceptor]
+        
+        return result
 #     def get_exponent(self,sphere):
 #         self._check_sphere(sphere)
 #         return self._table[self.DATA][sphere][self.EXPONENT]

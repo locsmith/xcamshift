@@ -294,6 +294,12 @@ class Test_table_manager(unittest2.TestCase):
         
         self.assertSequenceEqual(table.get_donors(),['O'])
         self.assertSequenceEqual(table.get_acceptors(),['HN'])
+        
+        self.assertSequenceEqual(('C', 'O'), table.get_bond_vector_atoms('O'))
+        self.assertSequenceEqual(('N', 'HN'), table.get_bond_vector_atoms('HN'))
+        
+        with self.assertRaises(KeyError):
+            table.get_bond_vector_atoms('J')
 
 if __name__ == "__main__":
 #     unittest2.main()
