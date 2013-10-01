@@ -31,6 +31,12 @@ class Hydrogen_bond_table(Table_base):
     
     def __init__(self, table):
         super(Hydrogen_bond_table, self).__init__(table)
+    
+    def get_donors(self):
+        return self._table['donors'][0].keys()
+    
+    def get_acceptors(self):
+        return self._table['acceptors'][0].keys()
         
 #     def get_exponent(self,sphere):
 #         self._check_sphere(sphere)
