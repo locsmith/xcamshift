@@ -21,6 +21,7 @@ import yaml
 import extra_table
 from dihedral_table import Dihedral_table, Dihedral_parameter_table,\
     Composite_dihedral_table
+from hydrogen_bond_table import Hydrogen_bond_table
 from python_utils import tupleit, Hierarchical_dict
 from sidechain_table import Sidechain_table
 from constants_table import Constants_table
@@ -77,7 +78,7 @@ class Table_manager(object):
     RING="ring"
     NON_BONDED = "nb"
     DISULPHIDE = 'disu'
-
+    HBOND = 'hbond'
     
     def __init__(self,paths=[]):
         '''
@@ -359,4 +360,8 @@ class Table_manager(object):
     
     def get_disulphide_table(self,residue_type):
         return Disulphide_table(self._get_table(self.DISULPHIDE,residue_type))
+    
+    def get_hydrogen_bond_table(self,residue_type):
+        return Hydrogen_bond_table(self._get_table(self.HBOND,residue_type))
+
             
