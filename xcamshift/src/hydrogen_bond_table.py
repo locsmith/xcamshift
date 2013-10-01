@@ -21,7 +21,7 @@ class Hydrogen_bond_table(Table_base):
 
 
 
-#     TARGET_ATOMS = "target_atoms"
+    TARGET_ATOMS = "target_atoms"
 #     SPHERE_1 = 'sphere_1'
 #     SPHERE_2 = 'sphere_2'
 #     EXPONENT = 'exponent'
@@ -36,15 +36,15 @@ class Hydrogen_bond_table(Table_base):
 #         self._check_sphere(sphere)
 #         return self._table[self.DATA][sphere][self.EXPONENT]
 #     
-#     def get_target_atoms(self):
-#         return tuple(self._table[self.TARGET_ATOMS])    
-# 
-#     def _check_target_atom(self, atom_name):
-#         atoms = self.get_target_atoms()
-#         if atom_name not in atoms:
-#             template = "atom_name %s is not in sidechain shift _table target atoms (%s)"
-#             message = template % (atom_name, ', '.join(atoms))
-#             raise KeyError(message)
+    def get_target_atoms(self):
+        return tuple(self._table[self.TARGET_ATOMS])    
+ 
+    def _check_target_atom(self, atom_name):
+        atoms = self.get_target_atoms()
+        if atom_name not in atoms:
+            template = "atom_name %s is not in sidechain shift _table target atoms (%s)"
+            message = template % (atom_name, ', '.join(atoms))
+            raise KeyError(message)
 #     
 #     def get_spheres(self):
 #         spheres = self._table[self.DATA].keys()

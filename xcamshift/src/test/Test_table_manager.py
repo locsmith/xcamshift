@@ -284,7 +284,14 @@ class Test_table_manager(unittest2.TestCase):
         table_1 = self.table_manager.get_non_bonded_table('GLY')
         table_2 = self.table_manager.get_non_bonded_table('GLY')
         self.assertEqual(id(table_1._table), id(table_2._table))
+        
+    
+    def test_hydrogen_bond_table(self):
+        
+        table = self.table_manager.get_hydrogen_bond_table('ALA')
+#         
+        self.assertSequenceEqual(('HA', 'CA', 'HN', 'N', 'C', 'CB'), table.get_target_atoms())
 
 if __name__ == "__main__":
-    unittest2.main()
-#    unittest2.main(module='test.Test_table_manager',defaultTest='Test_table_manager.test_table_hierachy')
+#     unittest2.main()
+    unittest2.main(module='test.Test_table_manager',defaultTest='Test_table_manager.test_hydrogen_bond_table')
