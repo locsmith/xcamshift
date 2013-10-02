@@ -9,6 +9,7 @@
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
 # camshift 1.35.0  disu table
+# post corrected CB component by  -12.62275  [11.361637-12.62275]
 ---
 target_atoms: ["HA", "CA", "HN", "N", "C", "CB"]
 
