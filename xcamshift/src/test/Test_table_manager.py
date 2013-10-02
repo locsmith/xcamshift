@@ -300,7 +300,24 @@ class Test_table_manager(unittest2.TestCase):
         
         with self.assertRaises(KeyError):
             table.get_bond_vector_atoms('J')
+        
+        expected_energy_terms = {
+                    'p1': -0.40353099999999997, 
+                    'p2': 13.9148, 
+                    'p3': -0.42172500000000002, 
+                    'p4': -3.0801599999999998, 
+                    'p5':  0.98725099999999999, 
+                    'p6':  0.0, 
+                    's': -16.5, 
+                    'r': 3.0}
+        
+        self.assertDictEqual(table.get_energy_terms('O','HN','DIST'),expected_energy_terms)
 
+        expected_energy_term_offsets = [(-1, 'O'), (0, 'HN'), (0, 'O'), (1, 'HN')]
+        self.assertSequenceEqual(table.get_energy_term_offsets(),expected_energy_term_offsets)
+        
+        table.get_energy_offset_correction((-1, 'O'),'DIST','HA')
+        
 if __name__ == "__main__":
 #     unittest2.main()
     unittest2.main(module='test.Test_table_manager',defaultTest='Test_table_manager.test_hydrogen_bond_table')

@@ -24,6 +24,10 @@ class Hydrogen_bond_table(Table_base):
     TARGET_ATOMS = "target_atoms"
     DONORS = 'donors'
     ACCEPTORS = 'acceptors'
+    
+    DISTANCE = 'DIST'
+    ANGLE_1 =  'ANG1'
+    ANGLE_2 =  'ANG2'
 #     SPHERE_1 = 'sphere_1'
 #     SPHERE_2 = 'sphere_2'
 #     EXPONENT = 'exponent'
@@ -59,6 +63,47 @@ class Hydrogen_bond_table(Table_base):
             result  = self._table[self.ACCEPTORS][0][donor_or_acceptor]
         
         return result
+    
+    def _check_donor(self, donor):
+        donors = self.get_donors()
+        
+        if donor not in donors:
+            message = 'donor %s not in known donors: %s'
+            raise KeyError(message % (`donor`,','.join(donors)))
+    
+    def _check_acceptor(self, acceptor):
+        acceptors = self.get_acceptors()
+        
+        if acceptor not in acceptors:
+            message = 'acceptor %s not in known acceptors: %s'
+            raise KeyError(message % (`acceptor`,','.join(acceptors)))
+    
+    def _check_term(self,term):
+        terms = self.DISTANCE, self.ANGLE_1, self.ANGLE_2
+        if term not in terms:
+            message = 'unrecognised term %s, term should be one of %s'
+            raise KeyError(message % (term, ','.join(terms)))
+    
+    def get_energy_terms(self, donor, acceptor, term):
+        self._check_donor(donor)
+        self._check_acceptor(acceptor)
+        self._check_term(term)
+        
+        return self._table['pairs'][donor,acceptor][term]
+    
+    def get_energy_term_offsets(self):
+        return sorted(self._table['data'].keys())
+    
+    def _check_offset(self, offset):
+        pass
+    
+    def get_energy_offset_correction(self,offset,term,target_atom):
+        self._check_term(term)
+        self._check_target_atom(target_atom)
+        self._check_offset(offset)
+        
+        
+        return self._table['data'][offset][term][target_atom]
 #     def get_exponent(self,sphere):
 #         self._check_sphere(sphere)
 #         return self._table[self.DATA][sphere][self.EXPONENT]
