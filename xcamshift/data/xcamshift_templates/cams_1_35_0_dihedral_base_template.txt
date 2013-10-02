@@ -15,6 +15,6 @@ exponent : 1.0
 offsets : [-1,0,1]
 target_atoms : ["HA", "CA", "HN", "N", "C", "CB"]
 dihedral_atoms : ["C", "N", "O", "CA", "C", "CB", "CG"]
-translations : [CG : "OG"]
+translations : {CG : "OG"}
 
 %s
