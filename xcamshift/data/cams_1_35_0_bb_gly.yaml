@@ -8,8 +8,6 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
-residue_type : GLY
-table_type : BACKBONE
 translations: {[GLY,HA1]: HA}
 data:
 
