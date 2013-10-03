@@ -18,8 +18,11 @@ from pdbTool import PDBTool
 import unittest2
 #from xcamshift import RandomCoilShifts, Distance_potential,  Extra_potential,\
 #    Dihedral_potential, Base_potential, Sidechain_potential, Xcamshift,\
-from xcamshift import    Non_bonded_potential, Non_bonded_list, Xcamshift
+from xcamshift import Non_bonded_potential, Non_bonded_list, Xcamshift
 from atomSel import AtomSel
+from cython.shift_calculators import allocate_array, zero_array
+from derivList import DerivList
+from vec3 import Vec3
 #from test.xdists import xdists_ala_3
 #from test.dihedrals import dihedrals_ala_3
 #from cython.fast_segment_manager import Segment_Manager
@@ -36,7 +39,6 @@ from cython.fast_segment_manager import Segment_Manager
 from cython.shift_calculators import Out_array
 
 
-fast = False
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -61,6 +63,17 @@ def almostEqual(first, second, places = 7):
 #class testSegmentManager(object):
 class TestXcamshiftA4(unittest2.TestCase):
 
+    def __init__(self,*args,**kwargs):
+        super(TestXcamshiftA4, self).__init__(*args,**kwargs)
+        self._esim = None
+        
+    def get_single_member_ensemble_simulation(self):
+        if self._esim.__class__ ==  None.__class__:
+            #TODO note EnsembleSimulation can't have a single member that causes a crash!
+            # therefore a hack
+            self._esim =  Xcamshift().ensembleSimulation()
+        return self._esim
+     
     def _setup_xcamshift_with_shifts_table(self, test_shifts):
         xcamshift = self._get_xcamshift()
         observed_shifts = Observed_shift_table(test_shifts)
@@ -114,7 +127,7 @@ class TestXcamshiftA4(unittest2.TestCase):
     def make_out_array(self):
 #        TODO: use segment manager
         num_atoms = len(AtomSel('(all)').indices())
-        result = Out_array(num_atoms)
+        result = Out_array(num_atoms, self.get_single_member_ensemble_simulation())
         return result
     
     def make_result_array(self):
@@ -329,28 +342,32 @@ class TestXcamshiftA4(unittest2.TestCase):
 
 
     def _get_non_bonded_potential(self, smoothed = True):
-        global fast
-        non_bonded_potential = Non_bonded_potential(smoothed)
-        non_bonded_potential.set_fast(fast)
+        non_bonded_potential = Non_bonded_potential(self.get_single_member_ensemble_simulation(), smoothed)
         return non_bonded_potential
 
     def testNonBondedComponents(self):
             non_bonded_potential = self._get_non_bonded_potential()
             non_bonded_potential.update_non_bonded_list()
-    
-            expected_components = dict(ala_4.ala_components_non_bond)
-            for component in non_bonded_potential._get_all_components():
-                target_atom_id,remote_atom_id,coefficient,exponent = component
-                
-                
-                target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
-                remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
             
-                expected_shift_key = target_atom_key,remote_atom_key,int(exponent)
-                self.assertElemeInSet(expected_shift_key, expected_components)
-                self.assertAlmostEqual(expected_components[expected_shift_key], coefficient, self.DEFAULT_DECIMAL_PLACES)
+            target_components = non_bonded_potential._get_component_list('ATOM')
+            remote_components = non_bonded_potential._get_component_list('NBRM')
+            
+            expected_components = dict(ala_4.ala_components_non_bond)
+            for component in non_bonded_potential._get_all_components('NBLT'):
+                #TODO: remove need for component?
+                for exponent in (1,-3):
+                    target_component_index, remote_component_index = component[1:3]
+                    
+                    target_atom_id = target_components[target_component_index][0]
+                    remote_atom_id = remote_components[remote_component_index][0]
+                    
+                    target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
+                    remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
                 
-                del expected_components[expected_shift_key]
+                    expected_shift_key = target_atom_key,remote_atom_key,int(exponent)
+                    self.assertElemeInSet(expected_shift_key, expected_components)
+                    
+                    del expected_components[expected_shift_key]
             
             self.assertEmpty(expected_components)
                 
@@ -358,23 +375,35 @@ class TestXcamshiftA4(unittest2.TestCase):
 
     def _test_non_bonded_shifts(self, non_bonded_potential, non_bonded_shifts):
         non_bonded_potential.update_non_bonded_list()
-        for i, component in enumerate(non_bonded_potential._get_all_components()):
-            target_atom_id, remote_atom_id = component[:2]
-            exponent = component[3]
-            target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
-            remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
-            expected_shift_key = target_atom_key, remote_atom_key, int(exponent)
-            if expected_shift_key in non_bonded_shifts:
-                expected_shift = non_bonded_shifts[expected_shift_key]
-                calculated_shift = non_bonded_potential._calc_component_shift(i)
-    #                print expected_shift_key,calculated_shift
-                self.assertAlmostEqual(expected_shift, calculated_shift, self.DEFAULT_DECIMAL_PLACES, expected_shift_key)
-                del non_bonded_shifts[expected_shift_key]
-            else:
-                distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
-                self.assertTrue(distance >= 5.0, expected_shift_key)
         
-        self.assertEmpty(non_bonded_shifts)
+        target_components = non_bonded_potential._get_component_list('ATOM')
+        remote_components = non_bonded_potential._get_component_list('NBRM')
+        
+        for i, component in enumerate( non_bonded_potential._get_all_components('NBLT')):
+             
+            target_component_index, remote_component_index = component[1:3]
+                    
+            target_atom_id = target_components[target_component_index][0]
+            remote_atom_id = remote_components[remote_component_index][0]
+            
+            expected_shift = 0.0
+            key_good = False
+            for j, exponent in enumerate((1,-3)):
+                target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
+                remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
+                expected_shift_key = target_atom_key, remote_atom_key, int(exponent)
+                if expected_shift_key in non_bonded_shifts:
+                    expected_shift += non_bonded_shifts[expected_shift_key]
+                    key_good=True
+                elif j == 0:
+                    distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
+                    self.assertTrue(distance >= 5.0, expected_shift_key)
+                
+            if key_good:
+                calculated_shift = non_bonded_potential._calc_component_shift(i)
+                self.assertAlmostEqual(expected_shift, calculated_shift, self.DEFAULT_DECIMAL_PLACES, expected_shift_key)
+                
+
 
     def testNonBondedShiftsNoSmoothing(self):
         non_bonded_potential = self._get_non_bonded_potential(smoothed=False)
@@ -401,9 +430,20 @@ class TestXcamshiftA4(unittest2.TestCase):
 
     def _test_non_bonded_force_factors(self, non_bonded_potential, non_bonded_force_factors, active_shifts, factors):
         
-        non_bonded_potential._force_calculator._set_components(non_bonded_potential._get_component_list())
-        for i, component in enumerate(non_bonded_potential._get_all_components()):
-            target_atom_id, remote_atom_id, coefficient, exponent = component
+        components = dict(non_bonded_potential._get_components())
+        nb_interaction_list = components['NBLT']
+        active_array = allocate_array(1,'i')
+        components['ACTI'] =  active_array
+        components['OFFS'] = 0
+        non_bonded_potential._force_calculator._set_components(components)
+        
+        for i, component in enumerate(nb_interaction_list):
+            zero_array(active_array)
+            active_array[0] = i
+            
+            target_atom_id =  non_bonded_potential._get_component_list('ATOM')[component[1]][0]
+            remote_atom_id =  non_bonded_potential._get_component_list('NBRM')[component[2]][0]
+
             target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
             remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
             
@@ -411,18 +451,19 @@ class TestXcamshiftA4(unittest2.TestCase):
                 continue
     #
             distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
-    #            print target_atom_id,remote_atom_id,distance,target_atom_key, remote_atom_key
-            if distance  >= 5.0:
-                continue
-            
-            expected_key = target_atom_key, remote_atom_key, int(exponent)
-            factor = factors[target_atom_key]
-    #            print expected_key,factor
-            force_factor = non_bonded_potential._force_calculator._calc_single_force_factor(i, factor)
-            
-            #TODO: check change from 7 to 5 dp is ok
-            self.assertAlmostEqual(force_factor, non_bonded_force_factors[expected_key],places=self.DEFAULT_DECIMAL_PLACES)
-            del non_bonded_force_factors[expected_key]
+
+            if distance  < 5.0:
+               
+                for exponent_index, exponent in enumerate((1,-3)):
+                    expected_key = target_atom_key, remote_atom_key, int(exponent)
+                    factor = factors[target_atom_key]
+    
+                    non_bonded_potential._force_calculator._build_component(i,exponent_index)
+    
+                    force_factor = non_bonded_potential._force_calculator._calc_single_force_factor(0, factor)
+                    #TODO: check change from 7 to 5 dp is ok
+                    self.assertAlmostEqual(force_factor, non_bonded_force_factors[expected_key],places=self.DEFAULT_DECIMAL_PLACES)
+                    del non_bonded_force_factors[expected_key]
         self.assertEmpty(non_bonded_force_factors)
 
     def testNonBondedForceFactorsNotSmoothed(self):
@@ -445,48 +486,64 @@ class TestXcamshiftA4(unittest2.TestCase):
         self._test_non_bonded_force_factors(non_bonded_potential, non_bonded_force_factors, 
                                             ala_4.active_shifts, ala_4.ala4_factors_non_bonded)
 
-    def _test_non_bonded_forces(self, potential, non_bonded_forces, active_shifts, factors):
+    def _test_non_bonded_forces(self, non_bonded_potential, non_bonded_forces, active_shifts, factors):
+
+        components = dict(non_bonded_potential._get_components())
+        nb_interaction_list = components['NBLT']
+        active_array = allocate_array(1,'i')
+        components['ACTI'] =  active_array
+        #TODO: make this less invasive of the potentials encapsulation
+        components['OFFS'] = 0
+        non_bonded_potential._force_calculator._set_components(components)
         
-        potential._force_calculator._set_components(potential._get_component_list())
-        for i, component in enumerate(potential._get_all_components()):
-            target_atom_id, remote_atom_id, coefficient, exponent = component
+        for i, component in enumerate(nb_interaction_list):
+            zero_array(active_array)
+            active_array[0] = i
+            
+            target_atom_id =  non_bonded_potential._get_component_list('ATOM')[component[1]][0]
+            remote_atom_id =  non_bonded_potential._get_component_list('NBRM')[component[2]][0]
+
             target_atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
             remote_atom_key = Atom_utils._get_atom_info_from_index(remote_atom_id)
-            
+             
             if active_shifts[target_atom_key] == 0:
                 continue
     #
             distance = Atom_utils._calculate_distance(target_atom_id, remote_atom_id)
-    #            print target_atom_id,remote_atom_id,distance,target_atom_key, remote_atom_key
-            if distance  >= 5.0:
-                continue
-            
-            expected_key = target_atom_key, remote_atom_key, int(exponent)
-            factor = factors[target_atom_key]
-    #            print expected_key,factor
-            out_array = self.make_out_array()
-            potential._force_calculator._calc_single_force_set(i, factor,out_array)
-            
-            forces = out_array.add_forces_to_result()
-            target_force_triplet = forces[target_atom_id]
-            remote_force_triplet  = forces[remote_atom_id]
-            
-            expected_target_forces = non_bonded_forces[expected_key]
-            expected_remote_forces  = [-elem for elem in expected_target_forces]
-            
-            #TODO: check change from 7 to 5 dp is ok also improve assertSequenceAlmostEqual ro take a places argument
-            self.assertSequenceAlmostEqual(target_force_triplet, expected_target_forces,delta= 1e-1**self.DEFAULT_DECIMAL_PLACES)
-            self.assertSequenceAlmostEqual(remote_force_triplet, expected_remote_forces,delta= 1e-1**self.DEFAULT_DECIMAL_PLACES)
-            
-            atom_ids =  [target_atom_id,remote_atom_id]
-            atom_ids.sort(reverse=True)
-            for atom_id in atom_ids:
-                del forces[atom_id]
-            forces = self.remove_almost_zero_force_elems_from_list(forces)
-            
-            self.assertEmpty(forces)
-            
-            del non_bonded_forces[expected_key]
+
+            if distance  < 5.0:
+               
+                for exponent_index, exponent in enumerate((1,-3)):
+                    expected_key = target_atom_key, remote_atom_key, int(exponent)
+                    factor = factors[target_atom_key]
+    
+                    non_bonded_potential._force_calculator._build_component(i,exponent_index)
+                    
+                    factor = factors[target_atom_key]
+
+                    out_array = self.make_out_array()
+                    non_bonded_potential._force_calculator._calc_single_force_set(0, factor,out_array)
+                     
+                    forces = out_array.add_forces_to_result()
+                    target_force_triplet = forces[target_atom_id]
+                    remote_force_triplet  = forces[remote_atom_id]
+                     
+                    expected_target_forces = non_bonded_forces[expected_key]
+                    expected_remote_forces  = [-elem for elem in expected_target_forces]
+                     
+                    #TODO: check change from 7 to 5 dp is ok also improve assertSequenceAlmostEqual ro take a places argument
+                    self.assertSequenceAlmostEqual(target_force_triplet, expected_target_forces,delta= 1e-1**self.DEFAULT_DECIMAL_PLACES)
+                    self.assertSequenceAlmostEqual(remote_force_triplet, expected_remote_forces,delta= 1e-1**self.DEFAULT_DECIMAL_PLACES)
+
+                    atom_ids =  [target_atom_id,remote_atom_id]
+                    atom_ids.sort(reverse=True)
+                    for atom_id in atom_ids:
+                        del forces[atom_id]
+                    forces = self.remove_almost_zero_force_elems_from_list(forces)
+                     
+                    self.assertEmpty(forces)
+                    
+                    del non_bonded_forces[expected_key]
         self.assertEmpty(non_bonded_forces)
 
     def testNonBondedForces(self):
@@ -513,9 +570,7 @@ class TestXcamshiftA4(unittest2.TestCase):
 
 
     def _get_xcamshift(self):
-        global fast
         xcamshift_potential = Xcamshift()
-        xcamshift_potential.set_fast(fast)
         return xcamshift_potential
 
     def  test_overall_shifts_a4(self):
@@ -550,12 +605,25 @@ class TestXcamshiftA4(unittest2.TestCase):
                 del expected_shift_components[expected_key]
         self.remove_zero_valued_keys(expected_shift_components)
         self.assertEmpty(expected_shift_components)
-        
+
+    def deriv_list_as_array(self, total_result_forces_deriv_list, simulation):
+        derivs_vec3 = total_result_forces_deriv_list.get(simulation)
+        #todo: report to charles  print derivs_vec3 segfaults
+        result = [None]*len(derivs_vec3)
+        for i,vec in enumerate(derivs_vec3):
+            if vec != Vec3(0.0,0.0,0.0):
+                result[i]=Vec3(vec)
+        return result
+    
     def _test_force_sets(self, xcamshift, expected_energy, expected_forces):
         expected_forces = dict(expected_forces)
         number_atoms = Segment_Manager().get_number_atoms()
-        derivs = [None] * number_atoms
+        derivs = DerivList()
+        derivs.init(self.get_single_member_ensemble_simulation())
+        
         energy = xcamshift.calcEnergyAndDerivs(derivs)
+        
+        derivs = self.deriv_list_as_array(derivs, self.get_single_member_ensemble_simulation())
         
         for atom_id in range(number_atoms):
             
@@ -584,10 +652,8 @@ class TestXcamshiftA4(unittest2.TestCase):
         self._test_force_sets(xcamshift, expected_energy, expected_forces)
                 
 def run_tests():
-    if fast:
-        print >> sys.stderr, TestXcamshiftA4.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift_a4')
-#    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testNonBondedForceFactorsNotSmoothed')
+#     unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testNonBondedForceFactorsSmoothed')
     
 if __name__ == "__main__":
     run_tests()

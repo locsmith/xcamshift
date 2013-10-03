@@ -13,6 +13,7 @@ Created on 29 Jul 2012
 
 @author: garyt
 '''
+import sys
 import unittest
 import timeit
 from common_constants import NON_BONDED, RING
@@ -25,6 +26,11 @@ from xcamshift import Xcamshift
 from observed_chemical_shifts import Observed_shift_table
 from atomSel import AtomSel
 import common_constants
+from cython.fast_segment_manager import Segment_Manager
+import cProfile
+import profile
+import time
+from cython.shift_calculators import allocate_array
 
 
 test_function = None
@@ -48,6 +54,7 @@ class Test(unittest2.TestCase):
         xcamshift = Xcamshift()
         observed_shifts = Observed_shift_table(test_shifts)
         xcamshift.set_observed_shifts(observed_shifts)
+        xcamshift.setup()
         return xcamshift
     
     def make_xcamshift(self, shifts):
@@ -83,11 +90,13 @@ class Test(unittest2.TestCase):
 
 
     def set_cache_shifts(self,xcamshift, shift_list):
-        shift_cache =  xcamshift._shift_cache
         
-        for key in shift_list:
+        shift_cache =  allocate_array(len(shift_list))
+        xcamshift._shift_cache =  shift_cache
+        
+        for i,key in enumerate(shift_list):
             index = self.get_atom_index(key)
-            shift_cache[index] = shift_list[key]
+            shift_cache[i] = shift_list[key]
             
     def make_result_array_forces(self):
 #        TODO: use segment manager
@@ -99,12 +108,6 @@ class Test(unittest2.TestCase):
 
         xcamshift = self.make_xcamshift(gb3.gb3_zero_shifts)
 
-        self.set_cache_shifts(xcamshift, gb3.gb3_shifts)
-        
-        non_bonded = xcamshift.get_named_sub_potential(NON_BONDED)
-#        timings.test_function = self.doiit
-#        test_function()
-#        Test.doiit = self.done
         class Test_nonbonded:
             def __init__(self, non_bonded):
                 self.non_bonded =  non_bonded
@@ -124,17 +127,30 @@ class Test(unittest2.TestCase):
                 self.derivs = derivs
                 self.xcamshift = xcamshift
                 self.potential_list = potential_list
-                
+                self.result  = {}
+                for i in range(Segment_Manager.get_segment_manager().get_number_atoms()):
+                    self.result[i]=None
+                    
             def __call__(self):
-                self.xcamshift._calc_derivs(self.derivs,self.potential_list)
-                
+                start = time.clock()
+                for i in range(10):
+                    energy = self.xcamshift.calcEnergyAndDerivs(self.result)
+                end =  time.clock()
+                print '%4.3f ms / cycle' % ((end-start)/10.0*1000)
 
-            
-#        print 'non_bonded',timeit.Timer(Test_nonbonded(non_bonded)).timeit(number=10).0
-#        print 'all',timeit.Timer(Test_xcamshift_forces(xcamshift, self.make_result_array_forces())).timeit(number=10)/10.0
-        for sub_potential in common_constants.CAMSHIFT_SUB_POTENTIALS:
-            potential_list =  [xcamshift.get_named_sub_potential(sub_potential)]
-            print sub_potential,timeit.Timer(Test_xcamshift_subpotential(xcamshift, potential_list, self.make_result_array_forces())).timeit(number=10)/10.0
+        def run():
+            def make_result_array_forces():
+                #        TODO: use segment manager
+                num_atoms = len(AtomSel('(all)').indices())
+                result = [None] * num_atoms
+                return result
+            Test_xcamshift_subpotential(xcamshift, None, make_result_array_forces())()
+        run()
+        cProfile.runctx('run()',globals(),locals(),filename='/home/garyt/test.profile')
+        for i in range(10):
+            run()
+        
+
 if __name__ == "__main__":
 #    import sys;sys.argv = ['', 'Test.testName']
     unittest2.main()

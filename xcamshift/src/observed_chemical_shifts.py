@@ -15,6 +15,7 @@ Created on 24 Jan 2012
 '''
 from python_utils import tupleit
 from utils import Atom_utils
+from  cython.shift_calculators import allocate_array
 
 class Observed_shift_table(object):
     '''
@@ -23,6 +24,7 @@ class Observed_shift_table(object):
 
     def __init__(self,shift_data={}):
         self._chemical_shifts = self.process_observed_shifts(shift_data)
+        self._native_shifts = None
         
     def process_observed_shifts(self,shift_data):
         result  = {}
@@ -65,6 +67,15 @@ class Observed_shift_table(object):
             sub_result.append(Atom_utils._get_atom_info_from_index(atom_index))
             sub_result.append(self._chemical_shifts[atom_index])
         return tupleit(results)
+    
+    def get_native_shifts(self, target_atom_ids):
+        if self._native_shifts == None:
+            self._native_shifts = allocate_array(len(target_atom_ids),'f')
+            for i,target_atom_id in enumerate(target_atom_ids):
+                self._native_shifts[i] = self.get_chemical_shift(target_atom_id)
+                
+        return self._native_shifts
+            
     
     def __str__(self): 
         

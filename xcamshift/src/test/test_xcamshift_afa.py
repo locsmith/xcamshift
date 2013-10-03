@@ -16,7 +16,7 @@ Created on 31 Dec 2011
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
-from xcamshift import Ring_Potential
+from xcamshift import Ring_Potential,Xcamshift
 from atomSel import AtomSel
 from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
@@ -33,7 +33,6 @@ from common_constants import TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
 TOTAL_ENERGY = 'total'
 from cython.shift_calculators import Out_array
 
-fast =  False
 
 def text_keys_to_atom_ids(keys, segment = '*'):
     result = []
@@ -57,6 +56,10 @@ def almostEqual(first, second, places = 7):
 #class testSegmentManager(object):
 class TestXcamshiftAFA(unittest2.TestCase):
 
+    def __init__(self,*args,**kwargs):
+        super(TestXcamshiftAFA, self).__init__(*args,**kwargs)
+        self._esim = None
+        
     # TODO add extra places
     DEFAULT_DECIMAL_PLACES = 5
     DEFAULT_ERROR = 10**-DEFAULT_DECIMAL_PLACES
@@ -95,18 +98,26 @@ class TestXcamshiftAFA(unittest2.TestCase):
             elem_2 = expected[difference_offset]
             message = template % (difference_offset, `elem_1`,`elem_2`,delta)
             raise AssertionError(message)
-            
+
+    def get_single_member_ensemble_simulation(self):
+        if self._esim.__class__ ==  None.__class__:
+            #TODO note EnsembleSimulation can't have a single member that causes a crash!
+            # therefore a hack
+            self._esim =  Xcamshift().ensembleSimulation()
+        return self._esim
+                
     def setUp(self):
         initStruct("test_data/ala_phe_ala/AFA.psf")
         PDBTool("test_data/ala_phe_ala/AFA.pdb").read()
         Atom_utils.clear_cache()
         Segment_Manager.reset_segment_manager()
+#         print "In method", self._testMethodName
         
 #TODO: shoulf be private
     def make_out_array(self):
 #        TODO: use segment manager
         num_atoms = len(AtomSel('(all)').indices())
-        result = Out_array(num_atoms)
+        result = Out_array(num_atoms,self.get_single_member_ensemble_simulation())
         return result
     
     def make_result_array(self):
@@ -232,14 +243,14 @@ class TestXcamshiftAFA(unittest2.TestCase):
             
 
     def make_ring_potential(self):
-        global fast
-        ring_potential = Ring_Potential()
-        ring_potential.set_fast(fast)
+        ring_potential = Ring_Potential(self.get_single_member_ensemble_simulation())
+        
         return ring_potential
 
     def test_calc_component_forces(self):
         ring_potential = self.make_ring_potential()
         ring_potential._setup_ring_calculator(ring_potential._force_calculator)
+        ring_potential._force_calculator._set_components(ring_potential._get_components())
         for target_atom_id,atom_type_id in ring_potential._get_component_list('ATOM'):
             for ring_id,ring_atom_ids in ring_potential._get_component_list('RING'):
                 
@@ -275,8 +286,6 @@ class TestXcamshiftAFA(unittest2.TestCase):
             
 
 def run_tests():
-    if fast:
-        print >> sys.stderr, TestXcamshiftAFA.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift_afa')
 #    unittest2.main(module='test.test_xcamshift_afa',defaultTest='TestXcamshiftAFA.test_calc_component_shift')
     

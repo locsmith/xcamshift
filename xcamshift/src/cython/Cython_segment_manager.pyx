@@ -8,6 +8,7 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
+# cython: c_string_encoding=ascii
 '''
 Created on 11 Aug 2012
 
@@ -20,6 +21,8 @@ Created on 31 Dec 2011
 @author: garyt
 '''
 
+cdef extern from "instantiate.hh":
+    pass
 
 from textwrap import dedent
 from  xplor_access cimport currentSimulation, Atom

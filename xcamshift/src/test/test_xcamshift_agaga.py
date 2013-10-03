@@ -19,11 +19,10 @@ from protocol import initStruct
 from pdbTool import PDBTool
 from xcamshift import Xcamshift
 from utils import Atom_utils
-from common_constants import BACK_BONE
+from common_constants import BACK_BONE, ROUND_CHANGED
 import sys
 from cython.fast_segment_manager import Segment_Manager
 
-fast = False
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -53,12 +52,12 @@ class TestXcamshiftAGAGA(unittest2.TestCase):
 
     def _get_xcamshift(self):
         xcamshift = Xcamshift()
-        xcamshift.set_fast(True)
         return xcamshift
 
     def test_agaga_shifts(self):
         xcamshift = self._get_xcamshift()
         
+        xcamshift._prepare(ROUND_CHANGED, None)
         agaga_shifts_copy = dict( agaga_shifts)
         for key in agaga_shifts:
             segment, residue_number, atom = key
@@ -75,6 +74,7 @@ class TestXcamshiftAGAGA(unittest2.TestCase):
         
     def test_agaga_component_shifts(self):
         xcamshift = Xcamshift()
+        xcamshift._prepare(ROUND_CHANGED, None)
         
         sub_potential_shifts = dict(agaga_subpotential_shifts)
         for key in agaga_subpotential_shifts:
@@ -136,8 +136,6 @@ class TestXcamshiftAGAGA(unittest2.TestCase):
             self.assertAlmostEqual(test_data_sum[key], agaga_shifts[key], places=self.DEFAULT_DECIMAL_PLACES - 2, msg=key)
             
 def run_tests():
-    if fast:
-        print >> sys.stderr, TestXcamshiftAGAGA.__module__,"using fast calculators"
     unittest2.main(module='test.test_xcamshift_agaga')
     
 if __name__ == "__main__":
