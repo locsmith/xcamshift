@@ -29,7 +29,7 @@ from table_manager import Table_manager
 from python_utils import tupleit
 from utils import Atom_utils, iter_residues_and_segments
 import sys
-from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED, DISULPHIDE
+from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED, DISULPHIDE, HBOND
 from common_constants import  TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, STRUCTURE_CHANGED, SHIFT_DATA_CHANGED
 from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
@@ -2496,8 +2496,84 @@ class Non_bonded_potential(Distance_based_potential):
         self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._selected_components)
          
 
+class Hydrogen_bond_potential(Base_potential):
 
+    def __init__(self,simulation,smoothed=True):
+        super(Hydrogen_bond_potential, self).__init__(simulation)
+        self._force_calculator = self._get_force_calculator()
+        self._shift_calculator =  self._get_shift_calculator()
+        
+#         self._add_component_factory(Non_bonded_backbone_component_factory()) 
+#         self._add_component_factory(Non_bonded_backbone_component_factory())
+#         self._add_component_factory(Non_bonded_remote_component_factory())
+#         self._add_component_factory(Non_bonded_coefficient_factory())
+#         self._add_component_factory(Null_component_factory('NBLT'))
+#         
+#         self._non_bonded_list = Non_bonded_list(self._simulation)
+#         self._component_set = {}
+#         self._selected_components =  None
+    
+    def _get_shift_calculator(self):
+        return None
+#         raise Exception("not implemented")
+#         result  = Hyrogen_bond_shift_calculator(self._simulation, name = self.get_abbreviated_name())
+#         result.set_verbose(self._verbose)
+#         return result
+#     
+    def _get_force_calculator(self):
+        return None
+#         result = Hydrogen_bond_force_calculator( smoothed=self._smoothed, name = self.get_abbreviated_name())
+#         result.set_verbose(self._verbose)
+#         return result
+    
+    def set_verbose(self, on=True):
+        pass
+#         print "not implemented"
+#         Distance_based_potential.set_verbose(self,on)
+#         self._non_bonded_list.set_verbose(on)
+            
+    def _get_table_source(self):
+        return Table_manager.get_default_table_manager().get_hydrogen_bond_table
+        
+    def get_abbreviated_name(self):
+        return HBOND
+    
+#     def _get_indices(self):
+#         return Distance_based_potential.Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
+    
+    def _get_target_atom_list_name(self):
+        return 'ATOM'
+
+#     def _get_non_bonded_list(self):
+#         non_bonded_list = self._get_component_list('NBLT')
+#         
+#         target_atom_list = self._get_component_list('ATOM')
+#         
+#         remote_atom_list = self._get_component_list('NBRM')
+#         
+#         coefficient_list  = self._get_component_list('COEF')
+#         updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
+#         
+#         return non_bonded_list
+    
+    def _prepare(self, change, target_atom_ids):
+        super(Hydrogen_bond_potential, self)._prepare(change, target_atom_ids)
+        
+            
+#         if change == STRUCTURE_CHANGED:
+#             self._reset_non_bonded_list()
+#         
+#         if change == ROUND_CHANGED:
+#             self.update_non_bonded_list()
+#         
+#         if change == TARGET_ATOM_IDS_CHANGED:
+#             self._selected_components = self._build_selected_components(target_atom_ids)
 # from pyPot import PyPot
+
+    def _create_component_list(self, name):
+        return None
+#         if name == "ATOM":
+#             return Native_component_list(format='ii')
 
 class Xcamshift(PyEnsemblePot):
 
@@ -2522,7 +2598,8 @@ class Xcamshift(PyEnsemblePot):
                           Sidechain_potential(self.ensembleSimulation()),
                           Ring_Potential(self.ensembleSimulation()),
                           Non_bonded_potential(self.ensembleSimulation()),
-                          Disulphide_shift_calculator(self.ensembleSimulation())
+                          Disulphide_shift_calculator(self.ensembleSimulation()),
+                          Hydrogen_bond_potential(self.ensembleSimulation())
                           ]
         self._verbose=verbose
         self._shift_table = Observed_shift_table()
