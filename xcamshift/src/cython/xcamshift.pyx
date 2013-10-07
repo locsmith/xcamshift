@@ -582,6 +582,7 @@ class Base_potential(object):
 
 
     def _build_active_components_list(self, target_atom_ids, components=None, force=False):
+        result = []
         if force or not self._freeze  or  self._active_components == None:
             if self._verbose:
                 print '   filtering components %s' % self.get_abbreviated_name(),
@@ -594,14 +595,17 @@ class Base_potential(object):
             if components == None: 
                 components =  self._get_component_list() 
                  
-            result  =  components.build_selection_list(test)
+            if components != None:
+                result  =  components.build_selection_list(test)
 
             if self._verbose:
                 
                 if self._active_components != None:
                     num_active_components = len(self._active_components)
                 else:
-                    num_active_components = len(components)
+                    num_active_components = 0
+                    if components  != None:
+                        num_active_components = len(components)
                 print ' %i reduced to %i' % (len(components),num_active_components)
         else:
             result = self._active_components
@@ -609,7 +613,10 @@ class Base_potential(object):
         return result
      
     def _get_components(self):
-        return {'ATOM' : self._get_component_list().get_native_components(),
+        atom_components =  self._get_component_list()
+        if atom_components != None:
+            atom_components = atom_components.get_native_components()
+        return {'ATOM' : atom_components,
                 'SIMU' : self._simulation}
     
     def _calc_component_shift(self, index):
@@ -672,11 +679,12 @@ class Base_potential(object):
     def _create_components_for_residue(self, name, segment, target_residue_number, atom_selection):
         selected_atoms = intersection(Atom_utils._select_atom_with_translation(segment, target_residue_number), atom_selection)
         
-        component_factory = self._component_factories[name]
-        table_source =  self._get_table_source()
-        if component_factory.is_residue_acceptable(segment,target_residue_number,self._segment_manager):
-            component_list =  self._component_list_data[name]
-            component_factory.create_components(component_list, table_source, segment, target_residue_number,selected_atoms)
+        if name in self._component_factories:
+            component_factory = self._component_factories[name]
+            table_source =  self._get_table_source()
+            if component_factory.is_residue_acceptable(segment,target_residue_number,self._segment_manager):
+                component_list =  self._component_list_data[name]
+                component_factory.create_components(component_list, table_source, segment, target_residue_number,selected_atoms)
 
     
     def _build_component_list(self,name,global_atom_selection):
@@ -756,7 +764,10 @@ class Base_potential(object):
     
     def get_target_atom_ids(self):
         components = self._get_component_list()
-        return  components.get_component_atom_ids()
+        result  =  []
+        if components != None:
+            result  =  components.get_component_atom_ids()
+        return  result
         
     def _calc_single_atom_shift(self, target_atom_id):
         components =  self._get_component_list()
@@ -774,7 +785,8 @@ class Base_potential(object):
             components = self._get_components()
             #TODO: move simulation outr of components and into constructor (for simplicity and symmetry with shift calculators)
             #TODO: do shift calculators use components fully?
-            self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._get_active_components())
+            if self._force_calculator != None:
+                self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._get_active_components())
             
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
@@ -810,8 +822,9 @@ class Base_potential(object):
     #TODO: unify with ring random coil and disuphide shift calculators
     def calc_shifts(self, target_atom_ids, results):
        
-        components = self._get_components()
-        self._shift_calculator(components,results,self._component_to_result, active_components=self._get_active_components())
+        if self._shift_calculator != None:
+            components = self._get_components()
+            self._shift_calculator(components,results,self._component_to_result, active_components=self._get_active_components())
              
 
             
