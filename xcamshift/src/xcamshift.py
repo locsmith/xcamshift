@@ -17,7 +17,6 @@ Created on 27 Dec 2011
 
 #TODO: add tests to exclude atoms/distances which are not defined
 
-from xplor_access cimport CDSVector
 from cython.pyEnsemblePot import PyEnsemblePot
 from atomSel import AtomSel,intersection
 from component_list import Component_list, Native_component_list
@@ -3170,7 +3169,7 @@ class Xcamshift(PyEnsemblePot):
             print "energy and derivatives completed in %.17g " %  (end_time-start_time)," second\ns"
         return energy
 
-    def calcEnergyAndDerivsMaybe0(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
+    def calcEnergyAndDerivsMaybe0(self,  derivListPtr,  ensembleSimulationPtr,  calcDerivatives):
 
         
         if self._verbose:
@@ -3185,7 +3184,7 @@ class Xcamshift(PyEnsemblePot):
 
         return 0.0 
 
-    def calcEnergyAndDerivsMaybe1(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
+    def calcEnergyAndDerivsMaybe1(self,  derivListPtr,  ensembleSimulationPtr,  calcDerivatives):
         target_atom_ids = self._get_active_target_atom_ids()
         
         ensemble_size =  self.ensembleSimulation().size()
@@ -3198,18 +3197,18 @@ class Xcamshift(PyEnsemblePot):
         return 0.0 
 
         
-    def calcEnergyAndDerivsMaybe2(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
+    def calcEnergyAndDerivsMaybe2(self,  derivListPtr,  ensembleSimulationPtr,  calcDerivatives):
         self._average_shift_cache()
         
         return 0.0
 
-    def calcEnergyAndDerivsMaybe3(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
+    def calcEnergyAndDerivsMaybe3(self,  derivListPtr,  ensembleSimulationPtr,  calcDerivatives):
 
         target_atom_ids = self._get_active_target_atom_ids()
         energy = self._calc_energy( active_target_atom_ids=target_atom_ids)
         return energy
 
-    def calcEnergyAndDerivsMaybe4(self, Py_ssize_t derivListPtr, Py_ssize_t ensembleSimulationPtr, bint calcDerivatives):
+    def calcEnergyAndDerivsMaybe4(self,  derivListPtr,  ensembleSimulationPtr,  calcDerivatives):
         if calcDerivatives:
             target_atom_ids = self._get_active_target_atom_ids()
             self._calc_derivs(int(derivListPtr), target_atom_ids)        

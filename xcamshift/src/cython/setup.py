@@ -73,18 +73,8 @@ ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx", '
                          language="c++",
                          extra_compile_args=["-O3"],
                          extra_link_args=extra_link_args,
-                         include_dirs=include_dirs),
-               
-               
-               Extension("xcamshift",  ["xcamshift.pyx"],
-                         define_macros = [('CPLUSPLUS', '1') ,
-                                          ('USE_CDS_NAMESPACE', '1')],
-                        
-                         language="c++",
-                         extra_compile_args=["-O3"],
-                         extra_link_args=extra_link_args,
                          include_dirs=include_dirs)
-              ]
+            ]
 
 if False:
     for e in ext_modules:
