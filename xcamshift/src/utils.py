@@ -180,6 +180,10 @@ class Atom_utils(object):
     def _get_chem_type(atom):
         return atom.chemType()
     
+    @staticmethod
+    def _get_bonded_atom_ids(atom_index):
+        return currentSimulation().select("bondedto index %i" % atom_index)
+    
 def return_true(*args, **kwargs):
     return True
 
