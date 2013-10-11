@@ -132,6 +132,7 @@ class Table_manager(object):
             
     
     def get_residue_types_for_table(self,table_type):
+        table_type = table_type.lower()
         self._load_tables(table_type)
         residues = set([key[1] for key in self.tables.keys() if key[0] == table_type])
  
@@ -289,6 +290,7 @@ class Table_manager(object):
             yield residue_type
             
     def load_tables_for_known_residues(self, table_type):
+        table_type =  table_type.lower()
         # add sequence lookup delegate to allow testing (currently we need a real molecule)
         for residue_type in self.iter_residue_types():
             
