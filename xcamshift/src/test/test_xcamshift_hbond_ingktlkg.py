@@ -66,7 +66,16 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         self.assertEqual(self.donor_indexer.get_max_index(), 7)
         self.assertEqual(self.acceptor_indexer.get_max_index(), 7)
 
-#             
+    def test_get_name(self):    
+        self.assertTrue('donor' in self.donor_indexer.get_name().lower())
+        self.assertTrue('acceptor' in self.acceptor_indexer.get_name().lower())
+
+#     def test_get_index_for_key(self,):
+#         for self.assertEqual(, second, msg)
+#     
+#     def get_key_for_index(self,index):
+#         return self._inverted_index[index]
+         
 
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')
