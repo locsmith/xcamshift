@@ -63,14 +63,26 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         self.assertSequenceEqual(acceptors, EXPECTED_ACCEPTORS)
     
     def test_get_max_index(self):
-        self.assertEqual(self.donor_indexer.get_max_index(), 7)
-        self.assertEqual(self.acceptor_indexer.get_max_index(), 7)
+        self.assertEqual(self.donor_indexer.get_max_index(), len(EXPECTED_DONORS))
+        self.assertEqual(self.acceptor_indexer.get_max_index(), len(EXPECTED_ACCEPTORS))
 
     def test_get_name(self):    
         self.assertTrue('donor' in self.donor_indexer.get_name().lower())
         self.assertTrue('acceptor' in self.acceptor_indexer.get_name().lower())
 
 
+    def test_get_index_for_key(self,):
+        for i,acceptor in enumerate(EXPECTED_ACCEPTORS):
+            self.assertEqual(EXPECTED_ACCEPTORS.index(acceptor), i)
+        self.assertEqual(i+1, self.acceptor_indexer.get_max_index())
+
+        for j,donor in enumerate(EXPECTED_DONORS):
+            self.assertEqual(EXPECTED_DONORS.index(donor), j)
+        self.assertEqual(j+1, self.donor_indexer.get_max_index())
+                       
+     
+#     def get_key_for_index(self,index):
+#         return self._inverted_index[index]
          
 
 def run_tests():
