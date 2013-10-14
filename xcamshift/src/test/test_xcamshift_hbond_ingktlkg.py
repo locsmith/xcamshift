@@ -28,11 +28,15 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         initStruct("test_data/ingktlkg_hbond/INGKTLKG.psf")
         PDBTool("test_data/ingktlkg_hbond/INGKTLKG.pdb").read()
         Atom_utils.clear_cache()
+
+        table_manager =  Table_manager.get_default_table_manager()
+        self.donor_indexer  = Hbond_donor_indexer(table_manager)
+        self.acceptor_indexer  = Hbond_acceptor_indexer(table_manager)
+        
         Segment_Manager.reset_segment_manager()
 #         print "In method", self._testMethodName
 
     def test_donor_indexer(self):
-        table_manager =  Table_manager.get_default_table_manager()
         
         expected_acceptors = (  (7, 'O', 'C'),
                                 (8, 'O', 'C'),
@@ -50,15 +54,14 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
                             (13, 'HN', 'N'),
                             (14, 'HN', 'N'))
         
-        donor_indexer  = Hbond_donor_indexer(table_manager)
-        donors = [donor for donor in donor_indexer.iter()]
+
+        donors = [donor for donor in self.donor_indexer.iter()]
         self.assertSequenceEqual(donors, expected_donors)
 
         
-        acceptor_indexer  = Hbond_acceptor_indexer(table_manager)
-        acceptors = [acceptor for acceptor in acceptor_indexer.iter()]
+        acceptors = [acceptor for acceptor in self.acceptor_indexer.iter()]
         self.assertSequenceEqual(acceptors, expected_acceptors)
-
+    
 #             
 
 def run_tests():
