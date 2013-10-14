@@ -62,6 +62,10 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         acceptors = [acceptor for acceptor in self.acceptor_indexer.iter()]
         self.assertSequenceEqual(acceptors, expected_acceptors)
     
+    def test_get_max_index(self):
+        self.assertEqual(self.donor_indexer.get_max_index(), 7)
+        self.assertEqual(self.acceptor_indexer.get_max_index(), 7)
+
 #             
 
 def run_tests():
