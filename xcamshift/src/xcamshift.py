@@ -2494,63 +2494,127 @@ class Non_bonded_potential(Distance_based_potential):
         return self._selected_components
         self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._selected_components)
          
-class Hydrogen_bond_context:
+class Hbond_indexer_base(object):
+    __metaclass__ = ABCMeta
     
-    def __init__(self,atom,offset,table):
-        self.complete = False
-    
-class Hydrogen_bond_component_factory(Atom_component_factory):
-    def __init__(self):
-        pass
-    
-    #TODO: remove just kept to satisfy an abstract method declaration
-    def _translate_atom_name(self, atom_name, context):
-        pass
-
-    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
+   
+    def __init__(self,table_manager):
+        super(Hbond_indexer_base, self).__init__()
         
-        return  table.get_translation_to_table(residue_type,atom_name)
-    
-    def _build_contexts(self, atom, table):
-        contexts = []
-        for offset in table.get_energy_term_offsets():
-            context = Hydrogen_bond_context(atom,offset,table)
-            if context.complete:
-                contexts.append(context)
-        return contexts
-    
-    def _get_component_for_atom(self, atom, context):
-        pass
-#         table = context._table
-#         
-#         from_atom_name = atom.atomName()
-#         from_residue_type = atom.residueName()
-#         #TODO move translation into context
-#         from_atom_name = self._translate_atom_name_to_table(from_residue_type,from_atom_name,table)
-#         
-#         offset = context.offset
-#         to_atom_name = context.to_atom_name
-#         to_residue_type = context.to_residue_type
-#         #TODO move translation into context
-#         to_atom_name = self._translate_atom_name_to_table(to_residue_type,to_atom_name,table)
-#         
-#         
-#         result = None
-#         if from_atom_name in table.get_from_atoms():
-#             if to_atom_name in table.get_to_atoms():
-#                 value = context._table.get_distance_coeeficent(from_atom_name,offset,to_atom_name)
-#                 if value != None:
-#                     from_atom_index = atom.index()
-#                     to_atom_index = context.to_atom_index
-#                     if from_atom_index != to_atom_index:
-#                         exponent = context._table.get_exponent()
-#                         result = (from_atom_index,to_atom_index,value,exponent)
-        reult = None
-        return result
+        self._index = {}
+        self._inverted_index = {}
+        self._max_index = 0
+            
+        self._build_index(table_manager)
+        
+    def get_name(self):
+        return 'hbond donor type'
+      
+    def iter_keys(self, table):
+        i = 0
+        for donor in table.get_donors():
+            yield donor
 
+
+    def _get_tables_by_index(self, table_manager):
+        table_index_map = {}
+        
+        for residue_type in table_manager.get_residue_types_for_table(NON_BONDED):
+            table = table_manager.get_non_bonded_table(residue_type)
+            index  = table._table['index']
+            table_index_map[index]=table
+        
+        keys = table_index_map.keys()
+        keys.sort()
+        result = []
+        
+        for key in keys:
+            result.append(table_index_map[key])
+        
+        return tuple(result)
     
-    def get_table_name(self):
-        return 'ATOM'
+    def _get_table(self,name):
+        return Table_manager.get_default_table_manager().get_hydrogen_bond_table(name)
+    
+    def _get_table_name(self):
+        return HBOND
+    
+    def _get_tables_by_index(self, table_manager):
+        table_index_map = {}
+        
+        for residue_type in table_manager.get_residue_types_for_table(self._get_table_name()):
+            table = self._get_table(residue_type)
+            index  = table._table['index']
+            table_index_map[index]=table
+        
+        keys = table_index_map.keys()
+        keys.sort()
+        result = []
+        
+        for key in keys:
+            result.append(table_index_map[key])
+        
+        return tuple(result) 
+    
+    @abstractmethod
+    def _get_targets(self, table):
+        pass
+
+    def _build_index(self, table_manager):
+        self._get_table('base')
+        
+        tables_by_index = self._get_tables_by_index(table_manager)
+        
+        segment_manager = Segment_Manager.get_segment_manager()
+        for segment in segment_manager.get_segments():
+            info =  segment_manager.get_segment_info(segment)
+            for atom_index in range(info.first_atom_index,info.last_atom_index):
+                atom_name  = Atom_utils._get_atom_info_from_index(atom_index)[2]
+                
+                for table in tables_by_index:
+                    for target in self._get_targets(table):
+                        vector_atoms  = table.get_bond_vector_atoms(target)
+                        if atom_name  == target:
+                            for bonded_index in  Atom_utils._get_bonded_atom_ids(atom_index):
+                                segid,residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
+                                if bonded_atom_name in vector_atoms:
+                                    key =  residue, atom_name, bonded_atom_name
+                                    if not key in self._index:
+                                        self._index[key] = self._max_index
+                                        self._inverted_index[self._max_index] = key
+                                        self._max_index+=1
+                                    
+                        
+    def get_index_for_key(self,key):
+        return self._index[key]
+    
+    def get_key_for_index(self,index):
+        return self._inverted_index[index]
+    
+    def get_max_index(self):
+        return self._max_index
+    
+    def iter(self):
+        for index in range(self._max_index):
+            yield self._inverted_index[index] 
+            
+class Hbond_donor_indexer(Hbond_indexer_base):
+
+    def __init__(self, table_manager):
+        super(Hbond_donor_indexer, self).__init__(table_manager)
+        
+    def _get_targets(self, table):
+        return table.get_donors()
+    
+class Hbond_acceptor_indexer(Hbond_indexer_base):
+
+    def __init__(self, table_manager):
+        super(Hbond_acceptor_indexer, self).__init__(table_manager)
+        
+    def _get_targets(self, table):
+        return table.get_acceptors()
+
+   
     
 class Hydrogen_bond_potential(Base_potential):
 
@@ -2559,7 +2623,7 @@ class Hydrogen_bond_potential(Base_potential):
         self._force_calculator = self._get_force_calculator()
         self._shift_calculator =  self._get_shift_calculator()
         
-        self._add_component_factory(Hydrogen_bond_component_factory()) 
+#       self._add_component_factory(Hydrogen_bond_component_factory()) 
 #         self._add_component_factory(Non_bonded_backbone_component_factory())
 #         self._add_component_factory(Non_bonded_remote_component_factory())
 #         self._add_component_factory(Non_bonded_coefficient_factory())
