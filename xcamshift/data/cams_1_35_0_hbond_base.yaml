@@ -13,8 +13,8 @@
 
 target_atoms : ["HA", "CA", "HN", "N", "C", "CB"]
 
-donors:     [O:  [C,  O]]
-acceptors:  [HN: [N, HN]]
+acceptors:    [O:  [C,  O]]
+donors:       [HN: [N, HN]]
 
 pairs: 
        [O, HN]: {
