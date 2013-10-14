@@ -2506,9 +2506,10 @@ class Hbond_indexer_base(object):
         self._max_index = 0
             
         self._build_index(table_manager)
-        
+    
+    @abstractmethod
     def get_name(self):
-        return 'hbond donor type'
+        pass
       
     def iter_keys(self, table):
         i = 0
@@ -2606,6 +2607,9 @@ class Hbond_donor_indexer(Hbond_indexer_base):
     def _get_targets(self, table):
         return table.get_donors()
     
+    def get_name(self):
+        return 'hbond donor'
+    
 class Hbond_acceptor_indexer(Hbond_indexer_base):
 
     def __init__(self, table_manager):
@@ -2614,7 +2618,8 @@ class Hbond_acceptor_indexer(Hbond_indexer_base):
     def _get_targets(self, table):
         return table.get_acceptors()
 
-   
+    def get_name(self):
+        return 'hbond acceptor'
     
 class Hydrogen_bond_potential(Base_potential):
 
