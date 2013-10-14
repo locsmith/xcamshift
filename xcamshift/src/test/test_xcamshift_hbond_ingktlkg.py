@@ -21,6 +21,22 @@ from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
 
+EXPECTED_ACCEPTORS =   ((7, 'O', 'C'),
+                        (8, 'O', 'C'),
+                        (9, 'O', 'C'),
+                        (10, 'O', 'C'),
+                        (11, 'O', 'C'),
+                        (12, 'O', 'C'),
+                        (13, 'O', 'C'))
+
+EXPECTED_DONORS =  ((8, 'HN', 'N'),
+                    (9, 'HN', 'N'),
+                    (10, 'HN', 'N'),
+                    (11, 'HN', 'N'),
+                    (12, 'HN', 'N'),
+                    (13, 'HN', 'N'),
+                    (14, 'HN', 'N'))
+
 class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
 
                  
@@ -38,29 +54,13 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
 
     def test_donor_indexer(self):
         
-        expected_acceptors = (  (7, 'O', 'C'),
-                                (8, 'O', 'C'),
-                                (9, 'O', 'C'),
-                                (10, 'O', 'C'),
-                                (11, 'O', 'C'),
-                                (12, 'O', 'C'),
-                                (13, 'O', 'C'))
-        
-        expected_donors = ( (8, 'HN', 'N'),
-                            (9, 'HN', 'N'),
-                            (10, 'HN', 'N'),
-                            (11, 'HN', 'N'),
-                            (12, 'HN', 'N'),
-                            (13, 'HN', 'N'),
-                            (14, 'HN', 'N'))
-        
 
         donors = [donor for donor in self.donor_indexer.iter()]
-        self.assertSequenceEqual(donors, expected_donors)
+        self.assertSequenceEqual(donors, EXPECTED_DONORS)
 
         
         acceptors = [acceptor for acceptor in self.acceptor_indexer.iter()]
-        self.assertSequenceEqual(acceptors, expected_acceptors)
+        self.assertSequenceEqual(acceptors, EXPECTED_ACCEPTORS)
     
     def test_get_max_index(self):
         self.assertEqual(self.donor_indexer.get_max_index(), 7)
@@ -70,11 +70,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         self.assertTrue('donor' in self.donor_indexer.get_name().lower())
         self.assertTrue('acceptor' in self.acceptor_indexer.get_name().lower())
 
-#     def test_get_index_for_key(self,):
-#         for self.assertEqual(, second, msg)
-#     
-#     def get_key_for_index(self,index):
-#         return self._inverted_index[index]
+
          
 
 def run_tests():
