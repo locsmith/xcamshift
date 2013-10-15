@@ -2511,23 +2511,6 @@ class Hbond_indexer_base(object):
     def get_name(self):
         pass
 
-    def _get_tables_by_index(self, table_manager):
-        table_index_map = {}
-        
-        for residue_type in table_manager.get_residue_types_for_table(NON_BONDED):
-            table = table_manager.get_non_bonded_table(residue_type)
-            index  = table._table['index']
-            table_index_map[index]=table
-        
-        keys = table_index_map.keys()
-        keys.sort()
-        result = []
-        
-        for key in keys:
-            result.append(table_index_map[key])
-        
-        return tuple(result)
-    
     def _get_table(self,name):
         return Table_manager.get_default_table_manager().get_hydrogen_bond_table(name)
     
