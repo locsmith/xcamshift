@@ -2620,7 +2620,87 @@ class Hbond_acceptor_indexer(Hbond_indexer_base):
 
     def get_name(self):
         return 'hbond acceptor'
+
+class Hydrogen_bond_context:
     
+    def __init__(self,atom,offset_data,table):
+        segid, res_num,atom_name = Atom_utils._get_atom_info_from_index(atom.index())
+        offset, offset_atom_name =  offset_data
+        
+        
+        if atom_name in table.get_target_atoms():
+            
+            offset_atoms  = Atom_utils.find_atom_ids(segid, res_num - offset, offset_atom_name)
+            
+            if len(offset_atoms) == 1:
+                
+                target_atom_index = atom.index()
+                offset_atom_index = offset_atoms[0]
+                
+                coeffs = []
+                for coeff_id in 'DIST','ANG1','ANG2':
+                    coeffs.append(table.get_energy_offset_correction(offset_data, coeff_id,atom_name))
+                self.complete = True
+                print segid, res_num, atom_name, res_num - offset, offset_atom_name, offset_atoms, coeffs
+        
+        print 1
+        for elem in Hbond_donor_indexer(Table_manager.get_default_table_manager()).iter():
+            print elem
+        print 2
+        self.complete = False
+    
+class Hydrogen_bond_component_factory(Atom_component_factory):
+    def __init__(self):
+        pass
+    
+    #TODO: remove just kept to satisfy an abstract method declaration
+    def _translate_atom_name(self, atom_name, context):
+        pass
+
+    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
+        
+        return  table.get_translation_to_table(residue_type,atom_name)
+    
+    def _build_contexts(self, atom, table):
+        contexts = []
+        for offset in table.get_energy_term_offsets():
+            context = Hydrogen_bond_context(atom,offset,table)
+            if context.complete:
+                contexts.append(context)
+        return contexts
+    
+    def _get_component_for_atom(self, atom, context):
+        pass
+#         table = context._table
+#         
+#         from_atom_name = atom.atomName()
+#         from_residue_type = atom.residueName()
+#         #TODO move translation into context
+#         from_atom_name = self._translate_atom_name_to_table(from_residue_type,from_atom_name,table)
+#         
+#         offset = context.offset
+#         to_atom_name = context.to_atom_name
+#         to_residue_type = context.to_residue_type
+#         #TODO move translation into context
+#         to_atom_name = self._translate_atom_name_to_table(to_residue_type,to_atom_name,table)
+#         
+#         
+#         result = None
+#         if from_atom_name in table.get_from_atoms():
+#             if to_atom_name in table.get_to_atoms():
+#                 value = context._table.get_distance_coeeficent(from_atom_name,offset,to_atom_name)
+#                 if value != None:
+#                     from_atom_index = atom.index()
+#                     to_atom_index = context.to_atom_index
+#                     if from_atom_index != to_atom_index:
+#                         exponent = context._table.get_exponent()
+#                         result = (from_atom_index,to_atom_index,value,exponent)
+        reult = None
+        return result
+
+    
+    def get_table_name(self):
+        return 'ATOM'
 class Hydrogen_bond_potential(Base_potential):
 
     def __init__(self,simulation,smoothed=True):
@@ -2628,7 +2708,7 @@ class Hydrogen_bond_potential(Base_potential):
         self._force_calculator = self._get_force_calculator()
         self._shift_calculator =  self._get_shift_calculator()
         
-#       self._add_component_factory(Hydrogen_bond_component_factory()) 
+        self._add_component_factory(Hydrogen_bond_component_factory()) 
 #         self._add_component_factory(Non_bonded_backbone_component_factory())
 #         self._add_component_factory(Non_bonded_remote_component_factory())
 #         self._add_component_factory(Non_bonded_coefficient_factory())

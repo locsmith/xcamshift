@@ -20,6 +20,7 @@ import unittest2
 from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
+from xcamshift import Hydrogen_bond_context
 
 EXPECTED_ACCEPTORS =   ((7, 'O', 'C'),
                         (8, 'O', 'C'),
@@ -90,7 +91,12 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
             self.assertEqual(donor,self.donor_indexer.get_key_for_index(j))
         self.assertEqual(j+1, self.donor_indexer.get_max_index())
          
-
+    def test_hbond_context(self):
+        atom = Atom_utils.find_atom('', 10, 'HN')[0]
+        offset_data = (0, 'HN')
+        table  =  Table_manager.get_default_table_manager().get_hydrogen_bond_table('LYS')
+        hbond_context = Hydrogen_bond_context(atom,offset_data,table)
+        
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')
     
