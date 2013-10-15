@@ -2510,12 +2510,6 @@ class Hbond_indexer_base(object):
     @abstractmethod
     def get_name(self):
         pass
-      
-    def iter_keys(self, table):
-        i = 0
-        for donor in table.get_donors():
-            yield donor
-
 
     def _get_tables_by_index(self, table_manager):
         table_index_map = {}
@@ -2595,7 +2589,7 @@ class Hbond_indexer_base(object):
     def get_max_index(self):
         return self._max_index
     
-    def iter(self):
+    def iter_keys(self):
         for index in range(self._max_index):
             yield self._inverted_index[index] 
             
@@ -2644,7 +2638,7 @@ class Hydrogen_bond_context:
                 print segid, res_num, atom_name, res_num - offset, offset_atom_name, offset_atoms, coeffs
         
         print 1
-        for elem in Hbond_donor_indexer(Table_manager.get_default_table_manager()).iter():
+        for elem in Hbond_donor_indexer(Table_manager.get_default_table_manager()).iter_keys():
             print elem
         print 2
         self.complete = False
