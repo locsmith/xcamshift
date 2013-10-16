@@ -8,7 +8,6 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
-from table_manager import Table_manager
 '''
 Created on 31 Dec 2011
 
@@ -17,10 +16,10 @@ Created on 31 Dec 2011
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
-from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer
+from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer, Hydrogen_bond_context, Hbond_atom_type_indexer
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
-from xcamshift import Hydrogen_bond_context
+from table_manager import Table_manager
 
 EXPECTED_ACCEPTORS =   ((7, 'O', 'C'),
                         (8, 'O', 'C'),
@@ -38,6 +37,8 @@ EXPECTED_DONORS =  ((8, 'HN', 'N'),
                     (13, 'HN', 'N'),
                     (14, 'HN', 'N'))
 
+EXPECTED_ATOMS =  set(['O','HN'])
+
 class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
 
                  
@@ -49,11 +50,12 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         table_manager =  Table_manager.get_default_table_manager()
         self.donor_indexer  = Hbond_donor_indexer(table_manager)
         self.acceptor_indexer  = Hbond_acceptor_indexer(table_manager)
+        self.atom_type_indexer =  Hbond_atom_type_indexer(table_manager)
         
         Segment_Manager.reset_segment_manager()
 #         print "In method", self._testMethodName
 
-    def test_donor_indexer(self):
+    def test_donor_and_acceptor_indexers(self):
         
 
         donors = [donor for donor in self.donor_indexer.iter_keys()]
@@ -90,7 +92,47 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         for j,donor in enumerate(EXPECTED_DONORS):
             self.assertEqual(donor,self.donor_indexer.get_key_for_index(j))
         self.assertEqual(j+1, self.donor_indexer.get_max_index())
+    
          
+    def test_hbond_context(self):
+        atom = Atom_utils.find_atom('', 10, 'HN')[0]
+        offset_data = (0, 'HN')
+        table  =  Table_manager.get_default_table_manager().get_hydrogen_bond_table('LYS')
+        hbond_context = Hydrogen_bond_context(atom,offset_data,table)
+        
+    def test_atom_indexer_indexers(self):
+         
+ 
+        atom_indices = [index for index in self.atom_type_indexer.iter_keys()]
+        self.assertEqual(len(EXPECTED_ATOMS), len(atom_indices))
+        
+        self.assertEqual(sorted(EXPECTED_ATOMS), atom_indices)
+        
+      
+    def test_get_max_index(self):
+        self.assertEqual(self.atom_type_indexer.get_max_index(), len(EXPECTED_ATOMS))
+ 
+    def test_get_name(self):    
+        for elem in 'hydrogen', 'bond', 'atom','type':
+            self.assertTrue(elem in self.atom_type_indexer.get_name().lower(), elem)
+        
+ 
+ 
+    def test_get_index_for_key(self,):
+        for i,atom_name in enumerate(sorted(EXPECTED_ATOMS)):
+            self.assertEqual(i,self.atom_type_indexer.get_index_for_key(atom_name))
+        self.assertEqual(i+1, self.atom_type_indexer.get_max_index())
+ 
+        
+                        
+      
+    def test_get_key_for_index(self):
+        for i,atom_name in enumerate(EXPECTED_ATOMS):
+            self.assertEqual(atom_name,self.atom_type_indexer.get_key_for_index(i))
+        self.assertEqual(i+1, self.atom_type_indexer.get_max_index())
+
+     
+          
     def test_hbond_context(self):
         atom = Atom_utils.find_atom('', 10, 'HN')[0]
         offset_data = (0, 'HN')

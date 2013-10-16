@@ -2493,6 +2493,76 @@ class Non_bonded_potential(Distance_based_potential):
     def _get_active_components(self):
         return self._selected_components
         self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._selected_components)
+
+class Hbond_atom_type_indexer(object):
+    __metaclass__ = ABCMeta
+    
+   
+    def __init__(self,table_manager):
+        super(Hbond_atom_type_indexer, self).__init__()
+        
+        self._index = {}
+        self._inverted_index = {}
+        self._max_index = 0
+            
+        self._build_index(table_manager)
+    
+    def get_name(self):
+        return 'hydrogen bond atom type'
+
+    def _get_table(self,name):
+        return Table_manager.get_default_table_manager().get_hydrogen_bond_table(name)
+    
+    def _get_table_name(self):
+        return HBOND
+    
+    def _get_tables_by_index(self, table_manager):
+        table_index_map = {}
+        
+        for residue_type in table_manager.get_residue_types_for_table(self._get_table_name()):
+            table = self._get_table(residue_type)
+            index  = table._table['index']
+            table_index_map[index]=table
+        
+        keys = table_index_map.keys()
+        keys.sort()
+        result = []
+        
+        for key in keys:
+            result.append(table_index_map[key])
+        
+        return tuple(result) 
+
+    def add_key(self, key):
+        if not key in self._index:
+            self._index[key] = self._max_index
+            self._inverted_index[self._max_index] = key
+            self._max_index += 1
+
+    def _build_index(self, table_manager):
+        self._get_table('base')
+        
+        tables_by_index = self._get_tables_by_index(table_manager)
+        
+        for table in tables_by_index:
+            for donor in table.get_donors():
+                self.add_key(donor)
+            for acceptor in table.get_acceptors():
+                self.add_key(acceptor)
+                                    
+    def get_index_for_key(self,key):
+        return self._index[key]
+    
+    def get_key_for_index(self,index):
+        return self._inverted_index[index]
+    
+    def get_max_index(self):
+        return self._max_index
+    
+    def iter_keys(self):
+        for index in range(self._max_index):
+            yield self._inverted_index[index] 
+
          
 class Hbond_indexer_base(object):
     __metaclass__ = ABCMeta
@@ -2618,12 +2688,10 @@ class Hydrogen_bond_context:
                 for coeff_id in 'DIST','ANG1','ANG2':
                     coeffs.append(table.get_energy_offset_correction(offset_data, coeff_id,atom_name))
                 self.complete = True
-                print segid, res_num, atom_name, res_num - offset, offset_atom_name, offset_atoms, coeffs
+#                 print segid, res_num, atom_name, res_num - offset, offset_atom_name, offset_atoms, coeffs
         
-        print 1
-        for elem in Hbond_donor_indexer(Table_manager.get_default_table_manager()).iter_keys():
-            print elem
-        print 2
+#         for elem in Hbond_donor_indexer(Table_manager.get_default_table_manager()).iter_keys():
+#             print elem
         self.complete = False
     
 class Hydrogen_bond_component_factory(Atom_component_factory):
