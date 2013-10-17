@@ -135,9 +135,27 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
           
     def test_hbond_context(self):
         atom = Atom_utils.find_atom('', 10, 'HN')[0]
-        offset_data = (0, 'HN')
+        offset_data_0 = (0, 'O')
         table  =  Table_manager.get_default_table_manager().get_hydrogen_bond_table('LYS')
-        hbond_context = Hydrogen_bond_context(atom,offset_data,table)
+        
+        hbond_context_0 = Hydrogen_bond_context(atom,offset_data_0,table)
+        
+        self.assertTrue(hbond_context_0.complete)        
+        self.assertEqual(Atom_utils.find_atom_ids('   ',10,'HN')[0], hbond_context_0.target_atom_index)
+        self.assertEqual(Atom_utils.find_atom_ids('   ',10,'O')[0], hbond_context_0.hbond_atom_index)
+        
+        offset_data_1 = (-1, 'O')
+        hbond_context_1 = Hydrogen_bond_context(atom,offset_data_1,table)
+
+        self.assertTrue(hbond_context_1.complete)
+        self.assertEqual(Atom_utils.find_atom_ids('   ',10,'HN')[0], hbond_context_1.target_atom_index)
+        self.assertEqual(Atom_utils.find_atom_ids('   ',9,'O')[0], hbond_context_1.hbond_atom_index)
+
+
+        offset_data_2 = (-3, 'HN')
+        hbond_context_2 = Hydrogen_bond_context(atom,offset_data_2,table)
+
+        self.assertFalse(hbond_context_2.complete)
         
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')

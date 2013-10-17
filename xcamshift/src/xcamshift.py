@@ -2674,25 +2674,34 @@ class Hydrogen_bond_context:
         segid, res_num,atom_name = Atom_utils._get_atom_info_from_index(atom.index())
         offset, offset_atom_name =  offset_data
         
+        self.complete = False
         
         if atom_name in table.get_target_atoms():
-            
-            offset_atoms  = Atom_utils.find_atom_ids(segid, res_num - offset, offset_atom_name)
+            self.target_atom_index = atom.index()
+            offset_atoms  = Atom_utils.find_atom_ids(segid, res_num + offset, offset_atom_name)
             
             if len(offset_atoms) == 1:
                 
-                target_atom_index = atom.index()
-                offset_atom_index = offset_atoms[0]
+                if len(offset_atoms) == 1:
+                    self.hbond_atom_index = offset_atoms[0]
+                    self.complete =  True
+                elif len(offset_atoms) > 1:
+                    msg = 'unexpected multiple atoms found for hbond with atom %s and offset %s'
+                    print >> stderr, msg % (Atom_utils._get_atom_name(atom.index()), `offset`)
+                    return
                 
-                coeffs = []
-                for coeff_id in 'DIST','ANG1','ANG2':
-                    coeffs.append(table.get_energy_offset_correction(offset_data, coeff_id,atom_name))
-                self.complete = True
+                    
+                
+#                 coeffs = []
+#                 for coeff_id in 'DIST','ANG1','ANG2':
+#                     coeffs.append(table.get_energy_offset_correction(offset_data, coeff_id,atom_name))
+                
+               
 #                 print segid, res_num, atom_name, res_num - offset, offset_atom_name, offset_atoms, coeffs
         
 #         for elem in Hbond_donor_indexer(Table_manager.get_default_table_manager()).iter_keys():
 #             print elem
-        self.complete = False
+       
     
 class Hydrogen_bond_component_factory(Atom_component_factory):
     def __init__(self):
