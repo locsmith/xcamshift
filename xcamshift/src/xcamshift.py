@@ -2685,6 +2685,10 @@ class Hydrogen_bond_context:
                 if len(offset_atoms) == 1:
                     self.hbond_atom_index = offset_atoms[0]
                     self.complete =  True
+                    self.coeffs = []
+                    for coeff_id in 'DIST','ANG1','ANG2':
+                        self.coeffs.append(table.get_energy_offset_correction(offset_data, coeff_id,atom_name))
+                        
                 elif len(offset_atoms) > 1:
                     msg = 'unexpected multiple atoms found for hbond with atom %s and offset %s'
                     print >> stderr, msg % (Atom_utils._get_atom_name(atom.index()), `offset`)
@@ -2692,9 +2696,6 @@ class Hydrogen_bond_context:
                 
                     
                 
-#                 coeffs = []
-#                 for coeff_id in 'DIST','ANG1','ANG2':
-#                     coeffs.append(table.get_energy_offset_correction(offset_data, coeff_id,atom_name))
                 
                
 #                 print segid, res_num, atom_name, res_num - offset, offset_atom_name, offset_atoms, coeffs

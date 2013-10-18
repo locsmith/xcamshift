@@ -41,7 +41,39 @@ EXPECTED_ATOMS =  set(['O','HN'])
 
 class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
 
-                 
+    def check_almost_equal(self, list_1, list_2, delta = 1e-7):
+        difference_offset = -1
+        for i, (elem_1, elem_2) in enumerate(zip(list_1, list_2)):
+            diff = abs(elem_1 - elem_2)
+            if diff > delta:
+                difference_offset = i
+        
+        return difference_offset
+    
+    def are_almost_equal_sequences(self, list_1, list_2, delta =  1e-7):
+        result = True
+        if self.check_almost_equal(list_1, list_2, delta) > 0:
+            result = False
+        return result
+        
+    def assertSequenceAlmostEqual(self,result,expected, delta = 1e-7, msg=""):
+        len_result = len(result)
+        len_expected = len(expected)
+        if len_result != len_expected:
+            raise AssertionError("the two lists are of different length %i and %i" % (len_result,len_expected))
+        
+        difference_offset = self.check_almost_equal(result, expected, delta)
+        
+            
+        if difference_offset > 0:
+            if msg != "":
+                msg = msg + " "
+                
+            template = "%slists differ at item %i: %s - %s > %s"
+            elem_1 = result[difference_offset]
+            elem_2 = expected[difference_offset]
+            message = template % (msg,difference_offset, `elem_1`,`elem_2`,delta)
+            raise AssertionError(message)                 
     def setUp(self):
         initStruct("test_data/ingktlkg_hbond/INGKTLKG.psf")
         PDBTool("test_data/ingktlkg_hbond/INGKTLKG.pdb").read()
@@ -144,13 +176,18 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         self.assertEqual(Atom_utils.find_atom_ids('   ',10,'HN')[0], hbond_context_0.target_atom_index)
         self.assertEqual(Atom_utils.find_atom_ids('   ',10,'O')[0], hbond_context_0.hbond_atom_index)
         
+        EXPECTED_COEFFS_0 = [-0.00000547, 0.00023294, -0.00001567]
+        self.assertAlmostEqual(hbond_context_0.coeffs, EXPECTED_COEFFS_0)
+        self.assertSequenceAlmostEqual(EXPECTED_COEFFS_0, hbond_context_0.coeffs)
+        
         offset_data_1 = (-1, 'O')
         hbond_context_1 = Hydrogen_bond_context(atom,offset_data_1,table)
 
+        EXPECTED_COEFFS_1 = [-0.00000010, -0.00123116, 0.00012507]
         self.assertTrue(hbond_context_1.complete)
         self.assertEqual(Atom_utils.find_atom_ids('   ',10,'HN')[0], hbond_context_1.target_atom_index)
         self.assertEqual(Atom_utils.find_atom_ids('   ',9,'O')[0], hbond_context_1.hbond_atom_index)
-
+        self.assertSequenceAlmostEqual(EXPECTED_COEFFS_1, hbond_context_1.coeffs)
 
         offset_data_2 = (-3, 'HN')
         hbond_context_2 = Hydrogen_bond_context(atom,offset_data_2,table)
