@@ -593,6 +593,9 @@ class TestXcamshiftA4(unittest2.TestCase):
         
         expected_shift_components = dict(ala_4.ala_4_expected_shift_components)
         for sub_potential_name in xcamshift_potential.get_sub_potential_names():
+            if sub_potential_name == 'HBOND':
+                print "WARNING ignoring hydrogen bond potential"
+                continue
             sub_potential = xcamshift_potential.get_named_sub_potential(sub_potential_name)
             
             for target_atom_id in sub_potential.get_target_atom_ids():
