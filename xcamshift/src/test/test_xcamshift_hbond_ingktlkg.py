@@ -16,7 +16,8 @@ Created on 31 Dec 2011
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
-from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer, Hydrogen_bond_context, Hbond_atom_type_indexer
+from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer, Hydrogen_bond_context, Hbond_atom_type_indexer,\
+     Hydrogen_bond_donor_context, Hydrogen_bond_acceptor_context
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
 from table_manager import Table_manager
@@ -193,6 +194,31 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         hbond_context_2 = Hydrogen_bond_context(atom,offset_data_2,table)
 
         self.assertFalse(hbond_context_2.complete)
+        
+    
+    def test_hydrogen_bond_donor_context(self):
+
+        atom_0 = Atom_utils.find_atom('', 10, 'HN')[0]
+        offset_data_0 = None
+        table  =  Table_manager.get_default_table_manager().get_hydrogen_bond_table('LYS')
+        
+        hbond_donor_context_0 = Hydrogen_bond_donor_context(atom_0,offset_data_0,table)
+        self.assertTrue(hbond_donor_context_0.complete)
+        self.assertEqual(hbond_donor_context_0.atom_type_id,0)
+        self.assertEqual(hbond_donor_context_0.direct_atom_id, atom_0.index())
+        self.assertEqual(hbond_donor_context_0.indirect_atom_id, Atom_utils.find_atom('', 10, 'N')[0].index())
+
+    def test_hydrogen_bond_acceptor_context(self):
+        
+        atom_0 = Atom_utils.find_atom('', 10, 'O')[0]
+        offset_data_0 = None
+        table  =  Table_manager.get_default_table_manager().get_hydrogen_bond_table('LYS')
+        
+        hbond_acceptor_context_1 = Hydrogen_bond_acceptor_context(atom_0,offset_data_0,table)
+        self.assertTrue(hbond_acceptor_context_1.complete)
+        self.assertEqual(hbond_acceptor_context_1.atom_type_id,1)
+        self.assertEqual(hbond_acceptor_context_1.direct_atom_id, atom_0.index())
+        self.assertEqual(hbond_acceptor_context_1.indirect_atom_id, Atom_utils.find_atom('', 10, 'C')[0].index())
         
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')

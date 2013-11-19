@@ -2693,16 +2693,82 @@ class Hydrogen_bond_context:
                     msg = 'unexpected multiple atoms found for hbond with atom %s and offset %s'
                     print >> stderr, msg % (Atom_utils._get_atom_name(atom.index()), `offset`)
                     return
-                
-                    
-                
-                
-               
-#                 print segid, res_num, atom_name, res_num - offset, offset_atom_name, offset_atoms, coeffs
+
+
+class Hydrogen_bond_component_factory(Atom_component_factory):
+    def __init__(self):
+        pass
+    
+    #TODO: remove just kept to satisfy an abstract method declaration
+    def _translate_atom_name(self, atom_name, context):
+        pass
+
+    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
         
-#         for elem in Hbond_donor_indexer(Table_manager.get_default_table_manager()).iter_keys():
-#             print elem
-       
+        return  table.get_translation_to_table(residue_type,atom_name)
+    
+    def _build_contexts(self, atom, table):
+        contexts = []
+        for offset in table.get_energy_term_offsets():
+            context = Hydrogen_bond_context(atom,offset,table)
+            if context.complete:
+                contexts.append(context)
+        return contexts
+    
+    def _get_component_for_atom(self, atom, context):
+
+        result = None
+        if context.complete:
+            result = [context.target_atom_index,context.hbond_atom_index]
+            result.extend(context.coeffs)
+        return tuple(result)
+
+    
+    def get_table_name(self):
+        return 'ATOM'
+
+
+    
+class Hydrogen_bond_base_donor_acceptor_context(object):
+    def __init__(self, atom, offset, table):
+        self.complete = False
+        
+        self.direct_atom_id = atom.index()
+        segid,residue,atom_name = Atom_utils._get_atom_info_from_index(self.direct_atom_id)
+        
+        if atom_name in self.get_atom_names(table):
+            indexer  = Hbond_atom_type_indexer(Table_manager.get_default_table_manager())
+            self.atom_type_id = indexer.get_index_for_key(atom_name)
+            
+            vector_atom_names =  list(table.get_bond_vector_atoms(atom_name))
+            direct_atom_offset  = vector_atom_names.index(atom_name)
+            del vector_atom_names[direct_atom_offset] 
+            
+            attached_atom_id = Atom_utils.find_atom(segid,residue,vector_atom_names[0])[0].index()
+            for atom_id in Atom_utils._get_bonded_atom_ids(self.direct_atom_id):
+                if atom_id == attached_atom_id:
+                    self.indirect_atom_id = attached_atom_id
+                    self.complete =  True
+                    break
+    @abstractmethod            
+    def get_atom_names(self,table):
+        pass
+    
+class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
+    
+    def __init__(self,atom, offset, table):
+        super(Hydrogen_bond_donor_context, self).__init__(atom, offset, table)
+        
+    def get_atom_names(self,table):
+        return  table.get_donors()
+
+class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
+    
+    def __init__(self,atom, offset, table):
+        super(Hydrogen_bond_acceptor_context, self).__init__(atom, offset, table)
+        
+    def get_atom_names(self,table):
+        return  table.get_acceptors()
     
 class Hydrogen_bond_component_factory(Atom_component_factory):
     def __init__(self):
