@@ -17,10 +17,13 @@ from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
 from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer, Hydrogen_bond_context, Hbond_atom_type_indexer,\
-     Hydrogen_bond_donor_context, Hydrogen_bond_acceptor_context
+     Hydrogen_bond_donor_context, Hydrogen_bond_acceptor_context, Hydrogen_bond_donor_component_factory, DONOR,ACCEPTOR,\
+     Hbond_atom_type_indexer
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
 from table_manager import Table_manager
+from atomSel import AtomSel
+from component_list import Component_list
 
 EXPECTED_ACCEPTORS =   ((7, 'O', 'C'),
                         (8, 'O', 'C'),
@@ -38,9 +41,18 @@ EXPECTED_DONORS =  ((8, 'HN', 'N'),
                     (13, 'HN', 'N'),
                     (14, 'HN', 'N'))
 
+EXPECTED_INDIRECT_DONORS = {}
+for elem in EXPECTED_DONORS:
+    EXPECTED_INDIRECT_DONORS['',elem[0],elem[1]] = '',elem[0],elem[2]
+    
+EXPECTED_DIRECT_DONORS = [('',elem[0],elem[1]) for elem in EXPECTED_DONORS]
+
 EXPECTED_ATOMS =  set(['O','HN'])
 
 class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
+
+    def assertEmpty(self, expected_keys, msg=""):
+        return self.assertEqual(len(expected_keys), 0, msg)
 
     def check_almost_equal(self, list_1, list_2, delta = 1e-7):
         difference_offset = -1
@@ -219,6 +231,30 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         self.assertEqual(hbond_acceptor_context_1.atom_type_id,1)
         self.assertEqual(hbond_acceptor_context_1.direct_atom_id, atom_0.index())
         self.assertEqual(hbond_acceptor_context_1.indirect_atom_id, Atom_utils.find_atom('', 10, 'C')[0].index())
+        
+    
+    def test_hydrogen_bond_donor_components(self):
+        factory = Hydrogen_bond_donor_component_factory()
+        component_list = Component_list()
+        table_provider = Table_manager.get_default_table_manager().get_hydrogen_bond_table
+        segment = '    '
+        target_residue_number=10
+        selected_atoms =  AtomSel('(all)')
+        factory.create_components(component_list, table_provider, segment, target_residue_number, selected_atoms)
+        
+        expected_direct_donors =   set(EXPECTED_DIRECT_DONORS)
+        expected_indirect_donors =  set(EXPECTED_INDIRECT_DONORS)
+        for component in component_list:
+            atom_key = Atom_utils._get_atom_info_from_index(component[0])
+            indirect_atom_key = Atom_utils._get_atom_info_from_index(component[1])
+            self.assertIn(atom_key, expected_direct_donors)
+            expected_direct_donors.remove(atom_key)
+            self.assertEqual(EXPECTED_INDIRECT_DONORS[atom_key], indirect_atom_key, EXPECTED_INDIRECT_DONORS)
+            expected_indirect_donors.remove(atom_key)
+            self.assertEqual(component[2], DONOR)
+            self.assertEqual(component[3],  Hbond_atom_type_indexer(Table_manager.get_default_table_manager()).get_index_for_key(atom_key[2]))
+        self.assertEmpty(expected_direct_donors)
+        self.assertEmpty(expected_indirect_donors)
         
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')

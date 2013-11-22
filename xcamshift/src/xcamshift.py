@@ -2730,7 +2730,7 @@ class Hydrogen_bond_component_factory(Atom_component_factory):
 
     
 class Hydrogen_bond_base_donor_acceptor_context(object):
-    def __init__(self, atom, offset, table):
+    def __init__(self, atom, table):
         self.complete = False
         
         self.direct_atom_id = atom.index()
@@ -2756,21 +2756,24 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
     
 class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
     
-    def __init__(self,atom, offset, table):
-        super(Hydrogen_bond_donor_context, self).__init__(atom, offset, table)
+    def __init__(self,atom, offset,table):
+        super(Hydrogen_bond_donor_context, self).__init__(atom, table)
+        self.type = DONOR
         
     def get_atom_names(self,table):
         return  table.get_donors()
 
+ACCEPTOR = 'ACCEPTOR'
 class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
     
     def __init__(self,atom, offset, table):
-        super(Hydrogen_bond_acceptor_context, self).__init__(atom, offset, table)
+        super(Hydrogen_bond_acceptor_context, self).__init__(atom, table)
+        self.type = ACCEPTOR
         
     def get_atom_names(self,table):
         return  table.get_acceptors()
     
-class Hydrogen_bond_component_factory(Atom_component_factory):
+class Hydrogen_bond_donor_acceptor_component_factory(Atom_component_factory):
     def __init__(self):
         pass
     
@@ -2782,46 +2785,43 @@ class Hydrogen_bond_component_factory(Atom_component_factory):
         
         return  table.get_translation_to_table(residue_type,atom_name)
     
+    @abstractmethod
+    def _build_context(self,atom,table):
+        return Hydrogen_bond_donor_context(atom,table)
+    
     def _build_contexts(self, atom, table):
         contexts = []
-        for offset in table.get_energy_term_offsets():
-            context = Hydrogen_bond_context(atom,offset,table)
-            if context.complete:
-                contexts.append(context)
+        context = Hydrogen_bond_donor_context(atom,0, table)
+        if context.complete:
+            contexts.append(context)
         return contexts
     
-    def _get_component_for_atom(self, atom, context):
+    @abstractmethod
+    def _build_component(self, context):
         pass
-#         table = context._table
-#         
-#         from_atom_name = atom.atomName()
-#         from_residue_type = atom.residueName()
-#         #TODO move translation into context
-#         from_atom_name = self._translate_atom_name_to_table(from_residue_type,from_atom_name,table)
-#         
-#         offset = context.offset
-#         to_atom_name = context.to_atom_name
-#         to_residue_type = context.to_residue_type
-#         #TODO move translation into context
-#         to_atom_name = self._translate_atom_name_to_table(to_residue_type,to_atom_name,table)
-#         
-#         
-#         result = None
-#         if from_atom_name in table.get_from_atoms():
-#             if to_atom_name in table.get_to_atoms():
-#                 value = context._table.get_distance_coeeficent(from_atom_name,offset,to_atom_name)
-#                 if value != None:
-#                     from_atom_index = atom.index()
-#                     to_atom_index = context.to_atom_index
-#                     if from_atom_index != to_atom_index:
-#                         exponent = context._table.get_exponent()
-#                         result = (from_atom_index,to_atom_index,value,exponent)
-        reult = None
+    
+    def _get_component_for_atom(self, atom, context):
+        result = None
+        if context.complete:
+            result = self._build_component(context)
         return result
 
+DONOR = 1
+ACCEPTOR = 2
+class Hydrogen_bond_donor_component_factory(Hydrogen_bond_donor_acceptor_component_factory):
     
     def get_table_name(self):
-        return 'ATOM'
+        return DONOR
+    
+    def _build_context(self,atom,table):
+        return Hydrogen_bond_donor_context(atom,table)
+    
+    def _build_component(self,context):
+        component = None
+        if context.complete:
+            component = (context.direct_atom_id, context.indirect_atom_id, context.type, context.atom_type_id) 
+        return component
+
 class Hydrogen_bond_potential(Base_potential):
 
     def __init__(self,simulation,smoothed=True):
@@ -2829,6 +2829,7 @@ class Hydrogen_bond_potential(Base_potential):
         self._force_calculator = self._get_force_calculator()
         self._shift_calculator =  self._get_shift_calculator()
         
+        self._add_component_factory(Hydrogen_bond_donor_component_factory())
         self._add_component_factory(Hydrogen_bond_component_factory()) 
 #         self._add_component_factory(Non_bonded_backbone_component_factory())
 #         self._add_component_factory(Non_bonded_remote_component_factory())
@@ -2897,10 +2898,14 @@ class Hydrogen_bond_potential(Base_potential):
 # from pyPot import PyPot
 
     def _create_component_list(self, name):
-        return None
-#         if name == "ATOM":
-#             return Native_component_list(format='ii')
-
+        if name == "ATOM":
+            result = Native_component_list(format='iiiii')
+        elif name == "HDONOR":
+            result = Native_component_list(format='ii')
+        else:
+            raise Exception(name)
+        return result
+        
 class Xcamshift(PyEnsemblePot):
 
     
