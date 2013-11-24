@@ -18,7 +18,7 @@ from pdbTool import PDBTool
 import unittest2
 from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer, Hydrogen_bond_context, Hbond_atom_type_indexer,\
      Hydrogen_bond_donor_context, Hydrogen_bond_acceptor_context, Hydrogen_bond_donor_component_factory, DONOR,ACCEPTOR,\
-     Hbond_atom_type_indexer
+     Hbond_atom_type_indexer, Hydrogen_bond_acceptor_component_factory
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
 from table_manager import Table_manager
@@ -43,11 +43,17 @@ EXPECTED_DONORS =  ((8, 'HN', 'N'),
 
 EXPECTED_INDIRECT_DONORS = {}
 for elem in EXPECTED_DONORS:
-    EXPECTED_INDIRECT_DONORS['',elem[0],elem[1]] = '',elem[0],elem[2]
+    EXPECTED_INDIRECT_DONORS['',elem[0],elem[2]] = '',elem[0],elem[1]
     
 EXPECTED_DIRECT_DONORS = [('',elem[0],elem[1]) for elem in EXPECTED_DONORS]
 
 EXPECTED_ATOMS =  set(['O','HN'])
+
+EXPECTED_INDIRECT_ACCEPTORS = {}
+for elem in EXPECTED_ACCEPTORS:
+    EXPECTED_INDIRECT_ACCEPTORS['',elem[0],elem[2]] = '',elem[0],elem[1]
+    
+EXPECTED_DIRECT_ACCEPTORS = [('',elem[0],elem[1]) for elem in EXPECTED_ACCEPTORS]
 
 class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
 
@@ -233,29 +239,34 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         self.assertEqual(hbond_acceptor_context_1.indirect_atom_id, Atom_utils.find_atom('', 10, 'C')[0].index())
         
     
-    def test_hydrogen_bond_donor_components(self):
-        factory = Hydrogen_bond_donor_component_factory()
+
+    def _do_test_donor_acceptor_components(self, factory,expected_direct_donors_or_acceptors, expected_indirect_donors_or_acceptors, donor_or_acceptor):
+
         component_list = Component_list()
         table_provider = Table_manager.get_default_table_manager().get_hydrogen_bond_table
         segment = '    '
-        target_residue_number=10
-        selected_atoms =  AtomSel('(all)')
+        target_residue_number = 10
+        selected_atoms = AtomSel('(all)')
         factory.create_components(component_list, table_provider, segment, target_residue_number, selected_atoms)
-        
-        expected_direct_donors =   set(EXPECTED_DIRECT_DONORS)
-        expected_indirect_donors =  set(EXPECTED_INDIRECT_DONORS)
         for component in component_list:
             atom_key = Atom_utils._get_atom_info_from_index(component[0])
             indirect_atom_key = Atom_utils._get_atom_info_from_index(component[1])
-            self.assertIn(atom_key, expected_direct_donors)
-            expected_direct_donors.remove(atom_key)
-            self.assertEqual(EXPECTED_INDIRECT_DONORS[atom_key], indirect_atom_key, EXPECTED_INDIRECT_DONORS)
-            expected_indirect_donors.remove(atom_key)
-            self.assertEqual(component[2], DONOR)
-            self.assertEqual(component[3],  Hbond_atom_type_indexer(Table_manager.get_default_table_manager()).get_index_for_key(atom_key[2]))
-        self.assertEmpty(expected_direct_donors)
-        self.assertEmpty(expected_indirect_donors)
+            self.assertIn(atom_key, expected_direct_donors_or_acceptors)
+            expected_direct_donors_or_acceptors.remove(atom_key)
+            self.assertEqual(atom_key,expected_indirect_donors_or_acceptors[indirect_atom_key])
+            del expected_indirect_donors_or_acceptors[indirect_atom_key]
+            self.assertEqual(component[2], donor_or_acceptor)
+            self.assertEqual(component[3], Hbond_atom_type_indexer(Table_manager.get_default_table_manager()).get_index_for_key(atom_key[2]))
         
+        self.assertEmpty(expected_direct_donors_or_acceptors)
+        self.assertEmpty(expected_indirect_donors_or_acceptors)
+
+    def test_hydrogen_bond_donor_components(self):
+        self._do_test_donor_acceptor_components(Hydrogen_bond_donor_component_factory(), set(EXPECTED_DIRECT_DONORS), dict(EXPECTED_INDIRECT_DONORS), DONOR)
+        
+    def test_hydrogen_bond_acceptor_components(self):
+        self._do_test_donor_acceptor_components(Hydrogen_bond_acceptor_component_factory(), set(EXPECTED_DIRECT_ACCEPTORS), dict(EXPECTED_INDIRECT_ACCEPTORS), ACCEPTOR)
+
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')
     

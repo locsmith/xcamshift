@@ -2787,11 +2787,11 @@ class Hydrogen_bond_donor_acceptor_component_factory(Atom_component_factory):
     
     @abstractmethod
     def _build_context(self,atom,table):
-        return Hydrogen_bond_donor_context(atom,table)
+        pass
     
     def _build_contexts(self, atom, table):
         contexts = []
-        context = Hydrogen_bond_donor_context(atom,0, table)
+        context = self._build_context(atom,0, table)
         if context.complete:
             contexts.append(context)
         return contexts
@@ -2813,8 +2813,8 @@ class Hydrogen_bond_donor_component_factory(Hydrogen_bond_donor_acceptor_compone
     def get_table_name(self):
         return DONOR
     
-    def _build_context(self,atom,table):
-        return Hydrogen_bond_donor_context(atom,table)
+    def _build_context(self,atom,offset,table):
+        return Hydrogen_bond_donor_context(atom,offset, table)
     
     def _build_component(self,context):
         component = None
@@ -2822,6 +2822,20 @@ class Hydrogen_bond_donor_component_factory(Hydrogen_bond_donor_acceptor_compone
             component = (context.direct_atom_id, context.indirect_atom_id, context.type, context.atom_type_id) 
         return component
 
+class Hydrogen_bond_acceptor_component_factory(Hydrogen_bond_donor_acceptor_component_factory):
+    
+    def get_table_name(self):
+        return ACCEPTOR
+    
+    def _build_context(self,atom,offset, table):
+        return Hydrogen_bond_acceptor_context(atom, offset, table)
+    
+    def _build_component(self,context):
+        component = None
+        if context.complete:
+            component = (context.direct_atom_id, context.indirect_atom_id, context.type, context.atom_type_id) 
+        return component
+    
 class Hydrogen_bond_potential(Base_potential):
 
     def __init__(self,simulation,smoothed=True):
