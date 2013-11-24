@@ -217,10 +217,9 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
     def test_hydrogen_bond_donor_context(self):
 
         atom_0 = Atom_utils.find_atom('', 10, 'HN')[0]
-        offset_data_0 = None
         table  =  Table_manager.get_default_table_manager().get_hydrogen_bond_table('LYS')
         
-        hbond_donor_context_0 = Hydrogen_bond_donor_context(atom_0,offset_data_0,table)
+        hbond_donor_context_0 = Hydrogen_bond_donor_context(atom_0,table)
         self.assertTrue(hbond_donor_context_0.complete)
         self.assertEqual(hbond_donor_context_0.atom_type_id,0)
         self.assertEqual(hbond_donor_context_0.direct_atom_id, atom_0.index())
@@ -229,10 +228,9 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
     def test_hydrogen_bond_acceptor_context(self):
         
         atom_0 = Atom_utils.find_atom('', 10, 'O')[0]
-        offset_data_0 = None
         table  =  Table_manager.get_default_table_manager().get_hydrogen_bond_table('LYS')
         
-        hbond_acceptor_context_1 = Hydrogen_bond_acceptor_context(atom_0,offset_data_0,table)
+        hbond_acceptor_context_1 = Hydrogen_bond_acceptor_context(atom_0,table)
         self.assertTrue(hbond_acceptor_context_1.complete)
         self.assertEqual(hbond_acceptor_context_1.atom_type_id,1)
         self.assertEqual(hbond_acceptor_context_1.direct_atom_id, atom_0.index())

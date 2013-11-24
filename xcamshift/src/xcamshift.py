@@ -2756,17 +2756,17 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
     
 class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
     
-    def __init__(self,atom, offset,table):
+    def __init__(self,atom,table):
         super(Hydrogen_bond_donor_context, self).__init__(atom, table)
         self.type = DONOR
         
     def get_atom_names(self,table):
         return  table.get_donors()
 
-ACCEPTOR = 'ACCEPTOR'
+
 class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
     
-    def __init__(self,atom, offset, table):
+    def __init__(self,atom, table):
         super(Hydrogen_bond_acceptor_context, self).__init__(atom, table)
         self.type = ACCEPTOR
         
@@ -2791,7 +2791,7 @@ class Hydrogen_bond_donor_acceptor_component_factory(Atom_component_factory):
     
     def _build_contexts(self, atom, table):
         contexts = []
-        context = self._build_context(atom,0, table)
+        context = self._build_context(atom, table)
         if context.complete:
             contexts.append(context)
         return contexts
@@ -2813,8 +2813,8 @@ class Hydrogen_bond_donor_component_factory(Hydrogen_bond_donor_acceptor_compone
     def get_table_name(self):
         return DONOR
     
-    def _build_context(self,atom,offset,table):
-        return Hydrogen_bond_donor_context(atom,offset, table)
+    def _build_context(self,atom,table):
+        return Hydrogen_bond_donor_context(atom, table)
     
     def _build_component(self,context):
         component = None
@@ -2827,8 +2827,8 @@ class Hydrogen_bond_acceptor_component_factory(Hydrogen_bond_donor_acceptor_comp
     def get_table_name(self):
         return ACCEPTOR
     
-    def _build_context(self,atom,offset, table):
-        return Hydrogen_bond_acceptor_context(atom, offset, table)
+    def _build_context(self,atom, table):
+        return Hydrogen_bond_acceptor_context(atom, table)
     
     def _build_component(self,context):
         component = None
