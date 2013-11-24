@@ -1902,14 +1902,7 @@ class Non_bonded_list(object):
         else:
             result = Atom_utils._get_atom_pos(atom_id)
             self._pos_cache = result
-        return result
-    
-        
-
-    class NonBoolean:
-        def __nonzero__(self):
-            raise Exception("internal error this object should never be used in a boolean comparison!!")
-    
+        return result    
 
 
 
