@@ -1895,14 +1895,7 @@ class Non_bonded_list(object):
     
     def get_num_target_atoms(self):
         return self._num_target_atoms
-    
-    def _get_cached_pos(self,atom_id):
-        if atom_id in  self._pos_cache:
-            result = self._pos_cache[atom_id]
-        else:
-            result = Atom_utils._get_atom_pos(atom_id)
-            self._pos_cache = result
-        return result    
+
 
 
 
