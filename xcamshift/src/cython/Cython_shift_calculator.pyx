@@ -108,7 +108,12 @@ cdef struct Constant_cache:
     float   tanh_elongation
     float   tanh_y_offset
     
-
+cdef struct Hydrogen_bond_component:
+    int direct_atom_id
+    int indirect_atom_id
+    int type
+    int atom_type_id 
+    
 def test_dump_component_index_pair(Non_bonded_interaction_list data, int index):
     cdef Component_index_pair* result =  data.get(index)
     
@@ -1421,6 +1426,98 @@ cdef class Fast_ring_data_calculator:
         if self._verbose:
             end_time = time()
             print '   ring data centres: ',len(rings), ' normals ', len(normals), 'in', "%.17g" %  (end_time-start_time), "seconds"
+
+cdef class Fast_hydrogen_bond_calculator:
+    cdef float _cutoff_distance
+    cdef bint _verbose 
+    cdef EnsembleSimulation* _simulation
+    
+    def __init__(self,simulation,cutoff_distance=5.0):
+        self._simulation = simulationAsNative(simulation)
+
+        self._cutoff_distance =  cutoff_distance
+        self._verbose =  False
+    
+        
+    def set_verbose(self,on):
+        self._verbose=on
+        
+    cdef   int _bytes_to_components(self, data, Hydrogen_bond_component** target_pointer):
+
+        target_pointer[0] =  <Hydrogen_bond_component*> <size_t> ctypes.addressof(data)
+        return len(data)/ sizeof(Hydrogen_bond_component)
+
+            
+    @cython.profile(True)
+    def __call__(self, atom_list_1, atom_list_2,dummy):#,  Hydrogen_bond_energy_list energy_list):
+        
+        if self._verbose:
+            print '***** BUILD HYDROGEN BOND LIST ******'
+        
+        cdef  Hydrogen_bond_component* donor_components
+        cdef int num_donor_components = self._bytes_to_components(atom_list_1,&donor_components)
+        
+        cdef Hydrogen_bond_component* acceptor_components
+        cdef int num_acceptor_components = self._bytes_to_components(atom_list_2,&acceptor_components)
+        
+        cdef double start_time = 0.0  
+        cdef double end_time = 0.0
+        
+        cdef Atom atom_1, atom_2
+        cdef int current_acceptor
+        cdef int atom_id_1,atom_id_2
+        cdef float distance 
+        cdef float min_distance
+        cdef float FLT_MAX=1000000.0 #TODO: replacce with header
+        
+        if self._verbose:
+            start_time = time()
+
+
+        cdef int i
+        
+#         hydrogen_bond_list.clear()
+        
+        for i in range(num_donor_components):
+            atom_id_1 = donor_components[i].direct_atom_id
+            current_acceptor = -1
+            min_distance = FLT_MAX
+
+            for j in range(num_acceptor_components):
+                atom_id_2  = acceptor_components[j].direct_atom_id
+                
+                atom_1 = self._simulation[0].atomByID(atom_id_1)
+                atom_2 = self._simulation[0].atomByID(atom_id_2)
+                
+                distance = norm(atom_1.pos() - atom_2.pos())
+                
+                if distance < min_distance:
+                    current_acceptor = atom_id_2
+            print atom_id_1, current_acceptor, min_distance
+                    
+#             if min_distance < cutoff:
+#                 
+#                donor_angle  = calc_angle(donor_components[j].indirect_atom_id, donor_components[j].direct_atom_id, acceptor_components[j].direct_atom_id)
+#                acceptor_angle  = calc_angle(donor_components[j].direct_atom_id, acceptor_components[j].direct_atom_id, acceptor_components[j].indirect_atom_id)
+#                
+#                energy_dist = calc_energy(distance, distance_params)
+#                energy_donor_angle = calc_energy(donor_angle, donor_angle_params)
+#                energy_acceptor_angle = calc_energy(acceptor_angle, acceptor_angle_params)
+#                
+#                hydrogen_bond_list[atom_id_1].energy_dist = energy_dist
+#                hydrogen_bond_list[atom_id_2].energy_dist = energy_dist
+#                
+#                hydrogen_bond_list[atom_id_1].energy_donor_angle = energy_donor_angle
+#                hydrogen_bond_list[atom_id_2].energy_donor_angle = energy_donor_angle
+#                
+#                hydrogen_bond_list[atom_id_1].energy_acceptor_angle = energy_acceptor_angle
+#                hydrogen_bond_list[atom_id_2].energy_acceptor_angle = energy_acceptor_angle
+               
+               
+        if self._verbose:
+            end_time = time()
+            print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"
+
 
 cdef class Fast_non_bonded_calculator:
     cdef int _min_residue_seperation

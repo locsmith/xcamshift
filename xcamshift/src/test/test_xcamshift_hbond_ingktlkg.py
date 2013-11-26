@@ -18,7 +18,8 @@ from pdbTool import PDBTool
 import unittest2
 from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer, Hydrogen_bond_context, Hbond_atom_type_indexer,\
      Hydrogen_bond_donor_context, Hydrogen_bond_acceptor_context, Hydrogen_bond_donor_component_factory, DONOR,ACCEPTOR,\
-     Hbond_atom_type_indexer, Hydrogen_bond_acceptor_component_factory
+     Hbond_atom_type_indexer, Hydrogen_bond_acceptor_component_factory, Xcamshift
+from cython.shift_calculators import Fast_hydrogen_bond_calculator
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
 from table_manager import Table_manager
@@ -57,6 +58,17 @@ EXPECTED_DIRECT_ACCEPTORS = [('',elem[0],elem[1]) for elem in EXPECTED_ACCEPTORS
 
 class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
 
+    def __init__(self,*args,**kwargs):
+        super(TestXcamshiftHBondINGKTLKG, self).__init__(*args,**kwargs)
+        self._esim = None
+        
+    def get_single_member_ensemble_simulation(self):
+        if self._esim.__class__ ==  None.__class__:
+            #TODO note EnsembleSimulation can't have a single member that causes a crash!
+            # therefore a hack
+            self._esim =  Xcamshift().ensembleSimulation()
+        return self._esim
+    
     def assertEmpty(self, expected_keys, msg=""):
         return self.assertEqual(len(expected_keys), 0, msg)
 
@@ -264,7 +276,10 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         
     def test_hydrogen_bond_acceptor_components(self):
         self._do_test_donor_acceptor_components(Hydrogen_bond_acceptor_component_factory(), set(EXPECTED_DIRECT_ACCEPTORS), dict(EXPECTED_INDIRECT_ACCEPTORS), ACCEPTOR)
-
+    
+    def test_fast_hydrogen_bond_calculator(self):
+        test = Fast_hydrogen_bond_calculator(self.get_single_member_ensemble_simulation())
+        
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')
     
