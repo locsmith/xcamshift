@@ -24,7 +24,7 @@ from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
 from table_manager import Table_manager
 from atomSel import AtomSel
-from component_list import Component_list
+from component_list import Native_component_list
 
 EXPECTED_ACCEPTORS =   ((7, 'O', 'C'),
                         (8, 'O', 'C'),
@@ -250,14 +250,20 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         
     
 
-    def _do_test_donor_acceptor_components(self, factory,expected_direct_donors_or_acceptors, expected_indirect_donors_or_acceptors, donor_or_acceptor):
 
-        component_list = Component_list()
+    def _build_component_list(self, factory):
+        component_list = Native_component_list('i' * 4)
         table_provider = Table_manager.get_default_table_manager().get_hydrogen_bond_table
         segment = '    '
+        #TODO note an oddity here as this takes a residu butr builds a list for all residues...
         target_residue_number = 10
         selected_atoms = AtomSel('(all)')
         factory.create_components(component_list, table_provider, segment, target_residue_number, selected_atoms)
+        return component_list
+
+    def _do_test_donor_acceptor_components(self, factory,expected_direct_donors_or_acceptors, expected_indirect_donors_or_acceptors, donor_or_acceptor):
+
+        component_list = self._build_component_list(factory)
         for component in component_list:
             atom_key = Atom_utils._get_atom_info_from_index(component[0])
             indirect_atom_key = Atom_utils._get_atom_info_from_index(component[1])
@@ -279,6 +285,9 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
     
     def test_fast_hydrogen_bond_calculator(self):
         test = Fast_hydrogen_bond_calculator(self.get_single_member_ensemble_simulation())
+        donor_components = self._build_component_list(Hydrogen_bond_donor_component_factory())
+        acceptor_components = self._build_component_list(Hydrogen_bond_acceptor_component_factory())
+        test(donor_components.get_native_components(), acceptor_components.get_native_components(), None)
         
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')

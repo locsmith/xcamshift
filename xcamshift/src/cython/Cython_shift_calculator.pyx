@@ -1431,10 +1431,12 @@ cdef class Fast_hydrogen_bond_calculator:
     cdef float _cutoff_distance
     cdef bint _verbose 
     cdef EnsembleSimulation* _simulation
+    cdef int _min_residue_seperation
     
     def __init__(self,simulation,cutoff_distance=5.0):
         self._simulation = simulationAsNative(simulation)
-
+        self._min_residue_seperation =  1
+        
         self._cutoff_distance =  cutoff_distance
         self._verbose =  False
     
@@ -1443,22 +1445,32 @@ cdef class Fast_hydrogen_bond_calculator:
         self._verbose=on
         
     cdef   int _bytes_to_components(self, data, Hydrogen_bond_component** target_pointer):
-
         target_pointer[0] =  <Hydrogen_bond_component*> <size_t> ctypes.addressof(data)
         return len(data)/ sizeof(Hydrogen_bond_component)
 
+    cdef inline bint _filter_by_residue(self, char* seg_1, int residue_1, char* seg_2, int residue_2):
+        cdef int sequence_distance
+        cdef bint result
+        
+        result = False
+        
+        if strcmp(seg_1, seg_2) == 0:
+            sequence_distance =abs(residue_1-residue_2)
+            if sequence_distance < self._min_residue_seperation:
+                result =True
+        return result
             
     @cython.profile(True)
-    def __call__(self, atom_list_1, atom_list_2,dummy):#,  Hydrogen_bond_energy_list energy_list):
+    def __call__(self, donor_list, acceptor_list,dummy):#,  Hydrogen_bond_energy_list energy_list):
         
         if self._verbose:
             print '***** BUILD HYDROGEN BOND LIST ******'
         
         cdef  Hydrogen_bond_component* donor_components
-        cdef int num_donor_components = self._bytes_to_components(atom_list_1,&donor_components)
+        cdef int num_donor_components = self._bytes_to_components(donor_list,&donor_components)
         
         cdef Hydrogen_bond_component* acceptor_components
-        cdef int num_acceptor_components = self._bytes_to_components(atom_list_2,&acceptor_components)
+        cdef int num_acceptor_components = self._bytes_to_components(acceptor_list,&acceptor_components)
         
         cdef double start_time = 0.0  
         cdef double end_time = 0.0
@@ -1470,6 +1482,10 @@ cdef class Fast_hydrogen_bond_calculator:
         cdef float min_distance
         cdef float FLT_MAX=1000000.0 #TODO: replacce with header
         
+        cdef char *seg_1, *seg_2
+        cdef int residue_1, residue_2
+        
+
         if self._verbose:
             start_time = time()
 
@@ -1477,23 +1493,34 @@ cdef class Fast_hydrogen_bond_calculator:
         cdef int i
         
 #         hydrogen_bond_list.clear()
-        
         for i in range(num_donor_components):
             atom_id_1 = donor_components[i].direct_atom_id
+            
+            atom_1 = self._simulation[0].atomByID(atom_id_1)
+            seg_1 =  <char *>atom_1.segmentName()
+            residue_1 = atom_1.residueNum()
+            
             current_acceptor = -1
             min_distance = FLT_MAX
 
             for j in range(num_acceptor_components):
                 atom_id_2  = acceptor_components[j].direct_atom_id
                 
-                atom_1 = self._simulation[0].atomByID(atom_id_1)
                 atom_2 = self._simulation[0].atomByID(atom_id_2)
                 
-                distance = norm(atom_1.pos() - atom_2.pos())
                 
-                if distance < min_distance:
+                seg_2 = <char*>atom_2.segmentName()
+                residue_2 =  atom_2.residueNum()
+                
+                distance = norm(atom_1.pos() - atom_2.pos())
+                residue_distance_ok = not self._filter_by_residue(seg_1, residue_1, seg_2, residue_2)
+                
+                if distance < min_distance and residue_distance_ok:
                     current_acceptor = atom_id_2
-            print atom_id_1, current_acceptor, min_distance
+                    min_distance = distance
+#                     print 'got dist',i,j,distance, min_distance
+            if  min_distance < 3.0:
+                print 'found', Atom_utils._get_atom_info_from_index(atom_id_1), Atom_utils._get_atom_info_from_index(current_acceptor), current_acceptor, min_distance
                     
 #             if min_distance < cutoff:
 #                 
@@ -1516,7 +1543,7 @@ cdef class Fast_hydrogen_bond_calculator:
                
         if self._verbose:
             end_time = time()
-            print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"
+            print '   hydrogen donors: ',len(donor_list),' acceptors: ', len(acceptor_list),' in', "%.17g" %  (end_time-start_time), "seconds"
 
 
 cdef class Fast_non_bonded_calculator:
