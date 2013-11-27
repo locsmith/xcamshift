@@ -622,26 +622,7 @@ cdef class Out_array:
 cdef object vec3_as_tuple(Vec3& vec_3):
     return vec_3.x(), vec_3.y(), vec_3.z()
     
-cdef class Vec3_container:
-    
-    cdef float[3] floats
-    
-    cdef set_vec3(self,Vec3& vec3):
-        self.floats[0] =  vec3.x()
-        self.floats[1] =  vec3.y()
-        self.floats[2] =  vec3.z()
-        
-    @cython.profile(False)    
-    cdef Vec3  get_vec3(self):
-        return Vec3(self.floats[0],self.floats[1],self.floats[2])
-    
-    def __getitem__(self, i):
-        if i > 2:
-            msg = "tried to access object at %i length is %i"
-            values = (i,3)
-            raise IndexError(msg % values)
 
-        return self.floats[i]
     
     
 cdef struct target_distant_atom:
@@ -1383,10 +1364,7 @@ cdef class Fast_ring_data_calculator:
         cdef Vec3 normal_2
         self._calculate_normal(atom_triplet_2,  &normal_2)
         
-#         cdef Vec3_container result = Vec3_container()
         self._average_2_vec_3(normal_1, normal_2, result)
-#         result.set_vec3(average)
-#         return result
        
     cdef inline void  _build_atom_triplet(self,atom_ids, int[3]& result):
         cdef int i
@@ -1402,8 +1380,6 @@ cdef class Fast_ring_data_calculator:
     
     @cython.profile(True)        
     def __call__(self, rings, Vec3_list normals, Vec3_list centres):
-#        cdef Vec3_container centre 
-#         cdef Vec3_container normal
         cdef double start_time = 0.0 
         cdef double end_time = 0.0
         
@@ -1427,6 +1403,7 @@ cdef class Fast_ring_data_calculator:
             end_time = time()
             print '   ring data centres: ',len(rings), ' normals ', len(normals), 'in', "%.17g" %  (end_time-start_time), "seconds"
 
+#TODO: add common base class with Non bonded calculator
 cdef class Fast_hydrogen_bond_calculator:
     cdef float _cutoff_distance
     cdef bint _verbose 
