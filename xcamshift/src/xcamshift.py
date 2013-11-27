@@ -2761,8 +2761,7 @@ class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
     
 class Hydrogen_bond_donor_acceptor_component_factory(Atom_component_factory):
     def __init__(self):
-        pass
-    
+        self.index = 0
     #TODO: remove just kept to satisfy an abstract method declaration
     def _translate_atom_name(self, atom_name, context):
         pass
@@ -2792,6 +2791,13 @@ class Hydrogen_bond_donor_acceptor_component_factory(Atom_component_factory):
             result = self._build_component(context)
         return result
 
+    def _build_component(self,context):
+        component = None
+        if context.complete:
+            component = (self.index, context.direct_atom_id, context.indirect_atom_id, context.type, context.atom_type_id) 
+            self.index+=1
+        return component
+    
 DONOR = 1
 ACCEPTOR = 2
 class Hydrogen_bond_donor_component_factory(Hydrogen_bond_donor_acceptor_component_factory):
@@ -2802,11 +2808,6 @@ class Hydrogen_bond_donor_component_factory(Hydrogen_bond_donor_acceptor_compone
     def _build_context(self,atom,table):
         return Hydrogen_bond_donor_context(atom, table)
     
-    def _build_component(self,context):
-        component = None
-        if context.complete:
-            component = (context.direct_atom_id, context.indirect_atom_id, context.type, context.atom_type_id) 
-        return component
 
 class Hydrogen_bond_acceptor_component_factory(Hydrogen_bond_donor_acceptor_component_factory):
     
@@ -2816,11 +2817,7 @@ class Hydrogen_bond_acceptor_component_factory(Hydrogen_bond_donor_acceptor_comp
     def _build_context(self,atom, table):
         return Hydrogen_bond_acceptor_context(atom, table)
     
-    def _build_component(self,context):
-        component = None
-        if context.complete:
-            component = (context.direct_atom_id, context.indirect_atom_id, context.type, context.atom_type_id) 
-        return component
+
     
 class Hydrogen_bond_potential(Base_potential):
 

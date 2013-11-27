@@ -252,7 +252,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
 
 
     def _build_component_list(self, factory):
-        component_list = Native_component_list('i' * 4)
+        component_list = Native_component_list('i' * 5)
         table_provider = Table_manager.get_default_table_manager().get_hydrogen_bond_table
         segment = '    '
         #TODO note an oddity here as this takes a residu butr builds a list for all residues...
@@ -264,15 +264,21 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
     def _do_test_donor_acceptor_components(self, factory,expected_direct_donors_or_acceptors, expected_indirect_donors_or_acceptors, donor_or_acceptor):
 
         component_list = self._build_component_list(factory)
-        for component in component_list:
-            atom_key = Atom_utils._get_atom_info_from_index(component[0])
-            indirect_atom_key = Atom_utils._get_atom_info_from_index(component[1])
+        for i,component in enumerate(component_list):
+            INDEX = 0
+            DIRECT_ATOM_ID = 1
+            INDIRECT_ATOM_ID = 2
+            DONOR_OR_ACCEPTOR = 3
+            ATOM_TYPE = 4
+            self.assertEqual(i,component[INDEX])
+            atom_key = Atom_utils._get_atom_info_from_index(component[DIRECT_ATOM_ID])
+            indirect_atom_key = Atom_utils._get_atom_info_from_index(component[INDIRECT_ATOM_ID])
             self.assertIn(atom_key, expected_direct_donors_or_acceptors)
             expected_direct_donors_or_acceptors.remove(atom_key)
             self.assertEqual(atom_key,expected_indirect_donors_or_acceptors[indirect_atom_key])
             del expected_indirect_donors_or_acceptors[indirect_atom_key]
-            self.assertEqual(component[2], donor_or_acceptor)
-            self.assertEqual(component[3], Hbond_atom_type_indexer(Table_manager.get_default_table_manager()).get_index_for_key(atom_key[2]))
+            self.assertEqual(component[DONOR_OR_ACCEPTOR], donor_or_acceptor)
+            self.assertEqual(component[ATOM_TYPE], Hbond_atom_type_indexer(Table_manager.get_default_table_manager()).get_index_for_key(atom_key[INDIRECT_ATOM_ID]))
         
         self.assertEmpty(expected_direct_donors_or_acceptors)
         self.assertEmpty(expected_indirect_donors_or_acceptors)

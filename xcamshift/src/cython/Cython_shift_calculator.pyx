@@ -109,6 +109,7 @@ cdef struct Constant_cache:
     float   tanh_y_offset
     
 cdef struct Hydrogen_bond_component:
+    int index 
     int direct_atom_id
     int indirect_atom_id
     int type
