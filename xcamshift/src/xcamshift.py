@@ -2818,6 +2818,16 @@ class Hydrogen_bond_acceptor_component_factory(Hydrogen_bond_donor_acceptor_comp
         return Hydrogen_bond_acceptor_context(atom, table)
     
 
+class Hydrogen_bond_parameter_factory(Component_factory):
+    
+    def is_residue_acceptable(self, segment, residue_number, segment_manager):
+        return True
+    
+    def get_table_name(self):
+        return 'PARA'
+    
+    def create_components(self, component_list, table_source, segment, target_residue_number, selected_atoms):
+        return component_list#
     
 class Hydrogen_bond_potential(Base_potential):
 

@@ -18,7 +18,7 @@ from pdbTool import PDBTool
 import unittest2
 from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer, Hydrogen_bond_context, Hbond_atom_type_indexer,\
      Hydrogen_bond_donor_context, Hydrogen_bond_acceptor_context, Hydrogen_bond_donor_component_factory, DONOR,ACCEPTOR,\
-     Hbond_atom_type_indexer, Hydrogen_bond_acceptor_component_factory, Xcamshift
+     Hbond_atom_type_indexer, Hydrogen_bond_acceptor_component_factory, Xcamshift, Hydrogen_bond_parameter_factory
 from cython.shift_calculators import Fast_hydrogen_bond_calculator
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
@@ -251,8 +251,8 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
     
 
 
-    def _build_component_list(self, factory):
-        component_list = Native_component_list('i' * 5)
+    def _build_component_list(self, factory, format):
+        component_list = Native_component_list(format)
         table_provider = Table_manager.get_default_table_manager().get_hydrogen_bond_table
         segment = '    '
         #TODO note an oddity here as this takes a residu butr builds a list for all residues...
@@ -263,7 +263,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
 
     def _do_test_donor_acceptor_components(self, factory,expected_direct_donors_or_acceptors, expected_indirect_donors_or_acceptors, donor_or_acceptor):
 
-        component_list = self._build_component_list(factory)
+        component_list = self._build_component_list(factory, 'i' * 5)
         for i,component in enumerate(component_list):
             INDEX = 0
             DIRECT_ATOM_ID = 1
@@ -291,9 +291,16 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
     
     def test_fast_hydrogen_bond_calculator(self):
         test = Fast_hydrogen_bond_calculator(self.get_single_member_ensemble_simulation())
-        donor_components = self._build_component_list(Hydrogen_bond_donor_component_factory())
-        acceptor_components = self._build_component_list(Hydrogen_bond_acceptor_component_factory())
+        format = 'i' * 5
+        donor_components = self._build_component_list(Hydrogen_bond_donor_component_factory(),format)
+        acceptor_components = self._build_component_list(Hydrogen_bond_acceptor_component_factory(),format)
         test(donor_components.get_native_components(), acceptor_components.get_native_components(), None)
+    
+    def test_parameter_components(self):
+        factory = Hydrogen_bond_parameter_factory()
+        format = ('i'*4) +('f'*8)
+        component_list = self._build_component_list(factory, format)
+        
         
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')
