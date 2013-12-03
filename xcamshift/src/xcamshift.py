@@ -2867,7 +2867,33 @@ class Hydrogen_bond_donor_lookup_factory(Component_factory):
             component_list.add_component(tuple(component))
                 
         return component_list
+
+class Hydrogen_bond_acceptor_lookup_factory(Component_factory):
+    def is_residue_acceptable(self, segment, residue_number, segment_manager):
+        return True
+    
+    def get_table_name(self):
+        return 'AIDX'
+    
+    def create_components(self, component_list, table_source, segment, target_residue_number, selected_atoms):
+        table_manager = Table_manager.get_default_table_manager()
+        hydrogen_bond_table  =  table_manager.get_hydrogen_bond_table(None)
         
+        index = 0
+        num_acceptor_types = len(hydrogen_bond_table.get_acceptors())
+        num_donor_types = len(hydrogen_bond_table.get_donors())
+        for i in range(num_acceptor_types):
+            for j in  range(num_donor_types):
+                donor_index = (i*num_acceptor_types) + j
+                num_param_types = len(hydrogen_bond_table.get_energy_term_ids())
+                param_type_indices = [(i*num_acceptor_types) + (j*num_acceptor_types) + k for k in range(num_param_types)]
+                 
+                component  = [index, i,j]
+                component.extend(param_type_indices)
+                
+                component_list.add_component(tuple(component))
+        
+        return component_list
 class Hydrogen_bond_potential(Base_potential):
 
     def __init__(self,simulation,smoothed=True):

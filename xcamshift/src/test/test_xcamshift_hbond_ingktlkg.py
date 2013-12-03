@@ -19,7 +19,7 @@ import unittest2
 from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer, Hydrogen_bond_context, Hbond_atom_type_indexer,\
      Hydrogen_bond_donor_context, Hydrogen_bond_acceptor_context, Hydrogen_bond_donor_component_factory, DONOR,ACCEPTOR,\
      Hbond_atom_type_indexer, Hydrogen_bond_acceptor_component_factory, Xcamshift, Hydrogen_bond_parameter_factory, \
-     Hydrogen_bond_donor_lookup_factory
+     Hydrogen_bond_donor_lookup_factory, Hydrogen_bond_acceptor_lookup_factory
 from cython.shift_calculators import Fast_hydrogen_bond_calculator
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
@@ -324,6 +324,13 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         self.assertLength(component_list, 1)
         self.assertSequenceEqual(component_list[0], EXPECTED[0])
 
+    def test_acceptor_index_components(self):
+        factory = Hydrogen_bond_acceptor_lookup_factory()
+        format = ('ii')
+        component_list = self._build_component_list(factory, format)
+        EXPECTED = ((0,0,0,0,1,2),)
+        self.assertLength(component_list, 1)
+        self.assertSequenceEqual(component_list[0], EXPECTED[0])
         
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')
