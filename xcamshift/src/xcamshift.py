@@ -2827,6 +2827,23 @@ class Hydrogen_bond_parameter_factory(Component_factory):
         return 'PARA'
     
     def create_components(self, component_list, table_source, segment, target_residue_number, selected_atoms):
+        table_manager = Table_manager.get_default_table_manager()
+        hydrogen_bond_table  =  table_manager.get_hydrogen_bond_table(None)
+        
+        number_donors = len(hydrogen_bond_table.get_donors())
+        number_acceptors = len(hydrogen_bond_table.get_acceptors())
+        
+        
+        index = 0
+        for i,donor in enumerate(hydrogen_bond_table.get_donors()):
+            for j,acceptor in enumerate(hydrogen_bond_table.get_acceptors()):
+                for term_index,term_id in enumerate(sorted(hydrogen_bond_table.get_energy_term_ids())):
+                    sub_result = [index,term_index,i,j]
+                    values  =  hydrogen_bond_table.get_energy_terms(donor,acceptor,term_id)
+                    for elem in 'p1','p2','p3','p4','p5', 'p6','s','r':
+                        sub_result.append(values[elem])
+                    component_list.add_component(tuple(sub_result))
+                index+=1
         return component_list#
     
 class Hydrogen_bond_potential(Base_potential):

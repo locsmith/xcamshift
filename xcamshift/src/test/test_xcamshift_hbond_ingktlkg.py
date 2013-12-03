@@ -305,8 +305,14 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         factory = Hydrogen_bond_parameter_factory()
         format = ('i'*4) +('f'*8)
         component_list = self._build_component_list(factory, format)
+        self.assertLength(component_list, 3)
+        EXPECTED = [(0, 0, 0, 0, 12.151400000000001, -1.1225799999999999, -1.1225799999999999, 1.3095300000000001, 1.3095300000000001, 0.0, 3.0, 15.5), 
+                    (0, 1, 0, 0, 15.0486, -1.7946899999999999, -1.7946899999999999, 1.4939800000000001, 1.4939800000000001, 0.0, 2.5, 15.5), 
+                    (0, 2, 0, 0, -0.40353099999999997, 13.9148, -0.42172500000000002, -3.0801599999999998, 0.98725099999999999, 0.0, -16.5, 3.0)]
         
-        
+        for i in range(3):
+            self.assertSequenceAlmostEqual(component_list[i], EXPECTED[i])
+        component_list.get_native_components()
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')
     
