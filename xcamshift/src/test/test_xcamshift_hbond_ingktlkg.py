@@ -313,9 +313,8 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         for i in range(3):
             self.assertSequenceEqual(component_list[i][:4], EXPECTED[i][:4])
             self.assertSequenceAlmostEqual(component_list[i][4:], EXPECTED[i][4:])
-#             self.assertSequenceAlmostEqual(component_list[i], EXPECTED[i])
-#             print component_list[i]
         component_list.get_native_components()
+        
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')
     
