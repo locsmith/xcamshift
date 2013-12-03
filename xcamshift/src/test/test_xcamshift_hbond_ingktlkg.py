@@ -71,7 +71,12 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
     
     def assertEmpty(self, expected_keys, msg=""):
         return self.assertEqual(len(expected_keys), 0, msg)
-
+    
+    def assertLength(self,sequence,length,msg='bad length expected length of %i'):
+        msg = msg % length
+        self.assertEqual(len(sequence), length, msg)
+        
+    
     def check_almost_equal(self, list_1, list_2, delta = 1e-7):
         difference_offset = -1
         for i, (elem_1, elem_2) in enumerate(zip(list_1, list_2)):
