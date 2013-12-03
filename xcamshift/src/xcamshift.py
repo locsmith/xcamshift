@@ -2843,7 +2843,7 @@ class Hydrogen_bond_parameter_factory(Component_factory):
                     for elem in 'p1','p2','p3','p4','p5', 'p6','s','r':
                         sub_result.append(values[elem])
                     component_list.add_component(tuple(sub_result))
-                index+=1
+                    index+=1
         return component_list#
     
 class Hydrogen_bond_potential(Base_potential):
