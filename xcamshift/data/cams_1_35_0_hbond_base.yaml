@@ -17,7 +17,7 @@ acceptors:    [O:  [C,  O]]
 donors:       [HN: [N, HN]]
 
 pairs: 
-       [O, HN]: {
+       [HN, O]: {
            # note: the p6 values in kai's thesis are set to 0.0 out in the current implementation  1.35.0
            #       [dist-p6: -3.77431, ang1-p6: 4.64911 ang2-p6: 6.33794]
            DIST:  {p1: -0.403531, p2: 13.91480, p3: -0.421725, p4: -3.08016, p5: 0.987251, p6: 0.0, r:  3.0, s: -16.5},
