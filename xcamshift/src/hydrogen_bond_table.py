@@ -84,6 +84,10 @@ class Hydrogen_bond_table(Table_base):
             message = 'unrecognised term %s, term should be one of %s'
             raise KeyError(message % (term, ','.join(terms)))
     
+    def get_energy_term_ids(self):
+        key_0 =  self._table['pairs'].keys()[0]
+        return self._table['pairs'][key_0].keys()
+    
     def get_energy_terms(self, donor, acceptor, term):
         self._check_donor(donor)
         self._check_acceptor(acceptor)
