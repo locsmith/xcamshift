@@ -300,7 +300,9 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         format = 'i' * 5
         donor_components = self._build_component_list(Hydrogen_bond_donor_component_factory(),format)
         acceptor_components = self._build_component_list(Hydrogen_bond_acceptor_component_factory(),format)
-        test(donor_components.get_native_components(), acceptor_components.get_native_components(), None)
+        parameter_format =  format = ('i'*4) +('f'*8)
+        parameter_components = self._build_component_list(Hydrogen_bond_parameter_factory(), parameter_format)
+        test(donor_components.get_native_components(), acceptor_components.get_native_components(), parameter_components.get_native_components(), None)
     
     def test_parameter_components(self):
         factory = Hydrogen_bond_parameter_factory()

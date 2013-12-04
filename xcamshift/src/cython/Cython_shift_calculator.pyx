@@ -115,6 +115,17 @@ cdef struct Hydrogen_bond_component:
     int type
     int atom_type_id 
     
+cdef struct Hydrogen_bond_parameter:
+    int component_index
+    int param_index
+    int donor_index
+    int acceptor_index
+    float[6] p
+    float r 
+    float s
+
+
+    
 def test_dump_component_index_pair(Non_bonded_interaction_list data, int index):
     cdef Component_index_pair* result =  data.get(index)
     
@@ -1425,7 +1436,11 @@ cdef class Fast_hydrogen_bond_calculator:
     cdef   int _bytes_to_components(self, data, Hydrogen_bond_component** target_pointer):
         target_pointer[0] =  <Hydrogen_bond_component*> <size_t> ctypes.addressof(data)
         return len(data)/ sizeof(Hydrogen_bond_component)
-
+    
+    cdef  int _bytes_to_parameters(self,data, Hydrogen_bond_parameter** target_pointer):
+        target_pointer[0] =  <Hydrogen_bond_parameter*> <size_t> ctypes.addressof(data)
+        return len(data)/ sizeof(Hydrogen_bond_parameter)
+    
     cdef inline bint _filter_by_residue(self, char* seg_1, int residue_1, char* seg_2, int residue_2):
         cdef int sequence_distance
         cdef bint result
@@ -1439,7 +1454,7 @@ cdef class Fast_hydrogen_bond_calculator:
         return result
             
     @cython.profile(True)
-    def __call__(self, donor_list, acceptor_list,dummy):#,  Hydrogen_bond_energy_list energy_list):
+    def __call__(self, donor_list, acceptor_list, parameters, dummy):#,  Hydrogen_bond_energy_list energy_list):
         
         if self._verbose:
             print '***** BUILD HYDROGEN BOND LIST ******'
@@ -1449,6 +1464,9 @@ cdef class Fast_hydrogen_bond_calculator:
         
         cdef Hydrogen_bond_component* acceptor_components
         cdef int num_acceptor_components = self._bytes_to_components(acceptor_list,&acceptor_components)
+        
+        cdef Hydrogen_bond_parameter* hydrogen_bond_parameters
+        cdef int num_parameters = self._bytes_to_parameters(parameters, &hydrogen_bond_parameters)
         
         cdef double start_time = 0.0  
         cdef double end_time = 0.0
@@ -1498,6 +1516,9 @@ cdef class Fast_hydrogen_bond_calculator:
                     min_distance = distance
 #                     print 'got dist',i,j,distance, min_distance
             if  min_distance < 3.0:
+                print atom_id_1,atom_id_2,donor_components[0].index,donor_components[0].atom_type_id,acceptor_components[0].index,acceptor_components[0].atom_type_id
+
+                print num_parameters,hydrogen_bond_parameters[0].p[0]
                 print 'found', Atom_utils._get_atom_info_from_index(atom_id_1), Atom_utils._get_atom_info_from_index(current_acceptor), current_acceptor, min_distance
                     
 #             if min_distance < cutoff:
