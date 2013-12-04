@@ -2903,6 +2903,10 @@ class Hydrogen_bond_potential(Base_potential):
         
         self._add_component_factory(Hydrogen_bond_donor_component_factory())
         self._add_component_factory(Hydrogen_bond_component_factory()) 
+        self._add_component_factory(Hydrogen_bond_parameter_factory())
+        self._add_component_factory(Hydrogen_bond_donor_lookup_factory())
+        self._add_component_factory(Hydrogen_bond_acceptor_lookup_factory())
+        
 #         self._add_component_factory(Non_bonded_backbone_component_factory())
 #         self._add_component_factory(Non_bonded_remote_component_factory())
 #         self._add_component_factory(Non_bonded_coefficient_factory())
