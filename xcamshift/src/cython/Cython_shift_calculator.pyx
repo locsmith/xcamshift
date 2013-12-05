@@ -124,7 +124,16 @@ cdef struct Hydrogen_bond_parameter:
     float r 
     float s
 
+cdef struct Hydrogen_bond_donor_lookup:
+    int donor_id
+    int number_acceptors
+    int[1] acceptor_offset
 
+cdef struct Hydrogen_bond_acceptor_lookup:
+    int index
+    int donor_id
+    int acceptor_id
+    int[3] parameter_indices
     
 def test_dump_component_index_pair(Non_bonded_interaction_list data, int index):
     cdef Component_index_pair* result =  data.get(index)
@@ -1441,6 +1450,14 @@ cdef class Fast_hydrogen_bond_calculator:
         target_pointer[0] =  <Hydrogen_bond_parameter*> <size_t> ctypes.addressof(data)
         return len(data)/ sizeof(Hydrogen_bond_parameter)
     
+    cdef  int _bytes_to_donor_lookup(self,data, Hydrogen_bond_donor_lookup** target_pointer):
+        target_pointer[0] =  <Hydrogen_bond_donor_lookup*> <size_t> ctypes.addressof(data)
+        return len(data)/ sizeof(Hydrogen_bond_donor_lookup)
+    
+    cdef  int _bytes_to_acceptor_lookup(self,data, Hydrogen_bond_acceptor_lookup** target_pointer):
+        target_pointer[0] =  <Hydrogen_bond_acceptor_lookup*> <size_t> ctypes.addressof(data)
+        return len(data)/ sizeof(Hydrogen_bond_acceptor_lookup)
+
     cdef inline bint _filter_by_residue(self, char* seg_1, int residue_1, char* seg_2, int residue_2):
         cdef int sequence_distance
         cdef bint result
@@ -1459,7 +1476,8 @@ cdef class Fast_hydrogen_bond_calculator:
         donor_list = components['DONR']
         acceptor_list =  components['ACCP']
         parameters =  components['PARA']
-
+        donor_indices = components['DIDX']
+        acceptor_indices = components['AIDX']
         
         if self._verbose:
             print '***** BUILD HYDROGEN BOND LIST ******'
@@ -1469,9 +1487,15 @@ cdef class Fast_hydrogen_bond_calculator:
         
         cdef Hydrogen_bond_component* acceptor_components
         cdef int num_acceptor_components = self._bytes_to_components(acceptor_list,&acceptor_components)
-        
+
+        cdef Hydrogen_bond_donor_lookup* donor_lookup
+        cdef int num_donor_lookup_components = self._bytes_to_donor_lookup(donor_indices,&donor_lookup)
+
         cdef Hydrogen_bond_parameter* hydrogen_bond_parameters
         cdef int num_parameters = self._bytes_to_parameters(parameters, &hydrogen_bond_parameters)
+        
+        cdef Hydrogen_bond_acceptor_lookup* acceptor_lookup
+        cdef int num_acceptor_lookup_components = self._bytes_to_acceptor_lookup(acceptor_indices,&acceptor_lookup)
         
         cdef double start_time = 0.0  
         cdef double end_time = 0.0

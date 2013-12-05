@@ -302,9 +302,15 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         acceptor_components = self._build_component_list(Hydrogen_bond_acceptor_component_factory(),format)
         parameter_format =  format = ('i'*4) +('f'*8)
         parameter_components = self._build_component_list(Hydrogen_bond_parameter_factory(), parameter_format)
+        donor_index_format = 'i'*3
+        donor_index_components = self._build_component_list(Hydrogen_bond_donor_lookup_factory(), donor_index_format)
+        acceptor_index_format = 'i'*6
+        acceptor_index_components = self._build_component_list(Hydrogen_bond_acceptor_lookup_factory(), acceptor_index_format)
         components = {'DONR' : donor_components.get_native_components(), 
                       'ACCP' : acceptor_components.get_native_components(), 
                       'PARA' : parameter_components.get_native_components(),
+                      'DIDX' : donor_index_components.get_native_components(),
+                      'AIDX' : acceptor_index_components.get_native_components()
                       }
         test(components, None)
     
