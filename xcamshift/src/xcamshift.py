@@ -2803,7 +2803,7 @@ ACCEPTOR = 2
 class Hydrogen_bond_donor_component_factory(Hydrogen_bond_donor_acceptor_component_factory):
     
     def get_table_name(self):
-        return DONOR
+        return 'DONR'
     
     def _build_context(self,atom,table):
         return Hydrogen_bond_donor_context(atom, table)
@@ -2812,7 +2812,7 @@ class Hydrogen_bond_donor_component_factory(Hydrogen_bond_donor_acceptor_compone
 class Hydrogen_bond_acceptor_component_factory(Hydrogen_bond_donor_acceptor_component_factory):
     
     def get_table_name(self):
-        return ACCEPTOR
+        return 'ACCP'
     
     def _build_context(self,atom, table):
         return Hydrogen_bond_acceptor_context(atom, table)
