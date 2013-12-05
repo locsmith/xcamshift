@@ -1454,7 +1454,12 @@ cdef class Fast_hydrogen_bond_calculator:
         return result
             
     @cython.profile(True)
-    def __call__(self, donor_list, acceptor_list, parameters, dummy):#,  Hydrogen_bond_energy_list energy_list):
+    def __call__(self, components, dummy):#,  Hydrogen_bond_energy_list energy_list):
+        
+        donor_list = components['DONR']
+        acceptor_list =  components['ACCP']
+        parameters =  components['PARA']
+
         
         if self._verbose:
             print '***** BUILD HYDROGEN BOND LIST ******'

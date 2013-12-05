@@ -302,7 +302,11 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         acceptor_components = self._build_component_list(Hydrogen_bond_acceptor_component_factory(),format)
         parameter_format =  format = ('i'*4) +('f'*8)
         parameter_components = self._build_component_list(Hydrogen_bond_parameter_factory(), parameter_format)
-        test(donor_components.get_native_components(), acceptor_components.get_native_components(), parameter_components.get_native_components(), None)
+        components = {'DONR' : donor_components.get_native_components(), 
+                      'ACCP' : acceptor_components.get_native_components(), 
+                      'PARA' : parameter_components.get_native_components(),
+                      }
+        test(components, None)
     
     def test_parameter_components(self):
         factory = Hydrogen_bond_parameter_factory()
