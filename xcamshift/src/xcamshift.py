@@ -2937,6 +2937,7 @@ class Hydrogen_bond_acceptor_lookup_factory(Component_factory):
             self._accessed = True
             
         return component_list
+    
 class Hydrogen_bond_potential(Base_potential):
 
     def __init__(self,simulation,smoothed=True):
@@ -2944,7 +2945,9 @@ class Hydrogen_bond_potential(Base_potential):
         self._force_calculator = self._get_force_calculator()
         self._shift_calculator =  self._get_shift_calculator()
         
+        self._add_component_factory(Hydrogen_bond_acceptor_component_factory())
         self._add_component_factory(Hydrogen_bond_donor_component_factory())
+        
         self._add_component_factory(Hydrogen_bond_component_factory()) 
         self._add_component_factory(Hydrogen_bond_parameter_factory())
         self._add_component_factory(Hydrogen_bond_donor_lookup_factory())
