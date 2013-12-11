@@ -18,8 +18,9 @@ from pdbTool import PDBTool
 import unittest2
 from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer, Hydrogen_bond_context, Hbond_atom_type_indexer,\
      Hydrogen_bond_donor_context, Hydrogen_bond_acceptor_context, Hydrogen_bond_donor_component_factory, DONOR,ACCEPTOR,\
-     Hbond_atom_type_indexer, Hydrogen_bond_acceptor_component_factory, Xcamshift, Hydrogen_bond_parameter_factory, \
-     Hydrogen_bond_donor_lookup_factory, Hydrogen_bond_acceptor_lookup_factory
+     Hbond_donor_atom_type_indexer, Hbond_acceptor_atom_type_indexer, Hydrogen_bond_acceptor_component_factory, Xcamshift, Hydrogen_bond_parameter_factory, \
+     Hydrogen_bond_donor_lookup_factory, Hydrogen_bond_acceptor_lookup_factory,\
+    Hydrogen_bond_potential
 from cython.shift_calculators import Fast_hydrogen_bond_calculator
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
@@ -49,7 +50,8 @@ for elem in EXPECTED_DONORS:
     
 EXPECTED_DIRECT_DONORS = [('',elem[0],elem[1]) for elem in EXPECTED_DONORS]
 
-EXPECTED_ATOMS =  set(['O','HN'])
+EXPECTED_DONOR_ATOMS = set(['HN',])
+EXPECTED_ACCEPTOR_ATOMS = set(['O',])
 
 EXPECTED_INDIRECT_ACCEPTORS = {}
 for elem in EXPECTED_ACCEPTORS:
@@ -119,7 +121,8 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         table_manager =  Table_manager.get_default_table_manager()
         self.donor_indexer  = Hbond_donor_indexer(table_manager)
         self.acceptor_indexer  = Hbond_acceptor_indexer(table_manager)
-        self.atom_type_indexer =  Hbond_atom_type_indexer(table_manager)
+        self.donor_atom_type_indexer =  Hbond_donor_atom_type_indexer(table_manager)
+        self.acceptor_atom_type_indexer =  Hbond_acceptor_atom_type_indexer(table_manager)
         
         Segment_Manager.reset_segment_manager()
 #         print "In method", self._testMethodName
@@ -172,34 +175,46 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
     def test_atom_indexer_indexers(self):
          
  
-        atom_indices = [index for index in self.atom_type_indexer.iter_keys()]
-        self.assertEqual(len(EXPECTED_ATOMS), len(atom_indices))
+        donor_atom_indices = [index for index in self.donor_atom_type_indexer.iter_keys()]
+        self.assertEqual(len(EXPECTED_DONOR_ATOMS), len(donor_atom_indices))
         
-        self.assertEqual(sorted(EXPECTED_ATOMS), atom_indices)
+        self.assertEqual(sorted(EXPECTED_DONOR_ATOMS), donor_atom_indices)
+
+        acceptor_atom_indices = [index for index in self.acceptor_atom_type_indexer.iter_keys()]
+        self.assertEqual(len(EXPECTED_ACCEPTOR_ATOMS), len(acceptor_atom_indices))
         
+        self.assertEqual(sorted(EXPECTED_ACCEPTOR_ATOMS), acceptor_atom_indices)        
       
     def test_get_max_index(self):
-        self.assertEqual(self.atom_type_indexer.get_max_index(), len(EXPECTED_ATOMS))
- 
+        self.assertEqual(self.donor_atom_type_indexer.get_max_index(), len(EXPECTED_DONOR_ATOMS))
+        self.assertEqual(self.acceptor_atom_type_indexer.get_max_index(), len(EXPECTED_ACCEPTOR_ATOMS))
+        
     def test_get_name(self):    
         for elem in 'hydrogen', 'bond', 'atom','type':
-            self.assertTrue(elem in self.atom_type_indexer.get_name().lower(), elem)
+            self.assertTrue(elem in self.donor_atom_type_indexer.get_name().lower(), elem)
+            self.assertTrue(elem in self.acceptor_atom_type_indexer.get_name().lower(), elem)
         
  
  
     def test_get_index_for_key(self,):
-        for i,atom_name in enumerate(sorted(EXPECTED_ATOMS)):
-            self.assertEqual(i,self.atom_type_indexer.get_index_for_key(atom_name))
-        self.assertEqual(i+1, self.atom_type_indexer.get_max_index())
- 
+        for i,atom_name in enumerate(sorted(EXPECTED_DONOR_ATOMS)):
+            self.assertEqual(i,self.donor_atom_type_indexer.get_index_for_key(atom_name))
+        self.assertEqual(i+1, self.donor_atom_type_indexer.get_max_index())
+        
+        for i,atom_name in enumerate(sorted(EXPECTED_ACCEPTOR_ATOMS)):
+            self.assertEqual(i,self.acceptor_atom_type_indexer.get_index_for_key(atom_name))
+        self.assertEqual(i+1, self.acceptor_atom_type_indexer.get_max_index()) 
         
                         
       
     def test_get_key_for_index(self):
-        for i,atom_name in enumerate(EXPECTED_ATOMS):
-            self.assertEqual(atom_name,self.atom_type_indexer.get_key_for_index(i))
-        self.assertEqual(i+1, self.atom_type_indexer.get_max_index())
+        for i,atom_name in enumerate(EXPECTED_DONOR_ATOMS):
+            self.assertEqual(atom_name,self.donor_atom_type_indexer.get_key_for_index(i))
+        self.assertEqual(i+1, self.donor_atom_type_indexer.get_max_index())
 
+        for i,atom_name in enumerate(EXPECTED_ACCEPTOR_ATOMS):
+            self.assertEqual(atom_name,self.acceptor_atom_type_indexer.get_key_for_index(i))
+        self.assertEqual(i+1, self.acceptor_atom_type_indexer.get_max_index())
      
           
     def test_hbond_context(self):
@@ -250,7 +265,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         
         hbond_acceptor_context_1 = Hydrogen_bond_acceptor_context(atom_0,table)
         self.assertTrue(hbond_acceptor_context_1.complete)
-        self.assertEqual(hbond_acceptor_context_1.atom_type_id,1)
+        self.assertEqual(hbond_acceptor_context_1.atom_type_id,0)
         self.assertEqual(hbond_acceptor_context_1.direct_atom_id, atom_0.index())
         self.assertEqual(hbond_acceptor_context_1.indirect_atom_id, Atom_utils.find_atom('', 10, 'C')[0].index())
         
@@ -284,7 +299,10 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
             self.assertEqual(atom_key,expected_indirect_donors_or_acceptors[indirect_atom_key])
             del expected_indirect_donors_or_acceptors[indirect_atom_key]
             self.assertEqual(component[DONOR_OR_ACCEPTOR], donor_or_acceptor)
-            self.assertEqual(component[ATOM_TYPE], Hbond_atom_type_indexer(Table_manager.get_default_table_manager()).get_index_for_key(atom_key[INDIRECT_ATOM_ID]))
+            if donor_or_acceptor ==  DONOR:
+                self.assertEqual(component[ATOM_TYPE], Hbond_donor_atom_type_indexer(Table_manager.get_default_table_manager()).get_index_for_key(atom_key[INDIRECT_ATOM_ID]))
+            elif donor_or_acceptor ==  ACCEPTOR:
+                self.assertEqual(component[ATOM_TYPE], Hbond_acceptor_atom_type_indexer(Table_manager.get_default_table_manager()).get_index_for_key(atom_key[INDIRECT_ATOM_ID]))
         
         self.assertEmpty(expected_direct_donors_or_acceptors)
         self.assertEmpty(expected_indirect_donors_or_acceptors)

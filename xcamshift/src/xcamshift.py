@@ -2525,16 +2525,18 @@ class Hbond_atom_type_indexer(object):
             self._inverted_index[self._max_index] = key
             self._max_index += 1
 
+    @abstractmethod
+    def get_keys(self, table):
+        pass
+
     def _build_index(self, table_manager):
         self._get_table('base')
         
         tables_by_index = self._get_tables_by_index(table_manager)
         
         for table in tables_by_index:
-            for donor in table.get_donors():
-                self.add_key(donor)
-            for acceptor in table.get_acceptors():
-                self.add_key(acceptor)
+            for key in self.get_keys(table):
+                self.add_key(key)
                                     
     def get_index_for_key(self,key):
         return self._index[key]
@@ -2549,6 +2551,24 @@ class Hbond_atom_type_indexer(object):
         for index in range(self._max_index):
             yield self._inverted_index[index] 
 
+class Hbond_donor_atom_type_indexer(Hbond_atom_type_indexer):
+    
+    def __init__(self, table_manager):
+        Hbond_atom_type_indexer.__init__(self, table_manager)
+
+    def get_keys(self, table):
+
+        return table.get_donors()
+
+class Hbond_acceptor_atom_type_indexer(Hbond_atom_type_indexer):
+    
+    def __init__(self, table_manager):
+        Hbond_atom_type_indexer.__init__(self, table_manager)
+
+    def get_keys(self, table):
+
+        return table.get_acceptors()
+            
          
 class Hbond_indexer_base(object):
     __metaclass__ = ABCMeta
@@ -2723,7 +2743,7 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
         segid,residue,atom_name = Atom_utils._get_atom_info_from_index(self.direct_atom_id)
         
         if atom_name in self.get_atom_names(table):
-            indexer  = Hbond_atom_type_indexer(Table_manager.get_default_table_manager())
+            indexer  =  self.get_indexer()
             self.atom_type_id = indexer.get_index_for_key(atom_name)
             
             vector_atom_names =  list(table.get_bond_vector_atoms(atom_name))
@@ -2740,6 +2760,10 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
     def get_atom_names(self,table):
         pass
     
+    @abstractmethod
+    def get_indexer(self):
+        pass
+    
 class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
     
     def __init__(self,atom,table):
@@ -2749,6 +2773,8 @@ class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
     def get_atom_names(self,table):
         return  table.get_donors()
 
+    def get_indexer(self):
+        return Hbond_donor_atom_type_indexer(Table_manager.get_default_table_manager())
 
 class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
     
@@ -2758,6 +2784,9 @@ class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
         
     def get_atom_names(self,table):
         return  table.get_acceptors()
+
+    def get_indexer(self):
+        return Hbond_acceptor_atom_type_indexer(Table_manager.get_default_table_manager())
     
 class Hydrogen_bond_donor_acceptor_component_factory(Atom_component_factory):
     def __init__(self):
