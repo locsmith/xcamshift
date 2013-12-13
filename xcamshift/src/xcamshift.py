@@ -3030,6 +3030,14 @@ class Hydrogen_bond_potential(Base_potential):
             result = Native_component_list(format='iiiii')
         elif name == "HDONOR":
             result = Native_component_list(format='ii')
+        elif name == 'ACCP' or name == 'DONR':
+            result = Native_component_list(format='i' * 5)
+        elif name == 'DIDX':
+            result = Native_component_list(format='i' * 3)
+        elif name == 'AIDX':
+            result = Native_component_list(format='i' * 6)
+        elif name == 'PARA':
+            result = Native_component_list(format = (('i'*4) +('f'*8)))
         else:
             raise Exception(name)
         return result
