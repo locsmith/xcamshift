@@ -2958,7 +2958,83 @@ class Hydrogen_bond_potential(Base_potential):
         self._add_component_factory(Hydrogen_bond_parameter_factory())
         self._add_component_factory(Hydrogen_bond_donor_lookup_factory())
         self._add_component_factory(Hydrogen_bond_acceptor_lookup_factory())
+    
+
+
+    def __str__(self):
+        def get_donor_acceptor_string(result, type_string, name):
+            result.append(name)
+            result.append('-' * len(name) )
+            result.append('')
+            result.append('---------------------------------------------------------------------')
+            result.append('ind  indirect atom                 direct atom                 hbond ')
+            result.append('ex   ----------------------------  --------------------------- ------')
+            result.append('     id    segid   res      atom   id    segid   res      atom id    ')
+            result.append('---  ---   ------  -------  ----   --    -----   -------- ---- ------')
+            
+            for donor_acceptor in self._get_component_list(type_string): #             print donor
+                index_string = '%-i.' % (donor_acceptor[0] + 1)
+                type_index = '%-i' % donor_acceptor[4]
+                values = '%s %s - %s %s' % (index_string.ljust(4), Atom_utils._get_atom_name(donor_acceptor[2]), Atom_utils._get_atom_name(donor_acceptor[1]), type_index)
+                result.append(values)
         
+        def get_index_strings(result,type_string):
+            if type_string == 'DIDX':
+                result.append('donor indices')
+                result.append('----- -------')
+                result.append('')
+                result.append('index  acceptor count  acceptor indices')
+                result.append('-----  --------------  ----------------')
+                result.append('')
+                for component in self._get_component_list(type_string):
+                    result_string = '%-4i   %-4i           ' % component[:2]
+                    for index in component[2:]:
+                        result_string += ' %i' % index
+                    result.append(result_string )
+                    
+            if type_string == 'AIDX':
+                result.append('acceptor indices')
+                result.append('-------- -------')
+                result.append('')
+                result.append('index  donor index  acceptor index  parameter indices')
+                result.append('-----  -----------  --------------  -----------------')
+                result.append('')
+                for component in self._get_component_list(type_string):
+                    result_string = '%-4i   %-4i         %-4i           ' % component[:3]
+                    for index in component[3:]:
+                        result_string += ' %i' % index
+                    result.append(result_string ) 
+            
+#             'DIDX'
+#             'AIDX'
+            return result
+        
+        def get_para_string(result):
+            result.append('parameters')
+            result.append('----------')
+            result.append('')
+            result.append('index  term id  donor id  acceptor id  p1        p2       p3      p4       p5       p6       s        r')
+            result.append('-----  -------  --------  -----------  -------  -------  -------  -------  -------  -------  -------  -------')
+            format = '%-3i    %-3i      %-3i       %-3i          '
+            for component in self._get_component_list('PARA'):
+                parameters =  '  '.join([('%7.3f' % param).ljust(7) for param in component[4:]])
+                result.append(format % component[:4] + parameters)
+        
+        result = []
+        
+        
+        get_donor_acceptor_string(result,  'DONR', 'donors')
+        result.append('')
+        get_donor_acceptor_string(result,  'ACCP', 'acceptors')
+        result.append('')
+        get_index_strings(result,'DIDX')
+        result.append('')
+        get_index_strings(result,'AIDX')
+        result.append('')
+        get_para_string(result)
+        
+
+        return '\n'.join(result)
 #         self._add_component_factory(Non_bonded_backbone_component_factory())
 #         self._add_component_factory(Non_bonded_remote_component_factory())
 #         self._add_component_factory(Non_bonded_coefficient_factory())
