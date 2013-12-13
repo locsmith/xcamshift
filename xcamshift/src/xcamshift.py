@@ -2848,7 +2848,10 @@ class Hydrogen_bond_acceptor_component_factory(Hydrogen_bond_donor_acceptor_comp
     
 
 class Hydrogen_bond_parameter_factory(Component_factory):
-    
+
+    def __init__(self):
+        self._accessed = False
+            
     def is_residue_acceptable(self, segment, residue_number, segment_manager):
         return True
     
@@ -2856,23 +2859,26 @@ class Hydrogen_bond_parameter_factory(Component_factory):
         return 'PARA'
     
     def create_components(self, component_list, table_source, segment, target_residue_number, selected_atoms):
-        table_manager = Table_manager.get_default_table_manager()
-        hydrogen_bond_table  =  table_manager.get_hydrogen_bond_table(None)
-        
-        number_donors = len(hydrogen_bond_table.get_donors())
-        number_acceptors = len(hydrogen_bond_table.get_acceptors())
-        
-        
-        index = 0
-        for i,donor in enumerate(hydrogen_bond_table.get_donors()):
-            for j,acceptor in enumerate(hydrogen_bond_table.get_acceptors()):
-                for term_index,term_id in enumerate(sorted(hydrogen_bond_table.get_energy_term_ids())):
-                    sub_result = [index,term_index,i,j]
-                    values  =  hydrogen_bond_table.get_energy_terms(donor,acceptor,term_id)
-                    for elem in 'p1','p2','p3','p4','p5', 'p6','s','r':
-                        sub_result.append(values[elem])
-                    component_list.add_component(tuple(sub_result))
-                    index+=1
+        #TODO: this is hack!
+        if not self._accessed:
+            table_manager = Table_manager.get_default_table_manager()
+            hydrogen_bond_table  =  table_manager.get_hydrogen_bond_table(None)
+            
+            number_donors = len(hydrogen_bond_table.get_donors())
+            number_acceptors = len(hydrogen_bond_table.get_acceptors())
+            
+            
+            index = 0
+            for i,donor in enumerate(hydrogen_bond_table.get_donors()):
+                for j,acceptor in enumerate(hydrogen_bond_table.get_acceptors()):
+                    for term_index,term_id in enumerate(sorted(hydrogen_bond_table.get_energy_term_ids())):
+                        sub_result = [index,term_index,i,j]
+                        values  =  hydrogen_bond_table.get_energy_terms(donor,acceptor,term_id)
+                        for elem in 'p1','p2','p3','p4','p5', 'p6','s','r':
+                            sub_result.append(values[elem])
+                        component_list.add_component(tuple(sub_result))
+                        index+=1
+            self._accessed = True
         return component_list#
 
 class Hydrogen_bond_donor_lookup_factory(Component_factory):
