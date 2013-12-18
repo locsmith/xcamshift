@@ -1529,7 +1529,10 @@ cdef class Fast_hydrogen_bond_calculator:
         
         cdef char *seg_1, *seg_2
         cdef int residue_1, residue_2
-        
+                
+        cdef Hydrogen_bond_parameter params_dist
+        cdef Hydrogen_bond_parameter params_angle_1
+        cdef Hydrogen_bond_parameter params_angle_2
 
         if self._verbose:
             start_time = time()
@@ -1583,6 +1586,19 @@ cdef class Fast_hydrogen_bond_calculator:
                 bond_angle_atom_ids.atom_id_3 = acceptor_direct_atom_id 
                  
                 angle_2 = calc_bond_angle_simulation(self._simulation, bond_angle_atom_ids) 
+
+                donor_atom_type_id  = donor_components[donor_index].atom_type_id
+                acceptor_atom_type_id = acceptor_components[acceptor_index].atom_type_id
+                acceptor_id = donor_lookup[donor_atom_type_id].acceptor_offset[acceptor_atom_type_id]
+ 
+                param_id_dist = acceptor_lookup[acceptor_id].parameter_indices[0]
+                param_id_angle_1 = acceptor_lookup[acceptor_id].parameter_indices[1]
+                param_id_angle_2 = acceptor_lookup[acceptor_id].parameter_indices[2]
+#
+                print param_id_dist,param_id_angle_1,param_id_angle_2
+                params_dist  = hydrogen_bond_parameters[param_id_dist]
+                params_angle_1  = hydrogen_bond_parameters[param_id_angle_1]
+                params_angle_2  = hydrogen_bond_parameters[param_id_angle_2]
  
                     
 #             if min_distance < cutoff:
