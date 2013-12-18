@@ -2873,7 +2873,6 @@ class Hydrogen_bond_parameter_factory(Component_factory):
                 for j,acceptor in enumerate(hydrogen_bond_table.get_acceptors()):
                     for term_index,term_id in enumerate(hydrogen_bond_table.get_energy_term_ids()):
                         sub_result = [index,term_index,i,j]
-                        print term_id
                         values  =  hydrogen_bond_table.get_energy_terms(donor,acceptor,term_id)
                         for elem in 'p1','p2','p3','p4','p5', 'p6','r','s':
                             sub_result.append(values[elem])

@@ -1605,7 +1605,6 @@ cdef class Fast_hydrogen_bond_calculator:
                 param_id_angle_1 = acceptor_lookup[acceptor_id].parameter_indices[1]
                 param_id_angle_2 = acceptor_lookup[acceptor_id].parameter_indices[2]
 #
-                print param_id_dist,param_id_angle_1,param_id_angle_2
                 params_dist  = hydrogen_bond_parameters[param_id_dist]
                 params_angle_1  = hydrogen_bond_parameters[param_id_angle_1]
                 params_angle_2  = hydrogen_bond_parameters[param_id_angle_2]
