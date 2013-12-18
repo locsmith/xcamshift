@@ -39,6 +39,8 @@ from cpython cimport array
 import ctypes
 from component_list import  Component_list, Native_component_list
 from ensembleSimulation import EnsembleSimulation as pyEnsembleSimulation
+import math
+cdef double PI = math.pi
 
 #TODO: should be ensembleSimulationAsNative
 cdef inline EnsembleSimulation* simulationAsNative(object simulation) except NULL:
@@ -1487,7 +1489,15 @@ cdef class Fast_hydrogen_bond_calculator:
             if sequence_distance < self._min_residue_seperation:
                 result =True
         return result
-            
+    
+    cdef inline float _calc_energy(self, float distance_or_angle, Hydrogen_bond_parameter params):
+        
+
+        cdef float term_1 = (params.p[1]/distance_or_angle) + params.p[3]
+        cdef float term_2 = (params.p[2]/distance_or_angle) + params.p[4]
+        
+        return params.p[0] * (term_1**params.r - term_2**params.s) + params.p[5]
+    
     @cython.profile(True)
     def __call__(self, components, dummy):#,  Hydrogen_bond_energy_list energy_list):
         
@@ -1599,7 +1609,21 @@ cdef class Fast_hydrogen_bond_calculator:
                 params_dist  = hydrogen_bond_parameters[param_id_dist]
                 params_angle_1  = hydrogen_bond_parameters[param_id_angle_1]
                 params_angle_2  = hydrogen_bond_parameters[param_id_angle_2]
- 
+                
+                print 'dist and angles', min_distance, angle_1, angle_2
+                energy = self._calc_energy(min_distance,params_dist)
+                print 'energy distance', energy
+                energy = self._calc_energy(angle_1 / PI * 180.0, params_angle_1)
+                print 'energy angle 1', energy
+                energy = self._calc_energy(angle_2 / PI * 180.0, params_angle_2)
+                print 'energy angle 2', energy
+#                 
+#                 print param_id_dist, param_id_ang_1, param_id_ang_2
+#                 print 'dist',params_dist.s,params_dist.p[0]
+#                 print 'ang1',params_ang_1.s,params_ang_1.p[0]
+#                 print 'ang2',params_ang_2.s,params_ang_2.p[0]
+#                 print num_parameters,hydrogen_bond_parameters[0].p[0]
+#                 print 'found', Atom_utils._get_atom_info_from_index(atom_id_1), Atom_utils._get_atom_info_from_index(current_acceptor), current_acceptor, min_distance
                     
 #             if min_distance < cutoff:
 #                 
