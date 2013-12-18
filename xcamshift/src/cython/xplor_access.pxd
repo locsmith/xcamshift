@@ -48,6 +48,13 @@ cdef extern from "dihedral.hh":
                  Atom&, Atom&) nogil
         float value() nogil
         
+cdef extern from "bondAngle.hh":
+     cdef cppclass BondAngle:
+          BondAngle() nogil
+          BondAngle(Atom&, Atom&,
+                    Atom&,) nogil
+          float value() nogil
+
 cdef extern from "cdsVector.hh":
     cdef cppclass CDSVector[T]:
         T& data(int i) nogil
