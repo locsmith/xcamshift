@@ -2875,7 +2875,7 @@ class Hydrogen_bond_parameter_factory(Component_factory):
                         sub_result = [index,term_index,i,j]
                         print term_id
                         values  =  hydrogen_bond_table.get_energy_terms(donor,acceptor,term_id)
-                        for elem in 'p1','p2','p3','p4','p5', 'p6','s','r':
+                        for elem in 'p1','p2','p3','p4','p5', 'p6','r','s':
                             sub_result.append(values[elem])
                         component_list.add_component(tuple(sub_result))
                         index+=1
