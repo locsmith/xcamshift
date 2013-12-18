@@ -663,6 +663,12 @@ cdef struct dihedral_ids:
     int atom_id_2
     int atom_id_3
     int atom_id_4
+    
+cdef struct bond_angle_ids:
+    int atom_id_1
+    int atom_id_2
+    int atom_id_3
+
 
 cdef struct Coef_component:
     int atom_type_id
@@ -854,6 +860,16 @@ cdef inline float calc_dihedral_angle_simulation(Simulation* simulation, dihedra
     cdef double result = Dihedral(atom_1,atom_2,atom_3,atom_4).value()
     return result 
 
+@cython.profile(False)
+cdef inline float calc_bond_angle_simulation(Simulation* simulation, bond_angle_ids bond_angle_atom_ids):
+    
+    
+    cdef Atom atom_1  = simulation[0].atomByID(bond_angle_atom_ids.atom_id_1)
+    cdef Atom atom_2  = simulation[0].atomByID(bond_angle_atom_ids.atom_id_2)
+    cdef Atom atom_3  = simulation[0].atomByID(bond_angle_atom_ids.atom_id_3)
+    
+    cdef double result = BondAngle(atom_1,atom_2,atom_3).value()
+    return result 
 
 
 cdef float DEFAULT_CUTOFF = 5.0
@@ -1507,6 +1523,8 @@ cdef class Fast_hydrogen_bond_calculator:
         cdef float min_distance
         cdef float FLT_MAX=1000000.0 #TODO: replacce with header
         
+        cdef bond_angle_ids bond_angle_atom_ids
+        
         cdef char *seg_1, *seg_2
         cdef int residue_1, residue_2
         
@@ -1541,14 +1559,29 @@ cdef class Fast_hydrogen_bond_calculator:
                 residue_distance_ok = not self._filter_by_residue(seg_1, residue_1, seg_2, residue_2)
                 
                 if distance < min_distance and residue_distance_ok:
-                    current_acceptor = atom_id_2
+                    donor_index = i
+                    acceptor_index  = j
                     min_distance = distance
-#                     print 'got dist',i,j,distance, min_distance
-            if  min_distance < 3.0:
-                print atom_id_1,atom_id_2,donor_components[0].index,donor_components[0].atom_type_id,acceptor_components[0].index,acceptor_components[0].atom_type_id
 
-                print num_parameters,hydrogen_bond_parameters[0].p[0]
-                print 'found', Atom_utils._get_atom_info_from_index(atom_id_1), Atom_utils._get_atom_info_from_index(current_acceptor), current_acceptor, min_distance
+            if  min_distance < 3.0:
+                donor_direct_atom_id = donor_components[donor_index].direct_atom_id
+                donor_indirect_atom_id = donor_components[donor_index].indirect_atom_id
+                acceptor_direct_atom_id = acceptor_components[acceptor_index].direct_atom_id
+                acceptor_indirect_atom_id = acceptor_components[acceptor_index].indirect_atom_id 
+
+                bond_angle_atom_ids.atom_id_1 = donor_direct_atom_id 
+                bond_angle_atom_ids.atom_id_2 = acceptor_direct_atom_id 
+                bond_angle_atom_ids.atom_id_3 = acceptor_indirect_atom_id
+                 
+                angle_1 = calc_bond_angle_simulation(self._simulation, bond_angle_atom_ids) 
+                                
+#                 
+                bond_angle_atom_ids.atom_id_1 = donor_indirect_atom_id
+                bond_angle_atom_ids.atom_id_2 = donor_direct_atom_id 
+                bond_angle_atom_ids.atom_id_3 = acceptor_direct_atom_id 
+                 
+                angle_2 = calc_bond_angle_simulation(self._simulation, bond_angle_atom_ids) 
+ 
                     
 #             if min_distance < cutoff:
 #                 
