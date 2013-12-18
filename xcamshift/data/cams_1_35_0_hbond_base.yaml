@@ -16,6 +16,8 @@ target_atoms : ["HA", "CA", "HN", "N", "C", "CB"]
 acceptors:    [O:  [C,  O]]
 donors:       [HN: [N, HN]]
 
+energy_terms: ["DIST", "ANG1", "ANG2"]
+
 pairs: 
        [HN, O]: {
            # note: the p6 values in kai's thesis are set to 0.0 out in the current implementation  1.35.0
