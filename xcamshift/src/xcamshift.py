@@ -2750,7 +2750,7 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
             direct_atom_offset  = vector_atom_names.index(atom_name)
             del vector_atom_names[direct_atom_offset] 
             
-            attached_atom_id = Atom_utils.find_atom(segid,residue,vector_atom_names[0])[0].index()
+            attached_atom_id = Atom_utils.find_atom(segid,residue,vector_atom_names[1])[0].index()
             for atom_id in Atom_utils._get_bonded_atom_ids(self.direct_atom_id):
                 if atom_id == attached_atom_id:
                     self.indirect_atom_id = attached_atom_id
