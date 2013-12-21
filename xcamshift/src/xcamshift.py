@@ -2558,7 +2558,7 @@ class Hbond_donor_atom_type_indexer(Hbond_atom_type_indexer):
 
     def get_keys(self, table):
 
-        return table.get_donors()
+        return table.get_donor_types()
 
 class Hbond_acceptor_atom_type_indexer(Hbond_atom_type_indexer):
     
@@ -2567,7 +2567,7 @@ class Hbond_acceptor_atom_type_indexer(Hbond_atom_type_indexer):
 
     def get_keys(self, table):
 
-        return table.get_acceptors()
+        return table.get_acceptor_types()
             
          
 class Hbond_indexer_base(object):
@@ -2658,7 +2658,7 @@ class Hbond_donor_indexer(Hbond_indexer_base):
         super(Hbond_donor_indexer, self).__init__(table_manager)
         
     def _get_targets(self, table):
-        return table.get_donors()
+        return table.get_donor_types()
     
     def get_name(self):
         return 'hbond donor'
@@ -2669,7 +2669,7 @@ class Hbond_acceptor_indexer(Hbond_indexer_base):
         super(Hbond_acceptor_indexer, self).__init__(table_manager)
         
     def _get_targets(self, table):
-        return table.get_acceptors()
+        return table.get_acceptor_types()
 
     def get_name(self):
         return 'hbond acceptor'
@@ -2771,7 +2771,7 @@ class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
         self.type = DONOR
         
     def get_atom_names(self,table):
-        return  table.get_donors()
+        return  table.get_donor_types()
 
     def get_indexer(self):
         return Hbond_donor_atom_type_indexer(Table_manager.get_default_table_manager())
@@ -2783,7 +2783,7 @@ class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
         self.type = ACCEPTOR
         
     def get_atom_names(self,table):
-        return  table.get_acceptors()
+        return  table.get_acceptor_types()
 
     def get_indexer(self):
         return Hbond_acceptor_atom_type_indexer(Table_manager.get_default_table_manager())
@@ -2864,16 +2864,16 @@ class Hydrogen_bond_parameter_factory(Component_factory):
             table_manager = Table_manager.get_default_table_manager()
             hydrogen_bond_table  =  table_manager.get_hydrogen_bond_table(None)
             
-            number_donors = len(hydrogen_bond_table.get_donors())
-            number_acceptors = len(hydrogen_bond_table.get_acceptors())
+            number_donors = len(hydrogen_bond_table.get_donor_types())
+            number_acceptors = len(hydrogen_bond_table.get_acceptor_types())
             
             
             index = 0
-            for i,donor in enumerate(hydrogen_bond_table.get_donors()):
-                for j,acceptor in enumerate(hydrogen_bond_table.get_acceptors()):
+            for i,donor in enumerate(hydrogen_bond_table.get_donor_types()):
+                for j,acceptor in enumerate(hydrogen_bond_table.get_acceptor_types()):
                     for term_index,term_id in enumerate(hydrogen_bond_table.get_energy_term_ids()):
                         sub_result = [index,term_index,i,j]
-                        values  =  hydrogen_bond_table.get_energy_terms(donor,acceptor,term_id)
+                        values  =  hydrogen_bond_table.get_energy_terms(donor, acceptor,term_id)
                         for elem in 'p1','p2','p3','p4','p5', 'p6','r','s':
                             sub_result.append(values[elem])
                         component_list.add_component(tuple(sub_result))
@@ -2899,8 +2899,8 @@ class Hydrogen_bond_donor_lookup_factory(Component_factory):
             hydrogen_bond_table  =  table_manager.get_hydrogen_bond_table(None)
             
             index = 0
-            num_acceptor_types = len(hydrogen_bond_table.get_acceptors())
-            num_donor_types = len(hydrogen_bond_table.get_donors())
+            num_acceptor_types = len(hydrogen_bond_table.get_acceptor_types())
+            num_donor_types = len(hydrogen_bond_table.get_donor_types())
             for i in range(num_acceptor_types):
                 elems  =  [(i*num_acceptor_types) + j for j in range(num_donor_types)]
                 component  = [i,num_acceptor_types]
@@ -2928,8 +2928,8 @@ class Hydrogen_bond_acceptor_lookup_factory(Component_factory):
             hydrogen_bond_table  =  table_manager.get_hydrogen_bond_table(None)
             
             index = 0
-            num_acceptor_types = len(hydrogen_bond_table.get_acceptors())
-            num_donor_types = len(hydrogen_bond_table.get_donors())
+            num_acceptor_types = len(hydrogen_bond_table.get_acceptor_types())
+            num_donor_types = len(hydrogen_bond_table.get_donor_types())
             for i in range(num_acceptor_types):
                 for j in  range(num_donor_types):
                     donor_index = (i*num_acceptor_types) + j

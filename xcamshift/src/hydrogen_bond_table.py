@@ -38,17 +38,17 @@ class Hydrogen_bond_table(Table_base):
     def __init__(self, table):
         super(Hydrogen_bond_table, self).__init__(table)
     
-    def get_donors(self):
+    def get_donor_types(self):
         return self._table[self.DONORS][0].keys()
     
-    def get_acceptors(self):
+    def get_acceptor_types(self):
         return self._table[self.ACCEPTORS][0].keys()
     
     def _check_donor_or_acceptor(self,donor_or_acceptor):
         donors_and_acceptors = []
         
-        donors_and_acceptors.extend(self.get_acceptors())
-        donors_and_acceptors.extend(self.get_donors())
+        donors_and_acceptors.extend(self.get_acceptor_types())
+        donors_and_acceptors.extend(self.get_donor_types())
         
         if donor_or_acceptor not in donors_and_acceptors:
             message = "the donor or acceptor %s is not known it should be one of %s"
@@ -64,19 +64,19 @@ class Hydrogen_bond_table(Table_base):
         
         return result
     
-    def _check_donor(self, donor):
-        donors = self.get_donors()
+    def _check_donor_type(self, donor_type):
+        donor_types = self.get_donor_types()
         
-        if donor not in donors:
-            message = 'donor %s not in known donors: %s'
-            raise KeyError(message % (`donor`,','.join(donors)))
+        if donor_type not in donor_types:
+            message = 'donor type %s not in known donor types: %s'
+            raise KeyError(message % (`donor_type`,','.join(donor_types)))
     
-    def _check_acceptor(self, acceptor):
-        acceptors = self.get_acceptors()
+    def _check_acceptor_type(self, acceptor_type):
+        acceptor_types = self.get_acceptor_types()
         
-        if acceptor not in acceptors:
-            message = 'acceptor %s not in known acceptors: %s'
-            raise KeyError(message % (`acceptor`,','.join(acceptors)))
+        if acceptor_type not in acceptor_types:
+            message = 'acceptor type %s not in known acceptor types: %s'
+            raise KeyError(message % (`acceptor_type`,','.join(acceptor_types)))
     
     def _check_term(self,term):
         terms = self.DISTANCE, self.ANGLE_1, self.ANGLE_2
@@ -87,12 +87,12 @@ class Hydrogen_bond_table(Table_base):
     def get_energy_term_ids(self):
         return self._table['energy_terms']
     
-    def get_energy_terms(self, donor, acceptor, term):
-        self._check_donor(donor)
-        self._check_acceptor(acceptor)
+    def get_energy_terms(self,  donor_type, acceptor_type, term):
+        self._check_donor_type(donor_type)
+        self._check_acceptor_type(acceptor_type)
         self._check_term(term)
         
-        return self._table['pairs'][donor,acceptor][term]
+        return self._table['pairs'][donor_type,acceptor_type][term]
     
     def get_energy_term_offsets(self):
         return sorted(self._table['data'].keys())

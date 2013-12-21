@@ -292,11 +292,11 @@ class Test_table_manager(unittest2.TestCase):
 #         
         self.assertSequenceEqual(('HA', 'CA', 'HN', 'N', 'C', 'CB'), table.get_target_atoms())
         
-        self.assertSequenceEqual(table.get_donors(),['O'])
-        self.assertSequenceEqual(table.get_acceptors(),['HN'])
+        self.assertSequenceEqual(table.get_donor_types(),['HN'])
+        self.assertSequenceEqual(table.get_acceptor_types(),['O'])
         
-        self.assertSequenceEqual(('C', 'O'), table.get_bond_vector_atoms('O'))
-        self.assertSequenceEqual(('N', 'HN'), table.get_bond_vector_atoms('HN'))
+        self.assertSequenceEqual(('.','C', 'O'), table.get_bond_vector_atoms('O'))
+        self.assertSequenceEqual(('.','N', 'HN'), table.get_bond_vector_atoms('HN'))
         
         with self.assertRaises(KeyError):
             table.get_bond_vector_atoms('J')
@@ -311,7 +311,7 @@ class Test_table_manager(unittest2.TestCase):
                     's': -16.5, 
                     'r': 3.0}
         
-        self.assertDictEqual(table.get_energy_terms('O','HN','DIST'),expected_energy_terms)
+        self.assertDictEqual(table.get_energy_terms('HN','O','DIST'),expected_energy_terms)
 
         expected_energy_term_offsets = [(-1, 'O'), (0, 'HN'), (0, 'O'), (1, 'HN')]
         self.assertSequenceEqual(table.get_energy_term_offsets(),expected_energy_term_offsets)
@@ -320,7 +320,7 @@ class Test_table_manager(unittest2.TestCase):
         
         table = self.table_manager.get_hydrogen_bond_table('GLY')
         
-        self.assertDictEqual(table.get_energy_terms('O','HN','DIST'),expected_energy_terms)
+        self.assertDictEqual(table.get_energy_terms('HN','O','DIST'),expected_energy_terms)
         
         self.assertAlmostEqual(-0.00000029, table.get_energy_offset_correction((-1, 'O'),'DIST','HA'),places=10)
         
