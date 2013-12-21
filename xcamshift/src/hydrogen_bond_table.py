@@ -53,8 +53,8 @@ class Hydrogen_bond_table(Table_base):
         if donor_or_acceptor not in donors_and_acceptors:
             message = "the donor or acceptor %s is not known it should be one of %s"
             raise KeyError(message % (donor_or_acceptor, ','.join(donors_and_acceptors)))
-        
-    def get_bond_vector_atoms(self, donor_or_acceptor):
+    
+    def get_donor_or_acceptor_info(self, donor_or_acceptor):
         self._check_donor_or_acceptor(donor_or_acceptor)
         
         if donor_or_acceptor in self._table[self.DONORS][0]:
@@ -87,7 +87,7 @@ class Hydrogen_bond_table(Table_base):
     def get_energy_term_ids(self):
         return self._table['energy_terms']
     
-    def get_energy_terms(self,  donor_type, acceptor_type, term):
+    def get_energy_terms(self, donor_type, acceptor_type, term):
         self._check_donor_type(donor_type)
         self._check_acceptor_type(acceptor_type)
         self._check_term(term)

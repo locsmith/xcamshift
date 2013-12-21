@@ -2627,7 +2627,7 @@ class Hbond_indexer_base(object):
                 
                 for table in tables_by_index:
                     for target in self._get_targets(table):
-                        for vector_atom in  table.get_bond_vector_atoms(target):
+                        for vector_atom in  table.get_donor_or_acceptor_info(target):
                             if atom_name  == vector_atom[2]:
                                 for bonded_index in  Atom_utils._get_bonded_atom_ids(atom_index):
                                     segid,residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
@@ -2743,7 +2743,7 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
         segid,residue,atom_name = Atom_utils._get_atom_info_from_index(self.direct_atom_id)
         
         for donor_acceptor_type in self.get_donor_acceptor_types(table):
-            for vector_atom_name in  list(table.get_bond_vector_atoms(donor_acceptor_type)):
+            for vector_atom_name in  list(table.get_donor_or_acceptor_info(donor_acceptor_type)):
                 if atom_name == vector_atom_name[2]:
                     indexer  =  self.get_indexer()
                     self.atom_type_id = indexer.get_index_for_key(donor_acceptor_type)
@@ -2762,10 +2762,6 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
     def get_donor_acceptor_types(self,table):
         pass
     
-    @abstractmethod 
-    def get_bond_vector_atoms(self,table, donor_acceptor_type):
-        pass
-    
     @abstractmethod
     def get_indexer(self):
         pass
@@ -2778,9 +2774,6 @@ class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
         
     def get_donor_acceptor_types(self,table):
         return  table.get_donor_types()
-
-    def get_bond_vector_atoms(self, table, donor_type):
-        return table.get_donor_bond_vector_atoms(donor_type)
     
         
     def get_indexer(self):
@@ -2795,8 +2788,6 @@ class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
     def get_donor_acceptor_types(self,table):
         return  table.get_acceptor_types()
 
-    def get_bond_vector_atoms(self, table, accpetor_type):
-        return table.get_acceptor_bond_vector_atoms(accpetor_type)
 
     def get_indexer(self):
         return Hbond_acceptor_atom_type_indexer(Table_manager.get_default_table_manager())
