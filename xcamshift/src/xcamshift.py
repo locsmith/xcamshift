@@ -2627,16 +2627,16 @@ class Hbond_indexer_base(object):
                 
                 for table in tables_by_index:
                     for target in self._get_targets(table):
-                        vector_atoms  = table.get_bond_vector_atoms(target)
-                        if atom_name  == target:
-                            for bonded_index in  Atom_utils._get_bonded_atom_ids(atom_index):
-                                segid,residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
-                                if bonded_atom_name in vector_atoms:
-                                    key =  residue, atom_name, bonded_atom_name
-                                    if not key in self._index:
-                                        self._index[key] = self._max_index
-                                        self._inverted_index[self._max_index] = key
-                                        self._max_index+=1
+                        for vector_atom in  table.get_bond_vector_atoms(target):
+                            if atom_name  == vector_atom[2]:
+                                for bonded_index in  Atom_utils._get_bonded_atom_ids(atom_index):
+                                    segid,residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
+                                    if bonded_atom_name  ==  vector_atom[1]:
+                                        key =  residue, atom_name, bonded_atom_name
+                                        if not key in self._index:
+                                            self._index[key] = self._max_index
+                                            self._inverted_index[self._max_index] = key
+                                            self._max_index+=1
                                     
                         
     def get_index_for_key(self,key):
@@ -2742,22 +2742,28 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
         self.direct_atom_id = atom.index()
         segid,residue,atom_name = Atom_utils._get_atom_info_from_index(self.direct_atom_id)
         
-        if atom_name in self.get_atom_names(table):
-            indexer  =  self.get_indexer()
-            self.atom_type_id = indexer.get_index_for_key(atom_name)
-            
-            vector_atom_names =  list(table.get_bond_vector_atoms(atom_name))
-            direct_atom_offset  = vector_atom_names.index(atom_name)
-            del vector_atom_names[direct_atom_offset] 
-            
-            attached_atom_id = Atom_utils.find_atom(segid,residue,vector_atom_names[1])[0].index()
-            for atom_id in Atom_utils._get_bonded_atom_ids(self.direct_atom_id):
-                if atom_id == attached_atom_id:
-                    self.indirect_atom_id = attached_atom_id
-                    self.complete =  True
-                    break
+        for donor_acceptor_type in self.get_donor_acceptor_types(table):
+            for vector_atom_name in  list(table.get_bond_vector_atoms(donor_acceptor_type)):
+                if atom_name == vector_atom_name[2]:
+                    indexer  =  self.get_indexer()
+                    self.atom_type_id = indexer.get_index_for_key(donor_acceptor_type)
+                    
+                    
+    #                 direct_atom_offset  = vector_atom_names.index(atom_name)
+    #                 del vector_atom_names[direct_atom_offset] 
+                    
+                    attached_atom_id = Atom_utils.find_atom(segid,residue,vector_atom_name[1])[0].index()
+                    for bonded_atom_id in Atom_utils._get_bonded_atom_ids(self.direct_atom_id):
+                        if bonded_atom_id == attached_atom_id:
+                            self.indirect_atom_id = attached_atom_id
+                            self.complete =  True
+                            break
     @abstractmethod            
-    def get_atom_names(self,table):
+    def get_donor_acceptor_types(self,table):
+        pass
+    
+    @abstractmethod 
+    def get_bond_vector_atoms(self,table, donor_acceptor_type):
         pass
     
     @abstractmethod
@@ -2770,9 +2776,13 @@ class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
         super(Hydrogen_bond_donor_context, self).__init__(atom, table)
         self.type = DONOR
         
-    def get_atom_names(self,table):
+    def get_donor_acceptor_types(self,table):
         return  table.get_donor_types()
 
+    def get_bond_vector_atoms(self, table, donor_type):
+        return table.get_donor_bond_vector_atoms(donor_type)
+    
+        
     def get_indexer(self):
         return Hbond_donor_atom_type_indexer(Table_manager.get_default_table_manager())
 
@@ -2782,8 +2792,11 @@ class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
         super(Hydrogen_bond_acceptor_context, self).__init__(atom, table)
         self.type = ACCEPTOR
         
-    def get_atom_names(self,table):
+    def get_donor_acceptor_types(self,table):
         return  table.get_acceptor_types()
+
+    def get_bond_vector_atoms(self, table, accpetor_type):
+        return table.get_acceptor_bond_vector_atoms(accpetor_type)
 
     def get_indexer(self):
         return Hbond_acceptor_atom_type_indexer(Table_manager.get_default_table_manager())

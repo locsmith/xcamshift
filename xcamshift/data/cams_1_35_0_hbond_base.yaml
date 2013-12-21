@@ -14,8 +14,8 @@
 target_atoms : ["HA", "CA", "HN", "N", "C", "CB"]
 
 # note ON must be quoted as on is a yaml identifier for true
-acceptors:    [O:  [., C,  O]]
-donors:       [HN: [., N, HN]]
+acceptors:    [O:  [[., C,  O],]]
+donors:       [HN: [[., N, HN],]]
 
 energy_terms: ["DIST", "ANG1", "ANG2"]
 
