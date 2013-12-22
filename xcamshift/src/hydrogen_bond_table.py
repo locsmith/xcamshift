@@ -54,7 +54,7 @@ class Hydrogen_bond_table(Table_base):
             message = "the donor or acceptor %s is not known it should be one of %s"
             raise KeyError(message % (donor_or_acceptor, ','.join(donors_and_acceptors)))
     
-    def get_donor_or_acceptor_info(self, donor_or_acceptor):
+    def get_atom_selector(self, donor_or_acceptor):
         self._check_donor_or_acceptor(donor_or_acceptor)
         
         if donor_or_acceptor in self._table[self.DONORS][0]:

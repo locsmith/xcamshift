@@ -301,11 +301,11 @@ class Test_table_manager(unittest2.TestCase):
         self.assertSequenceEqual(table.get_donor_types(),['HON'])
         self.assertSequenceEqual(table.get_acceptor_types(),['ON'])
         
-        self.assertSequenceContains(['.','C', 'O'], table.get_donor_or_acceptor_info('ON'))
-        self.assertSequenceContains(['.','N', 'HN'], table.get_donor_or_acceptor_info('HON'))
+        self.assertSequenceContains(['.','C', 'O'], table.get_atom_selector('ON'))
+        self.assertSequenceContains(['.','N', 'HN'], table.get_atom_selector('HON'))
         
         with self.assertRaises(KeyError):
-            table.get_donor_or_acceptor_info('J')
+            table.get_atom_selector('J')
         
         expected_energy_terms = {
                     'p1': -0.40353099999999997, 

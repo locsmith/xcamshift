@@ -2627,7 +2627,7 @@ class Hbond_indexer_base(object):
                 
                 for table in tables_by_index:
                     for target in self._get_targets(table):
-                        for vector_atom in  table.get_donor_or_acceptor_info(target):
+                        for vector_atom in  table.get_atom_selector(target):
                             if atom_name  == vector_atom[2]:
                                 for bonded_index in  Atom_utils._get_bonded_atom_ids(atom_index):
                                     segid,residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
@@ -2743,21 +2743,23 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
         segid,residue,atom_name = Atom_utils._get_atom_info_from_index(self.direct_atom_id)
         
         for donor_acceptor_type in self.get_donor_acceptor_types(table):
-            for vector_atom_name in  list(table.get_donor_or_acceptor_info(donor_acceptor_type)):
-                if atom_name == vector_atom_name[2]:
-                    indexer  =  self.get_indexer()
-                    self.atom_type_id = indexer.get_index_for_key(donor_acceptor_type)
-                    
-                    attached_atoms = Atom_utils.find_atom(segid,residue,vector_atom_name[1])
-                    if len(attached_atoms) == 1:
-                        attached_atom_id = attached_atoms[0].index()
-                        for bonded_atom_id in Atom_utils._get_bonded_atom_ids(self.direct_atom_id):
-                            if bonded_atom_id == attached_atom_id:
-                                self.indirect_atom_id = attached_atom_id
-                                self.complete =  True
-                                break
-                    elif len(attached_atoms) == 1:
-                        raise Exception("unexpected number attached atoms should be 1 or 0")
+            for atom_selector in  list(table.get_atom_selector(donor_acceptor_type)):
+                residue_type = atom.residueName()
+                if atom_selector[0] == '.' or atom_selector[0] == residue_type:
+                    if atom_name == atom_selector[2]:
+                        indexer  =  self.get_indexer()
+                        self.atom_type_id = indexer.get_index_for_key(donor_acceptor_type)
+                        
+                        attached_atoms = Atom_utils.find_atom(segid,residue,atom_selector[1])
+                        if len(attached_atoms) == 1:
+                            attached_atom_id = attached_atoms[0].index()
+                            for bonded_atom_id in Atom_utils._get_bonded_atom_ids(self.direct_atom_id):
+                                if bonded_atom_id == attached_atom_id:
+                                    self.indirect_atom_id = attached_atom_id
+                                    self.complete =  True
+                                    break
+                        elif len(attached_atoms) == 1:
+                            raise Exception("unexpected number attached atoms should be 1 or 0")
     @abstractmethod            
     def get_donor_acceptor_types(self,table):
         pass
