@@ -16,7 +16,7 @@ Created on 31 Dec 2011
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
-from xcamshift import Hbond_donor_indexer, Hbond_acceptor_indexer, Hydrogen_bond_context, Hbond_atom_type_indexer,\
+from xcamshift import Hydrogen_bond_context, Hbond_atom_type_indexer,\
      Hydrogen_bond_donor_context, Hydrogen_bond_acceptor_context, Hydrogen_bond_donor_component_factory, DONOR,ACCEPTOR,\
      Hbond_donor_atom_type_indexer, Hbond_acceptor_atom_type_indexer, Hydrogen_bond_acceptor_component_factory, Xcamshift, Hydrogen_bond_parameter_factory, \
      Hydrogen_bond_donor_lookup_factory, Hydrogen_bond_acceptor_lookup_factory,\
@@ -140,51 +140,51 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         Atom_utils.clear_cache()
 
         table_manager =  Table_manager.get_default_table_manager()
-        self.donor_indexer  = Hbond_donor_indexer(table_manager)
-        self.acceptor_indexer  = Hbond_acceptor_indexer(table_manager)
+#         self.donor_indexer  = Hbond_donor_indexer(table_manager)
+#         self.acceptor_indexer  = Hbond_acceptor_indexer(table_manager)
         self.donor_atom_type_indexer =  Hbond_donor_atom_type_indexer(table_manager)
         self.acceptor_atom_type_indexer =  Hbond_acceptor_atom_type_indexer(table_manager)
         
         Segment_Manager.reset_segment_manager()
 #         print "In method", self._testMethodName
 
-    def test_donor_and_acceptor_indexers(self):
-        
-
-        donors = [donor for donor in self.donor_indexer.iter_keys()]
-        self.assertSequenceEqual(sorted(donors), sorted(EXPECTED_DONORS))
-
-        
-        acceptors = [acceptor for acceptor in self.acceptor_indexer.iter_keys()]
-        self.assertSequenceEqual(sorted(acceptors), sorted(EXPECTED_ACCEPTORS))
-    
-    def test_get_max_index(self):
-        self.assertEqual(self.donor_indexer.get_max_index(), len(EXPECTED_DONORS))
-        self.assertEqual(self.acceptor_indexer.get_max_index(), len(EXPECTED_ACCEPTORS))
-
-    def test_get_name(self):    
-        self.assertTrue('donor' in self.donor_indexer.get_name().lower())
-        self.assertTrue('acceptor' in self.acceptor_indexer.get_name().lower())
-
-
-    def test_get_index_for_key(self,):
-        for i,acceptor in enumerate(EXPECTED_ACCEPTORS):
-            self.assertEqual(i,self.acceptor_indexer.get_index_for_key(acceptor))
-        self.assertEqual(i+1, self.acceptor_indexer.get_max_index())
-
-        for j,donor in enumerate(EXPECTED_DONORS):
-            self.assertEqual(j,self.donor_indexer.get_index_for_key(donor))
-        self.assertEqual(j+1, self.donor_indexer.get_max_index())
-                       
-     
-    def test_get_key_for_index(self):
-        for i,acceptor in enumerate(EXPECTED_ACCEPTORS):
-            self.assertEqual(acceptor,self.acceptor_indexer.get_key_for_index(i))
-        self.assertEqual(i+1, self.acceptor_indexer.get_max_index())
-
-        for j,donor in enumerate(EXPECTED_DONORS):
-            self.assertEqual(donor,self.donor_indexer.get_key_for_index(j))
-        self.assertEqual(j+1, self.donor_indexer.get_max_index())
+#     def test_donor_and_acceptor_indexers(self):
+#         
+# 
+#         donors = [donor for donor in self.donor_indexer.iter_keys()]
+#         self.assertSequenceEqual(sorted(donors), sorted(EXPECTED_DONORS))
+# 
+#         
+#         acceptors = [acceptor for acceptor in self.acceptor_indexer.iter_keys()]
+#         self.assertSequenceEqual(sorted(acceptors), sorted(EXPECTED_ACCEPTORS))
+#     
+#     def test_get_max_index(self):
+#         self.assertEqual(self.donor_indexer.get_max_index(), len(EXPECTED_DONORS))
+#         self.assertEqual(self.acceptor_indexer.get_max_index(), len(EXPECTED_ACCEPTORS))
+# 
+#     def test_get_name(self):    
+#         self.assertTrue('donor' in self.donor_indexer.get_name().lower())
+#         self.assertTrue('acceptor' in self.acceptor_indexer.get_name().lower())
+# 
+# 
+#     def test_get_index_for_key(self,):
+#         for i,acceptor in enumerate(EXPECTED_ACCEPTORS):
+#             self.assertEqual(i,self.acceptor_indexer.get_index_for_key(acceptor))
+#         self.assertEqual(i+1, self.acceptor_indexer.get_max_index())
+# 
+#         for j,donor in enumerate(EXPECTED_DONORS):
+#             self.assertEqual(j,self.donor_indexer.get_index_for_key(donor))
+#         self.assertEqual(j+1, self.donor_indexer.get_max_index())
+#                        
+#      
+#     def test_get_key_for_index(self):
+#         for i,acceptor in enumerate(EXPECTED_ACCEPTORS):
+#             self.assertEqual(acceptor,self.acceptor_indexer.get_key_for_index(i))
+#         self.assertEqual(i+1, self.acceptor_indexer.get_max_index())
+# 
+#         for j,donor in enumerate(EXPECTED_DONORS):
+#             self.assertEqual(donor,self.donor_indexer.get_key_for_index(j))
+#         self.assertEqual(j+1, self.donor_indexer.get_max_index())
     
          
     def test_hbond_context(self):
