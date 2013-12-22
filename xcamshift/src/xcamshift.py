@@ -2750,16 +2750,13 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
                         indexer  =  self.get_indexer()
                         self.atom_type_id = indexer.get_index_for_key(donor_acceptor_type)
                         
-                        attached_atoms = Atom_utils.find_atom(segid,residue,atom_selector[1])
-                        if len(attached_atoms) == 1:
-                            attached_atom_id = attached_atoms[0].index()
-                            for bonded_atom_id in Atom_utils._get_bonded_atom_ids(self.direct_atom_id):
-                                if bonded_atom_id == attached_atom_id:
-                                    self.indirect_atom_id = attached_atom_id
-                                    self.complete =  True
-                                    break
-                        elif len(attached_atoms) == 1:
-                            raise Exception("unexpected number attached atoms should be 1 or 0")
+                        attached_atom_ids = Atom_utils._get_bonded_atom_ids(self.direct_atom_id)
+                        for attached_atom_id in attached_atom_ids:
+                            attached_segid,attached_residue,attached_atom_name = Atom_utils._get_atom_info_from_index(attached_atom_id)
+                            if attached_atom_name ==  atom_selector[1]:
+                                self.indirect_atom_id = attached_atom_id
+                                self.complete =  True
+                       
     @abstractmethod            
     def get_donor_acceptor_types(self,table):
         pass

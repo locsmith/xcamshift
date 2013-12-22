@@ -28,24 +28,23 @@ from table_manager import Table_manager
 from atomSel import AtomSel
 from component_list import Native_component_list
 
-EXPECTED_ACCEPTORS =   ((7,  'O',   'C'),
-                        (7,  'N',   'CA'),
-                        (8,  'O',   'C'),
-                        (8,  'N',   'CA'),
-                        (9,  'O',   'C'),
-                        (9,  'N',   'CA'),
-                        (10, 'O',   'C'),
-                        (10, 'N',   'CA'),
-                        (10, 'NZ',  'CE'),
-                        (11, 'O',   'C'),
-                        (11, 'N',   'CA'),
-                        (11, 'OG1', 'CB'),
-                        (12, 'O',   'C'),
-                        (12, 'N',   'CA'),
-                        (13, 'O',   'C'),
-                        (13, 'N',   'CA'),
-                        (13, 'NZ',  'CE'),
-                        (14, 'N',   'CA'))
+EXPECTED_ACCEPTORS_BASE =   (((7,  'O'),   (7,  'C')),
+                             ((8,  'O'),   (8,  'C')),
+                             ((8,  'N'),   (7,  'C')),
+                             ((9,  'O'),   (9,  'C')),
+                             ((9,  'N'),   (8,  'C')),
+                             ((10, 'O'),   (10, 'C')),
+                             ((10, 'N'),   (9,  'C')),
+                             ((10, 'NZ'),  (10, 'CE')),
+                             ((11, 'O'),   (11, 'C')),
+                             ((11, 'N'),   (10, 'C')),
+                             ((11, 'OG1'), (11, 'CB')),
+                             ((12, 'O'),   (12, 'C')),
+                             ((12, 'N'),   (11, 'C')),
+                             ((13, 'O'),   (13, 'C')),
+                             ((13, 'N'),   (12, 'C')),
+                             ((13, 'NZ'),  (13, 'CE')),
+                             ((14, 'N'),   (13, 'C')))
 
 EXPECTED_DONORS =  ((8,  'HN',  'N'),
                     (9,  'HN',  'N'),
@@ -75,10 +74,12 @@ EXPECTED_DONOR_TYPES = sorted(['HON',])
 EXPECTED_ACCEPTOR_TYPES = sorted(['ON',])
 
 EXPECTED_INDIRECT_ACCEPTORS = {}
-for elem in EXPECTED_ACCEPTORS:
-    EXPECTED_INDIRECT_ACCEPTORS['',elem[0],elem[1]] = '',elem[0],elem[2]
+for elem in EXPECTED_ACCEPTORS_BASE:
+    EXPECTED_INDIRECT_ACCEPTORS['',elem[0][0],elem[0][1]] = '',elem[1][0],elem[1][1]
+
     
-EXPECTED_DIRECT_ACCEPTORS = [('',elem[0],elem[1]) for elem in EXPECTED_ACCEPTORS]
+EXPECTED_DIRECT_ACCEPTORS = [('',elem[0][0],elem[0][1]) for elem in EXPECTED_ACCEPTORS_BASE]
+
 
 class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
 
