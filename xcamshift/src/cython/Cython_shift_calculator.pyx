@@ -1587,35 +1587,38 @@ cdef class Fast_hydrogen_bond_calculator:
                 bond_angle_atom_ids.atom_id_1 = donor_direct_atom_id 
                 bond_angle_atom_ids.atom_id_2 = acceptor_direct_atom_id 
                 bond_angle_atom_ids.atom_id_3 = acceptor_indirect_atom_id
-                 
+                
                 angle_1 = calc_bond_angle_simulation(self._simulation, bond_angle_atom_ids) 
-                                
+                
 #                 
                 bond_angle_atom_ids.atom_id_1 = donor_indirect_atom_id
                 bond_angle_atom_ids.atom_id_2 = donor_direct_atom_id 
                 bond_angle_atom_ids.atom_id_3 = acceptor_direct_atom_id 
                  
                 angle_2 = calc_bond_angle_simulation(self._simulation, bond_angle_atom_ids) 
-
-                donor_atom_type_id  = donor_components[donor_index].atom_type_id
-                acceptor_atom_type_id = acceptor_components[acceptor_index].atom_type_id
-                acceptor_id = donor_lookup[donor_atom_type_id].acceptor_offset[acceptor_atom_type_id]
- 
-                param_id_dist = acceptor_lookup[acceptor_id].parameter_indices[0]
-                param_id_angle_1 = acceptor_lookup[acceptor_id].parameter_indices[1]
-                param_id_angle_2 = acceptor_lookup[acceptor_id].parameter_indices[2]
-#
-                params_dist  = hydrogen_bond_parameters[param_id_dist]
-                params_angle_1  = hydrogen_bond_parameters[param_id_angle_1]
-                params_angle_2  = hydrogen_bond_parameters[param_id_angle_2]
                 
-                print 'dist and angles', min_distance, angle_1, angle_2
-                energy = self._calc_energy(min_distance,params_dist)
-                print 'energy distance', energy
-                energy = self._calc_energy(angle_1 / PI * 180.0, params_angle_1)
-                print 'energy angle 1', energy
-                energy = self._calc_energy(angle_2 / PI * 180.0, params_angle_2)
-                print 'energy angle 2', energy
+                if (angle_1 > 90.0 and angle_1 < 270.0) and (angle_2 > 90.0 and angle_2 < 270.0):
+                
+                    donor_atom_type_id  = donor_components[donor_index].atom_type_id
+                    acceptor_atom_type_id = acceptor_components[acceptor_index].atom_type_id
+                    acceptor_id = donor_lookup[donor_atom_type_id].acceptor_offset[acceptor_atom_type_id]
+     
+                    param_id_dist = acceptor_lookup[acceptor_id].parameter_indices[0]
+                    param_id_angle_1 = acceptor_lookup[acceptor_id].parameter_indices[1]
+                    param_id_angle_2 = acceptor_lookup[acceptor_id].parameter_indices[2]
+    #
+                    params_dist  = hydrogen_bond_parameters[param_id_dist]
+                    params_angle_1  = hydrogen_bond_parameters[param_id_angle_1]
+                    params_angle_2  = hydrogen_bond_parameters[param_id_angle_2]
+                    print
+                    print 'dist and angles', Atom_utils._get_atom_info_from_index(donor_direct_atom_id),Atom_utils._get_atom_info_from_index(acceptor_direct_atom_id), min_distance, angle_1, angle_2
+                    energy = self._calc_energy(min_distance,params_dist)
+                    print 'energy distance', energy
+                    energy = self._calc_energy(angle_1 / PI * 180.0, params_angle_1)
+                    print 'energy angle 1', energy
+                    energy = self._calc_energy(angle_2 / PI * 180.0, params_angle_2)
+                    print 'energy angle 2', energy
+                    print
 #                 
 #                 print param_id_dist, param_id_ang_1, param_id_ang_2
 #                 print 'dist',params_dist.s,params_dist.p[0]
