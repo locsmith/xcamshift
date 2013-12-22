@@ -28,25 +28,43 @@ from table_manager import Table_manager
 from atomSel import AtomSel
 from component_list import Native_component_list
 
-EXPECTED_ACCEPTORS =   ((7, 'O', 'C'),
-                        (8, 'O', 'C'),
-                        (9, 'O', 'C'),
-                        (10, 'O', 'C'),
-                        (11, 'O', 'C'),
-                        (12, 'O', 'C'),
-                        (13, 'O', 'C'))
+EXPECTED_ACCEPTORS =   ((7,  'O',   'C'),
+                        (7,  'N',   'CA'),
+                        (8,  'O',   'C'),
+                        (8,  'N',   'CA'),
+                        (9,  'O',   'C'),
+                        (9,  'N',   'CA'),
+                        (10, 'O',   'C'),
+                        (10, 'N',   'CA'),
+                        (10, 'NZ',  'CE'),
+                        (11, 'O',   'C'),
+                        (11, 'N',   'CA'),
+                        (11, 'OG1', 'CB'),
+                        (12, 'O',   'C'),
+                        (12, 'N',   'CA'),
+                        (13, 'O',   'C'),
+                        (13, 'N',   'CA'),
+                        (13, 'NZ',  'CE'),
+                        (14, 'N',   'CA'))
 
-EXPECTED_DONORS =  ((8, 'HN', 'N'),
-                    (9, 'HN', 'N'),
-                    (10, 'HN', 'N'),
-                    (11, 'HN', 'N'),
-                    (12, 'HN', 'N'),
-                    (13, 'HN', 'N'),
-                    (14, 'HN', 'N'))
+EXPECTED_DONORS =  ((8,  'HN',  'N'),
+                    (9,  'HN',  'N'),
+                    (10, 'HN',  'N'),
+                    (10, 'HZ1', 'NZ'),
+                    (10, 'HZ2', 'NZ'),
+                    (10, 'HZ3', 'NZ'),
+                    (11, 'HN',  'N'),
+                    (11, 'HG1', 'OG1'),
+                    (12, 'HN',  'N'),
+                    (13, 'HN',  'N'),
+                    (13, 'HZ1', 'NZ'),
+                    (13, 'HZ2', 'NZ'),
+                    (13, 'HZ3', 'NZ'),
+                    (14, 'HN',  'N'))
 
 EXPECTED_INDIRECT_DONORS = {}
 for elem in EXPECTED_DONORS:
-    EXPECTED_INDIRECT_DONORS['',elem[0],elem[2]] = '',elem[0],elem[1]
+    EXPECTED_INDIRECT_DONORS['',elem[0],elem[1]] = '',elem[0],elem[2]
     
 EXPECTED_DIRECT_DONORS = [('',elem[0],elem[1]) for elem in EXPECTED_DONORS]
 
@@ -58,7 +76,7 @@ EXPECTED_ACCEPTOR_TYPES = sorted(['ON',])
 
 EXPECTED_INDIRECT_ACCEPTORS = {}
 for elem in EXPECTED_ACCEPTORS:
-    EXPECTED_INDIRECT_ACCEPTORS['',elem[0],elem[2]] = '',elem[0],elem[1]
+    EXPECTED_INDIRECT_ACCEPTORS['',elem[0],elem[1]] = '',elem[0],elem[2]
     
 EXPECTED_DIRECT_ACCEPTORS = [('',elem[0],elem[1]) for elem in EXPECTED_ACCEPTORS]
 
@@ -134,11 +152,11 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         
 
         donors = [donor for donor in self.donor_indexer.iter_keys()]
-        self.assertSequenceEqual(donors, EXPECTED_DONORS)
+        self.assertSequenceEqual(sorted(donors), sorted(EXPECTED_DONORS))
 
         
         acceptors = [acceptor for acceptor in self.acceptor_indexer.iter_keys()]
-        self.assertSequenceEqual(acceptors, EXPECTED_ACCEPTORS)
+        self.assertSequenceEqual(sorted(acceptors), sorted(EXPECTED_ACCEPTORS))
     
     def test_get_max_index(self):
         self.assertEqual(self.donor_indexer.get_max_index(), len(EXPECTED_DONORS))
@@ -294,14 +312,21 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
             INDIRECT_ATOM_ID = 2
             DONOR_OR_ACCEPTOR = 3
             ATOM_TYPE = 4
+            
             self.assertEqual(i,component[INDEX])
+            
             atom_key = Atom_utils._get_atom_info_from_index(component[DIRECT_ATOM_ID])
             indirect_atom_key = Atom_utils._get_atom_info_from_index(component[INDIRECT_ATOM_ID])
+            
             self.assertIn(atom_key, expected_direct_donors_or_acceptors)
-            expected_direct_donors_or_acceptors.remove(atom_key)
-            self.assertEqual(atom_key,expected_indirect_donors_or_acceptors[indirect_atom_key])
-            del expected_indirect_donors_or_acceptors[indirect_atom_key]
+            if atom_key in expected_direct_donors_or_acceptors:
+                expected_direct_donors_or_acceptors.remove(atom_key)
+            
+            self.assertEqual(indirect_atom_key,expected_indirect_donors_or_acceptors[atom_key])
+            del expected_indirect_donors_or_acceptors[atom_key]
+            
             self.assertEqual(component[DONOR_OR_ACCEPTOR], donor_or_acceptor)
+            
             if donor_or_acceptor ==  DONOR:
                 self.assertEqual(component[ATOM_TYPE],0)
             elif donor_or_acceptor ==  ACCEPTOR:
