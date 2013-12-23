@@ -344,7 +344,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
     
     def test_fast_hydrogen_bond_calculator(self):
         test = Fast_hydrogen_bond_calculator(self.get_single_member_ensemble_simulation())
-        format = 'i' * 5
+        format = 'i' * 6
         donor_components = self._build_component_list(Hydrogen_bond_donor_component_factory(),format)
         acceptor_components = self._build_component_list(Hydrogen_bond_acceptor_component_factory(),format)
         parameter_format =  ('i'*4) +('f'*8)

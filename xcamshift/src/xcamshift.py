@@ -2755,6 +2755,10 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
                             attached_segid,attached_residue,attached_atom_name = Atom_utils._get_atom_info_from_index(attached_atom_id)
                             if attached_atom_name ==  atom_selector[1]:
                                 self.indirect_atom_id = attached_atom_id
+                                if atom_selector[0] == ".":
+                                    self.backbone = 1
+                                else:
+                                    self.backbone = 0
                                 self.complete =  True
                        
     @abstractmethod            
@@ -2826,7 +2830,7 @@ class Hydrogen_bond_donor_acceptor_component_factory(Atom_component_factory):
     def _build_component(self,context):
         component = None
         if context.complete:
-            component = (self.index, context.direct_atom_id, context.indirect_atom_id, context.type, context.atom_type_id) 
+            component = (self.index, context.direct_atom_id, context.indirect_atom_id, context.type, context.atom_type_id, context.backbone) 
             self.index+=1
         return component
     
@@ -3110,7 +3114,7 @@ class Hydrogen_bond_potential(Base_potential):
         elif name == "HDONOR":
             result = Native_component_list(format='ii')
         elif name == 'ACCP' or name == 'DONR':
-            result = Native_component_list(format='i' * 5)
+            result = Native_component_list(format='i' * 6)
         elif name == 'DIDX':
             result = Native_component_list(format='i' * 3)
         elif name == 'AIDX':

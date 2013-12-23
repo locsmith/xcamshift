@@ -118,6 +118,7 @@ cdef struct Hydrogen_bond_component:
     int indirect_atom_id
     int type
     int atom_type_id 
+    int backbone
     
 cdef struct Hydrogen_bond_parameter:
     int component_index
