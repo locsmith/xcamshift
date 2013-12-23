@@ -1597,7 +1597,7 @@ cdef class Fast_hydrogen_bond_calculator:
                  
                 angle_2 = calc_bond_angle_simulation(self._simulation, bond_angle_atom_ids) 
                 
-                if (angle_1 > 90.0 and angle_1 < 270.0) and (angle_2 > 90.0 and angle_2 < 270.0):
+                if (angle_1 > PI/2.0 and angle_1 < PI *3.0/2.0) and (angle_2 > PI/2.0 and angle_2 < PI *3.0/2.0):
                 
                     donor_atom_type_id  = donor_components[donor_index].atom_type_id
                     acceptor_atom_type_id = acceptor_components[acceptor_index].atom_type_id
