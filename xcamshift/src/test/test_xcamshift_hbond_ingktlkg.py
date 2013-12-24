@@ -21,7 +21,7 @@ from xcamshift import Hbond_backbone_donor_indexer, Hbond_backbone_acceptor_inde
      Hbond_donor_atom_type_indexer, Hbond_acceptor_atom_type_indexer, Hydrogen_bond_acceptor_component_factory, Xcamshift, Hydrogen_bond_parameter_factory, \
      Hydrogen_bond_donor_lookup_factory, Hydrogen_bond_acceptor_lookup_factory,\
     Hydrogen_bond_potential
-from cython.shift_calculators import Fast_hydrogen_bond_calculator
+from cython.shift_calculators import Fast_hydrogen_bond_calculator, allocate_array
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
 from table_manager import Table_manager
@@ -60,6 +60,42 @@ EXPECTED_DONORS =  ((8,  'HN',  'N', 1),
                     (13, 'HZ2', 'NZ', 0),
                     (13, 'HZ3', 'NZ', 0),
                     (14, 'HN',  'N', 1))
+
+DIST=0
+ANG_1=1
+ANG_2=2
+
+EXPECTED_DONOR_ENERGIES = {
+        ('',  9, 'HN', DIST):     3.64372,
+        ('',  9, 'HN', ANG_1):  701.205,
+        ('',  9, 'HN', ANG_2): 6548.52,
+        ('', 11, 'HN', DIST):     4.45286,
+        ('', 11, 'HN', ANG_1):  672.789,
+        ('', 11, 'HN', ANG_2): 6252.28,
+        ('', 12, 'HN', DIST):     4.66541,
+        ('', 12, 'HN', ANG_1):  695.025,
+        ('', 12, 'HN', ANG_2): 6238.2,
+        ('', 14, 'HN', DIST):     3.27874313127,
+        ('', 14, 'HN', ANG_1):  696.529729434,
+        ('', 14, 'HN', ANG_2):  6683.4703906
+}
+
+EXPECTED_ACCEPTOR_ENERGIES = {
+        ('',  7,  'O', DIST):     3.27874313127,
+        ('',  7,  'O', ANG_1):  696.529729434,
+        ('',  7,  'O', ANG_2):  6683.4703906,
+        ('', 12,  'O', DIST):     3.64372,
+        ('', 12,  'O', ANG_1):  701.205,
+        ('', 12,  'O', ANG_2): 6548.52,
+        ('', 10,  'N', DIST):     4.45286,
+        ('', 10,  'N', ANG_1):  672.789,
+        ('', 10,  'N', ANG_2): 6252.28,
+        ('', 11,  'N', DIST):     4.66541,
+        ('', 11,  'N', ANG_1):  695.025,
+        ('', 11,  'N', ANG_2): 6238.2
+}   
+
+
 
 EXPECTED_INDIRECT_DONORS = {}
 for elem in EXPECTED_DONORS:
@@ -386,8 +422,28 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         num_donors = self.donor_indexer.get_max_index()
         num_acceptors = self.acceptor_indexer.get_max_index()
         
-        test(components, None)
+        donor_energies = allocate_array(num_donors*3, type='f')
+        acceptor_energies = allocate_array(num_acceptors*3,type='f')
+        test(components, donor_energies, acceptor_energies)
+        
+        for donor_selector in EXPECTED_DONOR_ENERGIES.keys():
+            offset =  self.donor_indexer.get_index_for_key(donor_selector[:3])*3+donor_selector[3]
+            self.assertAlmostEqual(donor_energies[offset]/EXPECTED_DONOR_ENERGIES[donor_selector],1.0,places=4)
+            del EXPECTED_DONOR_ENERGIES[donor_selector]
+            donor_energies[offset] = 0.0
+
+        for acceptor_selector in EXPECTED_ACCEPTOR_ENERGIES.keys():
+            offset =  self.acceptor_indexer.get_index_for_key(acceptor_selector[:3])*3+acceptor_selector[3]
+            self.assertAlmostEqual(acceptor_energies[offset]/EXPECTED_ACCEPTOR_ENERGIES[acceptor_selector],1.0,places=4,msg=acceptor_selector)
+            del EXPECTED_ACCEPTOR_ENERGIES[acceptor_selector]
+            acceptor_energies[offset] = 0.0
     
+        self.assertEmpty(EXPECTED_ACCEPTOR_ENERGIES)
+        self.assertEmpty(EXPECTED_DONOR_ENERGIES)
+        
+        self.assertSequenceAlmostEqual(donor_energies, [0.0]* len(donor_energies))
+        self.assertSequenceAlmostEqual(acceptor_energies, [0.0]* len(acceptor_energies))
+        
     def test_parameter_components(self):
         factory = Hydrogen_bond_parameter_factory()
         format = ('i'*4) +('f'*8)

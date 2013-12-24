@@ -1500,7 +1500,7 @@ cdef class Fast_hydrogen_bond_calculator:
         return params.p[0] * (term_1**params.r - term_2**params.s) + params.p[5]
     
     @cython.profile(True)
-    def __call__(self, components, dummy):#,  Hydrogen_bond_energy_list energy_list):
+    def __call__(self, components, float[:] donor_energies, float[:] acceptor_energies):#,  Hydrogen_bond_energy_list energy_list):
         
         donor_list = components['DONR']
         acceptor_list =  components['ACCP']
@@ -1611,40 +1611,20 @@ cdef class Fast_hydrogen_bond_calculator:
                     params_dist  = hydrogen_bond_parameters[param_id_dist]
                     params_angle_1  = hydrogen_bond_parameters[param_id_angle_1]
                     params_angle_2  = hydrogen_bond_parameters[param_id_angle_2]
-                    print
-                    print 'dist and angles', Atom_utils._get_atom_info_from_index(donor_direct_atom_id),Atom_utils._get_atom_info_from_index(acceptor_direct_atom_id), min_distance, angle_1, angle_2
-                    energy = self._calc_energy(min_distance,params_dist)
-                    print 'energy distance', energy
-                    energy = self._calc_energy(angle_1 / PI * 180.0, params_angle_1)
-                    print 'energy angle 1', energy
-                    energy = self._calc_energy(angle_2 / PI * 180.0, params_angle_2)
-                    print 'energy angle 2', energy
-                    print
-#                 
-#                 print param_id_dist, param_id_ang_1, param_id_ang_2
-#                 print 'dist',params_dist.s,params_dist.p[0]
-#                 print 'ang1',params_ang_1.s,params_ang_1.p[0]
-#                 print 'ang2',params_ang_2.s,params_ang_2.p[0]
-#                 print num_parameters,hydrogen_bond_parameters[0].p[0]
-#                 print 'found', Atom_utils._get_atom_info_from_index(atom_id_1), Atom_utils._get_atom_info_from_index(current_acceptor), current_acceptor, min_distance
+
+                    energy_dist = self._calc_energy(min_distance,params_dist)
+                    energy_ang_1 = self._calc_energy(angle_1 / PI * 180.0, params_angle_1)
+                    energy_ang_2 = self._calc_energy(angle_2 / PI * 180.0, params_angle_2)
                     
-#             if min_distance < cutoff:
+                    if donor_components[donor_index].backbone > -1:
+                        donor_energies[donor_components[donor_index].backbone*3] = energy_dist
+                        donor_energies[donor_components[donor_index].backbone*3+1] = energy_ang_1
+                        donor_energies[donor_components[donor_index].backbone*3+2] = energy_ang_2
 #                 
-#                donor_angle  = calc_angle(donor_components[j].indirect_atom_id, donor_components[j].direct_atom_id, acceptor_components[j].direct_atom_id)
-#                acceptor_angle  = calc_angle(donor_components[j].direct_atom_id, acceptor_components[j].direct_atom_id, acceptor_components[j].indirect_atom_id)
-#                
-#                energy_dist = calc_energy(distance, distance_params)
-#                energy_donor_angle = calc_energy(donor_angle, donor_angle_params)
-#                energy_acceptor_angle = calc_energy(acceptor_angle, acceptor_angle_params)
-#                
-#                hydrogen_bond_list[atom_id_1].energy_dist = energy_dist
-#                hydrogen_bond_list[atom_id_2].energy_dist = energy_dist
-#                
-#                hydrogen_bond_list[atom_id_1].energy_donor_angle = energy_donor_angle
-#                hydrogen_bond_list[atom_id_2].energy_donor_angle = energy_donor_angle
-#                
-#                hydrogen_bond_list[atom_id_1].energy_acceptor_angle = energy_acceptor_angle
-#                hydrogen_bond_list[atom_id_2].energy_acceptor_angle = energy_acceptor_angle
+                    if acceptor_components[acceptor_index].backbone > -1:
+                        acceptor_energies[acceptor_components[acceptor_index].backbone*3] = energy_dist
+                        acceptor_energies[acceptor_components[acceptor_index].backbone*3+1] = energy_ang_1
+                        acceptor_energies[acceptor_components[acceptor_index].backbone*3+2] = energy_ang_2
                
                
         if self._verbose:
@@ -2149,7 +2129,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         else:
             pre_exponent = exponent
             
-        reduced_exponent = (exponent - 2.0) / 2.0
+        reduced_exponent = (exponent - 2.0) / 2
         
         force_factor = full_factor *  pre_exponent * sum_xyz_distances_2 ** reduced_exponent
 
