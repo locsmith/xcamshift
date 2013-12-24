@@ -67,9 +67,6 @@ for elem in EXPECTED_DONORS:
     
 EXPECTED_DIRECT_DONORS = [('',elem[0],elem[1]) for elem in EXPECTED_DONORS]
 
-EXPECTED_DONOR_ATOMS = set(['HN',])
-EXPECTED_ACCEPTOR_ATOMS = set(['O',])
-
 EXPECTED_DONOR_TYPES = sorted(['HON',])
 EXPECTED_ACCEPTOR_TYPES = sorted(['ON',])
 
@@ -208,8 +205,8 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         self.assertEqual(sorted(EXPECTED_ACCEPTOR_TYPES), acceptor_atom_indices)        
       
     def test_get_max_index(self):
-        self.assertEqual(self.donor_atom_type_indexer.get_max_index(), len(EXPECTED_DONOR_ATOMS))
-        self.assertEqual(self.acceptor_atom_type_indexer.get_max_index(), len(EXPECTED_ACCEPTOR_ATOMS))
+        self.assertEqual(self.donor_atom_type_indexer.get_max_index(), len(EXPECTED_DONOR_TYPES))
+        self.assertEqual(self.acceptor_atom_type_indexer.get_max_index(), len(EXPECTED_ACCEPTOR_TYPES))
         
     def test_get_name(self):    
         for elem in 'hydrogen', 'bond', 'atom','type':
