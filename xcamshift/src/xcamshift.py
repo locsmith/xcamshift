@@ -2570,109 +2570,109 @@ class Hbond_acceptor_atom_type_indexer(Hbond_atom_type_indexer):
         return table.get_acceptor_types()
             
          
-# class Hbond_indexer_base(object):
-#     __metaclass__ = ABCMeta
-#     
-#    
-#     def __init__(self,table_manager):
-#         super(Hbond_indexer_base, self).__init__()
-#         
-#         self._index = {}
-#         self._inverted_index = {}
-#         self._max_index = 0
-#             
-#         self._build_index(table_manager)
-#     
-#     @abstractmethod
-#     def get_name(self):
-#         pass
-# 
-#     def _get_table(self,name):
-#         return Table_manager.get_default_table_manager().get_hydrogen_bond_table(name)
-#     
-#     def _get_table_name(self):
-#         return HBOND
-#     
-#     def _get_tables_by_index(self, table_manager):
-#         table_index_map = {}
-#         
-#         for residue_type in table_manager.get_residue_types_for_table(self._get_table_name()):
-#             table = self._get_table(residue_type)
-#             index  = table._table['index']
-#             table_index_map[index]=table
-#         
-#         keys = table_index_map.keys()
-#         keys.sort()
-#         result = []
-#         
-#         for key in keys:
-#             result.append(table_index_map[key])
-#         
-#         return tuple(result) 
-#     
-#     @abstractmethod
-#     def _get_targets(self, table):
-#         pass
-# 
-#     def _build_index(self, table_manager):
-#         self._get_table('base')
-#         
-#         tables_by_index = self._get_tables_by_index(table_manager)
-#         
-#         segment_manager = Segment_Manager.get_segment_manager()
-#         for segment in segment_manager.get_segments():
-#             info =  segment_manager.get_segment_info(segment)
-#             for atom_index in range(info.first_atom_index,info.last_atom_index):
-#                 atom_name  = Atom_utils._get_atom_info_from_index(atom_index)[2]
-#                 
-#                 for table in tables_by_index:
-#                     for target in self._get_targets(table):
-#                         for vector_atom in  table.get_atom_selector(target):
-#                             if atom_name  == vector_atom[2]:
-#                                 for bonded_index in  Atom_utils._get_bonded_atom_ids(atom_index):
-#                                     segid,residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
-#                                     if bonded_atom_name  ==  vector_atom[1]:
-#                                         key =  residue, atom_name, bonded_atom_name
-#                                         if not key in self._index:
-#                                             self._index[key] = self._max_index
-#                                             self._inverted_index[self._max_index] = key
-#                                             self._max_index+=1
-#                                     
-#                         
-#     def get_index_for_key(self,key):
-#         return self._index[key]
-#     
-#     def get_key_for_index(self,index):
-#         return self._inverted_index[index]
-#     
-#     def get_max_index(self):
-#         return self._max_index
-#     
-#     def iter_keys(self):
-#         for index in range(self._max_index):
-#             yield self._inverted_index[index] 
-#             
-# class Hbond_donor_indexer(Hbond_indexer_base):
-# 
-#     def __init__(self, table_manager):
-#         super(Hbond_donor_indexer, self).__init__(table_manager)
-#         
-#     def _get_targets(self, table):
-#         return table.get_donor_types()
-#     
-#     def get_name(self):
-#         return 'hbond donor'
-#     
-# class Hbond_acceptor_indexer(Hbond_indexer_base):
-# 
-#     def __init__(self, table_manager):
-#         super(Hbond_acceptor_indexer, self).__init__(table_manager)
-#         
-#     def _get_targets(self, table):
-#         return table.get_acceptor_types()
-# 
-#     def get_name(self):
-#         return 'hbond acceptor'
+class Hbond_backbone_indexer_base(object):
+    __metaclass__ = ABCMeta
+     
+    
+    def __init__(self,table_manager):
+        super(Hbond_backbone_indexer_base, self).__init__()
+         
+        self._index = {}
+        self._inverted_index = {}
+        self._max_index = 0
+             
+        self._build_index(table_manager)
+     
+    @abstractmethod
+    def get_name(self):
+        pass
+ 
+    def _get_table(self,name):
+        return Table_manager.get_default_table_manager().get_hydrogen_bond_table(name)
+     
+    def _get_table_name(self):
+        return HBOND
+     
+    def _get_tables_by_index(self, table_manager):
+        table_index_map = {}
+         
+        for residue_type in table_manager.get_residue_types_for_table(self._get_table_name()):
+            table = self._get_table(residue_type)
+            index  = table._table['index']
+            table_index_map[index]=table
+         
+        keys = table_index_map.keys()
+        keys.sort()
+        result = []
+         
+        for key in keys:
+            result.append(table_index_map[key])
+         
+        return tuple(result) 
+     
+    @abstractmethod
+    def _get_targets(self, table):
+        pass
+ 
+    def _build_index(self, table_manager):
+        self._get_table('base')
+         
+        tables_by_index = self._get_tables_by_index(table_manager)
+         
+        segment_manager = Segment_Manager.get_segment_manager()
+        for segment in segment_manager.get_segments():
+            info =  segment_manager.get_segment_info(segment)
+            for atom_index in range(info.first_atom_index,info.last_atom_index):
+                segment,resiue,atom_name  = Atom_utils._get_atom_info_from_index(atom_index)
+                for table in tables_by_index:
+                    for target in self._get_targets(table):
+                        for vector_atom in  table.get_atom_selector(target):
+                            if vector_atom[0] == '.':
+                                if atom_name  == vector_atom[1]:
+                                    for bonded_index in  Atom_utils._get_bonded_atom_ids(atom_index):
+                                        segid,residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
+                                        if bonded_atom_name  ==  vector_atom[2]:
+                                            key =  residue, bonded_atom_name, atom_name
+                                            if not key in self._index:
+                                                self._index[key] = self._max_index
+                                                self._inverted_index[self._max_index] = key
+                                                self._max_index+=1
+                                     
+                         
+    def get_index_for_key(self,key):
+        return self._index[key]
+     
+    def get_key_for_index(self,index):
+        return self._inverted_index[index]
+     
+    def get_max_index(self):
+        return self._max_index
+     
+    def iter_keys(self):
+        for index in range(self._max_index):
+            yield self._inverted_index[index] 
+             
+class Hbond_backbone_donor_indexer(Hbond_backbone_indexer_base):
+ 
+    def __init__(self, table_manager):
+        super(Hbond_backbone_donor_indexer, self).__init__(table_manager)
+         
+    def _get_targets(self, table):
+        return table.get_donor_types()
+     
+    def get_name(self):
+        return 'hbond donor'
+     
+class Hbond_backbone_acceptor_indexer(Hbond_backbone_indexer_base):
+ 
+    def __init__(self, table_manager):
+        super(Hbond_backbone_acceptor_indexer, self).__init__(table_manager)
+         
+    def _get_targets(self, table):
+        return table.get_acceptor_types()
+ 
+    def get_name(self):
+        return 'hbond acceptor'
 
 class Hydrogen_bond_context:
     
