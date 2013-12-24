@@ -29,20 +29,20 @@ from atomSel import AtomSel
 from component_list import Native_component_list
 
 EXPECTED_ACCEPTORS_BASE =   (((7,  'O'),   (7,  'C'), 1),
-                             ((8,  'O'),   (8,  'C'), 1),
                              ((8,  'N'),   (7,  'C'), 1),
-                             ((9,  'O'),   (9,  'C'), 1),
+                             ((8,  'O'),   (8,  'C'), 1),
                              ((9,  'N'),   (8,  'C'), 1),
-                             ((10, 'O'),   (10, 'C'), 1),
+                             ((9,  'O'),   (9,  'C'), 1),
                              ((10, 'N'),   (9,  'C'), 1),
+                             ((10, 'O'),   (10, 'C'), 1),
                              ((10, 'NZ'),  (10, 'CE'), 0),
-                             ((11, 'O'),   (11, 'C'), 1),
                              ((11, 'N'),   (10, 'C'), 1),
+                             ((11, 'O'),   (11, 'C'), 1),
                              ((11, 'OG1'), (11, 'CB'), 0),
-                             ((12, 'O'),   (12, 'C'), 1),
                              ((12, 'N'),   (11, 'C'), 1),
-                             ((13, 'O'),   (13, 'C'), 1),
+                             ((12, 'O'),   (12, 'C'), 1),
                              ((13, 'N'),   (12, 'C'), 1),
+                             ((13, 'O'),   (13, 'C'), 1),
                              ((13, 'NZ'),  (13, 'CE'), 0),
                              ((14, 'N'),   (13, 'C'), 1))
 
@@ -168,39 +168,40 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
     def test_backbone_donor_and_acceptor_indexers(self):
          
  
-        donors = [('',donor[0],donor[1]) for donor in self.donor_indexer.iter_keys()]
+        donors = [donor for donor in self.donor_indexer.iter_keys()]
         self.assertSequenceEqual(sorted(donors), sorted(EXPECTED_BACK_BONE_DONOR)) 
          
-        acceptors = [('',acceptor[0],acceptor[1]) for acceptor in self.acceptor_indexer.iter_keys()]
+        acceptors = [acceptor for acceptor in self.acceptor_indexer.iter_keys()]
         self.assertSequenceEqual(sorted(acceptors), sorted(EXPECTED_BACK_BONE_ACCEPTOR))
-#     
-#     def test_get_max_index(self):
-#         self.assertEqual(self.donor_indexer.get_max_index(), len(EXPECTED_DONORS))
-#         self.assertEqual(self.acceptor_indexer.get_max_index(), len(EXPECTED_ACCEPTORS))
-# 
-#     def test_get_name(self):    
-#         self.assertTrue('donor' in self.donor_indexer.get_name().lower())
-#         self.assertTrue('acceptor' in self.acceptor_indexer.get_name().lower())
-# 
-# 
-#     def test_get_index_for_key(self,):
-#         for i,acceptor in enumerate(EXPECTED_ACCEPTORS):
-#             self.assertEqual(i,self.acceptor_indexer.get_index_for_key(acceptor))
-#         self.assertEqual(i+1, self.acceptor_indexer.get_max_index())
-# 
-#         for j,donor in enumerate(EXPECTED_DONORS):
-#             self.assertEqual(j,self.donor_indexer.get_index_for_key(donor))
-#         self.assertEqual(j+1, self.donor_indexer.get_max_index())
-#                        
-#      
-#     def test_get_key_for_index(self):
-#         for i,acceptor in enumerate(EXPECTED_ACCEPTORS):
-#             self.assertEqual(acceptor,self.acceptor_indexer.get_key_for_index(i))
-#         self.assertEqual(i+1, self.acceptor_indexer.get_max_index())
-# 
-#         for j,donor in enumerate(EXPECTED_DONORS):
-#             self.assertEqual(donor,self.donor_indexer.get_key_for_index(j))
-#         self.assertEqual(j+1, self.donor_indexer.get_max_index())
+     
+    def test_backbone_donor_and_acceptor_indexers_get_max_index(self):
+        self.assertEqual(self.donor_indexer.get_max_index(), len(EXPECTED_BACK_BONE_DONOR))
+        self.assertEqual(self.acceptor_indexer.get_max_index(), len(EXPECTED_BACK_BONE_ACCEPTOR))
+ 
+    def test_backbone_donor_and_acceptor_indexers_get_name(self):    
+        self.assertTrue('donor' in self.donor_indexer.get_name().lower())
+        self.assertTrue('acceptor' in self.acceptor_indexer.get_name().lower())
+ 
+ 
+    def test_backbone_donor_and_acceptor_indexers_get_index_for_key(self,):
+
+        for i,acceptor in enumerate(EXPECTED_BACK_BONE_ACCEPTOR):
+            self.assertEqual(i,self.acceptor_indexer.get_index_for_key(acceptor))
+        self.assertEqual(i+1, self.acceptor_indexer.get_max_index())
+ 
+        for j,donor in enumerate(EXPECTED_BACK_BONE_DONOR):
+            self.assertEqual(j,self.donor_indexer.get_index_for_key(donor))
+        self.assertEqual(j+1, self.donor_indexer.get_max_index())
+                        
+      
+    def test_backbone_donor_and_acceptor_indexers_get_index_get_key_for_index(self):
+        for i,acceptor in enumerate(EXPECTED_BACK_BONE_ACCEPTOR):
+            self.assertEqual(acceptor,self.acceptor_indexer.get_key_for_index(i))
+        self.assertEqual(i+1, self.acceptor_indexer.get_max_index())
+ 
+        for j,donor in enumerate(EXPECTED_BACK_BONE_DONOR):
+            self.assertEqual(donor,self.donor_indexer.get_key_for_index(j))
+        self.assertEqual(j+1, self.donor_indexer.get_max_index())
     
          
     def test_hbond_context(self):
