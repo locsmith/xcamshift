@@ -101,7 +101,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         if expected in sequence:
             sequence_strings = [`elem` for elem in sequence]
             sequence_string = '\n'.join(sequence_strings)
-            raise AssertionError("element %s found in the sequence:\n%s" % sequence_string,`expected`)        
+            raise AssertionError("element %s found in the sequence:\n%s" % (`expected`,sequence_string))        
         
     def get_single_member_ensemble_simulation(self):
         if self._esim.__class__ ==  None.__class__:
@@ -336,8 +336,9 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
             atom_key = Atom_utils._get_atom_info_from_index(component[DIRECT_ATOM_ID])
             indirect_atom_key = Atom_utils._get_atom_info_from_index(component[INDIRECT_ATOM_ID])
             
-            if component[BACKBONE] > 0:
+            if component[BACKBONE] > -1:
                 self.assertSequenceContains(atom_key, expected_backbone)
+                self.assertEqual(component[BACKBONE], expected_backbone.index(atom_key))
             else:
                 self.assertSequenceDoesntContain(atom_key, expected_backbone)
             
@@ -381,6 +382,10 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
                       'DIDX' : donor_index_components.get_native_components(),
                       'AIDX' : acceptor_index_components.get_native_components()
                       }
+        
+        num_donors = self.donor_indexer.get_max_index()
+        num_acceptors = self.acceptor_indexer.get_max_index()
+        
         test(components, None)
     
     def test_parameter_components(self):
