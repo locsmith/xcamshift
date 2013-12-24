@@ -28,38 +28,38 @@ from table_manager import Table_manager
 from atomSel import AtomSel
 from component_list import Native_component_list
 
-EXPECTED_ACCEPTORS_BASE =   (((7,  'O'),   (7,  'C')),
-                             ((8,  'O'),   (8,  'C')),
-                             ((8,  'N'),   (7,  'C')),
-                             ((9,  'O'),   (9,  'C')),
-                             ((9,  'N'),   (8,  'C')),
-                             ((10, 'O'),   (10, 'C')),
-                             ((10, 'N'),   (9,  'C')),
-                             ((10, 'NZ'),  (10, 'CE')),
-                             ((11, 'O'),   (11, 'C')),
-                             ((11, 'N'),   (10, 'C')),
-                             ((11, 'OG1'), (11, 'CB')),
-                             ((12, 'O'),   (12, 'C')),
-                             ((12, 'N'),   (11, 'C')),
-                             ((13, 'O'),   (13, 'C')),
-                             ((13, 'N'),   (12, 'C')),
-                             ((13, 'NZ'),  (13, 'CE')),
-                             ((14, 'N'),   (13, 'C')))
+EXPECTED_ACCEPTORS_BASE =   (((7,  'O'),   (7,  'C'), 1),
+                             ((8,  'O'),   (8,  'C'), 1),
+                             ((8,  'N'),   (7,  'C'), 1),
+                             ((9,  'O'),   (9,  'C'), 1),
+                             ((9,  'N'),   (8,  'C'), 1),
+                             ((10, 'O'),   (10, 'C'), 1),
+                             ((10, 'N'),   (9,  'C'), 1),
+                             ((10, 'NZ'),  (10, 'CE'), 0),
+                             ((11, 'O'),   (11, 'C'), 1),
+                             ((11, 'N'),   (10, 'C'), 1),
+                             ((11, 'OG1'), (11, 'CB'), 0),
+                             ((12, 'O'),   (12, 'C'), 1),
+                             ((12, 'N'),   (11, 'C'), 1),
+                             ((13, 'O'),   (13, 'C'), 1),
+                             ((13, 'N'),   (12, 'C'), 1),
+                             ((13, 'NZ'),  (13, 'CE'), 0),
+                             ((14, 'N'),   (13, 'C'), 1))
 
-EXPECTED_DONORS =  ((8,  'HN',  'N'),
-                    (9,  'HN',  'N'),
-                    (10, 'HN',  'N'),
-                    (10, 'HZ1', 'NZ'),
-                    (10, 'HZ2', 'NZ'),
-                    (10, 'HZ3', 'NZ'),
-                    (11, 'HN',  'N'),
-                    (11, 'HG1', 'OG1'),
-                    (12, 'HN',  'N'),
-                    (13, 'HN',  'N'),
-                    (13, 'HZ1', 'NZ'),
-                    (13, 'HZ2', 'NZ'),
-                    (13, 'HZ3', 'NZ'),
-                    (14, 'HN',  'N'))
+EXPECTED_DONORS =  ((8,  'HN',  'N', 1),
+                    (9,  'HN',  'N', 1),
+                    (10, 'HN',  'N', 1),
+                    (10, 'HZ1', 'NZ', 0),
+                    (10, 'HZ2', 'NZ', 0),
+                    (10, 'HZ3', 'NZ', 0),
+                    (11, 'HN',  'N', 1),
+                    (11, 'HG1', 'OG1', 0),
+                    (12, 'HN',  'N', 1),
+                    (13, 'HN',  'N', 1),
+                    (13, 'HZ1', 'NZ', 0),
+                    (13, 'HZ2', 'NZ', 0),
+                    (13, 'HZ3', 'NZ', 0),
+                    (14, 'HN',  'N', 1))
 
 EXPECTED_INDIRECT_DONORS = {}
 for elem in EXPECTED_DONORS:
@@ -78,11 +78,30 @@ for elem in EXPECTED_ACCEPTORS_BASE:
 EXPECTED_DIRECT_ACCEPTORS = [('',elem[0][0],elem[0][1]) for elem in EXPECTED_ACCEPTORS_BASE]
 
 
+EXPECTED_BACK_BONE_DONOR = [('',elem[0],elem[1]) for elem in EXPECTED_DONORS if elem[-1] == 1]
+EXPECTED_BACK_BONE_ACCEPTOR = [('',elem[0][0],elem[0][1]) for elem in EXPECTED_ACCEPTORS_BASE if elem[-1] == 1]
+
+
+
 class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
 
     def __init__(self,*args,**kwargs):
         super(TestXcamshiftHBondINGKTLKG, self).__init__(*args,**kwargs)
         self._esim = None
+        
+        
+    def assertSequenceContains(self,expected,sequence):
+        if expected not in sequence:
+            sequence_strings = [`elem` for elem in sequence]
+            sequence_string = '\n'.join(sequence_strings)
+            raise AssertionError("element %s not found in the sequence:\n%s" % sequence_string,`expected`)
+
+        
+    def assertSequenceDoesntContain(self,expected,sequence):
+        if expected in sequence:
+            sequence_strings = [`elem` for elem in sequence]
+            sequence_string = '\n'.join(sequence_strings)
+            raise AssertionError("element %s found in the sequence:\n%s" % sequence_string,`expected`)        
         
     def get_single_member_ensemble_simulation(self):
         if self._esim.__class__ ==  None.__class__:
@@ -301,7 +320,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         factory.create_components(component_list, table_provider, segment, target_residue_number, selected_atoms)
         return component_list
 
-    def _do_test_donor_acceptor_components(self, factory,expected_direct_donors_or_acceptors, expected_indirect_donors_or_acceptors, donor_or_acceptor):
+    def _do_test_donor_acceptor_components(self, factory,expected_direct_donors_or_acceptors, expected_indirect_donors_or_acceptors, donor_or_acceptor, expected_backbone):
 
         component_list = self._build_component_list(factory, 'i' * 5)
         for i,component in enumerate(component_list):
@@ -310,11 +329,17 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
             INDIRECT_ATOM_ID = 2
             DONOR_OR_ACCEPTOR = 3
             ATOM_TYPE = 4
+            BACKBONE = 5
             
             self.assertEqual(i,component[INDEX])
             
             atom_key = Atom_utils._get_atom_info_from_index(component[DIRECT_ATOM_ID])
             indirect_atom_key = Atom_utils._get_atom_info_from_index(component[INDIRECT_ATOM_ID])
+            
+            if component[BACKBONE] > 0:
+                self.assertSequenceContains(atom_key, expected_backbone)
+            else:
+                self.assertSequenceDoesntContain(atom_key, expected_backbone)
             
             self.assertIn(atom_key, expected_direct_donors_or_acceptors)
             if atom_key in expected_direct_donors_or_acceptors:
@@ -334,10 +359,10 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         self.assertEmpty(expected_indirect_donors_or_acceptors)
 
     def test_hydrogen_bond_donor_components(self):
-        self._do_test_donor_acceptor_components(Hydrogen_bond_donor_component_factory(), set(EXPECTED_DIRECT_DONORS), dict(EXPECTED_INDIRECT_DONORS), DONOR)
+        self._do_test_donor_acceptor_components(Hydrogen_bond_donor_component_factory(), set(EXPECTED_DIRECT_DONORS), dict(EXPECTED_INDIRECT_DONORS), DONOR, EXPECTED_BACK_BONE_DONOR)
         
     def test_hydrogen_bond_acceptor_components(self):
-        self._do_test_donor_acceptor_components(Hydrogen_bond_acceptor_component_factory(), set(EXPECTED_DIRECT_ACCEPTORS), dict(EXPECTED_INDIRECT_ACCEPTORS), ACCEPTOR)
+        self._do_test_donor_acceptor_components(Hydrogen_bond_acceptor_component_factory(), set(EXPECTED_DIRECT_ACCEPTORS), dict(EXPECTED_INDIRECT_ACCEPTORS), ACCEPTOR, EXPECTED_BACK_BONE_ACCEPTOR)
     
     def test_fast_hydrogen_bond_calculator(self):
         test = Fast_hydrogen_bond_calculator(self.get_single_member_ensemble_simulation())
