@@ -78,8 +78,8 @@ for elem in EXPECTED_ACCEPTORS_BASE:
 EXPECTED_DIRECT_ACCEPTORS = [('',elem[0][0],elem[0][1]) for elem in EXPECTED_ACCEPTORS_BASE]
 
 
-EXPECTED_BACK_BONE_DONOR = [('',elem[0],elem[1]) for elem in EXPECTED_DONORS if elem[-1] == 1]
-EXPECTED_BACK_BONE_ACCEPTOR = [('',elem[0][0],elem[0][1]) for elem in EXPECTED_ACCEPTORS_BASE if elem[-1] == 1]
+EXPECTED_BACK_BONE_DONORS = [('',elem[0],elem[1]) for elem in EXPECTED_DONORS if elem[-1] == 1]
+EXPECTED_BACK_BONE_ACCEPTORS = [('',elem[0][0],elem[0][1]) for elem in EXPECTED_ACCEPTORS_BASE if elem[-1] == 1]
 
 
 
@@ -169,14 +169,14 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
          
  
         donors = [donor for donor in self.donor_indexer.iter_keys()]
-        self.assertSequenceEqual(sorted(donors), sorted(EXPECTED_BACK_BONE_DONOR)) 
+        self.assertSequenceEqual(sorted(donors), sorted(EXPECTED_BACK_BONE_DONORS)) 
          
         acceptors = [acceptor for acceptor in self.acceptor_indexer.iter_keys()]
-        self.assertSequenceEqual(sorted(acceptors), sorted(EXPECTED_BACK_BONE_ACCEPTOR))
+        self.assertSequenceEqual(sorted(acceptors), sorted(EXPECTED_BACK_BONE_ACCEPTORS))
      
     def test_backbone_donor_and_acceptor_indexers_get_max_index(self):
-        self.assertEqual(self.donor_indexer.get_max_index(), len(EXPECTED_BACK_BONE_DONOR))
-        self.assertEqual(self.acceptor_indexer.get_max_index(), len(EXPECTED_BACK_BONE_ACCEPTOR))
+        self.assertEqual(self.donor_indexer.get_max_index(), len(EXPECTED_BACK_BONE_DONORS))
+        self.assertEqual(self.acceptor_indexer.get_max_index(), len(EXPECTED_BACK_BONE_ACCEPTORS))
  
     def test_backbone_donor_and_acceptor_indexers_get_name(self):    
         self.assertTrue('donor' in self.donor_indexer.get_name().lower())
@@ -185,21 +185,21 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
  
     def test_backbone_donor_and_acceptor_indexers_get_index_for_key(self,):
 
-        for i,acceptor in enumerate(EXPECTED_BACK_BONE_ACCEPTOR):
+        for i,acceptor in enumerate(EXPECTED_BACK_BONE_ACCEPTORS):
             self.assertEqual(i,self.acceptor_indexer.get_index_for_key(acceptor))
         self.assertEqual(i+1, self.acceptor_indexer.get_max_index())
  
-        for j,donor in enumerate(EXPECTED_BACK_BONE_DONOR):
+        for j,donor in enumerate(EXPECTED_BACK_BONE_DONORS):
             self.assertEqual(j,self.donor_indexer.get_index_for_key(donor))
         self.assertEqual(j+1, self.donor_indexer.get_max_index())
                         
       
     def test_backbone_donor_and_acceptor_indexers_get_index_get_key_for_index(self):
-        for i,acceptor in enumerate(EXPECTED_BACK_BONE_ACCEPTOR):
+        for i,acceptor in enumerate(EXPECTED_BACK_BONE_ACCEPTORS):
             self.assertEqual(acceptor,self.acceptor_indexer.get_key_for_index(i))
         self.assertEqual(i+1, self.acceptor_indexer.get_max_index())
  
-        for j,donor in enumerate(EXPECTED_BACK_BONE_DONOR):
+        for j,donor in enumerate(EXPECTED_BACK_BONE_DONORS):
             self.assertEqual(donor,self.donor_indexer.get_key_for_index(j))
         self.assertEqual(j+1, self.donor_indexer.get_max_index())
     
@@ -359,10 +359,10 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         self.assertEmpty(expected_indirect_donors_or_acceptors)
 
     def test_hydrogen_bond_donor_components(self):
-        self._do_test_donor_acceptor_components(Hydrogen_bond_donor_component_factory(), set(EXPECTED_DIRECT_DONORS), dict(EXPECTED_INDIRECT_DONORS), DONOR, EXPECTED_BACK_BONE_DONOR)
+        self._do_test_donor_acceptor_components(Hydrogen_bond_donor_component_factory(), set(EXPECTED_DIRECT_DONORS), dict(EXPECTED_INDIRECT_DONORS), DONOR, EXPECTED_BACK_BONE_DONORS)
         
     def test_hydrogen_bond_acceptor_components(self):
-        self._do_test_donor_acceptor_components(Hydrogen_bond_acceptor_component_factory(), set(EXPECTED_DIRECT_ACCEPTORS), dict(EXPECTED_INDIRECT_ACCEPTORS), ACCEPTOR, EXPECTED_BACK_BONE_ACCEPTOR)
+        self._do_test_donor_acceptor_components(Hydrogen_bond_acceptor_component_factory(), set(EXPECTED_DIRECT_ACCEPTORS), dict(EXPECTED_INDIRECT_ACCEPTORS), ACCEPTOR, EXPECTED_BACK_BONE_ACCEPTORS)
     
     def test_fast_hydrogen_bond_calculator(self):
         test = Fast_hydrogen_bond_calculator(self.get_single_member_ensemble_simulation())
