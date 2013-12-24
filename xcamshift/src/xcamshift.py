@@ -2632,7 +2632,7 @@ class Hbond_backbone_indexer_base(object):
                                     for bonded_index in  Atom_utils._get_bonded_atom_ids(atom_index):
                                         segid,residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
                                         if bonded_atom_name  ==  vector_atom[2]:
-                                            key =  residue, bonded_atom_name, atom_name
+                                            key =  segid, residue, bonded_atom_name
                                             if not key in self._index:
                                                 self._index[key] = self._max_index
                                                 self._inverted_index[self._max_index] = key
