@@ -28,38 +28,40 @@ from table_manager import Table_manager
 from atomSel import AtomSel
 from component_list import Native_component_list
 
-EXPECTED_ACCEPTORS_BASE =   (((7,  'O'),   (7,  'C'), 1),
-                             ((8,  'N'),   (7,  'C'), 1),
-                             ((8,  'O'),   (8,  'C'), 1),
-                             ((9,  'N'),   (8,  'C'), 1),
-                             ((9,  'O'),   (9,  'C'), 1),
-                             ((10, 'N'),   (9,  'C'), 1),
-                             ((10, 'O'),   (10, 'C'), 1),
-                             ((10, 'NZ'),  (10, 'CE'), 0),
-                             ((11, 'N'),   (10, 'C'), 1),
-                             ((11, 'O'),   (11, 'C'), 1),
-                             ((11, 'OG1'), (11, 'CB'), 0),
-                             ((12, 'N'),   (11, 'C'), 1),
-                             ((12, 'O'),   (12, 'C'), 1),
-                             ((13, 'N'),   (12, 'C'), 1),
-                             ((13, 'O'),   (13, 'C'), 1),
-                             ((13, 'NZ'),  (13, 'CE'), 0),
-                             ((14, 'N'),   (13, 'C'), 1))
+BACKBONE=1
+SIDE_CHAIN=0
+EXPECTED_ACCEPTORS_BASE =   (((7,  'O'),   (7,  'C'),  BACKBONE),
+                             ((8,  'N'),   (7,  'C'),  BACKBONE),
+                             ((8,  'O'),   (8,  'C'),  BACKBONE),
+                             ((9,  'N'),   (8,  'C'),  BACKBONE),
+                             ((9,  'O'),   (9,  'C'),  BACKBONE),
+                             ((10, 'N'),   (9,  'C'),  BACKBONE),
+                             ((10, 'O'),   (10, 'C'),  BACKBONE),
+                             ((10, 'NZ'),  (10, 'CE'), SIDE_CHAIN),
+                             ((11, 'N'),   (10, 'C'),  BACKBONE),
+                             ((11, 'O'),   (11, 'C'),  BACKBONE),
+                             ((11, 'OG1'), (11, 'CB'), SIDE_CHAIN),
+                             ((12, 'N'),   (11, 'C'),  BACKBONE),
+                             ((12, 'O'),   (12, 'C'),  BACKBONE),
+                             ((13, 'N'),   (12, 'C'),  BACKBONE),
+                             ((13, 'O'),   (13, 'C'),  BACKBONE),
+                             ((13, 'NZ'),  (13, 'CE'), SIDE_CHAIN),
+                             ((14, 'N'),   (13, 'C'),  BACKBONE))
 
-EXPECTED_DONORS =  ((8,  'HN',  'N', 1),
-                    (9,  'HN',  'N', 1),
-                    (10, 'HN',  'N', 1),
-                    (10, 'HZ1', 'NZ', 0),
-                    (10, 'HZ2', 'NZ', 0),
-                    (10, 'HZ3', 'NZ', 0),
-                    (11, 'HN',  'N', 1),
-                    (11, 'HG1', 'OG1', 0),
-                    (12, 'HN',  'N', 1),
-                    (13, 'HN',  'N', 1),
-                    (13, 'HZ1', 'NZ', 0),
-                    (13, 'HZ2', 'NZ', 0),
-                    (13, 'HZ3', 'NZ', 0),
-                    (14, 'HN',  'N', 1))
+EXPECTED_DONORS =  ((8,  'HN',  'N',   BACKBONE),
+                    (9,  'HN',  'N',   BACKBONE),
+                    (10, 'HN',  'N',   BACKBONE),
+                    (10, 'HZ1', 'NZ',  SIDE_CHAIN),
+                    (10, 'HZ2', 'NZ',  SIDE_CHAIN),
+                    (10, 'HZ3', 'NZ',  SIDE_CHAIN),
+                    (11, 'HN',  'N',   BACKBONE),
+                    (11, 'HG1', 'OG1', SIDE_CHAIN),
+                    (12, 'HN',  'N',   BACKBONE),
+                    (13, 'HN',  'N',   BACKBONE),
+                    (13, 'HZ1', 'NZ',  SIDE_CHAIN),
+                    (13, 'HZ2', 'NZ',  SIDE_CHAIN),
+                    (13, 'HZ3', 'NZ',  SIDE_CHAIN),
+                    (14, 'HN',  'N',   BACKBONE))
 
 DIST=0
 ANG_1=1
