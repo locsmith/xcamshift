@@ -2625,9 +2625,13 @@ class Hbond_backbone_indexer_base(object):
     def _iter_tables_and_targets(self, table_manager):
        tables_by_index = self._get_tables_by_index(table_manager)
        for table in tables_by_index: 
-           for target in self._get_targets(table): 
+           for target in  self._get_targets(table):
                yield table,target 
-
+#            for target in table.get_donor_types():
+#                yield table,target 
+#            for target in table.get_acceptor_types():
+#                yield table,target 
+#                self._get_targets(table): 
 
     def _find_bonded_index(self, atom_index, atom_selector):
         segment,residue,atom_name  = Atom_utils._get_atom_info_from_index(atom_index)
