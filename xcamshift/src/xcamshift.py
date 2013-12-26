@@ -2625,13 +2625,9 @@ class Hbond_backbone_indexer_base(object):
     def _iter_tables_and_targets(self, table_manager):
        tables_by_index = self._get_tables_by_index(table_manager)
        for table in tables_by_index: 
-           for target in  self._get_targets(table):
-               yield table,target 
-#            for target in table.get_donor_types():
-#                yield table,target 
-#            for target in table.get_acceptor_types():
-#                yield table,target 
-#                self._get_targets(table): 
+           for target, donor_or_acceptor in self._get_targets(table):
+               yield table, target, donor_or_acceptor
+ 
 
     def _find_bonded_index(self, atom_index, atom_selector):
         segment,residue,atom_name  = Atom_utils._get_atom_info_from_index(atom_index)
@@ -2643,11 +2639,14 @@ class Hbond_backbone_indexer_base(object):
                         return bonded_index
         return -1
         
+    @abstractmethod
+    def _get_key(self, bonded_index, donor_or_acceptor):
+        pass
 
-    def _add_new_key(self, bonded_index):
-        segid, residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
-        key = segid, residue, bonded_atom_name
-        if not key in self._index:
+
+    def _add_new_key(self, bonded_index, donor_or_acceptor):
+        key = self._get_key(bonded_index, donor_or_acceptor)
+        if not key == None and not key in self._index:
             self._index[key] = self._max_index
             self._inverted_index[self._max_index] = key
             self._max_index += 1
@@ -2659,11 +2658,11 @@ class Hbond_backbone_indexer_base(object):
          
 
         for atom_index in self._iter_atom_ids():
-            for table,target in self._iter_tables_and_targets(table_manager):
+            for table,target, donor_or_acceptor in self._iter_tables_and_targets(table_manager):
                 for atom_selector in  table.get_atom_selector(target):
                     bonded_index  = self._find_bonded_index(atom_index,atom_selector)
                     if bonded_index > -1:
-                        self._add_new_key(bonded_index)
+                        self._add_new_key(bonded_index, donor_or_acceptor)
                                  
                          
     def get_index_for_key(self,key):
@@ -2685,8 +2684,15 @@ class Hbond_backbone_donor_indexer(Hbond_backbone_indexer_base):
         super(Hbond_backbone_donor_indexer, self).__init__(table_manager)
          
     def _get_targets(self, table):
-        return table.get_donor_types()
-     
+        for target in table.get_donor_types():
+            yield target, DONOR
+
+    def _get_key(self, bonded_index, donor_or_acceptor):
+        segid, residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
+        if donor_or_acceptor == DONOR:
+            result = segid, residue, bonded_atom_name
+        return result
+    
     def get_name(self):
         return 'hbond donor'
      
@@ -2696,8 +2702,16 @@ class Hbond_backbone_acceptor_indexer(Hbond_backbone_indexer_base):
         super(Hbond_backbone_acceptor_indexer, self).__init__(table_manager)
          
     def _get_targets(self, table):
-        return table.get_acceptor_types()
- 
+        for target in table.get_acceptor_types():
+            yield target, ACCEPTOR
+
+    def _get_key(self, bonded_index, donor_or_acceptor):
+        result = None
+        segid, residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
+        if donor_or_acceptor == ACCEPTOR:
+            result = segid, residue, bonded_atom_name
+        return result
+    
     def get_name(self):
         return 'hbond acceptor'
 
