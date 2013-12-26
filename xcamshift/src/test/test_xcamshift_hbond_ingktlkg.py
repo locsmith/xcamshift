@@ -30,40 +30,40 @@ from component_list import Native_component_list
 
 BACKBONE=1
 SIDE_CHAIN=0
-EXPECTED_ACCEPTORS_BASE =   (((7,  'O'),   (7,  'C'),  BACKBONE),
-                             ((8,  'N'),   (7,  'C'),  BACKBONE),
-                             ((8,  'O'),   (8,  'C'),  BACKBONE),
-                             ((9,  'N'),   (8,  'C'),  BACKBONE),
-                             ((9,  'O'),   (9,  'C'),  BACKBONE),
-                             ((10, 'N'),   (9,  'C'),  BACKBONE),
-                             ((10, 'O'),   (10, 'C'),  BACKBONE),
-                             ((10, 'NZ'),  (10, 'CE'), SIDE_CHAIN),
-                             ((11, 'N'),   (10, 'C'),  BACKBONE),
-                             ((11, 'O'),   (11, 'C'),  BACKBONE),
-                             ((11, 'OG1'), (11, 'CB'), SIDE_CHAIN),
-                             ((12, 'N'),   (11, 'C'),  BACKBONE),
-                             ((12, 'O'),   (12, 'C'),  BACKBONE),
-                             ((13, 'N'),   (12, 'C'),  BACKBONE),
-                             ((13, 'O'),   (13, 'C'),  BACKBONE),
-                             ((13, 'NZ'),  (13, 'CE'), SIDE_CHAIN),
-                             ((14, 'N'),   (13, 'C'),  BACKBONE))
+EXPECTED_ACCEPTORS_BASE =   ((ACCEPTOR, (7,  'O'),   (7,  'C'),  BACKBONE),
+                             (ACCEPTOR, (8,  'N'),   (7,  'C'),  BACKBONE),
+                             (ACCEPTOR, (8,  'O'),   (8,  'C'),  BACKBONE),
+                             (ACCEPTOR, (9,  'N'),   (8,  'C'),  BACKBONE),
+                             (ACCEPTOR, (9,  'O'),   (9,  'C'),  BACKBONE),
+                             (ACCEPTOR, (10, 'N'),   (9,  'C'),  BACKBONE),
+                             (ACCEPTOR, (10, 'O'),   (10, 'C'),  BACKBONE),
+                             (ACCEPTOR, (10, 'NZ'),  (10, 'CE'), SIDE_CHAIN),
+                             (ACCEPTOR, (11, 'N'),   (10, 'C'),  BACKBONE),
+                             (ACCEPTOR, (11, 'O'),   (11, 'C'),  BACKBONE),
+                             (ACCEPTOR, (11, 'OG1'), (11, 'CB'), SIDE_CHAIN),
+                             (ACCEPTOR, (12, 'N'),   (11, 'C'),  BACKBONE),
+                             (ACCEPTOR, (12, 'O'),   (12, 'C'),  BACKBONE),
+                             (ACCEPTOR, (13, 'N'),   (12, 'C'),  BACKBONE),
+                             (ACCEPTOR, (13, 'O'),   (13, 'C'),  BACKBONE),
+                             (ACCEPTOR, (13, 'NZ'),  (13, 'CE'), SIDE_CHAIN),
+                             (ACCEPTOR, (14, 'N'),   (13, 'C'),  BACKBONE))
 
-EXPECTED_DONORS_BASE =  (((8,  'HN'),  (8,  'N'),   BACKBONE),
-                        ((9,  'HN'),  (9,  'N'),   BACKBONE),
-                        ((10, 'HN'),  (10, 'N'),   BACKBONE),
-                        ((10, 'HZ1'), (10, 'NZ'),  SIDE_CHAIN),
-                        ((10, 'HZ2'), (10, 'NZ'),  SIDE_CHAIN),
-                        ((10, 'HZ3'), (10, 'NZ'),  SIDE_CHAIN),
-                        ((11, 'HN'),  (11, 'N'),   BACKBONE),
-                        ((11, 'HG1'), (11, 'OG1'), SIDE_CHAIN),
-                        ((12, 'HN'),  (12, 'N'),   BACKBONE),
-                        ((13, 'HN'),  (13, 'N'),   BACKBONE),
-                        ((13, 'HZ1'), (13, 'NZ'),  SIDE_CHAIN),
-                        ((13, 'HZ2'), (13, 'NZ'),  SIDE_CHAIN),
-                        ((13, 'HZ3'), (13, 'NZ'),  SIDE_CHAIN),
-                        ((14, 'HN'),  (14, 'N'),   BACKBONE))
+EXPECTED_DONORS_BASE = ((DONOR, (8,  'HN'),  (8,  'N'),   BACKBONE),
+                        (DONOR, (9,  'HN'),  (9,  'N'),   BACKBONE),
+                        (DONOR, (10, 'HN'),  (10, 'N'),   BACKBONE),
+                        (DONOR, (10, 'HZ1'), (10, 'NZ'),  SIDE_CHAIN),
+                        (DONOR, (10, 'HZ2'), (10, 'NZ'),  SIDE_CHAIN),
+                        (DONOR, (10, 'HZ3'), (10, 'NZ'),  SIDE_CHAIN),
+                        (DONOR, (11, 'HN'),  (11, 'N'),   BACKBONE),
+                        (DONOR, (11, 'HG1'), (11, 'OG1'), SIDE_CHAIN),
+                        (DONOR, (12, 'HN'),  (12, 'N'),   BACKBONE),
+                        (DONOR, (13, 'HN'),  (13, 'N'),   BACKBONE),
+                        (DONOR, (13, 'HZ1'), (13, 'NZ'),  SIDE_CHAIN),
+                        (DONOR, (13, 'HZ2'), (13, 'NZ'),  SIDE_CHAIN),
+                        (DONOR, (13, 'HZ3'), (13, 'NZ'),  SIDE_CHAIN),
+                        (DONOR, (14, 'HN'),  (14, 'N'),   BACKBONE))
 
-EXPECTED_DONORS = [(elem[0][0],elem[0][1],elem[1][1],elem[2]) for elem in  EXPECTED_DONORS_BASE]
+EXPECTED_DONORS = [(elem[1][0],elem[1][1],elem[2][1],elem[3]) for elem in  EXPECTED_DONORS_BASE]
 
 DIST=0
 ANG_1=1
@@ -112,14 +112,14 @@ EXPECTED_ACCEPTOR_TYPES = sorted(['ON',])
 
 EXPECTED_INDIRECT_ACCEPTORS = {}
 for elem in EXPECTED_ACCEPTORS_BASE:
-    EXPECTED_INDIRECT_ACCEPTORS['',elem[0][0],elem[0][1]] = '',elem[1][0],elem[1][1]
+    EXPECTED_INDIRECT_ACCEPTORS['',elem[1][0],elem[1][1]] = '',elem[2][0],elem[2][1]
 
     
-EXPECTED_DIRECT_ACCEPTORS = [('',elem[0][0],elem[0][1]) for elem in EXPECTED_ACCEPTORS_BASE]
+EXPECTED_DIRECT_ACCEPTORS = [('',elem[1][0],elem[1][1]) for elem in EXPECTED_ACCEPTORS_BASE]
 
 
 EXPECTED_BACK_BONE_DONORS = [('',elem[0],elem[1]) for elem in EXPECTED_DONORS if elem[-1] == 1]
-EXPECTED_BACK_BONE_ACCEPTORS = [('',elem[0][0],elem[0][1]) for elem in EXPECTED_ACCEPTORS_BASE if elem[-1] == 1]
+EXPECTED_BACK_BONE_ACCEPTORS = [('',elem[1][0],elem[1][1]) for elem in EXPECTED_ACCEPTORS_BASE if elem[-1] == 1]
 
 
 
