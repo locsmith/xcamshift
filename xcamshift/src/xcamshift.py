@@ -2888,8 +2888,8 @@ class Hydrogen_bond_donor_acceptor_component_factory(Atom_component_factory):
             self.index+=1
         return component
     
-DONOR = 1
-ACCEPTOR = 2
+DONOR = 0
+ACCEPTOR = 1
 class Hydrogen_bond_donor_component_factory(Hydrogen_bond_donor_acceptor_component_factory):
     
     def get_table_name(self):
