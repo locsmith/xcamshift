@@ -191,7 +191,8 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
             elem_1 = result[difference_offset]
             elem_2 = expected[difference_offset]
             message = template % (msg,difference_offset, `elem_1`,`elem_2`,delta)
-            raise AssertionError(message)                 
+            raise AssertionError(message)            
+             
     def setUp(self):
         initStruct("test_data/ingktlkg_hbond/INGKTLKG.psf")
         PDBTool("test_data/ingktlkg_hbond/INGKTLKG.pdb").read()
