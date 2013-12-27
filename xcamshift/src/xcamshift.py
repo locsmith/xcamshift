@@ -2677,6 +2677,25 @@ class Hbond_backbone_indexer_base(object):
     def iter_keys(self):
         for index in range(self._max_index):
             yield self._inverted_index[index] 
+            
+class Hbond_backbone_donor_and_acceptor_indexer(Hbond_backbone_indexer_base):
+
+    def __init__(self, table_manager):
+        super(Hbond_backbone_donor_and_acceptor_indexer, self).__init__(table_manager)
+
+    def _get_targets(self, table):
+        for target in table.get_donor_types():
+            yield target, DONOR 
+        for target in table.get_acceptor_types():
+            yield target, ACCEPTOR
+
+    def _get_key(self, bonded_index, donor_or_acceptor):
+        segid, residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
+        return segid, residue, bonded_atom_name, donor_or_acceptor
+
+    def get_name(self):
+        return 'hbond donor or acceptor' 
+              
              
 class Hbond_backbone_donor_indexer(Hbond_backbone_indexer_base):
  

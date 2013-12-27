@@ -16,7 +16,7 @@ Created on 31 Dec 2011
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
-from xcamshift import Hbond_backbone_donor_indexer, Hbond_backbone_acceptor_indexer, Hydrogen_bond_context, Hbond_atom_type_indexer,\
+from xcamshift import Hbond_backbone_donor_and_acceptor_indexer, Hbond_backbone_donor_indexer, Hbond_backbone_acceptor_indexer, Hydrogen_bond_context, Hbond_atom_type_indexer,\
      Hydrogen_bond_donor_context, Hydrogen_bond_acceptor_context, Hydrogen_bond_donor_component_factory, DONOR,ACCEPTOR,\
      Hbond_donor_atom_type_indexer, Hbond_acceptor_atom_type_indexer, Hydrogen_bond_acceptor_component_factory, Xcamshift, Hydrogen_bond_parameter_factory, \
      Hydrogen_bond_donor_lookup_factory, Hydrogen_bond_acceptor_lookup_factory,\
@@ -31,36 +31,36 @@ from component_list import Native_component_list
 BACKBONE=1
 SIDE_CHAIN=0
 EXPECTED_DONOR_ACCEPTORS_BASE =     ((ACCEPTOR, (7,  'O'),   (7,  'C'),   BACKBONE),
-                                     (DONOR,    (8,  'HN'),  (8,  'N'),   BACKBONE),
                                      (ACCEPTOR, (8,  'N'),   (7,  'C'),   BACKBONE),
+                                     (DONOR,    (8,  'HN'),  (8,  'N'),   BACKBONE),
                                      (ACCEPTOR, (8,  'O'),   (8,  'C'),   BACKBONE),
-                                     (DONOR,    (9,  'HN'),  (9,  'N'),   BACKBONE),
                                      (ACCEPTOR, (9,  'N'),   (8,  'C'),   BACKBONE),
+                                     (DONOR,    (9,  'HN'),  (9,  'N'),   BACKBONE),
                                      (ACCEPTOR, (9,  'O'),   (9,  'C'),   BACKBONE),
+                                     (ACCEPTOR, (10, 'N'),   (9,  'C'),   BACKBONE),
                                      (DONOR,    (10, 'HN'),  (10, 'N'),   BACKBONE),
+                                     (ACCEPTOR, (10, 'O'),   (10, 'C'),   BACKBONE),
                                      (DONOR,    (10, 'HZ1'), (10, 'NZ'),  SIDE_CHAIN),
                                      (DONOR,    (10, 'HZ2'), (10, 'NZ'),  SIDE_CHAIN),
                                      (DONOR,    (10, 'HZ3'), (10, 'NZ'),  SIDE_CHAIN),
-                                     (ACCEPTOR, (10, 'N'),   (9,  'C'),   BACKBONE),
-                                     (ACCEPTOR, (10, 'O'),   (10, 'C'),   BACKBONE),
                                      (ACCEPTOR, (10, 'NZ'),  (10, 'CE'),  SIDE_CHAIN),
-                                     (DONOR,    (11, 'HN'),  (11, 'N'),   BACKBONE),
                                      (DONOR,    (11, 'HG1'), (11, 'OG1'), SIDE_CHAIN),
                                      (ACCEPTOR, (11, 'N'),   (10, 'C'),   BACKBONE),
+                                     (DONOR,    (11, 'HN'),  (11, 'N'),   BACKBONE),
                                      (ACCEPTOR, (11, 'O'),   (11, 'C'),   BACKBONE),
                                      (ACCEPTOR, (11, 'OG1'), (11, 'CB'),  SIDE_CHAIN),
-                                     (DONOR,    (12, 'HN'),  (12, 'N'),   BACKBONE),
                                      (ACCEPTOR, (12, 'N'),   (11, 'C'),   BACKBONE),
+                                     (DONOR,    (12, 'HN'),  (12, 'N'),   BACKBONE),
                                      (ACCEPTOR, (12, 'O'),   (12, 'C'),   BACKBONE),
-                                     (DONOR,    (13, 'HN'),  (13, 'N'),   BACKBONE),
                                      (DONOR,    (13, 'HZ1'), (13, 'NZ'),  SIDE_CHAIN),
                                      (DONOR,    (13, 'HZ2'), (13, 'NZ'),  SIDE_CHAIN),
                                      (DONOR,    (13, 'HZ3'), (13, 'NZ'),  SIDE_CHAIN),
                                      (ACCEPTOR, (13, 'N'),   (12, 'C'),   BACKBONE),
+                                     (DONOR,    (13, 'HN'),  (13, 'N'),   BACKBONE),
                                      (ACCEPTOR, (13, 'O'),   (13, 'C'),   BACKBONE),
                                      (ACCEPTOR, (13, 'NZ'),  (13, 'CE'),  SIDE_CHAIN),
-                                     (DONOR,    (14, 'HN'),  (14, 'N'),   BACKBONE),
-                                     (ACCEPTOR, (14, 'N'),   (13, 'C'),   BACKBONE))
+                                     (ACCEPTOR, (14, 'N'),   (13, 'C'),   BACKBONE),
+                                     (DONOR,    (14, 'HN'),  (14, 'N'),   BACKBONE))
    
 EXPECTED_DONORS = [(elem[1][0],elem[1][1],elem[2][1],elem[3]) for elem in  EXPECTED_DONOR_ACCEPTORS_BASE if elem[0] == DONOR]
 
@@ -121,6 +121,7 @@ EXPECTED_DIRECT_ACCEPTORS = [('',elem[1][0],elem[1][1]) for elem in EXPECTED_DON
 EXPECTED_BACK_BONE_DONORS = [('',elem[0],elem[1]) for elem in EXPECTED_DONORS if elem[-1] == 1]
 EXPECTED_BACK_BONE_ACCEPTORS = [('',elem[1][0],elem[1][1]) for elem in EXPECTED_DONOR_ACCEPTORS_BASE if elem[-1] == 1 and elem[0] == ACCEPTOR]
 
+EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS = [('',elem[1][0],elem[1][1],elem[0]) for elem in EXPECTED_DONOR_ACCEPTORS_BASE if elem[-1] == 1]
 
 
 class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
@@ -197,6 +198,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         Atom_utils.clear_cache()
 
         table_manager =  Table_manager.get_default_table_manager()
+        self.donor_and_acceptor_indexer = Hbond_backbone_donor_and_acceptor_indexer(table_manager)
         self.donor_indexer  = Hbond_backbone_donor_indexer(table_manager)
         self.acceptor_indexer  = Hbond_backbone_acceptor_indexer(table_manager)
         self.donor_atom_type_indexer =  Hbond_donor_atom_type_indexer(table_manager)
@@ -213,16 +215,22 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
          
         acceptors = [acceptor for acceptor in self.acceptor_indexer.iter_keys()]
         self.assertSequenceEqual(sorted(acceptors), sorted(EXPECTED_BACK_BONE_ACCEPTORS))
-     
+        
+        donors_and_acceptors = [donor_or_acceptor for donor_or_acceptor in self.donor_and_acceptor_indexer.iter_keys()]
+        self.assertEqual(sorted(EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS), sorted(donors_and_acceptors))
+
     def test_backbone_donor_and_acceptor_indexers_get_max_index(self):
         self.assertEqual(self.donor_indexer.get_max_index(), len(EXPECTED_BACK_BONE_DONORS))
         self.assertEqual(self.acceptor_indexer.get_max_index(), len(EXPECTED_BACK_BONE_ACCEPTORS))
+        self.assertEqual(self.donor_and_acceptor_indexer.get_max_index(), len(EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS), )
  
     def test_backbone_donor_and_acceptor_indexers_get_name(self):    
         self.assertTrue('donor' in self.donor_indexer.get_name().lower())
         self.assertTrue('acceptor' in self.acceptor_indexer.get_name().lower())
- 
- 
+        
+        self.assertTrue('acceptor' in self.donor_and_acceptor_indexer.get_name().lower())
+        self.assertTrue('donor' in self.donor_and_acceptor_indexer.get_name().lower())
+        
     def test_backbone_donor_and_acceptor_indexers_get_index_for_key(self,):
 
         for i,acceptor in enumerate(EXPECTED_BACK_BONE_ACCEPTORS):
@@ -232,6 +240,10 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         for j,donor in enumerate(EXPECTED_BACK_BONE_DONORS):
             self.assertEqual(j,self.donor_indexer.get_index_for_key(donor))
         self.assertEqual(j+1, self.donor_indexer.get_max_index())
+        
+        for k,donor_acceptor in enumerate(EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS):
+            self.assertEqual(k,self.donor_and_acceptor_indexer.get_index_for_key(donor_acceptor))
+        self.assertEqual(k+1, self.donor_and_acceptor_indexer.get_max_index())
                         
       
     def test_backbone_donor_and_acceptor_indexers_get_index_get_key_for_index(self):
@@ -243,6 +255,9 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
             self.assertEqual(donor,self.donor_indexer.get_key_for_index(j))
         self.assertEqual(j+1, self.donor_indexer.get_max_index())
     
+        for k,donor_acceptor in enumerate(EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS):
+            self.assertEqual(donor_acceptor,self.donor_and_acceptor_indexer.get_key_for_index(k))
+        self.assertEqual(k+1, self.donor_and_acceptor_indexer.get_max_index())
          
     def test_hbond_context(self):
         atom = Atom_utils.find_atom('', 10, 'HN')[0]
