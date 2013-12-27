@@ -68,35 +68,33 @@ DIST=0
 ANG_1=1
 ANG_2=2
 
-EXPECTED_DONOR_ENERGIES = {
-        ('',  9, 'HN', DIST):     3.64372,
-        ('',  9, 'HN', ANG_1):  701.205,
-        ('',  9, 'HN', ANG_2): 6548.52,
-        ('', 11, 'HN', DIST):     4.45286,
-        ('', 11, 'HN', ANG_1):  672.789,
-        ('', 11, 'HN', ANG_2): 6252.28,
-        ('', 12, 'HN', DIST):     4.66541,
-        ('', 12, 'HN', ANG_1):  695.025,
-        ('', 12, 'HN', ANG_2): 6238.2,
-        ('', 14, 'HN', DIST):     3.27874313127,
-        ('', 14, 'HN', ANG_1):  696.529729434,
-        ('', 14, 'HN', ANG_2):  6683.4703906
+EXPECTED_DONOR_ACCEPTOR_ENERGIES = {
+        ('',  7,  'O', 1, DIST):     3.27874313127,
+        ('',  7,  'O', 1, ANG_1):  696.529729434,
+        ('',  7,  'O', 1, ANG_2):  6683.4703906,
+        ('',  9, 'HN', 0, DIST):     3.64372,
+        ('',  9, 'HN', 0, ANG_1):  701.205,
+        ('',  9, 'HN', 0, ANG_2): 6548.52,
+        ('', 10,  'N', 1, DIST):     4.45286,
+        ('', 10,  'N', 1, ANG_1):  672.789,
+        ('', 10,  'N', 1, ANG_2): 6252.28,
+        ('', 11, 'HN', 0, DIST):     4.45286,
+        ('', 11, 'HN', 0, ANG_1):  672.789,
+        ('', 11, 'HN', 0, ANG_2): 6252.28,
+        ('', 11,  'N', 1, DIST):     4.66541,
+        ('', 11,  'N', 1, ANG_1):  695.025,
+        ('', 11,  'N', 1, ANG_2): 6238.2,
+        ('', 12, 'HN', 0, DIST):     4.66541,
+        ('', 12, 'HN', 0, ANG_1):  695.025,
+        ('', 12, 'HN', 0, ANG_2): 6238.2,
+        ('', 12,  'O', 1, DIST):     3.64372,
+        ('', 12,  'O', 1, ANG_1):  701.205,
+        ('', 12,  'O', 1, ANG_2): 6548.52,
+        ('', 14, 'HN', 0, DIST):     3.27874313127,
+        ('', 14, 'HN', 0, ANG_1):  696.529729434,
+        ('', 14, 'HN', 0, ANG_2):  6683.4703906
 }
 
-EXPECTED_ACCEPTOR_ENERGIES = {
-        ('',  7,  'O', DIST):     3.27874313127,
-        ('',  7,  'O', ANG_1):  696.529729434,
-        ('',  7,  'O', ANG_2):  6683.4703906,
-        ('', 12,  'O', DIST):     3.64372,
-        ('', 12,  'O', ANG_1):  701.205,
-        ('', 12,  'O', ANG_2): 6548.52,
-        ('', 10,  'N', DIST):     4.45286,
-        ('', 10,  'N', ANG_1):  672.789,
-        ('', 10,  'N', ANG_2): 6252.28,
-        ('', 11,  'N', DIST):     4.66541,
-        ('', 11,  'N', ANG_1):  695.025,
-        ('', 11,  'N', ANG_2): 6238.2
-}   
 
 
 
@@ -390,13 +388,14 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
             self.assertEqual(i,component[INDEX])
             
             atom_key = Atom_utils._get_atom_info_from_index(component[DIRECT_ATOM_ID])
+            extended_atom_key = atom_key + (donor_or_acceptor,)
             indirect_atom_key = Atom_utils._get_atom_info_from_index(component[INDIRECT_ATOM_ID])
             
             if component[BACKBONE] > -1:
-                self.assertSequenceContains(atom_key, expected_backbone)
-                self.assertEqual(component[BACKBONE], expected_backbone.index(atom_key))
+                self.assertSequenceContains(extended_atom_key, expected_backbone)
+                self.assertEqual(component[BACKBONE], expected_backbone.index(extended_atom_key))
             else:
-                self.assertSequenceDoesntContain(atom_key, expected_backbone)
+                self.assertSequenceDoesntContain(extended_atom_key, expected_backbone)
             
             self.assertIn(atom_key, expected_direct_donors_or_acceptors)
             if atom_key in expected_direct_donors_or_acceptors:
@@ -416,10 +415,10 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         self.assertEmpty(expected_indirect_donors_or_acceptors)
 
     def test_hydrogen_bond_donor_components(self):
-        self._do_test_donor_acceptor_components(Hydrogen_bond_donor_component_factory(), set(EXPECTED_DIRECT_DONORS), dict(EXPECTED_INDIRECT_DONORS), DONOR, EXPECTED_BACK_BONE_DONORS)
+        self._do_test_donor_acceptor_components(Hydrogen_bond_donor_component_factory(), set(EXPECTED_DIRECT_DONORS), dict(EXPECTED_INDIRECT_DONORS), DONOR, EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS)
         
     def test_hydrogen_bond_acceptor_components(self):
-        self._do_test_donor_acceptor_components(Hydrogen_bond_acceptor_component_factory(), set(EXPECTED_DIRECT_ACCEPTORS), dict(EXPECTED_INDIRECT_ACCEPTORS), ACCEPTOR, EXPECTED_BACK_BONE_ACCEPTORS)
+        self._do_test_donor_acceptor_components(Hydrogen_bond_acceptor_component_factory(), set(EXPECTED_DIRECT_ACCEPTORS), dict(EXPECTED_INDIRECT_ACCEPTORS), ACCEPTOR, EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS)
     
     def test_fast_hydrogen_bond_calculator(self):
         test = Fast_hydrogen_bond_calculator(self.get_single_member_ensemble_simulation())
@@ -438,31 +437,22 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
                       'DIDX' : donor_index_components.get_native_components(),
                       'AIDX' : acceptor_index_components.get_native_components()
                       }
-        
-        num_donors = self.donor_indexer.get_max_index()
-        num_acceptors = self.acceptor_indexer.get_max_index()
-        
-        donor_energies = allocate_array(num_donors*3, type='f')
-        acceptor_energies = allocate_array(num_acceptors*3,type='f')
-        test(components, donor_energies, acceptor_energies)
-        
-        for donor_selector in EXPECTED_DONOR_ENERGIES.keys():
-            offset =  self.donor_indexer.get_index_for_key(donor_selector[:3])*3+donor_selector[3]
-            self.assertAlmostEqual(donor_energies[offset]/EXPECTED_DONOR_ENERGIES[donor_selector],1.0,places=4)
-            del EXPECTED_DONOR_ENERGIES[donor_selector]
-            donor_energies[offset] = 0.0
+         
+        num_donors_and_acceptors = self.donor_and_acceptor_indexer.get_max_index()
+         
+        energies = allocate_array(num_donors_and_acceptors*3, type='f')
+        test(components, energies)
+         
+        for donor_acceptor_selector in EXPECTED_DONOR_ACCEPTOR_ENERGIES.keys():
+            offset =  self.donor_and_acceptor_indexer.get_index_for_key(donor_acceptor_selector[:4])*3+donor_acceptor_selector[4]
+            self.assertAlmostEqual(energies[offset]/EXPECTED_DONOR_ACCEPTOR_ENERGIES[donor_acceptor_selector],1.0,places=4)
+            del EXPECTED_DONOR_ACCEPTOR_ENERGIES[donor_acceptor_selector]
+            energies[offset] = 0.0
+  
+      
+        self.assertEmpty(EXPECTED_DONOR_ACCEPTOR_ENERGIES)
 
-        for acceptor_selector in EXPECTED_ACCEPTOR_ENERGIES.keys():
-            offset =  self.acceptor_indexer.get_index_for_key(acceptor_selector[:3])*3+acceptor_selector[3]
-            self.assertAlmostEqual(acceptor_energies[offset]/EXPECTED_ACCEPTOR_ENERGIES[acceptor_selector],1.0,places=4,msg=acceptor_selector)
-            del EXPECTED_ACCEPTOR_ENERGIES[acceptor_selector]
-            acceptor_energies[offset] = 0.0
-    
-        self.assertEmpty(EXPECTED_ACCEPTOR_ENERGIES)
-        self.assertEmpty(EXPECTED_DONOR_ENERGIES)
-        
-        self.assertSequenceAlmostEqual(donor_energies, [0.0]* len(donor_energies))
-        self.assertSequenceAlmostEqual(acceptor_energies, [0.0]* len(acceptor_energies))
+        self.assertSequenceAlmostEqual(energies, [0.0]* len(energies))
         
     def test_parameter_components(self):
         factory = Hydrogen_bond_parameter_factory()

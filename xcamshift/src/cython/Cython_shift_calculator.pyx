@@ -1500,7 +1500,7 @@ cdef class Fast_hydrogen_bond_calculator:
         return params.p[0] * (term_1**params.r - term_2**params.s) + params.p[5]
     
     @cython.profile(True)
-    def __call__(self, components, float[:] donor_energies, float[:] acceptor_energies):#,  Hydrogen_bond_energy_list energy_list):
+    def __call__(self, components, float[:] energies):#,  Hydrogen_bond_energy_list energy_list):
         
         donor_list = components['DONR']
         acceptor_list =  components['ACCP']
@@ -1616,15 +1616,15 @@ cdef class Fast_hydrogen_bond_calculator:
                     energy_ang_1 = self._calc_energy(angle_1 / PI * 180.0, params_angle_1)
                     energy_ang_2 = self._calc_energy(angle_2 / PI * 180.0, params_angle_2)
                     
-                    if donor_components[donor_index].backbone > -1:
-                        donor_energies[donor_components[donor_index].backbone*3] = energy_dist
-                        donor_energies[donor_components[donor_index].backbone*3+1] = energy_ang_1
-                        donor_energies[donor_components[donor_index].backbone*3+2] = energy_ang_2
+                    if acceptor_components[acceptor_index].backbone > -1:
+                        energies[donor_components[donor_index].backbone*3] = energy_dist
+                        energies[donor_components[donor_index].backbone*3+1] = energy_ang_1
+                        energies[donor_components[donor_index].backbone*3+2] = energy_ang_2
 #                 
                     if acceptor_components[acceptor_index].backbone > -1:
-                        acceptor_energies[acceptor_components[acceptor_index].backbone*3] = energy_dist
-                        acceptor_energies[acceptor_components[acceptor_index].backbone*3+1] = energy_ang_1
-                        acceptor_energies[acceptor_components[acceptor_index].backbone*3+2] = energy_ang_2
+                        energies[acceptor_components[acceptor_index].backbone*3] = energy_dist
+                        energies[acceptor_components[acceptor_index].backbone*3+1] = energy_ang_1
+                        energies[acceptor_components[acceptor_index].backbone*3+2] = energy_ang_2
                
                
         if self._verbose:
