@@ -2817,7 +2817,7 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
                             if attached_atom_name ==  atom_selector[1]:
                                 self.indirect_atom_id = attached_atom_id
                                 if atom_selector[0] == ".":
-                                    key = segid,residue,atom_name
+                                    key = segid,residue,atom_name,self.type
                                     backbone_hydrogen_bond_indexer = self.get_backbone_hydrogen_bond_indexer()
                                     self.backbone = backbone_hydrogen_bond_indexer.get_index_for_key(key)
                                 else:
@@ -2832,15 +2832,15 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
     def get_atom_type_indexer(self):
         pass
 
-    @abstractmethod
     def get_backbone_hydrogen_bond_indexer(self):
+        return Hbond_backbone_donor_and_acceptor_indexer(Table_manager.get_default_table_manager())
         pass
     
 class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
     
     def __init__(self,atom,table):
-        super(Hydrogen_bond_donor_context, self).__init__(atom, table)
         self.type = DONOR
+        super(Hydrogen_bond_donor_context, self).__init__(atom, table)
         
     def get_donor_acceptor_types(self,table):
         return  table.get_donor_types()
@@ -2849,14 +2849,12 @@ class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
     def get_atom_type_indexer(self):
         return Hbond_donor_atom_type_indexer(Table_manager.get_default_table_manager())
     
-    def get_backbone_hydrogen_bond_indexer(self):
-        return Hbond_backbone_donor_indexer(Table_manager.get_default_table_manager())
 
 class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
     
     def __init__(self,atom, table):
-        super(Hydrogen_bond_acceptor_context, self).__init__(atom, table)
         self.type = ACCEPTOR
+        super(Hydrogen_bond_acceptor_context, self).__init__(atom, table)
         
     def get_donor_acceptor_types(self,table):
         return  table.get_acceptor_types()
@@ -2865,8 +2863,6 @@ class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
     def get_atom_type_indexer(self):
         return Hbond_acceptor_atom_type_indexer(Table_manager.get_default_table_manager())
 
-    def get_backbone_hydrogen_bond_indexer(self):
-        return Hbond_backbone_acceptor_indexer(Table_manager.get_default_table_manager())
         
 class Hydrogen_bond_donor_acceptor_component_factory(Atom_component_factory):
     def __init__(self):
