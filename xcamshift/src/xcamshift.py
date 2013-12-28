@@ -2748,16 +2748,14 @@ class Hydrogen_bond_context:
             offset_resnum = res_num + offset
             offset_atoms  = Atom_utils.find_atom_ids(segid, offset_resnum, offset_atom_name)
             
-            if len(offset_atoms) == 1:
                 
-                if len(offset_atoms) == 1:
-                    self.hbond_atom_index = offset_atoms[0]
-                    hbond_key = segid, offset_resnum, offset_atom_name
-                    self.hbond_index = indexer.get_index_for_key(hbond_key)
-                    self.complete =  True
-                    self.coeffs = []
-                    for coeff_id in 'DIST','ANG1','ANG2':
-                        self.coeffs.append(table.get_energy_offset_correction(offset_data, coeff_id,atom_name))
+            if len(offset_atoms) == 1:
+                hbond_key = segid, offset_resnum, offset_atom_name
+                self.hbond_index = indexer.get_index_for_key(hbond_key)
+                self.complete =  True
+                self.coeffs = []
+                for coeff_id in 'DIST','ANG1','ANG2':
+                    self.coeffs.append(table.get_energy_offset_correction(offset_data, coeff_id,atom_name))
                         
             elif len(offset_atoms) > 1:
                 msg = 'unexpected multiple atoms found for hbond with atom %s and offset %s'
@@ -2789,7 +2787,7 @@ class Hydrogen_bond_component_factory(Atom_component_factory):
 
         result = None
         if context.complete:
-            result = [context.target_atom_index,context.hbond_atom_index]
+            result = [context.target_atom_index,context.hbond_index]
             result.extend(context.coeffs)
         return tuple(result)
 

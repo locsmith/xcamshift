@@ -318,7 +318,6 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         
         self.assertTrue(hbond_context_0.complete)        
         self.assertEqual(Atom_utils.find_atom_ids('   ',10,'HN')[0], hbond_context_0.target_atom_index)
-        self.assertEqual(Atom_utils.find_atom_ids('   ',10,'O')[0], hbond_context_0.hbond_atom_index)
         self.assertEqual(hbond_context_0.hbond_index, EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS.index(('',10,'O')))
         
         EXPECTED_COEFFS_0 = [-0.00000547, 0.00023294, -0.00001567]
@@ -331,7 +330,6 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         EXPECTED_COEFFS_1 = [-0.00000010, -0.00123116, 0.00012507]
         self.assertTrue(hbond_context_1.complete)
         self.assertEqual(Atom_utils.find_atom_ids('   ',10,'HN')[0], hbond_context_1.target_atom_index)
-        self.assertEqual(Atom_utils.find_atom_ids('   ',9,'O')[0], hbond_context_1.hbond_atom_index)
         self.assertSequenceAlmostEqual(EXPECTED_COEFFS_1, hbond_context_1.coeffs)
         self.assertEqual(hbond_context_1.hbond_index, EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS.index(('',9,'O')))
 
