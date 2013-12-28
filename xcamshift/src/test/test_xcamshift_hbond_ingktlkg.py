@@ -133,7 +133,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         if expected not in sequence:
             sequence_strings = [`elem` for elem in sequence]
             sequence_string = '\n'.join(sequence_strings)
-            raise AssertionError("element %s not found in the sequence:\n%s" % sequence_string,`expected`)
+            raise AssertionError("element %s not found in the sequence:\n%s" % (`expected`,sequence_string))
 
         
     def assertSequenceDoesntContain(self,expected,sequence):
