@@ -121,7 +121,6 @@ EXPECTED_BACK_BONE_ACCEPTORS = [('',elem[1][0],elem[1][1]) for elem in EXPECTED_
 
 EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS = [('',elem[1][0],elem[1][1]) for elem in EXPECTED_DONOR_ACCEPTORS_BASE if elem[-1] == 1]
 
-
 class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
 
     def __init__(self,*args,**kwargs):
@@ -313,28 +312,31 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         atom = Atom_utils.find_atom('', 10, 'HN')[0]
         offset_data_0 = (0, 'O')
         table  =  Table_manager.get_default_table_manager().get_hydrogen_bond_table('LYS')
+        indexer  = Hbond_backbone_donor_and_acceptor_indexer(Table_manager.get_default_table_manager())
         
-        hbond_context_0 = Hydrogen_bond_context(atom,offset_data_0,table)
+        hbond_context_0 = Hydrogen_bond_context(atom,offset_data_0,table, indexer)
         
         self.assertTrue(hbond_context_0.complete)        
         self.assertEqual(Atom_utils.find_atom_ids('   ',10,'HN')[0], hbond_context_0.target_atom_index)
         self.assertEqual(Atom_utils.find_atom_ids('   ',10,'O')[0], hbond_context_0.hbond_atom_index)
+        self.assertEqual(hbond_context_0.hbond_index, EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS.index(('',10,'O')))
         
         EXPECTED_COEFFS_0 = [-0.00000547, 0.00023294, -0.00001567]
         self.assertAlmostEqual(hbond_context_0.coeffs, EXPECTED_COEFFS_0)
         self.assertSequenceAlmostEqual(EXPECTED_COEFFS_0, hbond_context_0.coeffs)
         
         offset_data_1 = (-1, 'O')
-        hbond_context_1 = Hydrogen_bond_context(atom,offset_data_1,table)
+        hbond_context_1 = Hydrogen_bond_context(atom,offset_data_1,table,indexer)
 
         EXPECTED_COEFFS_1 = [-0.00000010, -0.00123116, 0.00012507]
         self.assertTrue(hbond_context_1.complete)
         self.assertEqual(Atom_utils.find_atom_ids('   ',10,'HN')[0], hbond_context_1.target_atom_index)
         self.assertEqual(Atom_utils.find_atom_ids('   ',9,'O')[0], hbond_context_1.hbond_atom_index)
         self.assertSequenceAlmostEqual(EXPECTED_COEFFS_1, hbond_context_1.coeffs)
+        self.assertEqual(hbond_context_1.hbond_index, EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS.index(('',9,'O')))
 
         offset_data_2 = (-3, 'HN')
-        hbond_context_2 = Hydrogen_bond_context(atom,offset_data_2,table)
+        hbond_context_2 = Hydrogen_bond_context(atom,offset_data_2,table,indexer)
 
         self.assertFalse(hbond_context_2.complete)
         
@@ -485,6 +487,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')
+#     ,defaultTest='TestXcamshiftHBondINGKTLKG.test_hbond_context')
     
 if __name__ == "__main__":
     run_tests()

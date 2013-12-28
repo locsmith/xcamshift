@@ -2736,7 +2736,7 @@ class Hbond_backbone_acceptor_indexer(Hbond_backbone_indexer_base):
 
 class Hydrogen_bond_context:
     
-    def __init__(self,atom,offset_data,table):
+    def __init__(self,atom,offset_data,table, indexer):
         segid, res_num,atom_name = Atom_utils._get_atom_info_from_index(atom.index())
         offset, offset_atom_name =  offset_data
         
@@ -2744,27 +2744,31 @@ class Hydrogen_bond_context:
         
         if atom_name in table.get_target_atoms():
             self.target_atom_index = atom.index()
-            offset_atoms  = Atom_utils.find_atom_ids(segid, res_num + offset, offset_atom_name)
+            
+            offset_resnum = res_num + offset
+            offset_atoms  = Atom_utils.find_atom_ids(segid, offset_resnum, offset_atom_name)
             
             if len(offset_atoms) == 1:
                 
                 if len(offset_atoms) == 1:
                     self.hbond_atom_index = offset_atoms[0]
+                    hbond_key = segid, offset_resnum, offset_atom_name
+                    self.hbond_index = indexer.get_index_for_key(hbond_key)
                     self.complete =  True
                     self.coeffs = []
                     for coeff_id in 'DIST','ANG1','ANG2':
                         self.coeffs.append(table.get_energy_offset_correction(offset_data, coeff_id,atom_name))
                         
-                elif len(offset_atoms) > 1:
-                    msg = 'unexpected multiple atoms found for hbond with atom %s and offset %s'
-                    print >> stderr, msg % (Atom_utils._get_atom_name(atom.index()), `offset`)
-                    return
+            elif len(offset_atoms) > 1:
+                msg = 'unexpected multiple atoms found for hbond with atom %s and offset %s'
+                print >> stderr, msg % (Atom_utils._get_atom_name(atom.index()), `offset`)
+                return
 
 
 class Hydrogen_bond_component_factory(Atom_component_factory):
     def __init__(self):
-        pass
-    
+        self._indexer = indexer = Hbond_backbone_donor_and_acceptor_indexer(Table_manager.get_default_table_manager())
+        
     #TODO: remove just kept to satisfy an abstract method declaration
     def _translate_atom_name(self, atom_name, context):
         pass
@@ -2776,7 +2780,7 @@ class Hydrogen_bond_component_factory(Atom_component_factory):
     def _build_contexts(self, atom, table):
         contexts = []
         for offset in table.get_energy_term_offsets():
-            context = Hydrogen_bond_context(atom,offset,table)
+            context = Hydrogen_bond_context(atom,offset,table, self._indexer)
             if context.complete:
                 contexts.append(context)
         return contexts
