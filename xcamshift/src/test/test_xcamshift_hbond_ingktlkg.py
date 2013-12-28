@@ -119,7 +119,7 @@ EXPECTED_DIRECT_ACCEPTORS = [('',elem[1][0],elem[1][1]) for elem in EXPECTED_DON
 EXPECTED_BACK_BONE_DONORS = [('',elem[0],elem[1]) for elem in EXPECTED_DONORS if elem[-1] == 1]
 EXPECTED_BACK_BONE_ACCEPTORS = [('',elem[1][0],elem[1][1]) for elem in EXPECTED_DONOR_ACCEPTORS_BASE if elem[-1] == 1 and elem[0] == ACCEPTOR]
 
-EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS = [('',elem[1][0],elem[1][1],elem[0]) for elem in EXPECTED_DONOR_ACCEPTORS_BASE if elem[-1] == 1]
+EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS = [('',elem[1][0],elem[1][1]) for elem in EXPECTED_DONOR_ACCEPTORS_BASE if elem[-1] == 1]
 
 
 class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
@@ -388,14 +388,13 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
             self.assertEqual(i,component[INDEX])
             
             atom_key = Atom_utils._get_atom_info_from_index(component[DIRECT_ATOM_ID])
-            extended_atom_key = atom_key + (donor_or_acceptor,)
             indirect_atom_key = Atom_utils._get_atom_info_from_index(component[INDIRECT_ATOM_ID])
             
             if component[BACKBONE] > -1:
-                self.assertSequenceContains(extended_atom_key, expected_backbone)
-                self.assertEqual(component[BACKBONE], expected_backbone.index(extended_atom_key))
+                self.assertSequenceContains(atom_key, expected_backbone)
+                self.assertEqual(component[BACKBONE], expected_backbone.index(atom_key))
             else:
-                self.assertSequenceDoesntContain(extended_atom_key, expected_backbone)
+                self.assertSequenceDoesntContain(atom_key, expected_backbone)
             
             self.assertIn(atom_key, expected_direct_donors_or_acceptors)
             if atom_key in expected_direct_donors_or_acceptors:
@@ -444,7 +443,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         test(components, energies)
          
         for donor_acceptor_selector in EXPECTED_DONOR_ACCEPTOR_ENERGIES.keys():
-            offset =  self.donor_and_acceptor_indexer.get_index_for_key(donor_acceptor_selector[:4])*3+donor_acceptor_selector[4]
+            offset =  self.donor_and_acceptor_indexer.get_index_for_key(donor_acceptor_selector[:3])*3+donor_acceptor_selector[4]
             self.assertAlmostEqual(energies[offset]/EXPECTED_DONOR_ACCEPTOR_ENERGIES[donor_acceptor_selector],1.0,places=4)
             del EXPECTED_DONOR_ACCEPTOR_ENERGIES[donor_acceptor_selector]
             energies[offset] = 0.0

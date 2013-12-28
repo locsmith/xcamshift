@@ -2691,7 +2691,7 @@ class Hbond_backbone_donor_and_acceptor_indexer(Hbond_backbone_indexer_base):
 
     def _get_key(self, bonded_index, donor_or_acceptor):
         segid, residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
-        return segid, residue, bonded_atom_name, donor_or_acceptor
+        return segid, residue, bonded_atom_name
 
     def get_name(self):
         return 'hbond donor or acceptor' 
@@ -2817,7 +2817,7 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
                             if attached_atom_name ==  atom_selector[1]:
                                 self.indirect_atom_id = attached_atom_id
                                 if atom_selector[0] == ".":
-                                    key = segid,residue,atom_name,self.type
+                                    key = segid,residue,atom_name
                                     backbone_hydrogen_bond_indexer = self.get_backbone_hydrogen_bond_indexer()
                                     self.backbone = backbone_hydrogen_bond_indexer.get_index_for_key(key)
                                 else:
