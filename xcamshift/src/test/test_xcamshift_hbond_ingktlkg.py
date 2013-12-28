@@ -257,11 +257,6 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
             self.assertEqual(donor_acceptor,self.donor_and_acceptor_indexer.get_key_for_index(k))
         self.assertEqual(k+1, self.donor_and_acceptor_indexer.get_max_index())
          
-    def test_hbond_context(self):
-        atom = Atom_utils.find_atom('', 10, 'HN')[0]
-        offset_data = (0, 'HN')
-        table  =  Table_manager.get_default_table_manager().get_hydrogen_bond_table('LYS')
-        hbond_context = Hydrogen_bond_context(atom,offset_data,table)
         
     def test_atom_indexer_indexers(self):
          
