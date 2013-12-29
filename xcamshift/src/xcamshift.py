@@ -245,6 +245,7 @@ class DistanceContext:
         to_atom_name = self._translate_atom_name_from_table(to_residue_type, to_atom_name, table)
         
         #TODO remove select atom with translation
+        #code here is strange and repeating
         to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, to_atom_name)
         
         if len(to_atom) == 0:
@@ -2735,10 +2736,18 @@ class Hbond_backbone_acceptor_indexer(Hbond_backbone_indexer_base):
         return 'hbond acceptor'
 
 class Hydrogen_bond_context:
+
+    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
+        return  table.get_translation_to_table(residue_type,atom_name)
+
+   
     
     def __init__(self,atom,offset_data,table, indexer):
         segid, res_num,atom_name = Atom_utils._get_atom_info_from_index(atom.index())
         offset, offset_atom_name =  offset_data
+        
+        residue_type = Atom_utils._get_residue_type_from_atom_id(atom.index())
+        atom_name =  self._translate_atom_name_to_table(residue_type, atom_name, table)
         
         self.complete = False
         
