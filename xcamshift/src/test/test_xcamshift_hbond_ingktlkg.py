@@ -23,12 +23,13 @@ from xcamshift import Hbond_backbone_donor_and_acceptor_indexer, Hbond_backbone_
      Hbond_donor_atom_type_indexer, Hbond_acceptor_atom_type_indexer, Hydrogen_bond_acceptor_component_factory, Xcamshift, Hydrogen_bond_parameter_factory, \
      Hydrogen_bond_donor_lookup_factory, Hydrogen_bond_acceptor_lookup_factory,\
     Hydrogen_bond_potential, Hydrogen_bond_component_factory
-from cython.shift_calculators import Fast_hydrogen_bond_calculator, allocate_array
+from cython.shift_calculators import Fast_hydrogen_bond_calculator, allocate_array, Fast_hydrogen_bond_shift_calculator, CDSSharedVectorFloat
 from cython.fast_segment_manager import Segment_Manager
 from utils import Atom_utils
 from table_manager import Table_manager
 from atomSel import AtomSel
 from component_list import Native_component_list
+from array import array
 
 BACKBONE=1
 SIDE_CHAIN=0
@@ -264,6 +265,75 @@ EXPECTED_SHIFT_OFFSET_DATA = {
             (13, 'C', 13, 'HN', 0)      :  ( -0.00433359160,  -0.00048367656,   0.00005464226),
             (13, 'C', 13, 'O', 0)       :  ( -0.00001692652,  -0.01135204363,   0.00116527444),
             (13, 'C', 14, 'HN', 1)      :  ( -0.00773595447,   0.00571298451,  -0.00054428381)
+}
+
+EXPECTED_SHIFTS = {
+            # correction for an extra h bond at '',7,'O' - '',14,'HN'
+#             ('', 8,'N',('O',-1))      :      (  -0.000246806004409, 3.27874302864, -12.56614343240),
+#             ('', 8,'HN',('O',-1))     :      (  -3.28693988621e-07, 3.27874302864,  -0.85754120682),
+#             ('', 8,'CA',('O',-1))     :      (  -1.68723460505e-05, 3.27874302864,   1.01220531862),
+#             ('', 8,'HA',('O',-1))     :      (  -9.24605534077e-08, 3.27874302864,  -0.40371505707),
+#             ('', 8,'CB',('O',-1))     :      (   0.000108275996643, 3.27874302864,  -1.13713495959),
+#             ('', 8,'C',('O',-1))      :      (   2.78174788162e-05, 3.27874302864,   2.77827268417),
+            
+            ('',8,'HA',('H',1))       :      (  -0.006474500,    0.599857000,   -0.533485000),
+            ('',9,'HA',('H',0))       :      (  -0.004580300,    0.098017700,   -0.027869100),
+            ('',9,'HA',('O',0))       :      (   0.000006546,    0.135957000,   -0.104492000),
+            ('',10,'HA',('O',-1))     :      (  -0.000000125,   -0.410183000,    0.445172000),
+            ('',10,'HA',('H',1))      :      (  -0.007912250,    0.575547000,   -0.509351000),
+            ('',11,'HA',('H',0))      :      (  -0.006184930,    0.072022100,   -0.003471000),
+            ('',11,'HA',('H',1))      :      (  -0.008289930,    0.594569000,   -0.508204000),
+            ('',12,'HA',('H',0))      :      (  -0.006480160,    0.074402500,   -0.003463190),
+            ('',12,'HA',('O',0))      :      (   0.000004160,    0.216251000,   -0.183896000),
+            ('',13,'HA',('O',-1))     :      (  -0.000000103,   -0.406425000,    0.449591000),
+            ('',8,'CA',('H',1))       :      (  -0.019108100,    2.417810000,   -2.490590000),
+            ('',9,'CA',('H',0))       :      (   0.011098300,    0.951711000,   -1.071050000),
+            ('',9,'CA',('O',0))       :      (  -0.000109881,   -0.186612000,    0.196367000),
+            ('',10,'CA',('O',-1))     :      (  -0.000022875,    1.028420000,   -0.903907000),
+            ('',10,'CA',('H',1))      :      (  -0.023351300,    2.319830000,   -2.377920000),
+            ('',11,'CA',('H',0))      :      (   0.013484500,    0.717254000,   -0.829249000),
+            ('',11,'CA',('H',1))      :      (  -0.024466000,    2.396500000,   -2.372560000),
+            ('',12,'CA',('H',0))      :      (   0.014128100,    0.740959000,   -0.827382000),
+            ('',12,'CA',('O',0))      :      (  -0.000093595,   -0.204609000,    0.214597000),
+            ('',13,'CA',('O',-1))     :      (  -0.000018750,    1.019000000,   -0.912880000),
+            ('',8,'HN',('H',1))       :      (   0.004125170,    0.120623000,   -0.065260200),
+            ('',9,'HN',('H',0))       :      (  -0.054101000,    3.593090000,   -3.757910000),
+            ('',9,'HN',('O',0))       :      (  -0.000026701,    0.015738100,    0.040809200),
+            ('',10,'HN',('O',-1))     :      (  -0.000000446,   -0.871281000,    0.810961000),
+            ('',10,'HN',('H',1))      :      (   0.005041210,    0.115735000,   -0.062308000),
+            ('',11,'HN',('H',0))      :      (  -0.063618800,    3.015520000,   -3.192350000),
+            ('',11,'HN',('H',1))      :      (   0.005281850,    0.119560000,   -0.062167700),
+            ('',12,'HN',('H',0))      :      (  -0.066655600,    3.115180000,   -3.185160000),
+            ('',12,'HN',('O',0))      :      (  -0.000019937,    0.163340000,   -0.102623000),
+            ('',13,'HN',('O',-1))     :      (  -0.000000365,   -0.863298000,    0.819011000),
+            ('',8,'N',('H',1))        :      (  -0.056743400,    8.255150000,   -7.984670000),
+            ('',9,'N',('H',0))        :      (  -0.045953700,    1.301760000,   -1.726140000),
+            ('',9,'N',('O',0))        :      (  -0.000353355,    3.916280000,   -3.400070000),
+            ('',10,'N',('O',-1))      :      (  -0.000334618,  -12.767500000,   12.160800000),
+            ('',10,'N',('H',1))       :      (  -0.069344000,    7.920610000,   -7.623460000),
+            ('',11,'N',('H',0))       :      (  -0.059793600,    0.267922000,   -0.627378000),
+            ('',11,'N',('H',1))       :      (  -0.072654100,    8.182390000,   -7.606300000),
+            ('',12,'N',('H',0))       :      (  -0.062647700,    0.276776000,   -0.625965000),
+            ('',12,'N',('O',0))       :      (  -0.000307533,    4.601820000,   -4.174100000),
+            ('',13,'N',('O',-1))      :      (  -0.000274280,  -12.650500000,   12.281500000),
+            ('',8,'C',('H',1))        :      (  -0.028187700,    4.005980000,   -3.564250000),
+            ('',9,'C',('H',0))        :      (  -0.018128600,   -0.430683000,    0.438991000),
+            ('',9,'C',('O',0))        :      (  -0.000073336,   -7.577170000,    7.118090000),
+            ('',10,'C',('O',-1))      :      (   0.000037715,    2.822790000,   -2.539840000),
+            ('',10,'C',('H',1))       :      (  -0.034447100,    3.843630000,   -3.403010000),
+            ('',11,'C',('H',0))       :      (  -0.019296900,   -0.325412000,    0.341639000),
+            ('',11,'C',('H',1))       :      (  -0.036091400,    3.970670000,   -3.395350000),
+            ('',12,'C',('H',0))       :      (  -0.020218000,   -0.336167000,    0.340870000),
+            ('',12,'C',('O',0))       :      (  -0.000061676,   -7.960110000,    7.630820000),
+            ('',13,'C',('O',-1))      :      (   0.000030914,    2.796920000,   -2.565050000),
+            ('',8,'CB',('H',1))       :      (   0.006250740,   -0.589234000,    0.702420000),
+            ('',10,'CB',('O',-1))     :      (   0.000146800,   -1.155350000,    1.089000000),
+            ('',10,'CB',('H',1))      :      (   0.007638790,   -0.565355000,    0.670644000),
+            ('',11,'CB',('H',0))      :      (  -0.029408000,    0.520342000,   -0.198835000),
+            ('',11,'CB',('H',1))      :      (   0.008003420,   -0.584041000,    0.669134000),
+            ('',12,'CB',('H',0))      :      (  -0.030811800,    0.537540000,   -0.198387000),
+            ('',12,'CB',('O',0))      :      (  -0.000065246,    0.819023000,   -0.813855000),
+            ('',13,'CB',('O',-1))     :      (   0.000120329,   -1.144770000,    1.099810000),
 }
 
 EXPECTED_INDIRECT_DONORS = {}
@@ -669,7 +739,61 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
             expected_shift_offset_data_copy.remove(key)
             
         self.assertEmpty(expected_shift_offset_data_copy)
+
+    def _get_total_shifts(self):
+        result  =  {}
+        for full_key,values in EXPECTED_SHIFTS.items():
+            key = full_key[0],full_key[1],full_key[2]
+            for i,value in enumerate(values):
+                current_value = result.setdefault(key,0.0)
+                result[key] =  current_value + value
+        return result
+    
+    def test_shift_calculator(self):
+        expected_shifts = self._get_total_shifts()
+        simulation = self.get_single_member_ensemble_simulation()
         
+        potential = Hydrogen_bond_potential(simulation)
+        components = potential._get_components()
+        calculator  = Fast_hydrogen_bond_shift_calculator(components['SIMU'],"test")
+        energies = self._calculate_energies()
+
+        
+        #modify the energies for testing to allow for some camshift idiosyncrasies
+        energies[0] = 0.0       # camshift doesn't see the hbond 7 O - 14 HN
+        energies[1]= 0.0
+        energies[2]= 0.0
+        energies[60] = 0.0      # camshift doesn't see the hbond 7 O - 14 HN
+        energies[61]= 0.0
+        energies[62]= 0.0
+        energies[18] = 4.4453   # camshift includes 9  O  (GLY)     - [ HE2 LYS 13
+        energies[19] = 707.69   # as a hydrogen bond... so we add an extra energy
+        energies[20] = 6484.15
+        
+
+        components['HBLT'] =  energies
+        atom_components = potential._get_component_list('ATOM')
+        
+        target_atom_ids  = []
+        for i,component in enumerate(atom_components):
+            if component[0] not in target_atom_ids:
+                target_atom_ids.append(component[0])
+             
+        num_targets = len(target_atom_ids)
+
+        shift_cache = CDSSharedVectorFloat(num_targets, simulation)
+        component_to_target = [target_atom_ids.index(atom_component[0]) for atom_component in atom_components]
+        component_to_target =  array('i',component_to_target)
+
+        calculator(components, shift_cache, component_to_target, None)
+        for index,atom_id in enumerate(target_atom_ids):
+            atom_key = Atom_utils._get_atom_info_from_index(atom_id)
+            if atom_key == ('',9,'HA1'):
+                atom_key = ('',9,'HA')
+            
+            if abs(shift_cache[index]-expected_shifts[atom_key]) > 1.0e-4:
+                print 'bad',atom_key,shift_cache[index],expected_shifts[atom_key],shift_cache[index]-expected_shifts[atom_key],index
+                  
 def run_tests():
     unittest2.main(module='test.test_xcamshift_hbond_ingktlkg')
     

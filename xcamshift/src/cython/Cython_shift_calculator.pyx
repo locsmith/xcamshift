@@ -11,7 +11,7 @@
 # cython: profile=False
 # cython: boundscheck=False    
 # cython: wraparound=False
-# cython: cdivision=True 
+# cython: cdivision=True
 
 '''
 Created on 31 Jul 2012
@@ -139,7 +139,14 @@ cdef struct Hydrogen_bond_acceptor_lookup:
     int donor_id
     int acceptor_id
     int[3] parameter_indices
-    
+
+cdef struct Hydrogen_bond_shift_component:
+    int target_atom_index
+    int hbond_index
+    double dist_coef
+    double ang1_coef
+    double ang2_coef
+            
 def test_dump_component_index_pair(Non_bonded_interaction_list data, int index):
     cdef Component_index_pair* result =  data.get(index)
     
@@ -1630,6 +1637,81 @@ cdef class Fast_hydrogen_bond_calculator:
         if self._verbose:
             end_time = time()
             print '   hydrogen donors: ',len(donor_list),' acceptors: ', len(acceptor_list),' in', "%.17g" %  (end_time-start_time), "seconds"
+
+cdef class Fast_hydrogen_bond_shift_calculator(Base_shift_calculator):
+
+    cdef float[:]  _hydrogen_bond_energies
+    cdef int _num_hydrogen_bond_energies
+    cdef Hydrogen_bond_shift_component* _compiled_components
+    cdef int _num_components
+    cdef object raw_data
+        
+    def __cinit__(self, simulation,  str name = "not set"):
+        self._hydrogen_bond_energies = None
+        self.raw_data = None
+        self._num_hydrogen_bond_energies = -1
+                        
+    def __init__(self, simulation, str name = "not set"):
+        Base_shift_calculator.__init__(self, simulation, name)
+
+    def _bytes_to_components(self,data):
+
+        self.raw_data =  data 
+        self._compiled_components =  <Hydrogen_bond_shift_component*> <size_t> ctypes.addressof(data)
+        self._num_components =  len(data)/ sizeof(Hydrogen_bond_shift_component)
+
+    def _energies_to_components(self,float [:] energies):
+        self. _hydrogen_bond_energies = energies
+        self._num_hydrogen_bond_energies =energies.shape[0]/3
+        
+    def _set_components(self,components):
+        Base_shift_calculator._set_components(self,components)
+        self._energies_to_components(components['HBLT'])
+        
+    #TODO: add common force and shift base class
+    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
+        cdef double start_time = 0.0
+        cdef double end_time = 0.0
+     
+        
+        if self._verbose:
+            start_time=time()
+        
+        self._set_components(components)
+
+        if self._verbose:
+            start_time = time()
+        
+        cdef int factor_index = 0
+        cdef int component_index
+        cdef int offset
+        
+        #TODO: note to cython list for componnt_index in active_components produces awful code!
+        if active_components ==  None:
+            for factor_index in range(self._num_components):
+                      
+                
+                hbond_index = self._compiled_components[factor_index].hbond_index
+                target_atom_index = self._compiled_components[factor_index].target_atom_index
+                dist_coef = self._compiled_components[factor_index].dist_coef
+                ang1_coef = self._compiled_components[factor_index].ang1_coef
+                ang2_coef = self._compiled_components[factor_index].ang2_coef
+                
+                shift = 0.0
+                if self._hydrogen_bond_energies[hbond_index*3] > 0.0:
+
+                    shift+=self._hydrogen_bond_energies[hbond_index*3]* dist_coef
+                    shift+=self._hydrogen_bond_energies[(hbond_index*3)+1]* ang1_coef
+                    shift+=self._hydrogen_bond_energies[(hbond_index*3)+2]* ang2_coef
+
+                    offset = self.ensemble_array_offset(component_to_target[factor_index])
+                    shift_cache.addToResult(offset, shift)
+
+        else:
+            raise Exception("not implemented!")
+        if self._verbose:
+            end_time = time()
+            print '   hydrogen bond shift components ' ,self._name,len(self._num_components), 'in', "%.17g" % (end_time-start_time), "seconds"
 
 
 cdef class Fast_non_bonded_calculator:

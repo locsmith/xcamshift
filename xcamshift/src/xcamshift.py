@@ -3045,7 +3045,7 @@ class Hydrogen_bond_potential(Base_potential):
         self._add_component_factory(Hydrogen_bond_parameter_factory())
         self._add_component_factory(Hydrogen_bond_donor_lookup_factory())
         self._add_component_factory(Hydrogen_bond_acceptor_lookup_factory())
-    
+        self._add_component_factory(Null_component_factory('HBLT'))
 
 
     def __str__(self):
@@ -3190,7 +3190,7 @@ class Hydrogen_bond_potential(Base_potential):
 
     def _create_component_list(self, name):
         if name == "ATOM":
-            result = Native_component_list(format='iiiii')
+            result = Native_component_list(format='iiddd')
         elif name == "HDONOR":
             result = Native_component_list(format='ii')
         elif name == 'ACCP' or name == 'DONR':
