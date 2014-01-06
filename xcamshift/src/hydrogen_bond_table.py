@@ -105,8 +105,9 @@ class Hydrogen_bond_table(Table_base):
         self._check_target_atom(target_atom)
         self._check_offset(offset)
         
-        
-        return self._table['data'][offset][term][target_atom]
+        #NOTE: this value has to be divided by 1000 to get te values in the camshift tables as
+        #      pyyaml is converting to floats and not doubles so losing precision....
+        return self._table['data'][offset][term][target_atom]/1000.0
 #     def get_exponent(self,sphere):
 #         self._check_sphere(sphere)
 #         return self._table[self.DATA][sphere][self.EXPONENT]

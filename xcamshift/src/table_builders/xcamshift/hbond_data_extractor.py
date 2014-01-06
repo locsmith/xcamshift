@@ -55,7 +55,7 @@ class HBOND_table_extractor(Table_extractor):
             for j,parameter in enumerate(HBOND_V_KEYS_2):
                 out_data[DATA][v_key][parameter] = OrderedDict()
                 for h_key in h_keys:
-                    out_data[DATA][v_key][parameter][h_key] = data['HBONDS'][h_key][i*3+j]
+                    out_data[DATA][v_key][parameter][h_key] = data['HBONDS'][h_key][i*3+j]*1000.0
         return out_data
     
     def format_lines(self,lines):
@@ -64,6 +64,11 @@ class HBOND_table_extractor(Table_extractor):
         lines = global_fixup_colons_on_same_line_as_tuple_key(lines)
         lines = global_fixup_data_dicts_on_same_line_as_key(lines)
         for line in lines.split('\n'):
+            if line.startswith('data'):
+                line_data = ["# note these data are multiplied by 1000 compared to the camshift files to avoid problems with",
+                             "# the extractor only formatting floats to a limited precision...",
+                             line] 
+                line = '\n'.join(line_data)
             line = fixup_spaces_after_colons(line)
             line = fixup_complex_key_question_mark(line)
             line = fixup_null_values(line)
