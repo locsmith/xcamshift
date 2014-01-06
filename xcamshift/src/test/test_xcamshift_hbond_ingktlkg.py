@@ -580,29 +580,30 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         
     def test_hydrogen_bond_acceptor_components(self):
         self._do_test_donor_acceptor_components(Hydrogen_bond_acceptor_component_factory(), set(EXPECTED_DIRECT_ACCEPTORS), dict(EXPECTED_INDIRECT_ACCEPTORS), ACCEPTOR, EXPECTED_BACKBONE_DONORS_AND_ACCEPTORS)
-    
-    def test_fast_hydrogen_bond_calculator(self):
+
+
+    def _calculate_energies(self):
         test = Fast_hydrogen_bond_calculator(self.get_single_member_ensemble_simulation())
         format = 'i' * 6
-        donor_components = self._build_component_list(Hydrogen_bond_donor_component_factory(),format)
-        acceptor_components = self._build_component_list(Hydrogen_bond_acceptor_component_factory(),format)
-        parameter_format =  ('i'*4) +('f'*8)
+        donor_components = self._build_component_list(Hydrogen_bond_donor_component_factory(), format)
+        acceptor_components = self._build_component_list(Hydrogen_bond_acceptor_component_factory(), format)
+        parameter_format = ('i' * 4) + ('f' * 8)
         parameter_components = self._build_component_list(Hydrogen_bond_parameter_factory(), parameter_format)
-        donor_index_format = 'i'*3
+        donor_index_format = 'i' * 3
         donor_index_components = self._build_component_list(Hydrogen_bond_donor_lookup_factory(), donor_index_format)
-        acceptor_index_format = 'i'*6
+        acceptor_index_format = 'i' * 6
         acceptor_index_components = self._build_component_list(Hydrogen_bond_acceptor_lookup_factory(), acceptor_index_format)
-        components = {'DONR' : donor_components.get_native_components(), 
-                      'ACCP' : acceptor_components.get_native_components(), 
-                      'PARA' : parameter_components.get_native_components(),
-                      'DIDX' : donor_index_components.get_native_components(),
-                      'AIDX' : acceptor_index_components.get_native_components()
-                      }
-         
+        components = {'DONR':donor_components.get_native_components(), 'ACCP':acceptor_components.get_native_components(), 
+            'PARA':parameter_components.get_native_components(), 
+            'DIDX':donor_index_components.get_native_components(), 
+            'AIDX':acceptor_index_components.get_native_components()}
         num_donors_and_acceptors = self.donor_and_acceptor_indexer.get_max_index()
-         
-        energies = allocate_array(num_donors_and_acceptors*3, type='f')
+        energies = allocate_array(num_donors_and_acceptors * 3, type='f')
         test(components, energies)
+        return energies
+    
+    def test_fast_hydrogen_bond_calculator(self):
+        energies = self._calculate_energies()
          
         for donor_acceptor_selector in EXPECTED_DONOR_ACCEPTOR_ENERGIES.keys():
             offset =  self.donor_and_acceptor_indexer.get_index_for_key(donor_acceptor_selector[:3])*3+donor_acceptor_selector[4]
