@@ -1616,7 +1616,7 @@ cdef class Fast_hydrogen_bond_calculator:
                     energy_ang_1 = self._calc_energy(angle_1 / PI * 180.0, params_angle_1)
                     energy_ang_2 = self._calc_energy(angle_2 / PI * 180.0, params_angle_2)
                     
-                    if acceptor_components[acceptor_index].backbone > -1:
+                    if donor_components[donor_index].backbone > -1:
                         energies[donor_components[donor_index].backbone*3] = energy_dist
                         energies[donor_components[donor_index].backbone*3+1] = energy_ang_1
                         energies[donor_components[donor_index].backbone*3+2] = energy_ang_2
