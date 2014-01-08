@@ -42,7 +42,9 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_non_bonded_shift_calculator,                               \
                                      Fast_non_bonded_force_calculator,                               \
                                      Non_bonded_interaction_list,                                    \
-                                     Fast_random_coil_shift_calculator, CDSSharedVectorFloat,CDSVectorFloat
+                                     Fast_random_coil_shift_calculator, CDSSharedVectorFloat,        \
+                                     Fast_hydrogen_bond_shift_calculator,CDSVectorFloat,             \
+                                     Fast_hydrogen_bond_calculator
 from time import time
 import array#
 
@@ -823,8 +825,9 @@ class Base_potential(object):
     def calc_shifts(self, target_atom_ids, results):
        
         if self._shift_calculator != None:
-            components = self._get_components()
-            self._shift_calculator(components,results,self._component_to_result, active_components=self._get_active_components())
+            #TODO: get components doesn't work here
+            components = self._component_set
+            self._shift_calculator(components,results,self._component_to_result, None)
              
 
             
@@ -2877,6 +2880,10 @@ class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
 class Hydrogen_bond_donor_acceptor_component_factory(Atom_component_factory):
     def __init__(self):
         self.index = 0
+        
+    def is_residue_acceptable(self, segment, residue_number, segment_manager):
+        return True
+    
     #TODO: remove just kept to satisfy an abstract method declaration
     def _translate_atom_name(self, atom_name, context):
         pass
@@ -3045,8 +3052,29 @@ class Hydrogen_bond_potential(Base_potential):
         self._add_component_factory(Hydrogen_bond_donor_lookup_factory())
         self._add_component_factory(Hydrogen_bond_acceptor_lookup_factory())
         self._add_component_factory(Null_component_factory('HBLT'))
-
-
+        
+        self._hydrogen_bond_energies = None
+        self._component_set =  {}
+        
+        self._hydrogen_bond_energy_calculator = self._get_hydrogen_bond_energy_calculator()
+        
+    def _get_components(self):
+        self._component_set  = super(Hydrogen_bond_potential, self)._get_components()
+        
+        for name in 'DONR','ACCP','PARA','DIDX','AIDX':
+            self._component_set[name] = self._get_component_list(name).get_native_components()
+        
+        #TODO: repeatedly calling Hbond_backbone_donor_and_acceptor_indexer will be very slow
+        table_manager = Table_manager.get_default_table_manager()
+        num_donors_and_acceptors =  Hbond_backbone_donor_and_acceptor_indexer(table_manager).get_max_index()
+        
+        if self._hydrogen_bond_energies == None or len(self._hydrogen_bond_energies) != num_donors_and_acceptors: 
+            self._hydrogen_bond_energies = energies = allocate_array(num_donors_and_acceptors * 3, type='f')
+        self._component_set['HBLT'] =  self._hydrogen_bond_energies
+        
+        return self._component_set
+        
+    
     def __str__(self):
         def get_donor_acceptor_string(result, type_string, name):
             result.append(name)
@@ -3129,14 +3157,17 @@ class Hydrogen_bond_potential(Base_potential):
 #         self._non_bonded_list = Non_bonded_list(self._simulation)
 #         self._component_set = {}
 #         self._selected_components =  None
+    def _have_derivative(self):
+        return False
+    
+    def _get_hydrogen_bond_energy_calculator(self):
+        return Fast_hydrogen_bond_calculator(self._simulation)
     
     def _get_shift_calculator(self):
-        return None
-#         raise Exception("not implemented")
-#         result  = Hyrogen_bond_shift_calculator(self._simulation, name = self.get_abbreviated_name())
-#         result.set_verbose(self._verbose)
-#         return result
-#     
+        result  = Fast_hydrogen_bond_shift_calculator(self._simulation, name = self.get_abbreviated_name())
+        result.set_verbose(self._verbose)
+        return result
+     
     def _get_force_calculator(self):
         return None
 #         result = Hydrogen_bond_force_calculator( smoothed=self._smoothed, name = self.get_abbreviated_name())
@@ -3172,20 +3203,37 @@ class Hydrogen_bond_potential(Base_potential):
 #         updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
 #         
 #         return non_bonded_list
-    
+    def update_hydrogen_bond_list(self,increment=True):
+        if increment:
+            #TODO:fudged here
+            self._hydrogen_bond_energy_calculator(self._get_components(), self._hydrogen_bond_energies)
+
+    def _build_selected_components(self, target_atom_ids):
+        #TODO: cleanup and merge        
+        atom_components = self._get_component_list('ATOM')
+       
+        target_atom_ids  = []
+        for i,component in enumerate(atom_components):
+            if component[0] not in target_atom_ids:
+                target_atom_ids.append(component[0])
+        component_to_target = [target_atom_ids.index(atom_component[0]) for atom_component in atom_components]   
+        return  component_to_target
+        
     def _prepare(self, change, target_atom_ids):
         super(Hydrogen_bond_potential, self)._prepare(change, target_atom_ids)
         
+        
+        if change == STRUCTURE_CHANGED:
+            raise Exception("not implimented!")
+            #self._reset_hydrogen_bond_list()
+        
+        if change == ROUND_CHANGED:
+            self.update_hydrogen_bond_list()
+        
+        if change == TARGET_ATOM_IDS_CHANGED:
+            self._selected_components = self._build_selected_components(target_atom_ids)
+        
             
-#         if change == STRUCTURE_CHANGED:
-#             self._reset_non_bonded_list()
-#         
-#         if change == ROUND_CHANGED:
-#             self.update_non_bonded_list()
-#         
-#         if change == TARGET_ATOM_IDS_CHANGED:
-#             self._selected_components = self._build_selected_components(target_atom_ids)
-# from pyPot import PyPot
 
     def _create_component_list(self, name):
         if name == "ATOM":
