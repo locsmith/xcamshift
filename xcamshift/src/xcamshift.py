@@ -2479,7 +2479,6 @@ class Non_bonded_potential(Distance_based_potential):
     
     def _get_active_components(self):
         return self._selected_components
-        self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._selected_components)
 
 class Hbond_atom_type_indexer(object):
     __metaclass__ = ABCMeta
