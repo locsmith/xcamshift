@@ -2828,7 +2828,7 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
                             if attached_atom_name ==  atom_selector[1]:
                                 self.indirect_atom_id = attached_atom_id
                                 if atom_selector[0] == ".":
-                                    key = segid,residue,atom_name,self.type
+                                    key = segid,residue,atom_name
                                     backbone_hydrogen_bond_indexer = self.get_backbone_hydrogen_bond_indexer()
                                     self.backbone = backbone_hydrogen_bond_indexer.get_index_for_key(key)
                                 else:
