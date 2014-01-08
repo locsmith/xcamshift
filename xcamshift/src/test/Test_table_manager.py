@@ -322,13 +322,13 @@ class Test_table_manager(unittest2.TestCase):
         expected_energy_term_offsets = [(-1, 'O'), (0, 'HN'), (0, 'O'), (1, 'HN')]
         self.assertSequenceEqual(table.get_energy_term_offsets(),expected_energy_term_offsets)
         
-        self.assertAlmostEqual(-0.00000003, table.get_energy_offset_correction((-1, 'O'),'DIST','HA'),places=10)
+        self.assertAlmostEqual(-0.00000002820/table.get_energy_offset_correction((-1, 'O'),'DIST','HA'),1.0)
         
         table = self.table_manager.get_hydrogen_bond_table('GLY')
         
         self.assertDictEqual(table.get_energy_terms('HON','ON','DIST'),expected_energy_terms)
         
-        self.assertAlmostEqual(-0.00000029, table.get_energy_offset_correction((-1, 'O'),'DIST','HA'),places=10)
+        self.assertAlmostEqual(-0.00000029080/table.get_energy_offset_correction((-1, 'O'),'DIST','HA'), 1.0)
         
 if __name__ == "__main__":
 #     unittest2.main()
