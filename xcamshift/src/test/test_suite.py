@@ -8,6 +8,7 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
+from test.test_xcamshift_hbond_ingktlkg import TestXcamshiftHBondINGKTLKG
 '''
 Created on 25 Jan 2012
 
@@ -30,6 +31,7 @@ from test.test_xcamshift_agaga import TestXcamshiftAGAGA
 from test.test_xcamshift_gb3 import TestXcamshiftGB3
 from test.test_cython_non_bonded_list import Test_cython_non_boned_list
 from test.test_xcamshift_acaggaca import TestXcamshiftACAGGACA
+from test.test_xcamshift_hbond_ingktlkg import TestXcamshiftHBondINGKTLKG
 import sys
 
 fast = False
@@ -52,7 +54,8 @@ def load_tests(loader, tests, pattern):
                 TestXcamshiftAGFA,
                 TestXcamshiftAGAGA,
                 Test_cython_non_boned_list,
-                TestXcamshiftACAGGACA
+                TestXcamshiftACAGGACA,
+                TestXcamshiftHBondINGKTLKG
 #                TestXcamshiftGB3
 )
     
