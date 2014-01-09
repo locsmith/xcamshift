@@ -826,8 +826,8 @@ class Base_potential(object):
        
         if self._shift_calculator != None:
             #TODO: get components doesn't work here
-            components = self._component_set
-            self._shift_calculator(components,results,self._component_to_result, None)
+            components = self._get_components()
+            self._shift_calculator(components,results,self._component_to_result, active_components=self._get_active_components())
              
 
             
@@ -3051,13 +3051,18 @@ class Hydrogen_bond_potential(Base_potential):
         self._add_component_factory(Hydrogen_bond_parameter_factory())
         self._add_component_factory(Hydrogen_bond_donor_lookup_factory())
         self._add_component_factory(Hydrogen_bond_acceptor_lookup_factory())
-        self._add_component_factory(Null_component_factory('HBLT'))
+        #TODO: sort null component factorys
+#         self._add_component_factory(Null_component_factory('HBLT'))
         
-        self._hydrogen_bond_energies = None
+        self._hydrogen_bond_energies =  allocate_array(0,'f')
         self._component_set =  {}
         
         self._hydrogen_bond_energy_calculator = self._get_hydrogen_bond_energy_calculator()
-        
+      
+    def _get_active_components(self):
+        print "WARNING all components used for hbond shift calculation!" 
+        return None
+      
     def _get_components(self):
         self._component_set  = super(Hydrogen_bond_potential, self)._get_components()
         
@@ -3068,8 +3073,8 @@ class Hydrogen_bond_potential(Base_potential):
         table_manager = Table_manager.get_default_table_manager()
         num_donors_and_acceptors =  Hbond_backbone_donor_and_acceptor_indexer(table_manager).get_max_index()
         
-        if self._hydrogen_bond_energies == None or len(self._hydrogen_bond_energies) != num_donors_and_acceptors: 
-            self._hydrogen_bond_energies = energies = allocate_array(num_donors_and_acceptors * 3, type='f')
+        if len(self._hydrogen_bond_energies) != num_donors_and_acceptors: 
+            resize_array(self._hydrogen_bond_energies, num_donors_and_acceptors * 3)
         self._component_set['HBLT'] =  self._hydrogen_bond_energies
         
         return self._component_set
@@ -3346,7 +3351,12 @@ class Xcamshift(PyEnsemblePot):
             msg = template % (name,all_potential_names)
             raise Exception(msg)
         return result
-#    
+    
+    def removed_named_sub_potential(self,name):
+       print 'warning sub potential %s removed' % name
+       sub_pot  = self.get_named_sub_potential(name)
+       self.potential.remove(sub_pot)
+           
     def print_shifts(self):
         result  = [0] * Segment_Manager().get_number_atoms()
         
