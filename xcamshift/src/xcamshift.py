@@ -3308,6 +3308,14 @@ class Xcamshift(PyEnsemblePot):
         self._energy_calculator.set_verbose(on)
         self._verbose=on
     
+        
+    def removed_named_sub_potential(self,name):
+       print 'warning sub potential %s removed' % name
+       sub_pot  = self.get_named_sub_potential(name)
+       self.potential.remove(sub_pot)
+
+      
+    
     def _get_energy_term_cache(self):
         if self._energy_term_cache == None:
             self._energy_term_cache = self._create_energy_term_cache()
