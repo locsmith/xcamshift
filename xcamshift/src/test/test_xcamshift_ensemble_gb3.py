@@ -82,6 +82,7 @@ class TestXcamshiftEnsembleGB3(unittest2.TestCase):
           
     def _setup_xcamshift_with_shifts_table(self, test_shifts):
         xcamshift = Xcamshift()
+        xcamshift.removed_named_sub_potential('HBOND')
         observed_shifts = Observed_shift_table(test_shifts)
         xcamshift.set_observed_shifts(observed_shifts)
         return xcamshift

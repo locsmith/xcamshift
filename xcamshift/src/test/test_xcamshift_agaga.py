@@ -52,6 +52,7 @@ class TestXcamshiftAGAGA(unittest2.TestCase):
 
     def _get_xcamshift(self):
         xcamshift = Xcamshift()
+        xcamshift.removed_named_sub_potential('HBOND')
         return xcamshift
 
     def test_agaga_shifts(self):
