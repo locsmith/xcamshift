@@ -3058,7 +3058,11 @@ class Hydrogen_bond_potential(Base_potential):
         self._component_set =  {}
         
         self._hydrogen_bond_energy_calculator = self._get_hydrogen_bond_energy_calculator()
-      
+    
+          
+    def _get_active_components(self):
+        print "WARNING all components used for hbond shift calculation!" 
+        return None
     def _get_active_components(self):
         print "WARNING all components used for hbond shift calculation!" 
         return None
