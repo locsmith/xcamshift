@@ -2426,7 +2426,6 @@ class Non_bonded_potential(Distance_based_potential):
     
     def _build_selected_components(self, target_atom_ids):
                 
-        target_component_list = self._get_component_list('ATOM')
         non_bonded_list =  self._get_component_list('NBLT')
 
         
