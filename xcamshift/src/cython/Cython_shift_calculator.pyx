@@ -873,7 +873,7 @@ cdef inline float calc_dihedral_angle_simulation(Simulation* simulation, dihedra
     return result 
 
 @cython.profile(False)
-cdef inline float calc_bond_angle_simulation(Simulation* simulation, bond_angle_ids bond_angle_atom_ids):
+cdef inline float calc_bond_angle_simulation(Simulation* simulation, bond_angle_ids bond_angle_atom_ids) nogil:
     
     
     cdef Atom atom_1  = simulation[0].atomByID(bond_angle_atom_ids.atom_id_1)
@@ -1486,19 +1486,19 @@ cdef class Fast_hydrogen_bond_calculator:
         target_pointer[0] =  <Hydrogen_bond_acceptor_lookup*> <size_t> ctypes.addressof(data)
         return len(data)/ sizeof(Hydrogen_bond_acceptor_lookup)
 
-    cdef inline bint _filter_by_residue(self, char* seg_1, int residue_1, char* seg_2, int residue_2):
+    cdef inline bint _filter_by_residue(self, char* seg_1, int residue_1, char* seg_2, int residue_2) nogil:
         cdef int sequence_distance
         cdef bint result
         
         result = False
         
         if strcmp(seg_1, seg_2) == 0:
-            sequence_distance =abs(residue_1-residue_2)
+            sequence_distance =<int>fabs(residue_1-residue_2)
             if sequence_distance < self._min_residue_seperation:
                 result =True
         return result
     
-    cdef inline float _calc_energy(self, float distance_or_angle, Hydrogen_bond_parameter params):
+    cdef  inline float _calc_energy(self, float distance_or_angle, Hydrogen_bond_parameter params) nogil:
         
 
         cdef float term_1 = (params.p[1]/distance_or_angle) + params.p[3]
@@ -1532,7 +1532,6 @@ cdef class Fast_hydrogen_bond_calculator:
         
         cdef Hydrogen_bond_acceptor_lookup* acceptor_lookup
         cdef int num_acceptor_lookup_components = self._bytes_to_acceptor_lookup(acceptor_indices,&acceptor_lookup)
-        
         cdef double start_time = 0.0  
         cdef double end_time = 0.0
         
@@ -1551,87 +1550,92 @@ cdef class Fast_hydrogen_bond_calculator:
         cdef Hydrogen_bond_parameter params_dist
         cdef Hydrogen_bond_parameter params_angle_1
         cdef Hydrogen_bond_parameter params_angle_2
-
+        
+        cdef float angle_1,angle_2
+        cdef float energy_dist
+        cdef float energy_ang_1, energy_ang_2
+        
         if self._verbose:
             start_time = time()
 
-
+    
         cdef int i
         
-#         hydrogen_bond_list.clear()
-        for i in range(num_donor_components):
-            atom_id_1 = donor_components[i].direct_atom_id
-            
-            atom_1 = self._simulation[0].atomByID(atom_id_1)
-            seg_1 =  <char *>atom_1.segmentName()
-            residue_1 = atom_1.residueNum()
-            
-            current_acceptor = -1
-            min_distance = FLT_MAX
-
-            for j in range(num_acceptor_components):
-                atom_id_2  = acceptor_components[j].direct_atom_id
+        with nogil:
+    #         hydrogen_bond_list.clear()
+            for i in range(num_donor_components):
+                atom_id_1 = donor_components[i].direct_atom_id
                 
-                atom_2 = self._simulation[0].atomByID(atom_id_2)
+                atom_1 = self._simulation[0].atomByID(atom_id_1)
+                seg_1 =  <char *>atom_1.segmentName()
+                residue_1 = atom_1.residueNum()
                 
-                
-                seg_2 = <char*>atom_2.segmentName()
-                residue_2 =  atom_2.residueNum()
-                
-                distance = norm(atom_1.pos() - atom_2.pos())
-                residue_distance_ok = not self._filter_by_residue(seg_1, residue_1, seg_2, residue_2)
-                
-                if distance < min_distance and residue_distance_ok:
-                    donor_index = i
-                    acceptor_index  = j
-                    min_distance = distance
-
-            if  min_distance < 3.0:
-                donor_direct_atom_id = donor_components[donor_index].direct_atom_id
-                donor_indirect_atom_id = donor_components[donor_index].indirect_atom_id
-                acceptor_direct_atom_id = acceptor_components[acceptor_index].direct_atom_id
-                acceptor_indirect_atom_id = acceptor_components[acceptor_index].indirect_atom_id 
-
-                bond_angle_atom_ids.atom_id_1 = donor_direct_atom_id 
-                bond_angle_atom_ids.atom_id_2 = acceptor_direct_atom_id 
-                bond_angle_atom_ids.atom_id_3 = acceptor_indirect_atom_id
-                
-                angle_1 = calc_bond_angle_simulation(self._simulation, bond_angle_atom_ids) 
-                
-#                 
-                bond_angle_atom_ids.atom_id_1 = donor_indirect_atom_id
-                bond_angle_atom_ids.atom_id_2 = donor_direct_atom_id 
-                bond_angle_atom_ids.atom_id_3 = acceptor_direct_atom_id 
-                 
-                angle_2 = calc_bond_angle_simulation(self._simulation, bond_angle_atom_ids) 
-                
-                if (angle_1 > PI/2.0 and angle_1 < PI *3.0/2.0) and (angle_2 > PI/2.0 and angle_2 < PI *3.0/2.0):
-                
-                    donor_atom_type_id  = donor_components[donor_index].atom_type_id
-                    acceptor_atom_type_id = acceptor_components[acceptor_index].atom_type_id
-                    acceptor_id = donor_lookup[donor_atom_type_id].acceptor_offset[acceptor_atom_type_id]
-     
-                    param_id_dist = acceptor_lookup[acceptor_id].parameter_indices[0]
-                    param_id_angle_1 = acceptor_lookup[acceptor_id].parameter_indices[1]
-                    param_id_angle_2 = acceptor_lookup[acceptor_id].parameter_indices[2]
-    #
-                    params_dist  = hydrogen_bond_parameters[param_id_dist]
-                    params_angle_1  = hydrogen_bond_parameters[param_id_angle_1]
-                    params_angle_2  = hydrogen_bond_parameters[param_id_angle_2]
-
-                    energy_dist = self._calc_energy(min_distance,params_dist)
-                    energy_ang_1 = self._calc_energy(angle_1 / PI * 180.0, params_angle_1)
-                    energy_ang_2 = self._calc_energy(angle_2 / PI * 180.0, params_angle_2)
+                current_acceptor = -1
+                min_distance = FLT_MAX
+    
+                for j in range(num_acceptor_components):
+                    atom_id_2  = acceptor_components[j].direct_atom_id
                     
-                    if donor_components[donor_index].backbone > -1:
-                        energies[donor_components[donor_index].backbone*3] = energy_dist
-                        energies[donor_components[donor_index].backbone*3+1] = energy_ang_1
-                        energies[donor_components[donor_index].backbone*3+2] = energy_ang_2
-#                 
-                    if acceptor_components[acceptor_index].backbone > -1:
-                        energies[acceptor_components[acceptor_index].backbone*3] = energy_dist
-                        energies[acceptor_components[acceptor_index].backbone*3+1] = energy_ang_1
-                        energies[acceptor_components[acceptor_index].backbone*3+2] = energy_ang_2
+                    atom_2 = self._simulation[0].atomByID(atom_id_2)
+                    
+                    
+                    seg_2 = <char*>atom_2.segmentName()
+                    residue_2 =  atom_2.residueNum()
+                    
+                    distance = norm(atom_1.pos() - atom_2.pos())
+                    residue_distance_ok = not self._filter_by_residue(seg_1, residue_1, seg_2, residue_2)
+                    
+                    if distance < min_distance and residue_distance_ok:
+                        donor_index = i
+                        acceptor_index  = j
+                        min_distance = distance
+    
+                if  min_distance < 3.0:
+                    donor_direct_atom_id = donor_components[donor_index].direct_atom_id
+                    donor_indirect_atom_id = donor_components[donor_index].indirect_atom_id
+                    acceptor_direct_atom_id = acceptor_components[acceptor_index].direct_atom_id
+                    acceptor_indirect_atom_id = acceptor_components[acceptor_index].indirect_atom_id 
+    
+                    bond_angle_atom_ids.atom_id_1 = donor_direct_atom_id 
+                    bond_angle_atom_ids.atom_id_2 = acceptor_direct_atom_id 
+                    bond_angle_atom_ids.atom_id_3 = acceptor_indirect_atom_id
+                    
+                    angle_1 = calc_bond_angle_simulation(self._simulation, bond_angle_atom_ids) 
+                    
+    #                 
+                    bond_angle_atom_ids.atom_id_1 = donor_indirect_atom_id
+                    bond_angle_atom_ids.atom_id_2 = donor_direct_atom_id 
+                    bond_angle_atom_ids.atom_id_3 = acceptor_direct_atom_id 
+                     
+                    angle_2 = calc_bond_angle_simulation(self._simulation, bond_angle_atom_ids) 
+                    
+                    if (angle_1 > PI/2.0 and angle_1 < PI *3.0/2.0) and (angle_2 > PI/2.0 and angle_2 < PI *3.0/2.0):
+                    
+                        donor_atom_type_id  = donor_components[donor_index].atom_type_id
+                        acceptor_atom_type_id = acceptor_components[acceptor_index].atom_type_id
+                        acceptor_id = donor_lookup[donor_atom_type_id].acceptor_offset[acceptor_atom_type_id]
+         
+                        param_id_dist = acceptor_lookup[acceptor_id].parameter_indices[0]
+                        param_id_angle_1 = acceptor_lookup[acceptor_id].parameter_indices[1]
+                        param_id_angle_2 = acceptor_lookup[acceptor_id].parameter_indices[2]
+        #
+                        params_dist  = hydrogen_bond_parameters[param_id_dist]
+                        params_angle_1  = hydrogen_bond_parameters[param_id_angle_1]
+                        params_angle_2  = hydrogen_bond_parameters[param_id_angle_2]
+    
+                        energy_dist = self._calc_energy(min_distance,params_dist)
+                        energy_ang_1 = self._calc_energy(angle_1 / PI * 180.0, params_angle_1)
+                        energy_ang_2 = self._calc_energy(angle_2 / PI * 180.0, params_angle_2)
+                        
+                        if donor_components[donor_index].backbone > -1:
+                            energies[donor_components[donor_index].backbone*3] = energy_dist
+                            energies[donor_components[donor_index].backbone*3+1] = energy_ang_1
+                            energies[donor_components[donor_index].backbone*3+2] = energy_ang_2
+    #                 
+                        if acceptor_components[acceptor_index].backbone > -1:
+                            energies[acceptor_components[acceptor_index].backbone*3] = energy_dist
+                            energies[acceptor_components[acceptor_index].backbone*3+1] = energy_ang_1
+                            energies[acceptor_components[acceptor_index].backbone*3+2] = energy_ang_2
                
                
         if self._verbose:
