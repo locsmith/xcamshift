@@ -317,20 +317,31 @@ class Distance_component_factory(Atom_component_factory):
     
 #TODO: check if previous residue offsets are included
 class Random_coil_context :
+    
+    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
+        return  table.get_translation_to_table(residue_type,atom_name)
+            
     def __init__(self,atom,offset,table):
         
-        self._table = table
+        self.complete = False
         
-        segment = atom.segmentName()
+        atom_name  = atom.atomName()
+        residue_type = atom.residueName()
+        atom_name = self._translate_atom_name_to_table(residue_type, atom_name, table)
         
-        self.offset = offset
-        
-        from_residue_number = atom.residueNum()
-        
-        self.to_residue_number = from_residue_number + offset
-        self.to_residue_type = Atom_utils._get_residue_type(segment, from_residue_number + offset)
-        
-        self.complete = True
+        if atom_name in table.get_target_atoms():
+            self._table = table
+            
+            segment = atom.segmentName()
+            
+            self.offset = offset
+            
+            from_residue_number = atom.residueNum()
+            
+            self.to_residue_number = from_residue_number + offset
+            self.to_residue_type = Atom_utils._get_residue_type(segment, from_residue_number + offset)
+            
+            self.complete = True
 
 class Disulphide_context :
     def __init__(self,atom,table):
