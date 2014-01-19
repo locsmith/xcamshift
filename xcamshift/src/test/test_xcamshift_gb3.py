@@ -174,8 +174,19 @@ class TestXcamshiftGB3(unittest2.TestCase):
                 self.assertAlmostEqual(shift, expected_shift, self.DEFAULT_DECIMAL_PLACES - 2, msg=`key` + " " + residue_type)
      
     #TODO check all tests correct
+
+    def _get_xcamshift(self):
+        xcamshift = Xcamshift()
+        return xcamshift
+
+    def _get_xcamshift_no_hbond(self):
+        xcamshift =self._get_xcamshift()
+        xcamshift.removed_named_sub_potential('HBOND')
+        return xcamshift
+    
     def test_component_chemical_shifts(self):
-        xcamshift  = Xcamshift()
+        xcamshift = self._get_xcamshift()
+        
          
         component_shifts = gb3.gb3_subpotential_shifts
         self._do_test_component_shifts(xcamshift, component_shifts)
@@ -183,14 +194,14 @@ class TestXcamshiftGB3(unittest2.TestCase):
  
          
     def _setup_xcamshift_with_shifts_table(self, test_shifts):
-        xcamshift = Xcamshift()
+        xcamshift = self._get_xcamshift_no_hbond()
         observed_shifts = Observed_shift_table(test_shifts)
         xcamshift.set_observed_shifts(observed_shifts)
         return xcamshift
      
     def test_non_bonded_components(self):
         #TODO: add common loading method for xcamshift
-        xcamshift =  Xcamshift()
+        xcamshift =  self._get_xcamshift()
         sub_potential = xcamshift.get_named_sub_potential(NON_BONDED)
         components = sub_potential._get_component_list('NBLT')
         target_atom_ids = [component[0] for component in components]
@@ -231,7 +242,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
         self.assertEmpty(non_bonded_components)
          
     def test_non_bonded_component_shifts(self):
-        xcamshift =  Xcamshift()
+        xcamshift =  self._get_xcamshift()
         sub_potential = xcamshift.get_named_sub_potential(NON_BONDED)
         sub_potential.update_non_bonded_list()
         components = sub_potential._get_component_list('NBLT')
@@ -287,7 +298,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
     def test_component_shifts_sidechain(self):
  
          
-        xcamshift = Xcamshift()
+        xcamshift = self._get_xcamshift()
         sidechain_subpotential = xcamshift.get_named_sub_potential(SIDE_CHAIN)
          
         expected_sidechain_shifts = dict(gb3_component_shifts_sc)
@@ -317,7 +328,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
  
     def test_component_shifts_ring(self):
          
-        xcamshift = Xcamshift()
+        xcamshift = self._get_xcamshift()
          
         xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, xcamshift._get_all_component_target_atom_ids())
         xcamshift._prepare(ROUND_CHANGED,None)
@@ -758,7 +769,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
 #            self.assertAlmostEqual(gb3.gb3_shifts[elem], -gb3.gb3_shift_diffs[elem], self.DEFAULT_DECIMAL_PLACES-3,  elem)
  
     def test_component_chemical_shifts_10_step(self):
-        xcamshift  = Xcamshift(verbose=False)
+        xcamshift  = self._get_xcamshift()
         for i,file_name in enumerate(gb3_10_steps.gb3_files):
             PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
             print file_name
@@ -770,13 +781,13 @@ class TestXcamshiftGB3(unittest2.TestCase):
             self._do_test_component_shifts(xcamshift, component_shifts)
              
     def test_total_chemical_shifts(self):
-            xcamshift  = Xcamshift(verbose=False)
+            xcamshift  = self._get_xcamshift_no_hbond()
  
             component_shifts = gb3.gb3_subpotential_shifts
             self._do_test_shifts(xcamshift, component_shifts)
  
     def test_total_chemical_shifts_10_step(self):
-            xcamshift  = Xcamshift(verbose=False)
+            xcamshift  = self._get_xcamshift_no_hbond()
             for i,file_name in enumerate(gb3_10_steps.gb3_files):
                 PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
                 print 'coord file',file_name
