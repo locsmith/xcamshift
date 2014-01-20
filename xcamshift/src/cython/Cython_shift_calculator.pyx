@@ -229,10 +229,16 @@ cdef class CDSSharedVectorFloat:
         return self.size* self._ensemble_size
     
     
-    cdef inline int array_offset(self,int index, int ensemble_index):
+    cdef inline int array_offset(self,int index, int ensemble_index) nogil:
         return (self._ensemble_size * index) + ensemble_index
     
-    cdef inline int ensemble_array_offset(self,int index):
+    cdef inline int ensemble_member_index(self) nogil:
+        cdef int member_index
+        with gil:
+            member_index  = self._simulation[0].member()[0].memberIndex() 
+        return member_index
+    
+    cdef inline int ensemble_array_offset(self,int index) nogil: 
         return self.array_offset(index, self.ensemble_member_index())
     
     def __str__(self):
@@ -254,7 +260,7 @@ cdef class CDSSharedVectorFloat:
             for j in range(self._ensemble_size):
                 target[0][i] += getSharedVectorValue(self.data,self.array_offset(i,j)) * divisor
                 
-    cdef inline void addToResult(self, int offset, double value):
+    cdef inline void addToResult(self, int offset, double value) nogil:
         addToSharedVectorValue(self.data,offset,value)
     
     def __getitem__(self, int key):
@@ -910,13 +916,13 @@ cdef class Base_shift_calculator:
         self._simulation = <EnsembleSimulation*><size_t>int(components['SIMU'].this)
         
     
-    cdef inline int ensemble_size(self):
+    cdef inline int ensemble_size(self) nogil:
         return self._simulation[0].size()
     
-    cdef inline int ensemble_member_index(self):
+    cdef inline int ensemble_member_index(self) nogil:
         return self._simulation[0].member()[0].memberIndex()
     
-    cdef inline int ensemble_array_offset(self,int index):
+    cdef inline int ensemble_array_offset(self,int index) nogil:
         return (self.ensemble_size() * index) + self.ensemble_member_index()
     
         
@@ -1688,28 +1694,30 @@ cdef class Fast_hydrogen_bond_shift_calculator(Base_shift_calculator):
         
         cdef int factor_index = 0
         cdef int component_index
-        cdef int offset
+        cdef int offset, hbond_index
+        cdef float shift
         
         #TODO: note to cython list for componnt_index in active_components produces awful code!
         if active_components ==  None:
-            for factor_index in range(self._num_components):
-                      
-                
-                hbond_index = self._compiled_components[factor_index].hbond_index
-                target_atom_index = self._compiled_components[factor_index].target_atom_index
-                dist_coef = self._compiled_components[factor_index].dist_coef
-                ang1_coef = self._compiled_components[factor_index].ang1_coef
-                ang2_coef = self._compiled_components[factor_index].ang2_coef
-                
-                shift = 0.0
-                if self._hydrogen_bond_energies[hbond_index*3] > 0.0:
+            with nogil:
+                for factor_index in range(self._num_components):
+                          
+                    
+                    hbond_index = self._compiled_components[factor_index].hbond_index
+                    target_atom_index = self._compiled_components[factor_index].target_atom_index
+                    dist_coef = self._compiled_components[factor_index].dist_coef
+                    ang1_coef = self._compiled_components[factor_index].ang1_coef
+                    ang2_coef = self._compiled_components[factor_index].ang2_coef
+                    
+                    shift = 0.0
+                    if self._hydrogen_bond_energies[hbond_index*3] > 0.0:
 
-                    shift+=self._hydrogen_bond_energies[hbond_index*3]* dist_coef
-                    shift+=self._hydrogen_bond_energies[(hbond_index*3)+1]* ang1_coef
-                    shift+=self._hydrogen_bond_energies[(hbond_index*3)+2]* ang2_coef
+                        shift+=self._hydrogen_bond_energies[hbond_index*3]* dist_coef
+                        shift+=self._hydrogen_bond_energies[(hbond_index*3)+1]* ang1_coef
+                        shift+=self._hydrogen_bond_energies[(hbond_index*3)+2]* ang2_coef
 
-                    offset = self.ensemble_array_offset(component_to_target[factor_index])
-                    shift_cache.addToResult(offset, shift)
+                        offset = self.ensemble_array_offset(component_to_target[factor_index])
+                        shift_cache.addToResult(offset, shift)
 
         else:
             raise Exception("not implemented!")

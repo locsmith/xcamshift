@@ -66,12 +66,12 @@ cdef extern from "cdsVector.hh":
 
 cdef extern from "sharedCDSVectorFactory.hh" namespace "SharedCDSVectorFactory":
     void clearSharedVector(void *) nogil
-    void deleteSharedVector(void *)
-    void resizeSharedVector(void *, int) 
+    void deleteSharedVector(void *) nogil
+    void resizeSharedVector(void *, int)  nogil
     void * createSharedVector (int size, float& i,  EnsembleSimulation* simulation) nogil
-    void setSharedVectorValue(void * sharedVec, int offset ,double value) 
-    void addToSharedVectorValue(void * sharedVec, int offset ,double value) 
-    double getSharedVectorValue(void * sharedVec, int offset)
+    void setSharedVectorValue(void * sharedVec, int offset ,double value) nogil
+    void addToSharedVectorValue(void * sharedVec, int offset ,double value) nogil
+    double getSharedVectorValue(void * sharedVec, int offset) nogil
         
 
 
