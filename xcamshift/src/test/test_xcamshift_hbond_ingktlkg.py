@@ -867,7 +867,8 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
 
         for i,target_atom_id in enumerate(target_atom_ids):
             key = Atom_utils._get_atom_info_from_index(target_atom_id)
-            self.assertAlmostEqual(result[i],expected_shifts[key])
+            #TODO could we have more dps here...:
+            self.assertAlmostEqual(result[i],expected_shifts[key],places=5,msg=Atom_utils._get_atom_info_from_index(target_atom_id))
             del expected_shifts[key]
         self.assertEmpty(expected_shifts)
                       
