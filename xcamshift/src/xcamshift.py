@@ -2100,6 +2100,7 @@ class Non_bonded_potential(Distance_based_potential):
             self.update_non_bonded_list()
         
         if change == TARGET_ATOM_IDS_CHANGED:
+            #TODO why does this need to be selected rather than active?
             self._selected_components = self._build_selected_components(target_atom_ids)
 
         
@@ -2491,6 +2492,7 @@ class Non_bonded_potential(Distance_based_potential):
         return results[0]
     
     def _get_active_components(self):
+        #TODO: return self._active_components??
         return self._selected_components
 
 class Hbond_atom_type_indexer(object):
