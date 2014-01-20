@@ -749,7 +749,26 @@ cdef class Coef_components:
         self._raw_component_offsets_data =  data 
         self._component_offsets =  <Component_Offsets*> <size_t> ctypes.addressof(data)
         self.num_ids =  len(data)/ sizeof(Component_Offsets)    
-                  
+    
+    def __str__(self):
+        result = []
+        
+        result.append('components')
+        result.append('----------')
+        result.append('')
+        result.append('number = %i' % self._num_components)
+        for i in range(self._num_components):
+            result.append('%i : %i %i %f' % (i,self._components[i].atom_type_id, self._components[i].ring_id,self._components[i].coefficient))
+        result.append('')
+        result.append('offsets')
+        result.append('-------')
+        result.append('')
+        result.append('number = %i' % self.num_ids)
+        for i in range(self.num_ids):
+            result.append('%i : %i %i %i' % (i,self._component_offsets[i].id, self._component_offsets[i].offset,self._component_offsets[i].length))
+        
+        return '\n'.join(result)
+        
     def __cinit__(self, object coef_components, component_offsets):
 
  
