@@ -2821,20 +2821,18 @@ class Hydrogen_bond_component_factory(Atom_component_factory):
 
     
 class Hydrogen_bond_base_donor_acceptor_context(object):
-    def __init__(self, atom, table):
+    def __init__(self, atom, table, type_indexer, backbone_hydrogen_bond_indexer):
         self.complete = False
         
         self.direct_atom_id = atom.index()
         segid,residue,atom_name = Atom_utils._get_atom_info_from_index(self.direct_atom_id)
         
-        hydrogen_bond_backbone_indexer = self.get_atom_type_indexer()
         for donor_acceptor_type in self.get_donor_acceptor_types(table):
             for atom_selector in  list(table.get_atom_selector(donor_acceptor_type)):
                 residue_type = atom.residueName()
                 if atom_selector[0] == '.' or atom_selector[0] == residue_type:
                     if atom_name == atom_selector[2]:
-                        indexer  =  self.get_atom_type_indexer()
-                        self.atom_type_id = indexer.get_index_for_key(donor_acceptor_type)
+                        self.atom_type_id = type_indexer.get_index_for_key(donor_acceptor_type)
                         
                         attached_atom_ids = Atom_utils._get_bonded_atom_ids(self.direct_atom_id)
                         for attached_atom_id in attached_atom_ids:
@@ -2843,7 +2841,6 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
                                 self.indirect_atom_id = attached_atom_id
                                 if atom_selector[0] == ".":
                                     key = segid,residue,atom_name
-                                    backbone_hydrogen_bond_indexer = self.get_backbone_hydrogen_bond_indexer()
                                     self.backbone = backbone_hydrogen_bond_indexer.get_index_for_key(key)
                                 else:
                                     self.backbone = -1
@@ -2856,36 +2853,37 @@ class Hydrogen_bond_base_donor_acceptor_context(object):
     @abstractmethod
     def get_atom_type_indexer(self):
         pass
-
-    def get_backbone_hydrogen_bond_indexer(self):
+    
+    @staticmethod
+    def get_backbone_hydrogen_bond_indexer():
         return Hbond_backbone_donor_and_acceptor_indexer(Table_manager.get_default_table_manager())
-        pass
     
 class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
     
-    def __init__(self,atom,table):
+    def __init__(self,atom,table,atom_type_indexer, backbone_indexer):
+        #TODO could we avoid static methods for this
         self.type = DONOR
-        super(Hydrogen_bond_donor_context, self).__init__(atom, table)
+        super(Hydrogen_bond_donor_context, self).__init__(atom, table, atom_type_indexer, backbone_indexer)
         
     def get_donor_acceptor_types(self,table):
         return  table.get_donor_types()
     
-        
-    def get_atom_type_indexer(self):
+    @staticmethod    
+    def get_atom_type_indexer():
         return Hbond_donor_atom_type_indexer(Table_manager.get_default_table_manager())
     
 
 class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
     
-    def __init__(self,atom, table):
+    def __init__(self,atom, table,atom_type_indexer, backbone_indexer):
         self.type = ACCEPTOR
-        super(Hydrogen_bond_acceptor_context, self).__init__(atom, table)
+        super(Hydrogen_bond_acceptor_context, self).__init__(atom, table, atom_type_indexer, backbone_indexer)
         
     def get_donor_acceptor_types(self,table):
         return  table.get_acceptor_types()
 
-
-    def get_atom_type_indexer(self):
+    @staticmethod
+    def get_atom_type_indexer():
         return Hbond_acceptor_atom_type_indexer(Table_manager.get_default_table_manager())
 
         
@@ -2935,21 +2933,29 @@ class Hydrogen_bond_donor_acceptor_component_factory(Atom_component_factory):
 DONOR = 0
 ACCEPTOR = 1
 class Hydrogen_bond_donor_component_factory(Hydrogen_bond_donor_acceptor_component_factory):
-    
+    def __init__(self):
+        super(Hydrogen_bond_donor_component_factory, self).__init__()
+        self.atom_type_indexer = Hydrogen_bond_donor_context.get_atom_type_indexer()
+        self.backbone_indexer = Hydrogen_bond_donor_context.get_backbone_hydrogen_bond_indexer()
+        
     def get_table_name(self):
         return 'DONR'
     
     def _build_context(self,atom,table):
-        return Hydrogen_bond_donor_context(atom, table)
+        return Hydrogen_bond_donor_context(atom, table,self.atom_type_indexer, self.backbone_indexer)
     
 
 class Hydrogen_bond_acceptor_component_factory(Hydrogen_bond_donor_acceptor_component_factory):
-    
+    def __init__(self):
+        super(Hydrogen_bond_acceptor_component_factory, self).__init__()
+        self.atom_type_indexer = Hydrogen_bond_acceptor_context.get_atom_type_indexer()
+        self.backbone_indexer = Hydrogen_bond_acceptor_context.get_backbone_hydrogen_bond_indexer()
+        
     def get_table_name(self):
         return 'ACCP'
     
     def _build_context(self,atom, table):
-        return Hydrogen_bond_acceptor_context(atom, table)
+        return Hydrogen_bond_acceptor_context(atom, table, self.atom_type_indexer, self.backbone_indexer)
     
 
 class Hydrogen_bond_parameter_factory(Component_factory):
