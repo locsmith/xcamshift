@@ -3313,6 +3313,7 @@ class Xcamshift(PyEnsemblePot):
         self._active_target_atom_ids = None
         self._factors = None
 
+        self._prepare(STRUCTURE_CHANGED, None)
     
     
     
