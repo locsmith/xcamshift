@@ -31,6 +31,7 @@ from table_manager import Table_manager
 from atomSel import AtomSel
 from component_list import Native_component_list
 from array import array
+from common_constants import STRUCTURE_CHANGED
 
 BACKBONE=1
 SIDE_CHAIN=0
@@ -809,6 +810,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         simulation = self.get_single_member_ensemble_simulation()
         
         potential = Hydrogen_bond_potential(simulation)
+        potential._prepare(STRUCTURE_CHANGED, None)
         components = potential._get_components()
         calculator  = Fast_hydrogen_bond_shift_calculator(components['SIMU'],"test")
         energies = self._calculate_energies()
@@ -855,6 +857,7 @@ class TestXcamshiftHBondINGKTLKG(unittest2.TestCase):
         simulation = self.get_single_member_ensemble_simulation()
         
         potential = Hydrogen_bond_potential(simulation)
+        potential._prepare(STRUCTURE_CHANGED,None)
         target_atom_ids = potential.get_target_atom_ids()
         
         potential._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)

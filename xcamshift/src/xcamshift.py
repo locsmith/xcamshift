@@ -3082,12 +3082,7 @@ class Hydrogen_bond_potential(Base_potential):
         for name in 'DONR','ACCP','PARA','DIDX','AIDX':
             self._component_set[name] = self._get_component_list(name).get_native_components()
         
-        #TODO: repeatedly calling Hbond_backbone_donor_and_acceptor_indexer will be very slow
-        table_manager = Table_manager.get_default_table_manager()
-        num_donors_and_acceptors =  Hbond_backbone_donor_and_acceptor_indexer(table_manager).get_max_index()
-        
-        if len(self._hydrogen_bond_energies) != num_donors_and_acceptors: 
-            resize_array(self._hydrogen_bond_energies, num_donors_and_acceptors * 3)
+
         self._component_set['HBLT'] =  self._hydrogen_bond_energies
         
         return self._component_set
@@ -3221,9 +3216,9 @@ class Hydrogen_bond_potential(Base_potential):
 #         updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
 #         
 #         return non_bonded_list
-    def update_hydrogen_bond_list(self,increment=True):
+    def _update_hydrogen_bond_list(self,increment=True):
         if increment:
-            #TODO:fudged here
+            zero_array(self._hydrogen_bond_energies)
             self._hydrogen_bond_energy_calculator(self._get_components(), self._hydrogen_bond_energies)
 
     def _build_selected_components(self, target_atom_ids):
@@ -3237,16 +3232,24 @@ class Hydrogen_bond_potential(Base_potential):
         component_to_target = [target_atom_ids.index(atom_component[0]) for atom_component in atom_components]   
         return  component_to_target
         
+
+    def _reset_hydrogen_bond_list(self):
+        table_manager = Table_manager.get_default_table_manager()
+        num_donors_and_acceptors = Hbond_backbone_donor_and_acceptor_indexer(table_manager).get_max_index()
+        if len(self._hydrogen_bond_energies) != num_donors_and_acceptors:
+            resize_array(self._hydrogen_bond_energies, num_donors_and_acceptors * 3)
+            zero_array(self._hydrogen_bond_energies) #                 for i in range(len(self._hydrogen_bond_energies)):
+
     def _prepare(self, change, target_atom_ids):
         super(Hydrogen_bond_potential, self)._prepare(change, target_atom_ids)
         
         
         if change == STRUCTURE_CHANGED:
-            raise Exception("not implimented!")
-            #self._reset_hydrogen_bond_list()
+            self._reset_hydrogen_bond_list()
+
         
         if change == ROUND_CHANGED:
-            self.update_hydrogen_bond_list()
+            self._update_hydrogen_bond_list()
         
         if change == TARGET_ATOM_IDS_CHANGED:
             self._selected_components = self._build_selected_components(target_atom_ids)
