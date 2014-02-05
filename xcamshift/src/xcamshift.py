@@ -995,8 +995,8 @@ class Distance_potential(Distance_based_potential):
         print self._get_number_components()
         result = []
         for from_index,to_index,value,exponent in self._get_all_components():
-            from_atom = self._get_atom_name(from_index)
-            to_atom = self._get_atom_name(to_index)
+            from_atom = Atom_utils._get_atom_name(from_index)
+            to_atom = Atom_utils._get_atom_name(to_index)
             
             template = '[%s] - [%s] %7.3f %7.3f'
             values = from_atom, to_atom, value, exponent
