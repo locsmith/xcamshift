@@ -3498,7 +3498,34 @@ class Xcamshift(PyEnsemblePot):
         
         #TODO review whole funtion and resturn types
         return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(result))
+    
+    def print_shifts(self,out=sys.stdout):
+        #TODO: this is protein specific
+        ATOM_NAMES = 'HA','CA','HN','N','C','CB'
+        atom_keys,shifts = self.calc_shifts()
         
+        seg_residue = {}
+        for i,(seg,residue,atom) in enumerate(atom_keys):
+          #TODO: this is protein specific
+          if atom == 'HA1':
+            atom ='HA'
+          seg_residue.setdefault((seg,residue),{})[atom] = shifts[i]
+          
+        print >> out, 'SEGID     RESID    RES   %7s  %7s  %7s  %7s  %7s  %7s' % ATOM_NAMES 
+        
+        for seg,residue in sorted(seg_residue):
+          residue_type = Atom_utils._get_residue_type(seg,residue)
+          out_seg = '|%s|' % seg
+          out_seg.ljust(6)
+          print >> out, '%s        %-5i   %4s ' % (out_seg,residue,residue_type),
+          for name in ATOM_NAMES:
+              if name in seg_residue[seg,residue]:
+                  shift = '%7.4f' % seg_residue[seg,residue][name]
+                  print >> out,shift.rjust(8),
+              else:
+                  print >> out,  '       .',
+          print >> out
+            
     #TODO: add standalone mode flag or wrap in a external wrapper that call round changed etc    
     def _calc_shifts(self, target_atom_ids=None, result=None):
                 
