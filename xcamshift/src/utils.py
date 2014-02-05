@@ -34,8 +34,8 @@ def _build_residue_type_cache():
     result = {}
     for atom_id in iter_atom_ids():
         residue_type = Atom_utils._get_residue_type_from_atom_id(atom_id)
-        residue_number = Atom_utils._get_atom_info_from_index(atom_id)[1]
-        result[residue_number] = residue_type
+        segid,residue_number,atom_name =  Atom_utils._get_atom_info_from_index(atom_id)
+        result[segid,residue_number] = residue_type
     return result
 
 Cache_manager.get_cache_manager().add_cache_builder(RESIDUE_TYPE,_build_residue_type_cache)
@@ -117,13 +117,13 @@ class Atom_utils(object):
     def _get_residue_type(segment, residue_number):
         _residue_type_cache = _get_residue_type_cache()
         
-        
-        if residue_number in _residue_type_cache:
-            result = _residue_type_cache[residue_number]
+        key = segment, residue_number
+        if key in _residue_type_cache:
+            result = _residue_type_cache[key]
         else:
             residue_atoms = Atom_utils._select_atom_with_translation(segment, residue_number)
             result = residue_atoms[0].residueName()
-            _residue_type_cache[residue_number] = result
+            _residue_type_cache[key] = result
             
         return result
     
