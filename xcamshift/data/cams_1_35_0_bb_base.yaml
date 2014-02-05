@@ -50,7 +50,7 @@ scaling:     1.0
 to_atoms:    ["N","HN","CA","HA","C","O"]
 from_atoms:  ["HN","N","HA","CA","C","CB"]
 offsets:     [-1,0,1]
-translations: {[-,OT1] : O, [-,HT1] : HN,[GLY,HA1]: HA}
+translations: {[-,OT1] : O, [-,HT1] : HN,[GLY,HA1]: HA, [PRO,CD]: HN}
 
 data:
 
