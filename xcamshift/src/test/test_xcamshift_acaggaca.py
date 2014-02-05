@@ -111,7 +111,7 @@ class  TestXcamshiftACAGGACA(unittest2.TestCase):
         PDBTool("test_data/acaggaca/acaggaca.pdb").read()
         
         xcamshift = Xcamshift()
-        xcamshift.removed_named_sub_potential('HBOND')
+        xcamshift.remove_named_sub_potential('HBOND')
         shifts = xcamshift.calc_shifts()
         
         selections = list(shifts[0])

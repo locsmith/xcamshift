@@ -66,7 +66,7 @@ class TestXcamshift(unittest2.TestCase):
         
     def _make_xcamshift(self, shifts={}):
         xcamshift = self._setup_xcamshift_with_shifts_table(shifts)
-        xcamshift.removed_named_sub_potential('HBOND')
+        xcamshift.remove_named_sub_potential('HBOND')
         return xcamshift
     
     def get_single_member_ensemble_simulation(self):

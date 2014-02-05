@@ -3332,7 +3332,7 @@ class Xcamshift(PyEnsemblePot):
         self._verbose=on
     
         
-    def removed_named_sub_potential(self,name, quiet=False):
+    def remove_named_sub_potential(self,name, quiet=False):
        if not quiet:
            print 'warning sub potential %s removed' % name
        sub_pot  = self.get_named_sub_potential(name)

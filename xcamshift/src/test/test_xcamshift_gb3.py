@@ -181,7 +181,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
     def _get_xcamshift_no_hbond(self):
         xcamshift =self._get_xcamshift()
-        xcamshift.removed_named_sub_potential('HBOND')
+        xcamshift.remove_named_sub_potential('HBOND')
         return xcamshift
     
     def test_component_chemical_shifts(self):

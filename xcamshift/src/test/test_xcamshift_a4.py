@@ -571,7 +571,7 @@ class TestXcamshiftA4(unittest2.TestCase):
 
     def _get_xcamshift(self):
         xcamshift_potential = Xcamshift()
-        xcamshift_potential.removed_named_sub_potential('HBOND')
+        xcamshift_potential.remove_named_sub_potential('HBOND')
         return xcamshift_potential
 
     def  test_overall_shifts_a4(self):
