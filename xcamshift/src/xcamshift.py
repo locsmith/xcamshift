@@ -3332,8 +3332,9 @@ class Xcamshift(PyEnsemblePot):
         self._verbose=on
     
         
-    def removed_named_sub_potential(self,name):
-       print 'warning sub potential %s removed' % name
+    def removed_named_sub_potential(self,name, quiet=False):
+       if not quiet:
+           print 'warning sub potential %s removed' % name
        sub_pot  = self.get_named_sub_potential(name)
        self.potential.remove(sub_pot)
 
@@ -3383,10 +3384,7 @@ class Xcamshift(PyEnsemblePot):
             raise Exception(msg)
         return result
     
-    def removed_named_sub_potential(self,name):
-       print 'warning sub potential %s removed' % name
-       sub_pot  = self.get_named_sub_potential(name)
-       self.potential.remove(sub_pot)
+
            
     def print_shifts(self):
         result  = [0] * Segment_Manager().get_number_atoms()
