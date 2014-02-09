@@ -126,7 +126,7 @@ cdef class Segment_Manager:
     def __check_segment(self, segment):
         if segment not in self._segments:
             template = "segment %s is not defined  should be one of %s"
-            message = template % (segment, ', '.join(self.segments))
+            message = template % (segment, ', '.join(self._segments))
             raise KeyError(message)
 
     def get_segment_info(self,segment):

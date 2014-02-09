@@ -8,8 +8,6 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
-residue_type : PRO
-table_type : BACKBONE
 translations : {}
 data:
 

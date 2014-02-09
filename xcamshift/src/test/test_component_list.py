@@ -247,7 +247,7 @@ class  Test_native_component_list(Test_component_list):
         self._component_list.set_format('ii')
         self._component_list.add_components(TEST_DATA_1)
         
-        EXPECTED_1 = ((1, 0, 2), (2, 2, 1))
+        EXPECTED_1 = ((0,-1,-1),(1, 0, 2), (2, 2, 1))
         result  = test_dump_component_offsets(self._component_list.get_native_component_offsets())
         
         self.assertEqual(EXPECTED_1, result)

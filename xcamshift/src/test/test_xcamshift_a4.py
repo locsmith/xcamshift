@@ -18,9 +18,11 @@ from pdbTool import PDBTool
 import unittest2
 #from xcamshift import RandomCoilShifts, Distance_potential,  Extra_potential,\
 #    Dihedral_potential, Base_potential, Sidechain_potential, Xcamshift,\
-from xcamshift import    Non_bonded_potential, Non_bonded_list, Xcamshift
+from xcamshift import Non_bonded_potential, Non_bonded_list, Xcamshift
 from atomSel import AtomSel
 from cython.shift_calculators import allocate_array, zero_array
+from derivList import DerivList
+from vec3 import Vec3
 #from test.xdists import xdists_ala_3
 #from test.dihedrals import dihedrals_ala_3
 #from cython.fast_segment_manager import Segment_Manager
@@ -61,6 +63,17 @@ def almostEqual(first, second, places = 7):
 #class testSegmentManager(object):
 class TestXcamshiftA4(unittest2.TestCase):
 
+    def __init__(self,*args,**kwargs):
+        super(TestXcamshiftA4, self).__init__(*args,**kwargs)
+        self._esim = None
+        
+    def get_single_member_ensemble_simulation(self):
+        if self._esim.__class__ ==  None.__class__:
+            #TODO note EnsembleSimulation can't have a single member that causes a crash!
+            # therefore a hack
+            self._esim =  Xcamshift().ensembleSimulation()
+        return self._esim
+     
     def _setup_xcamshift_with_shifts_table(self, test_shifts):
         xcamshift = self._get_xcamshift()
         observed_shifts = Observed_shift_table(test_shifts)
@@ -114,7 +127,7 @@ class TestXcamshiftA4(unittest2.TestCase):
     def make_out_array(self):
 #        TODO: use segment manager
         num_atoms = len(AtomSel('(all)').indices())
-        result = Out_array(num_atoms)
+        result = Out_array(num_atoms, self.get_single_member_ensemble_simulation())
         return result
     
     def make_result_array(self):
@@ -329,7 +342,7 @@ class TestXcamshiftA4(unittest2.TestCase):
 
 
     def _get_non_bonded_potential(self, smoothed = True):
-        non_bonded_potential = Non_bonded_potential(smoothed)
+        non_bonded_potential = Non_bonded_potential(self.get_single_member_ensemble_simulation(), smoothed)
         return non_bonded_potential
 
     def testNonBondedComponents(self):
@@ -421,6 +434,7 @@ class TestXcamshiftA4(unittest2.TestCase):
         nb_interaction_list = components['NBLT']
         active_array = allocate_array(1,'i')
         components['ACTI'] =  active_array
+        components['OFFS'] = 0
         non_bonded_potential._force_calculator._set_components(components)
         
         for i, component in enumerate(nb_interaction_list):
@@ -478,6 +492,8 @@ class TestXcamshiftA4(unittest2.TestCase):
         nb_interaction_list = components['NBLT']
         active_array = allocate_array(1,'i')
         components['ACTI'] =  active_array
+        #TODO: make this less invasive of the potentials encapsulation
+        components['OFFS'] = 0
         non_bonded_potential._force_calculator._set_components(components)
         
         for i, component in enumerate(nb_interaction_list):
@@ -555,6 +571,7 @@ class TestXcamshiftA4(unittest2.TestCase):
 
     def _get_xcamshift(self):
         xcamshift_potential = Xcamshift()
+        xcamshift_potential.remove_named_sub_potential('HBOND')
         return xcamshift_potential
 
     def  test_overall_shifts_a4(self):
@@ -577,6 +594,9 @@ class TestXcamshiftA4(unittest2.TestCase):
         
         expected_shift_components = dict(ala_4.ala_4_expected_shift_components)
         for sub_potential_name in xcamshift_potential.get_sub_potential_names():
+            if sub_potential_name == 'HBOND':
+                print "WARNING ignoring hydrogen bond potential"
+                continue
             sub_potential = xcamshift_potential.get_named_sub_potential(sub_potential_name)
             
             for target_atom_id in sub_potential.get_target_atom_ids():
@@ -589,12 +609,25 @@ class TestXcamshiftA4(unittest2.TestCase):
                 del expected_shift_components[expected_key]
         self.remove_zero_valued_keys(expected_shift_components)
         self.assertEmpty(expected_shift_components)
-        
+
+    def deriv_list_as_array(self, total_result_forces_deriv_list, simulation):
+        derivs_vec3 = total_result_forces_deriv_list.get(simulation)
+        #todo: report to charles  print derivs_vec3 segfaults
+        result = [None]*len(derivs_vec3)
+        for i,vec in enumerate(derivs_vec3):
+            if vec != Vec3(0.0,0.0,0.0):
+                result[i]=Vec3(vec)
+        return result
+    
     def _test_force_sets(self, xcamshift, expected_energy, expected_forces):
         expected_forces = dict(expected_forces)
         number_atoms = Segment_Manager().get_number_atoms()
-        derivs = [None] * number_atoms
+        derivs = DerivList()
+        derivs.init(self.get_single_member_ensemble_simulation())
+        
         energy = xcamshift.calcEnergyAndDerivs(derivs)
+        
+        derivs = self.deriv_list_as_array(derivs, self.get_single_member_ensemble_simulation())
         
         for atom_id in range(number_atoms):
             

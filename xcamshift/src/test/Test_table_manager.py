@@ -30,6 +30,12 @@ class Test_table_manager(unittest2.TestCase):
                          (("N", 0), ("CA", 0), ("CB", 0), ("CG", 0)))
     TARGET_ATOMS = ["HA", "CA", "HN", "N", "C", "CB"]
 
+    def assertSequenceContains(self,expected,sequence):
+        if sequence.index(expected) == -1:
+            sequence_strings = [`elem` for elem in sequence]
+            sequence_string = '\n'.join(sequence_strings)
+            raise AssertionError("element %s not found in the sequence:\n%s" % sequence_string,`expected`)
+        
     def setUp(self):
         # TODO add a delegate to get a sequence to the table manager and remove dependance on a psf file
         initStruct("test_data/gb3/gb3.psf")
@@ -284,7 +290,47 @@ class Test_table_manager(unittest2.TestCase):
         table_1 = self.table_manager.get_non_bonded_table('GLY')
         table_2 = self.table_manager.get_non_bonded_table('GLY')
         self.assertEqual(id(table_1._table), id(table_2._table))
+        
+    
+    def test_hydrogen_bond_table(self):
+        
+        table = self.table_manager.get_hydrogen_bond_table('ALA')
+#         
+        self.assertSequenceEqual(('HA', 'CA', 'HN', 'N', 'C', 'CB'), table.get_target_atoms())
+        
+        self.assertSequenceEqual(table.get_donor_types(),['HON'])
+        self.assertSequenceEqual(table.get_acceptor_types(),['ON'])
+        
+        self.assertSequenceContains(['.','C', 'O'], table.get_atom_selector('ON'))
+        self.assertSequenceContains(['.','N', 'HN'], table.get_atom_selector('HON'))
+        
+        with self.assertRaises(KeyError):
+            table.get_atom_selector('J')
+        
+        expected_energy_terms = {
+                    'p1': -0.40353099999999997, 
+                    'p2': 13.9148, 
+                    'p3': -0.42172500000000002, 
+                    'p4': -3.0801599999999998, 
+                    'p5':  0.98725099999999999, 
+                    'p6':  0.0, 
+                    's': -16.5, 
+                    'r': 3.0}
+        
+        self.assertDictEqual(table.get_energy_terms('HON','ON','DIST'),expected_energy_terms)
 
+        expected_energy_term_offsets = [(-1, 'O'), (0, 'HN'), (0, 'O'), (1, 'HN')]
+        self.assertSequenceEqual(table.get_energy_term_offsets(),expected_energy_term_offsets)
+        
+        self.assertAlmostEqual(-0.00000002820/table.get_energy_offset_correction((-1, 'O'),'DIST','HA'),1.0)
+        
+        table = self.table_manager.get_hydrogen_bond_table('GLY')
+        
+        self.assertDictEqual(table.get_energy_terms('HON','ON','DIST'),expected_energy_terms)
+        
+        self.assertAlmostEqual(-0.00000029080/table.get_energy_offset_correction((-1, 'O'),'DIST','HA'), 1.0)
+        
 if __name__ == "__main__":
-    unittest2.main()
-#    unittest2.main(module='test.Test_table_manager',defaultTest='Test_table_manager.test_table_hierachy')
+#     unittest2.main()
+    unittest2.main(module='test.Test_table_manager')
+

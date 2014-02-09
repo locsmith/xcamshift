@@ -1,0 +1,37 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013 Gary Thompson & The University of Leeds.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v3.0
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-3.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
+# hbond distance dependent chemical shifts from camshift 1.35.0
+---
+
+target_atoms : ["HA", "CA", "HN", "N", "C", "CB"]
+
+# note ON must be quoted as on is a yaml identifier for true
+# note there is a lack of clarity here as to what the indirect acceptor atoms for TRP and HIS should be...
+donors:       ["HON": [[., N, HN],       [SER, OG, HG],   [THR, OG1, HG1], [TYR, OH, HH],   [LYS, NZ, HZ1],   [LYS, NZ, HZ2],   [LYS, NZ, HZ3],
+                       [ARG, NH1, H11],  [ARG, NH1, H12], [ARG, NH1, H21], [ARG, NH1, H22], [TRP,  NE1, HE1], [HIS,  ND1, HD1], [HIS, ND2, HD2]]]
+acceptors:    ["ON":  [[., C,  O],       [.,  C,  N],     [SER, CB, OG],   [THR, CB, OG1],  [TYR, CZ, OH],    [LYS, CE, NZ],    [ARG, CZ, NH1],
+                       [ARG, CZ, NH2],   [TRP, CE2, NE1], [HIS, CE1, ND1], [HIS, CE1, ND2]]]
+
+energy_terms: ["DIST", "ANG1", "ANG2"]
+
+translations: {[GLY,HA1]: HA}
+
+pairs: 
+       ["HON", "ON"]: {
+           # note: the p6 values in kai's thesis are set to 0.0 out in the current implementation  1.35.0
+           #       [dist-p6: -3.77431, ang1-p6: 4.64911 ang2-p6: 6.33794]
+           DIST:  {p1: -0.403531, p2: 13.91480, p3: -0.421725, p4: -3.08016, p5: 0.987251, p6: 0.0, r:  3.0, s: -16.5},
+           ANG1:  {p1: 12.151400, p2: -1.12258, p3: -1.122580, p4:  1.30953, p5: 1.309530, p6: 0.0, r: 15.5, s:   3.0},
+           ANG2:  {p1: 15.048600, p2: -1.79469, p3: -1.794690, p4:  1.49398, p5: 1.493980, p6: 0.0, r: 15.5, s:   2.5}
+       }
+
+
+%s

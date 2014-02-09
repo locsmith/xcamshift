@@ -28,10 +28,6 @@ rings : {
      HIS : { "5" : ["CG","ND1","CD2","CE1","NE2"]}
 
 }
-#{"CG", "CD1", "CE1", "CZ", "CE2", "CD2"};
-#  string trp1_n [] = {"CD2", "CE2", "CZ2", "CH2", "CZ3", "CE3"};
-#  string trp2_n [] = {"CG", "CD1", "NE1", "CE2", "CD2"};
-#  string his_n [] = {"CG", "ND1", "CD2", "CE1", "NE2"};
 
 # these values  are mutiplied by 1000 before they are used by the ring table class (this matches camshifts impementation)
 data:

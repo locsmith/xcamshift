@@ -87,8 +87,14 @@ def _check_shift_results(active_target_atoms_ids, result, expected_shifts):
         key = get_key_for_atom_index(target_atom_index)
         expected_shift_diff = expected_shifts[key]
         if abs(result[i] - expected_shift_diff) >  1.0**-(DEFAULT_DECIMAL_PLACES-2):
-            raise AssertionError("diff too big %f - %f " % (result[i], expected_shift_diff))
+            raise AssertionError("diff too big %f - %f [%i,%s]" % (result[i], expected_shift_diff,i,key))
         
+def keyed_atoms_to_list(active_target_atoms_ids,atom_key_shift_dict):
+    result  =[]
+    for target_atom_index in active_target_atoms_ids:
+        key = get_key_for_atom_index(target_atom_index)
+        result.append(atom_key_shift_dict[key])
+    return result
     
 class Yaml_loader(object):
     def __init__(self, files, root=None):

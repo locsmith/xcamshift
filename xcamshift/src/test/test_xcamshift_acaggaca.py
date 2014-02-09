@@ -28,6 +28,17 @@ class  TestXcamshiftACAGGACA(unittest2.TestCase):
     # TODO add extra places
     DEFAULT_DECIMAL_PLACES = 5
 
+    def __init__(self,*args,**kwargs):
+        super(TestXcamshiftACAGGACA, self).__init__(*args,**kwargs)
+        self._esim = None
+        
+    def get_single_member_ensemble_simulation(self):
+        if self._esim.__class__ ==  None.__class__:
+            #TODO note EnsembleSimulation can't have a single member that causes a crash!
+            # therefore a hack
+            self._esim =  Xcamshift().ensembleSimulation()
+        return self._esim
+    
     def setUp(self):
         initStruct("test_data/acaggaca/acaggaca.psf")
         PDBTool("test_data/acaggaca/acaggaca.pdb").read()
@@ -70,7 +81,7 @@ class  TestXcamshiftACAGGACA(unittest2.TestCase):
     
     def testDisulphideComponents(self):
         
-        disulphide_calculator = Disulphide_shift_calculator()
+        disulphide_calculator = Disulphide_shift_calculator(self.get_single_member_ensemble_simulation())
         components = disulphide_calculator._get_component_list('ATOM')
         
         expected = [(Atom_utils.find_atom_ids(*elem)[0],acaggaca_ss_shifts[elem]) for elem in acaggaca_ss_shifts]
@@ -81,7 +92,7 @@ class  TestXcamshiftACAGGACA(unittest2.TestCase):
     def testDisulphidePotential(self):
         initStruct("test_data/acaggaca/acaggaca.psf") 
         
-        disulphide_calculator = Disulphide_shift_calculator()
+        disulphide_calculator = Disulphide_shift_calculator(self.get_single_member_ensemble_simulation())
         result = self.make_result_array() 
         expected  = self.make_result_array()
         for elem in acaggaca_ss_shifts:
@@ -100,6 +111,7 @@ class  TestXcamshiftACAGGACA(unittest2.TestCase):
         PDBTool("test_data/acaggaca/acaggaca.pdb").read()
         
         xcamshift = Xcamshift()
+        xcamshift.remove_named_sub_potential('HBOND')
         shifts = xcamshift.calc_shifts()
         
         selections = list(shifts[0])

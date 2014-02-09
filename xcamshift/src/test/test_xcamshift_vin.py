@@ -51,7 +51,9 @@ class TestXcamshiftVIN(unittest2.TestCase):
         
 
     def _get_xcamshift(self):
-        return Xcamshift()
+        xcamshift = Xcamshift()
+        xcamshift.remove_named_sub_potential('HBOND')
+        return xcamshift
 
     def test_vin_shifts(self):
         xcamshift = self._get_xcamshift()

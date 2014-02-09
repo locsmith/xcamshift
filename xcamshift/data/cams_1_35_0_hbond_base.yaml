@@ -1,0 +1,63 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013 Gary Thompson & The University of Leeds.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v3.0
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-3.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
+# hbond distance dependent chemical shifts from camshift 1.35.0
+---
+
+target_atoms : ["HA", "CA", "HN", "N", "C", "CB"]
+
+# note ON must be quoted as on is a yaml identifier for true
+# note there is a lack of clarity here as to what the indirect acceptor atoms for TRP and HIS should be...
+donors:       ["HON": [[., N, HN],       [SER, OG, HG],   [THR, OG1, HG1], [TYR, OH, HH],   [LYS, NZ, HZ1],   [LYS, NZ, HZ2],   [LYS, NZ, HZ3],
+                       [ARG, NH1, H11],  [ARG, NH1, H12], [ARG, NH1, H21], [ARG, NH1, H22], [TRP,  NE1, HE1], [HIS,  ND1, HD1], [HIS, ND2, HD2]]]
+acceptors:    ["ON":  [[., C,  O],       [.,  C,  N],     [SER, CB, OG],   [THR, CB, OG1],  [TYR, CZ, OH],    [LYS, CE, NZ],    [ARG, CZ, NH1],
+                       [ARG, CZ, NH2],   [TRP, CE2, NE1], [HIS, CE1, ND1], [HIS, CE1, ND2]]]
+
+energy_terms: ["DIST", "ANG1", "ANG2"]
+
+translations: {[GLY,HA1]: HA}
+
+pairs: 
+       ["HON", "ON"]: {
+           # note: the p6 values in kai's thesis are set to 0.0 out in the current implementation  1.35.0
+           #       [dist-p6: -3.77431, ang1-p6: 4.64911 ang2-p6: 6.33794]
+           DIST:  {p1: -0.403531, p2: 13.91480, p3: -0.421725, p4: -3.08016, p5: 0.987251, p6: 0.0, r:  3.0, s: -16.5},
+           ANG1:  {p1: 12.151400, p2: -1.12258, p3: -1.122580, p4:  1.30953, p5: 1.309530, p6: 0.0, r: 15.5, s:   3.0},
+           ANG2:  {p1: 15.048600, p2: -1.79469, p3: -1.794690, p4:  1.49398, p5: 1.493980, p6: 0.0, r: 15.5, s:   2.5}
+       }
+
+
+# note these data are multiplied by 1000 compared to the camshift files to avoid problems with
+# the extractor only formatting floats to a limited precision...
+data:  
+        [-1,  O]:  
+            DIST:   {HA:   -0.00002820, CA:   -0.00514598, HN:  -0.00010025, N:   -0.07527458, C:    0.00848419, CB:    0.03302363}
+            ANG1:   {HA:   -0.57960923, CA:    1.45321195, HN:  -1.23116240, N:  -18.04107276, C:    3.98873528, CB:   -1.63257205}
+            ANG2:   {HA:    0.06865534, CA:   -0.13940254, HN:   0.12506817, N:    1.87546307, C:   -0.39169941, CB:    0.16794747}
+
+        [0,  HN]:  
+            DIST:   {HA:   -1.38898021, CA:    3.02826943, HN: -14.28719399, N:  -13.42813965, C:   -4.33359160, CB:   -6.60430277}
+            ANG1:   {HA:    0.10705011, CA:    1.06609006, HN:   4.48211681, N:    0.39822518, C:   -0.48367656, CB:    0.77341075}
+            ANG2:   {HA:   -0.00055516, CA:   -0.13263144, HN:  -0.51058950, N:   -0.10034386, C:    0.05464226, CB:   -0.03180200}
+
+        [0,   O]:  
+            DIST:   {HA:    0.00114176, CA:   -0.02568669, HN:  -0.00547163, N:   -0.08440091, C:   -0.01692652, CB:   -0.01790638}
+            ANG1:   {HA:    0.30839949, CA:   -0.29179647, HN:   0.23294214, N:    6.56272665, C:  -11.35204363, CB:    1.16802227}
+            ANG2:   {HA:   -0.02808213, CA:    0.03277032, HN:  -0.01567124, N:   -0.63741094, C:    1.16527444, CB:   -0.12428080}
+
+        [1,  HN]:  
+            DIST:   {HA:   -1.77689196, CA:   -5.24412125, HN:   1.13213021, N:  -15.57293172, C:   -7.73595447, CB:    1.71548083}
+            ANG1:   {HA:    0.85546479, CA:    3.44807243, HN:   0.17202282, N:   11.77279380, C:    5.71298451, CB:   -0.84031610}
+            ANG2:   {HA:   -0.08146647, CA:   -0.38032800, HN:  -0.00996565, N:   -1.21930908, C:   -0.54428381, CB:    0.10726395}
+
+
+
+
+

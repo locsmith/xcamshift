@@ -8,10 +8,11 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
-# cython: profile=False  
+
+# cython: profile=False
 # cython: boundscheck=False    
 # cython: wraparound=False
-# cython: cdivision=True 
+# cython: cdivision=True
 
 '''
 Created on 31 Jul 2012
@@ -22,11 +23,14 @@ Created on 31 Jul 2012
 cdef extern from "instantiate.hh":
     pass
 
+from derivList import DerivList as PyDerivList
 from math import ceil
 cimport cython
 from vec3 import Vec3 as python_vec3
 from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
-from  xplor_access cimport norm,Vec3,currentSimulation, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector
+from xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList,\
+     clearSharedVector, EnsembleSimulation, createSharedVector, getSharedVectorValue, resizeSharedVector,\
+     addToSharedVectorValue, getSharedVectorValue, deleteSharedVector, setSharedVectorValue, BondAngle
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
@@ -35,6 +39,18 @@ from utils import Atom_utils
 from cpython cimport array
 import ctypes
 from component_list import  Component_list, Native_component_list
+from ensembleSimulation import EnsembleSimulation as pyEnsembleSimulation
+import math
+cdef double PI = math.pi
+
+#TODO: should be ensembleSimulationAsNative
+cdef inline EnsembleSimulation* simulationAsNative(object simulation) except NULL:
+    #TODO tell charles his __eq__ method has problems
+    if id(None) == id(simulation):
+        raise Exception("_simulation cannot be None!")
+    if not isinstance(simulation, pyEnsembleSimulation):
+        raise Exception("a %s can't be converted to a EnsembleSimulation*" % simulation.__class__.__name__)
+    return <EnsembleSimulation*><size_t>int(simulation.this)
 
 cpdef array.array allocate_array(int len, type='d'):
     result = array.array(type,[0])
@@ -97,7 +113,41 @@ cdef struct Constant_cache:
     float   tanh_elongation
     float   tanh_y_offset
     
+cdef struct Hydrogen_bond_component:
+    int index 
+    int direct_atom_id
+    int indirect_atom_id
+    int type
+    int atom_type_id 
+    int backbone
+    
+cdef struct Hydrogen_bond_parameter:
+    int component_index
+    int param_index
+    int donor_index
+    int acceptor_index
+    float[6] p
+    float r 
+    float s
 
+cdef struct Hydrogen_bond_donor_lookup:
+    int donor_id
+    int number_acceptors
+    int[1] acceptor_offset
+
+cdef struct Hydrogen_bond_acceptor_lookup:
+    int index
+    int donor_id
+    int acceptor_id
+    int[3] parameter_indices
+
+cdef struct Hydrogen_bond_shift_component:
+    int target_atom_index
+    int hbond_index
+    double dist_coef
+    double ang1_coef
+    double ang2_coef
+            
 def test_dump_component_index_pair(Non_bonded_interaction_list data, int index):
     cdef Component_index_pair* result =  data.get(index)
     
@@ -153,8 +203,120 @@ def test_dump_dihedral_comp(data):
                       compiled_components[i].parameters[4], compiled_components[i].parameters[5],\
                       compiled_components[i].parameters[6]
                       
+cdef class CDSSharedVectorFloat:
+    cdef void *  data
+    cdef int size
+    cdef object _simulation
+    cdef int _ensemble_size
+    
+    def __init__(self, int size, object ensembleSimulation):
+        self._simulation = ensembleSimulation
+        self._ensemble_size = ensembleSimulation.size()
+        
+        cdef EnsembleSimulation* cEnsembleSimulation = simulationAsNative(ensembleSimulation)
+        self.data = <CDSVector[double]*>createSharedVector(size*self._ensemble_size, 0.0,  cEnsembleSimulation)
+        self.size = size
+    
+    cpdef resize(self,int size):
+        self.size = size * self._ensemble_size
+        resizeSharedVector(self.data,self.size)
+        return self
+    
+    cpdef clear(self):
+        clearSharedVector(self.data)
+        return self
+    
+    def __len__(self):
+        return self.size* self._ensemble_size
+    
+    
+    cdef inline int array_offset(self,int index, int ensemble_index) nogil:
+        return (self._ensemble_size * index) + ensemble_index
+    
+    cdef inline int ensemble_member_index(self) nogil:
+        cdef int member_index
+        with gil:
+            member_index  = self._simulation[0].member()[0].memberIndex() 
+        return member_index
+    
+    cdef inline int ensemble_array_offset(self,int index) nogil: 
+        return self.array_offset(index, self.ensemble_member_index())
+    
+    def __str__(self):
+        data = []
+        for i in range(len(self)):
+            value  = getSharedVectorValue(self.data,i)
+            data.append('%7.3f' % value)
+        return 'esim size: ' +`self._ensemble_size` + ', [' + ', '.join(data) + ']'
+
+
+    def average_into(self, CDSVectorFloat in_data):
+        in_data.clear()
+        cdef CDSVector[double] *target =  in_data.data
+        in_data.resize(self.size)
+        cdef int i,j
+        cdef double divisor = 1.0/self._ensemble_size
+        for i in range(self.size):
+            target[0][i]=0.0
+            for j in range(self._ensemble_size):
+                target[0][i] += getSharedVectorValue(self.data,self.array_offset(i,j)) * divisor
+                
+    cdef inline void addToResult(self, int offset, double value) nogil:
+        addToSharedVectorValue(self.data,offset,value)
+    
+    def __getitem__(self, int key):
+        if key >= len(self):
+            raise IndexError("index (%i) out of range (%i)" % (key, len(self)))
+        return getSharedVectorValue(self.data,key)
+
+    def __setitem__(self, int key,value):
+        if key >= self.size:
+            raise IndexError("index (%i) out of range (%i)" % (key, len(self)))
+        setSharedVectorValue(self.data,key,value)
+
+    def __del__(self):
+        deleteSharedVector(self.data)
+        self.data = NULL
+        
+cdef class CDSVectorFloat:
+    cdef CDSVector[double] *data
 
     
+    def __init__(self, int size):
+        self.data = new CDSVector[double]()
+        self.data[0].resize(size)
+    
+    cpdef resize(self,int size):
+        self.data[0].resize(size)
+    
+    cpdef clear(self):
+        self.data[0].set(0.0)
+    
+    def __len__(self):
+        return self.data[0].size()
+
+    cdef CDSVector[double]* get_data(self):
+        return self.data
+         
+    def __str__(self):
+        result = []
+        for i in range(self.data[0].size()):
+            result.append('%7.3f' % self.data[0][i])
+        return '[' + ', '.join(result) + ']'
+    
+    def __getitem__(self, int key):
+        if key >= self.data[0].size():
+            raise IndexError("index (%i) out of range (%i)" % (key, self.data.size()))
+        result = self.data[0][key]
+        return result
+
+    def __del__(self):
+        del self.data
+    
+
+    
+        
+
 cdef  class Non_bonded_interaction_list:
     cdef CDSVector[int]  *data
     cdef int length
@@ -240,7 +402,10 @@ cdef class Vec3_list:
     @cython.profile(False)    
     cdef inline set(self, int x, Vec3& y):
         self.data[0][x] =  y
-        
+    
+    def __len__(self):
+        return self.data[0].size()
+    
     def __dealloc__(self):
         
         if self.data != NULL:
@@ -261,12 +426,14 @@ cdef class Out_array:
     cdef long _length
     cdef double[60000] _data
     cdef int[60000] _mask
+    cdef EnsembleSimulation* _simulation
     
-    def __init__ (self, length):
+    def __init__ (self, length, simulation):
         self._length = length
+        self._simulation = simulationAsNative(simulation)
 
         
-    def __cinit__(self,  length):
+    def __cinit__(self,  length, simulation):
         self._length =  60000
         
         if length > 60000: 
@@ -345,25 +512,49 @@ cdef class Out_array:
             self._mask[target_id] = 0
             
     def add_forces_to_result(self, result=None, weight=1.0):
-        if result ==  None:
-            result = [None] * self._length
-        
-        cdef double x = 0.0
-        cdef double y = 0.0
-        cdef double z = 0.0
         cdef long id3
-        for i in range(self._length):
-            if self._mask[i] != 0:
-                if result[i] ==  None:
-                    result[i] = [0.0]*3
-                id3 = i * 3
-                x  = self._data[id3] * weight
-                y  = self._data[id3+1] *weight 
-                z  = self._data[id3+2] * weight  
-                result[i][0] += x
-                result[i][1] += y
-                result[i][2] += z
+        cdef DerivList *derivList
+        cdef CDSVector[Vec3]* derivs
+        cdef Vec3* test
+        
+        if isinstance(result,PyDerivList):
+            pointer = int(result.this)
+            derivList = (<DerivList*><size_t>pointer)
+            #TODO: references don't work here lots of problems -> cython mailing list
+            derivs  = &derivList[0][self._simulation]
+            for i in range(self._length): 
+                if self._mask[i] != 0:                  
+                    id3 = i * 3
+                    
+                    derivs[0][i][0]  +=  self._data[id3] * weight
+                    derivs[0][i][1]  +=  self._data[id3+1] *weight 
+                    derivs[0][i][2]  +=  self._data[id3+2] * weight 
 
+
+        elif result == None:
+            if result ==  None:
+                result = [None] * self._length
+            for i in range(self._length):
+                if self._mask[i] != 0:
+                    if result[i] ==  None:
+                        result[i] = [0.0]*3
+                    id3 = i * 3
+                    result[i][0] += self._data[id3] * weight
+                    result[i][1] += self._data[id3+1] *weight
+                    result[i][2] += self._data[id3+2] * weight  
+        else:
+            # raw pointer
+            pointer = int(result)
+            derivList = (<DerivList*><size_t>pointer)
+            #TODO: references don't work here lots of problems -> cython mailing list
+            derivs  = &derivList[0][self._simulation] 
+            for i in range(self._length): 
+                if self._mask[i] != 0:                  
+                    id3 = i * 3
+                    
+                    derivs[0][i][0]  +=  self._data[id3] * weight
+                    derivs[0][i][1]  +=  self._data[id3+1] *weight 
+                    derivs[0][i][2]  +=  self._data[id3+2] * weight             
                 
         return result
     
@@ -406,26 +597,7 @@ cdef class Out_array:
 cdef object vec3_as_tuple(Vec3& vec_3):
     return vec_3.x(), vec_3.y(), vec_3.z()
     
-cdef class Vec3_container:
-    
-    cdef float[3] floats
-    
-    cdef set_vec3(self,Vec3& vec3):
-        self.floats[0] =  vec3.x()
-        self.floats[1] =  vec3.y()
-        self.floats[2] =  vec3.z()
-        
-    @cython.profile(False)    
-    cdef Vec3  get_vec3(self):
-        return Vec3(self.floats[0],self.floats[1],self.floats[2])
-    
-    def __getitem__(self, i):
-        if i > 2:
-            msg = "tried to access object at %i length is %i"
-            values = (i,3)
-            raise IndexError(msg % values)
 
-        return self.floats[i]
     
     
 cdef struct target_distant_atom:
@@ -445,6 +617,12 @@ cdef struct dihedral_ids:
     int atom_id_2
     int atom_id_3
     int atom_id_4
+    
+cdef struct bond_angle_ids:
+    int atom_id_1
+    int atom_id_2
+    int atom_id_3
+
 
 cdef struct Coef_component:
     int atom_type_id
@@ -494,7 +672,7 @@ cdef class Coef_components:
     cdef Component_Offsets* _component_offsets
     cdef int num_ids
     
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
 
         self._raw_data =  data 
         self._components =  <Coef_component*> <size_t> ctypes.addressof(data)
@@ -505,7 +683,26 @@ cdef class Coef_components:
         self._raw_component_offsets_data =  data 
         self._component_offsets =  <Component_Offsets*> <size_t> ctypes.addressof(data)
         self.num_ids =  len(data)/ sizeof(Component_Offsets)    
-                  
+    
+    def __str__(self):
+        result = []
+        
+        result.append('components')
+        result.append('----------')
+        result.append('')
+        result.append('number = %i' % self._num_components)
+        for i in range(self._num_components):
+            result.append('%i : %i %i %f' % (i,self._components[i].atom_type_id, self._components[i].ring_id,self._components[i].coefficient))
+        result.append('')
+        result.append('offsets')
+        result.append('-------')
+        result.append('')
+        result.append('number = %i' % self.num_ids)
+        for i in range(self.num_ids):
+            result.append('%i : %i %i %i' % (i,self._component_offsets[i].id, self._component_offsets[i].offset,self._component_offsets[i].length))
+        
+        return '\n'.join(result)
+        
     def __cinit__(self, object coef_components, component_offsets):
 
  
@@ -577,6 +774,16 @@ cdef inline float calc_dihedral_angle_simulation(Simulation* simulation, dihedra
     cdef double result = Dihedral(atom_1,atom_2,atom_3,atom_4).value()
     return result 
 
+@cython.profile(False)
+cdef inline float calc_bond_angle_simulation(Simulation* simulation, bond_angle_ids bond_angle_atom_ids) nogil:
+    
+    
+    cdef Atom atom_1  = simulation[0].atomByID(bond_angle_atom_ids.atom_id_1)
+    cdef Atom atom_2  = simulation[0].atomByID(bond_angle_atom_ids.atom_id_2)
+    cdef Atom atom_3  = simulation[0].atomByID(bond_angle_atom_ids.atom_id_3)
+    
+    cdef double result = BondAngle(atom_1,atom_2,atom_3).value()
+    return result 
 
 
 cdef float DEFAULT_CUTOFF = 5.0
@@ -586,50 +793,60 @@ cdef float DEFAULT_NB_CUTOFF = 5.0
 cdef class Base_shift_calculator:
     cdef bint _verbose 
     cdef str _name
-    cdef Simulation* _simulation
+    cdef EnsembleSimulation* _simulation
 
-    def __init__(self, str name):
+    def __init__(self, simulation, str name):
             self._verbose = False
             self._name = name
-            self._simulation =  currentSimulation()
+            self._simulation =  simulationAsNative(simulation)
+        
             
     
     def set_verbose(self,bint state):
         self._verbose =  state
         
-    cdef inline void set_simulation(self):
-        self._simulation = currentSimulation()
     
     
+    def _set_components(self,components):
+        self._bytes_to_components(components['ATOM'])
+        self._simulation = <EnsembleSimulation*><size_t>int(components['SIMU'].this)
+        
+    
+    cdef inline int ensemble_size(self) nogil:
+        return self._simulation[0].size()
+    
+    cdef inline int ensemble_member_index(self) nogil:
+        return self._simulation[0].member()[0].memberIndex()
+    
+    cdef inline int ensemble_array_offset(self,int index) nogil:
+        return (self.ensemble_size() * index) + self.ensemble_member_index()
+    
+        
 cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):           
     
     cdef Random_coil_component* _compiled_components 
     cdef int _num_components
     cdef object _raw_data 
         
-    def __cinit__(self):
+    def __cinit__(self, simulation,  str name = "not set"):
         self._raw_data = None
         self._compiled_components  = NULL
         self._num_components =  0
                         
-    def __init__(self, str name = "not set"):
-        Base_shift_calculator.__init__(self, name)
+    def __init__(self, simulation, str name = "not set"):
+        Base_shift_calculator.__init__(self, simulation, name)
 
 #    
 #    TODO: this needs to be removed
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
 
         self._raw_data =  data 
         self._compiled_components =  <Random_coil_component*> <size_t> ctypes.addressof(data)
         self._num_components =  len(data)/ sizeof(Random_coil_component)
-            
-    def _set_components(self,components):
-        self._bytes_to_components(components)
 
     
     @cython.profile(False)
-    def __call__(self, object components, double[:] results, int[:] component_to_target,  int[:] active_components):
-        self.set_simulation()
+    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components):
         self._set_components(components)
         cdef double start_time = 0.0
         cdef double end_time = 0.0
@@ -639,12 +856,14 @@ cdef class Fast_random_coil_shift_calculator(Base_shift_calculator):
  
         cdef int factor_index = 0
         cdef int component_index
-         
+        cdef int offset
+
         #TODO: note to cython list for componnt_index in active_components produces awful code!
         for factor_index in range(len(active_components)):
             component_index = active_components[factor_index]         
-              
-            results[component_to_target[factor_index]]  += self._compiled_components[component_index].shift
+            
+            offset = self.ensemble_array_offset(component_to_target[factor_index])
+            shift_cache.addToResult(offset,self._compiled_components[component_index].shift)
  
         if self._verbose:
             end_time = time()
@@ -666,13 +885,13 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
     cdef int _num_components
     cdef object _raw_data
         
-    def __cinit__(self):
+    def __cinit__(self, simulation, smoothed, str name = "not set"):
         self._raw_data = None
         self._compiled_components  = NULL
         self._num_components =  0
                         
-    def __init__(self, smoothed, str name = "not set"):
-        Base_shift_calculator.__init__(self, name)
+    def __init__(self, simulation, smoothed, str name = "not set"):
+        Base_shift_calculator.__init__(self, simulation, name)
         
         self._smoothed =  smoothed
         self._smoothing_factor =  DEFAULT_SMOOTHING_FACTOR
@@ -680,14 +899,12 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         self._cutoff =  DEFAULT_CUTOFF
 
 #    TODO: this needs to be removed
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
 
         self._raw_data =  data 
         self._compiled_components =  <Distance_component*> <size_t> ctypes.addressof(data)
         self._num_components =  len(data)/ sizeof(Distance_component)
             
-    def _set_components(self,components):
-        self._bytes_to_components(components)
 
         
             
@@ -711,8 +928,8 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         return result
     
     @cython.profile(False)
-    def __call__(self, object components, double[:] results, int[:] component_to_target,  int[:] active_components):
-        self.set_simulation()
+    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target,  int[:] active_components):
+
         cdef double start_time = 0.0
         cdef double end_time = 0.0
         
@@ -738,6 +955,7 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
         
         cdef int factor_index = 0
         cdef int component_index
+        cdef int offset
         
         #TODO: note to cython list for componnt_index in active_components produces awful code!
         for factor_index in range(len(active_components)):
@@ -753,7 +971,9 @@ cdef class Fast_distance_shift_calculator(Base_shift_calculator):
             if self._smoothed:
                 ratio = distance / self._cutoff
                 smoothing_factor = 1.0 - ratio ** 8
-            results[component_to_target[factor_index]]  += smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient
+                
+            offset = self.ensemble_array_offset(component_to_target[factor_index])
+            shift_cache.addToResult(offset, smoothing_factor * pow(distance,  coef_exp.exponent) * coef_exp.coefficient)
 
         if self._verbose:
             end_time = time()
@@ -768,24 +988,22 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     cdef int _num_components
     cdef object _raw_data
         
-    def __cinit__(self):
+    def __cinit__(self, simulation, str name = "not set"):
         self._raw_data =  None
         self._compiled_components = NULL
         self._num_components = 0
         
         
-    def __init__(self, str name = "not set"):
-        Base_shift_calculator.__init__(self,name)
+    def __init__(self, simulation, str name = "not set"):
+        Base_shift_calculator.__init__(self, simulation, name)
         
         
-    cdef void _bytes_to_components(self, data):
+    def  _bytes_to_components(self, data):
         self._raw_data =  data 
         
         self._compiled_components =  <Dihedral_component*> <size_t> ctypes.addressof(data)
         self._num_components =  len(data)/ sizeof(Dihedral_component)
     
-    cdef _set_components(self, object components):
-        self._bytes_to_components(components)
             
     cdef inline _get_component(self,int index):
         return self._components[index]
@@ -824,8 +1042,8 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
     #TODO: architecture different from force calculator no base function/class
     #TODO: still uses component to result...
     #TODO: add common force and shift base class
-    def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
-        self.set_simulation()
+    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
+
         cdef float angle
         cdef float angle_term
         cdef float shift
@@ -841,7 +1059,7 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
             start_time = time()
         cdef int factor_index 
         cdef int component_index
-        
+        cdef int offset
             
         self._set_components(components)
         for factor_index in range(len(active_components)):
@@ -859,8 +1077,9 @@ cdef class Fast_dihedral_shift_calculator(Base_shift_calculator):
                          parameters.param_2 * cos(angle +  parameters.param_3) +      \
                          parameters.param_4
             shift = coefficient * angle_term
-    
-            results[component_to_target[factor_index]] += shift
+
+            offset = self.ensemble_array_offset(component_to_target[factor_index])
+            shift_cache.addToResult(offset,shift)
             
         if self._verbose:
             end_time = time()
@@ -881,7 +1100,7 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
     
     cdef Coef_components _compiled_coef_components
     
-    def __cinit__(self):
+    def __cinit__(self, simulation, str name = "not set"):
         self.raw_data = None
         self._compiled_components = NULL
         self._num_components = 0
@@ -896,17 +1115,22 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         self._centre_cache = None
         self._normal_cache = None
     
-    def __init__(self, str name = "not set"):
-        Base_shift_calculator.__init__(self,name)
+    def __init__(self, simulation, str name = "not set"):
+        Base_shift_calculator.__init__(self,simulation, name)
 
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
         self.raw_data =  data 
         self._compiled_components =  <Ring_target_component*> <size_t> ctypes.addressof(data)
         self._num_components =  len(data)/ sizeof(Ring_target_component)
 
          
+<<<<<<< HEAD
     def _set_components(self,components):
         self._bytes_to_components(components)
+=======
+
+
+>>>>>>> hbond-cs
             
     def _set_normal_cache(self,normals):
         self._normal_cache = <Vec3_list> normals
@@ -965,8 +1189,8 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         return contrib * coefficient
 
     @cython.profile(True)
-    def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
-        self.set_simulation()
+    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
+        
         cdef int target_atom_id
         cdef int atom_type_id
         cdef int ring_id
@@ -983,6 +1207,8 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         
         cdef int factor_index
         cdef int component_index
+        cdef int offset
+        
         for factor_index in range(len(active_components)):
             component_index = active_components[factor_index] 
             
@@ -1000,8 +1226,9 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
                 ring_id = coef_component[0].ring_id
                 coefficient = coef_component[0].coefficient
                 shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
-            
-            results[component_to_target[factor_index]] += shift
+                
+            offset = self.ensemble_array_offset(component_to_target[factor_index])
+            shift_cache.addToResult(offset,shift)
         
         if self._verbose:
             end_time = time()
@@ -1012,14 +1239,12 @@ cdef int RING_ATOM_IDS = 1
     
 cdef class Fast_ring_data_calculator:
     cdef bint _verbose
-    cdef Simulation* _simulation
+    cdef EnsembleSimulation* _simulation
          
-    def __init__(self): 
+    def __init__(self,simulation): 
         self._verbose = False
-        self._simulation =  currentSimulation()
+        self._simulation = simulationAsNative(simulation)
     
-    def set_simulation(self):
-        self._simulation  = currentSimulation()
         
     def set_verbose(self,on):
         self._verbose =  on
@@ -1071,10 +1296,7 @@ cdef class Fast_ring_data_calculator:
         cdef Vec3 normal_2
         self._calculate_normal(atom_triplet_2,  &normal_2)
         
-#         cdef Vec3_container result = Vec3_container()
         self._average_2_vec_3(normal_1, normal_2, result)
-#         result.set_vec3(average)
-#         return result
        
     cdef inline void  _build_atom_triplet(self,atom_ids, int[3]& result):
         cdef int i
@@ -1090,12 +1312,8 @@ cdef class Fast_ring_data_calculator:
     
     @cython.profile(True)        
     def __call__(self, rings, Vec3_list normals, Vec3_list centres):
-        self.set_simulation()
-#        cdef Vec3_container centre 
-#         cdef Vec3_container normal
         cdef double start_time = 0.0 
         cdef double end_time = 0.0
-        self.set_simulation()
         
         if self._verbose:
             start_time = time()
@@ -1117,23 +1335,291 @@ cdef class Fast_ring_data_calculator:
             end_time = time()
             print '   ring data centres: ',len(rings), ' normals ', len(normals), 'in', "%.17g" %  (end_time-start_time), "seconds"
 
+#TODO: add common base class with Non bonded calculator
+cdef class Fast_hydrogen_bond_calculator:
+    cdef float _cutoff_distance
+    cdef bint _verbose 
+    cdef EnsembleSimulation* _simulation
+    cdef int _min_residue_seperation
+    
+    def __init__(self,simulation,cutoff_distance=5.0):
+        self._simulation = simulationAsNative(simulation)
+        self._min_residue_seperation =  1
+        
+        self._cutoff_distance =  cutoff_distance
+        self._verbose =  False
+    
+        
+    def set_verbose(self,on):
+        self._verbose=on
+        
+    cdef   int _bytes_to_components(self, data, Hydrogen_bond_component** target_pointer):
+        target_pointer[0] =  <Hydrogen_bond_component*> <size_t> ctypes.addressof(data)
+        return len(data)/ sizeof(Hydrogen_bond_component)
+    
+    cdef  int _bytes_to_parameters(self,data, Hydrogen_bond_parameter** target_pointer):
+        target_pointer[0] =  <Hydrogen_bond_parameter*> <size_t> ctypes.addressof(data)
+        return len(data)/ sizeof(Hydrogen_bond_parameter)
+    
+    cdef  int _bytes_to_donor_lookup(self,data, Hydrogen_bond_donor_lookup** target_pointer):
+        target_pointer[0] =  <Hydrogen_bond_donor_lookup*> <size_t> ctypes.addressof(data)
+        return len(data)/ sizeof(Hydrogen_bond_donor_lookup)
+    
+    cdef  int _bytes_to_acceptor_lookup(self,data, Hydrogen_bond_acceptor_lookup** target_pointer):
+        target_pointer[0] =  <Hydrogen_bond_acceptor_lookup*> <size_t> ctypes.addressof(data)
+        return len(data)/ sizeof(Hydrogen_bond_acceptor_lookup)
+
+    cdef inline bint _filter_by_residue(self, char* seg_1, int residue_1, char* seg_2, int residue_2) nogil:
+        cdef int sequence_distance
+        cdef bint result
+        
+        result = False
+        
+        if strcmp(seg_1, seg_2) == 0:
+            sequence_distance =<int>fabs(residue_1-residue_2)
+            if sequence_distance < self._min_residue_seperation:
+                result =True
+        return result
+    
+    cdef  inline float _calc_energy(self, float distance_or_angle, Hydrogen_bond_parameter params) nogil:
+        
+
+        cdef float term_1 = (params.p[1]/distance_or_angle) + params.p[3]
+        cdef float term_2 = (params.p[2]/distance_or_angle) + params.p[4]
+        
+        return params.p[0] * (term_1**params.r - term_2**params.s) + params.p[5]
+    
+    @cython.profile(True)
+    def __call__(self, components, float[:] energies):#,  Hydrogen_bond_energy_list energy_list):
+        
+        donor_list = components['DONR']
+        acceptor_list =  components['ACCP']
+        parameters =  components['PARA']
+        donor_indices = components['DIDX']
+        acceptor_indices = components['AIDX']
+        
+        if self._verbose:
+            print '***** BUILD HYDROGEN BOND LIST ******'
+        
+        cdef  Hydrogen_bond_component* donor_components
+        cdef int num_donor_components = self._bytes_to_components(donor_list,&donor_components)
+        
+        cdef Hydrogen_bond_component* acceptor_components
+        cdef int num_acceptor_components = self._bytes_to_components(acceptor_list,&acceptor_components)
+
+        cdef Hydrogen_bond_donor_lookup* donor_lookup
+        cdef int num_donor_lookup_components = self._bytes_to_donor_lookup(donor_indices,&donor_lookup)
+
+        cdef Hydrogen_bond_parameter* hydrogen_bond_parameters
+        cdef int num_parameters = self._bytes_to_parameters(parameters, &hydrogen_bond_parameters)
+        
+        cdef Hydrogen_bond_acceptor_lookup* acceptor_lookup
+        cdef int num_acceptor_lookup_components = self._bytes_to_acceptor_lookup(acceptor_indices,&acceptor_lookup)
+        cdef double start_time = 0.0  
+        cdef double end_time = 0.0
+        
+        cdef Atom atom_1, atom_2
+        cdef int current_acceptor
+        cdef int atom_id_1,atom_id_2
+        cdef float distance 
+        cdef float min_distance
+        cdef float FLT_MAX=1000000.0 #TODO: replacce with header
+        
+        cdef bond_angle_ids bond_angle_atom_ids
+        
+        cdef char *seg_1, *seg_2
+        cdef int residue_1, residue_2
+                
+        cdef Hydrogen_bond_parameter params_dist
+        cdef Hydrogen_bond_parameter params_angle_1
+        cdef Hydrogen_bond_parameter params_angle_2
+        
+        cdef float angle_1,angle_2
+        cdef float energy_dist
+        cdef float energy_ang_1, energy_ang_2
+        
+        if self._verbose:
+            start_time = time()
+
+    
+        cdef int i
+        
+        with nogil:
+    #         hydrogen_bond_list.clear()
+            for i in range(num_donor_components):
+                atom_id_1 = donor_components[i].direct_atom_id
+                
+                atom_1 = self._simulation[0].atomByID(atom_id_1)
+                seg_1 =  <char *>atom_1.segmentName()
+                residue_1 = atom_1.residueNum()
+                
+                current_acceptor = -1
+                min_distance = FLT_MAX
+    
+                for j in range(num_acceptor_components):
+                    atom_id_2  = acceptor_components[j].direct_atom_id
+                    
+                    atom_2 = self._simulation[0].atomByID(atom_id_2)
+                    
+                    
+                    seg_2 = <char*>atom_2.segmentName()
+                    residue_2 =  atom_2.residueNum()
+                    
+                    distance = norm(atom_1.pos() - atom_2.pos())
+                    residue_distance_ok = not self._filter_by_residue(seg_1, residue_1, seg_2, residue_2)
+                    
+                    if distance < min_distance and residue_distance_ok:
+                        donor_index = i
+                        acceptor_index  = j
+                        min_distance = distance
+    
+                if  min_distance < 3.0:
+                    donor_direct_atom_id = donor_components[donor_index].direct_atom_id
+                    donor_indirect_atom_id = donor_components[donor_index].indirect_atom_id
+                    acceptor_direct_atom_id = acceptor_components[acceptor_index].direct_atom_id
+                    acceptor_indirect_atom_id = acceptor_components[acceptor_index].indirect_atom_id 
+    
+                    bond_angle_atom_ids.atom_id_1 = donor_direct_atom_id 
+                    bond_angle_atom_ids.atom_id_2 = acceptor_direct_atom_id 
+                    bond_angle_atom_ids.atom_id_3 = acceptor_indirect_atom_id
+                    
+                    angle_1 = calc_bond_angle_simulation(self._simulation, bond_angle_atom_ids) 
+                    
+    #                 
+                    bond_angle_atom_ids.atom_id_1 = donor_indirect_atom_id
+                    bond_angle_atom_ids.atom_id_2 = donor_direct_atom_id 
+                    bond_angle_atom_ids.atom_id_3 = acceptor_direct_atom_id 
+                     
+                    angle_2 = calc_bond_angle_simulation(self._simulation, bond_angle_atom_ids) 
+                    
+                    if (angle_1 > PI/2.0 and angle_1 < PI *3.0/2.0) and (angle_2 > PI/2.0 and angle_2 < PI *3.0/2.0):
+                    
+                        donor_atom_type_id  = donor_components[donor_index].atom_type_id
+                        acceptor_atom_type_id = acceptor_components[acceptor_index].atom_type_id
+                        acceptor_id = donor_lookup[donor_atom_type_id].acceptor_offset[acceptor_atom_type_id]
+         
+                        param_id_dist = acceptor_lookup[acceptor_id].parameter_indices[0]
+                        param_id_angle_1 = acceptor_lookup[acceptor_id].parameter_indices[1]
+                        param_id_angle_2 = acceptor_lookup[acceptor_id].parameter_indices[2]
+        #
+                        params_dist  = hydrogen_bond_parameters[param_id_dist]
+                        params_angle_1  = hydrogen_bond_parameters[param_id_angle_1]
+                        params_angle_2  = hydrogen_bond_parameters[param_id_angle_2]
+    
+                        energy_dist = self._calc_energy(min_distance,params_dist)
+                        energy_ang_1 = self._calc_energy(angle_1 / PI * 180.0, params_angle_1)
+                        energy_ang_2 = self._calc_energy(angle_2 / PI * 180.0, params_angle_2)
+                        
+                        if donor_components[donor_index].backbone > -1:
+                            energies[donor_components[donor_index].backbone*3] = energy_dist
+                            energies[donor_components[donor_index].backbone*3+1] = energy_ang_1
+                            energies[donor_components[donor_index].backbone*3+2] = energy_ang_2
+    #                 
+                        if acceptor_components[acceptor_index].backbone > -1:
+                            energies[acceptor_components[acceptor_index].backbone*3] = energy_dist
+                            energies[acceptor_components[acceptor_index].backbone*3+1] = energy_ang_1
+                            energies[acceptor_components[acceptor_index].backbone*3+2] = energy_ang_2
+               
+               
+        if self._verbose:
+            end_time = time()
+            print '   hydrogen donors: ',len(donor_list),' acceptors: ', len(acceptor_list),' in', "%.17g" %  (end_time-start_time), "seconds"
+
+cdef class Fast_hydrogen_bond_shift_calculator(Base_shift_calculator):
+
+    cdef float[:]  _hydrogen_bond_energies
+    cdef int _num_hydrogen_bond_energies
+    cdef Hydrogen_bond_shift_component* _compiled_components
+    cdef int _num_components
+    cdef object raw_data
+        
+    def __cinit__(self, simulation,  str name = "not set"):
+        self._hydrogen_bond_energies = None
+        self.raw_data = None
+        self._num_hydrogen_bond_energies = -1
+                        
+    def __init__(self, simulation, str name = "not set"):
+        Base_shift_calculator.__init__(self, simulation, name)
+
+    def _bytes_to_components(self,data):
+
+        self.raw_data =  data 
+        self._compiled_components =  <Hydrogen_bond_shift_component*> <size_t> ctypes.addressof(data)
+        self._num_components =  len(data)/ sizeof(Hydrogen_bond_shift_component)
+
+    def _energies_to_components(self,float [:] energies):
+        self. _hydrogen_bond_energies = energies
+        self._num_hydrogen_bond_energies =energies.shape[0]/3
+        
+    def _set_components(self,components):
+        Base_shift_calculator._set_components(self,components)
+        self._energies_to_components(components['HBLT'])
+        
+    #TODO: add common force and shift base class
+    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
+        cdef double start_time = 0.0
+        cdef double end_time = 0.0
+     
+        
+        if self._verbose:
+            start_time=time()
+        
+        self._set_components(components)
+
+        if self._verbose:
+            start_time = time()
+        
+        cdef int factor_index = 0
+        cdef int component_index
+        cdef int offset, hbond_index
+        cdef float shift
+        
+        #TODO: note to cython list for componnt_index in active_components produces awful code!
+        if active_components ==  None:
+            with nogil:
+                for factor_index in range(self._num_components):
+                          
+                    
+                    hbond_index = self._compiled_components[factor_index].hbond_index
+                    target_atom_index = self._compiled_components[factor_index].target_atom_index
+                    dist_coef = self._compiled_components[factor_index].dist_coef
+                    ang1_coef = self._compiled_components[factor_index].ang1_coef
+                    ang2_coef = self._compiled_components[factor_index].ang2_coef
+                    
+                    shift = 0.0
+                    if self._hydrogen_bond_energies[hbond_index*3] > 0.0:
+
+                        shift+=self._hydrogen_bond_energies[hbond_index*3]* dist_coef
+                        shift+=self._hydrogen_bond_energies[(hbond_index*3)+1]* ang1_coef
+                        shift+=self._hydrogen_bond_energies[(hbond_index*3)+2]* ang2_coef
+
+                        offset = self.ensemble_array_offset(component_to_target[factor_index])
+                        shift_cache.addToResult(offset, shift)
+
+        else:
+            raise Exception("not implemented!")
+        if self._verbose:
+            end_time = time()
+            print '   hydrogen bond shift components ' ,self._name,len(self._num_components), 'in', "%.17g" % (end_time-start_time), "seconds"
+
+
 cdef class Fast_non_bonded_calculator:
     cdef int _min_residue_seperation
     cdef float _cutoff_distance
     cdef float _jitter
     cdef float _full_cutoff_distance
     cdef bint _verbose 
-    cdef Simulation* _simulation
-    def __init__(self,min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
+    cdef EnsembleSimulation* _simulation
+    
+    def __init__(self,simulation, min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
+        self._simulation = simulationAsNative(simulation)
+
         self._min_residue_seperation =  min_residue_seperation
         self._cutoff_distance =  cutoff_distance
         self._jitter = jitter
         self._full_cutoff_distance =  self._cutoff_distance + self._jitter
         self._verbose =  False
-        self._simulation =  currentSimulation()
     
-    def set_simulation(self):
-        self._simulation = currentSimulation()
         
     def set_verbose(self,on):
         self._verbose=on
@@ -1158,8 +1644,8 @@ cdef class Fast_non_bonded_calculator:
         cdef bint is_non_bonded
         cdef float distance
         
-        atom_1 = currentSimulation().atomByID(atom_id_1)
-        atom_2 = currentSimulation().atomByID(atom_id_2)
+        atom_1 = self._simulation[0].atomByID(atom_id_1)
+        atom_2 = self._simulation[0].atomByID(atom_id_2)
         
         seg_1 =  <char *>atom_1.segmentName()
         residue_1 = atom_1.residueNum()
@@ -1204,7 +1690,6 @@ cdef class Fast_non_bonded_calculator:
             start_time = time()
 
 
-        self.set_simulation()
         cdef int i, atom_id_1, atom_id_2
         
         non_bonded_lists.clear()
@@ -1223,22 +1708,18 @@ cdef class Fast_non_bonded_calculator:
 
 cdef class Fast_energy_calculator:
     cdef Constant_cache* _energy_term_cache 
-    cdef double[:] _theory_shifts
+    cdef CDSVector[double]  *_theory_shifts
     cdef float[:] _observed_shifts
     cdef bint _verbose 
-    cdef Simulation* _simulation
     cdef int calls
 
     def __init__(self):
         self._energy_term_cache =  NULL
-        self._theory_shifts =   None
+        self._theory_shifts =   NULL
         self._observed_shifts =  None
         self._verbose = False
-        self._simulation = currentSimulation()
         self.calls = 0
     
-    def set_simulation(self):
-        self._simulation = currentSimulation()
         
     def set_verbose(self,on):
         self._verbose = on
@@ -1246,8 +1727,8 @@ cdef class Fast_energy_calculator:
     def set_observed_shifts(self, float[:] observed_shifts):
         self._observed_shifts =  observed_shifts
         
-    def set_calculated_shifts(self, double[:] calculated_shifts):
-        self._theory_shifts =  calculated_shifts
+    def set_calculated_shifts(self, CDSVectorFloat calculated_shifts):
+        self._theory_shifts = calculated_shifts.get_data()
     
     def set_energy_term_cache(self, energy_term_cache ):
         self._energy_term_cache =  <Constant_cache*> <size_t> ctypes.addressof(energy_term_cache)
@@ -1256,7 +1737,7 @@ cdef class Fast_energy_calculator:
         return &self._energy_term_cache[target_atom_index]
     
     cdef inline float  _get_calculated_atom_shift(self, int index):
-        return self._theory_shifts[index]
+        return self._theory_shifts[0][index]
     
     cdef inline float _get_observed_atom_shift(self, int index):
         return self._observed_shifts[index]
@@ -1280,7 +1761,6 @@ cdef class Fast_energy_calculator:
 
     @cython.profile(True)    
     def __call__(self,int[:] target_atom_ids, int[:] active_atom_ids=None):
-        self.set_simulation()
 
         cdef double start_time = 0.0
         cdef double end_time = 0.0 
@@ -1367,7 +1847,6 @@ cdef class Fast_force_factor_calculator(Fast_energy_calculator):
         if self._verbose:
             start_time = time()
 
-        self.set_simulation()
 
        #TODO: shouldn't be allocated each time
         cdef int target_atom_id
@@ -1441,7 +1920,7 @@ cdef class Base_force_calculator:
     
     def __init__(self,potential=None, name= "not set"):
         self._verbose = False
-        self._simulation =  currentSimulation()
+
         
         self._name = name
         
@@ -1449,12 +1928,11 @@ cdef class Base_force_calculator:
     def set_verbose(self,on):
         self._verbose = on
     
-    def set_simulation(self):
-        self._simulation =  currentSimulation()
     
 
-    
-        
+    def _set_components(self,components):
+        self._bytes_to_components(components['ATOM'])
+        self._simulation = <Simulation*><size_t>int(components['SIMU'].this)        
         
         
 #    TODO should most probably be a fixed array
@@ -1467,7 +1945,6 @@ cdef class Base_force_calculator:
             start_time = time()
 
         self._set_components(components)
-        self.set_simulation()
 #        TODO rename component to result to something better
         self._active_components = active_components
         self._do_calc_components(component_to_result, force_factors, forces)
@@ -1515,12 +1992,10 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
     def set_smoothing_factor(self,smoothing_factor):
         self._smoothing_factor = smoothing_factor
         
-    def _set_components(self,components):
-        self._bytes_to_components(components)
         
     
 
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
 
         self.raw_data =  data 
         self._compiled_components =  <Distance_component*> <size_t> ctypes.addressof(data)
@@ -1600,7 +2075,7 @@ cdef class Fast_distance_based_potential_force_calculator(Base_force_calculator)
         else:
             pre_exponent = exponent
             
-        reduced_exponent = (exponent - 2.0) / 2.0
+        reduced_exponent = (exponent - 2.0) / 2
         
         force_factor = full_factor *  pre_exponent * sum_xyz_distances_2 ** reduced_exponent
 
@@ -1688,7 +2163,9 @@ cdef class Fast_non_bonded_force_calculator(Fast_distance_based_potential_force_
         self._compiled_coefficient_components =  <Nonbonded_coefficient_component*> <size_t> ctypes.addressof(data)
         self._num_coefficient_components =  len(data)/ sizeof(Nonbonded_coefficient_component)
         
+    #TODO: call super?
     def _set_components(self, components):
+        self._simulation = <Simulation*><size_t>int(components['SIMU'].this)
         self._non_bonded_list =  components['NBLT']
         self._bytes_to_target_components(components['ATOM'])
         self._bytes_to_remote_components(components['NBRM'])
@@ -1803,7 +2280,7 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
     cdef int _num_components 
     cdef object raw_data
     
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
         self.raw_data =  data 
         
         self._compiled_components =  <Dihedral_component*> <size_t> ctypes.addressof(data)
@@ -1819,9 +2296,6 @@ cdef class Fast_dihedral_force_calculator(Base_force_calculator):
         self.raw_data =  None
         
         
-    def _set_components(self,components):
-        self._bytes_to_components(components)
-                   
      
 #     TODO: remove this is no longer needed
     @cython.profile(False)
@@ -2030,7 +2504,7 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
     def __init__(self,name="not set"):
         super(Fast_ring_force_calculator, self).__init__(name=name)
         
-    cdef void _bytes_to_components(self, data):
+    def _bytes_to_components(self, data):
         self.raw_data =  data 
         self._compiled_components =  <Ring_target_component*> <size_t> ctypes.addressof(data)
         self._num_components =  len(data)/ sizeof(Ring_target_component)
@@ -2040,9 +2514,6 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         self._compiled_ring_components =  <Ring_component*> <size_t> ctypes.addressof(data)
         self._num_ring_components =  len(data)/ sizeof(Ring_component)
          
-    def _set_components(self,components):
-        self._bytes_to_components(components)
-                            
         
     def _set_coef_components(self,coef_components, components):
         self._compiled_coef_components = Coef_components(coef_components, components)
@@ -2327,15 +2798,22 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
     cdef int _component_offset
 
     
+<<<<<<< HEAD
     def __cinit__(self):
+=======
+    
+    
+    def __cinit__(self, simulation, bint smoothed, str name):
+>>>>>>> hbond-cs
         self._non_bonded_list = None
         self._compiled_target_components =  NULL
         self._compiled_remote_components = NULL
         self._compiled_coefficient_components = NULL
         self. _component_offset = 0
         
-    def __init__(self, bint smoothed, str name):
-        super(Fast_non_bonded_shift_calculator, self).__init__(smoothed,name)
+    def __init__(self, simulation, bint smoothed, str name):
+        super(Fast_non_bonded_shift_calculator, self).__init__(simulation, smoothed,name)
+        self._simulation = simulationAsNative(simulation)
         global DEFAULT_NB_CUTOFF
         self._nb_cutoff = DEFAULT_NB_CUTOFF
         
@@ -2363,6 +2841,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         self._num_coefficient_components =  len(data)/ sizeof(Nonbonded_coefficient_component)
         
     def _set_components(self, components):
+        self._simulation = <EnsembleSimulation*><size_t>int(components['SIMU'].this)
         self._non_bonded_list =  components['NBLT']
         self._bytes_to_target_components(components['ATOM'])
         self._bytes_to_remote_components(components['NBRM'])
@@ -2372,21 +2851,21 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         
         
     @cython.profile(True)
-    def __call__(self, object components, double[:] results, int[:] component_to_target, int[:] active_components):
+    def __call__(self, object components, CDSSharedVectorFloat shift_cache, int[:] component_to_target, int[:] active_components):
         self._set_components(components)
         
         if active_components == None:
             for non_bonded_index in range(len(self._non_bonded_list)):
 #                 print non_bonded_index
-                self._calc_single_component_shift(non_bonded_index, non_bonded_index, results, component_to_target)
+                self._calc_single_component_shift(non_bonded_index, non_bonded_index, shift_cache, component_to_target)
         else:         
             for factor_index  in range(active_components.shape[0]):
                 non_bonded_index = active_components[factor_index]
 #                 print factor_index, non_bonded_index
-                self._calc_single_component_shift(factor_index, non_bonded_index, results, component_to_target)
+                self._calc_single_component_shift(factor_index, non_bonded_index, shift_cache, component_to_target)
 
         
-    cdef inline void  _calc_single_component_shift(self,int factor_index, int non_bonded_index, double[:] results, int[:] component_to_target):
+    cdef inline void  _calc_single_component_shift(self,int factor_index, int non_bonded_index, CDSSharedVectorFloat  results, int[:] component_to_target):
         cdef Component_index_pair* non_bonded_pair 
         
         cdef int target_component_index
@@ -2410,6 +2889,7 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
         
         cdef Nonbonded_coefficient_component* coefficent_component
         cdef int component_offset
+        cdef int offset
         
         if self._verbose:
             start_time = time()
@@ -2444,8 +2924,10 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
                 if self._smoothed:
                     ratio = distance / self._cutoff
                     smoothing_factor = 1.0 - ratio ** 8
+                
+                offset = self.ensemble_array_offset(component_to_target[component_offset])
+                results.addToResult(offset, smoothing_factor * pow(distance,  exponent) * coefficient)
 
-                results[component_to_target[component_offset]]  +=  smoothing_factor * pow(distance,  exponent) * coefficient
 
         if self._verbose:
             end_time = time()

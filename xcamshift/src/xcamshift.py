@@ -17,7 +17,7 @@ Created on 27 Dec 2011
 
 #TODO: add tests to exclude atoms/distances which are not defined
 
-
+from cython.pyEnsemblePot import PyEnsemblePot
 from atomSel import AtomSel,intersection
 from component_list import Component_list, Native_component_list
 from dihedral import Dihedral
@@ -28,7 +28,7 @@ from table_manager import Table_manager
 from python_utils import tupleit
 from utils import Atom_utils, iter_residues_and_segments
 import sys
-from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED, DISULPHIDE
+from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED, DISULPHIDE, HBOND
 from common_constants import  TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, STRUCTURE_CHANGED, SHIFT_DATA_CHANGED
 from abc import abstractmethod, ABCMeta
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
@@ -38,14 +38,17 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Fast_dihedral_force_calculator,                                 \
                                      Fast_ring_force_calculator,                                     \
                                      Fast_force_factor_calculator,                                   \
-                                     Out_array, Vec3_list, allocate_array, zero_array,               \
+                                     Out_array, Vec3_list, allocate_array, zero_array, resize_array, \
                                      Fast_non_bonded_shift_calculator,                               \
                                      Fast_non_bonded_force_calculator,                               \
                                      Non_bonded_interaction_list,                                    \
-                                     Fast_random_coil_shift_calculator
+                                     Fast_random_coil_shift_calculator, CDSSharedVectorFloat,        \
+                                     Fast_hydrogen_bond_shift_calculator,CDSVectorFloat,             \
+                                     Fast_hydrogen_bond_calculator
 from time import time
 import array#
 
+#TODO: REMOVE!
 
 class Component_factory(object):
     __metaclass__ = ABCMeta
@@ -87,6 +90,9 @@ class Atom_component_factory(Component_factory):
         segment_info = segment_manager.get_segment_info(segment)
         
         return residue_number > segment_info.first_residue and residue_number < segment_info.last_residue
+
+
+
 
     def create_components(self, component_list, table_provider, segment,target_residue_number,selected_atoms):
         table = self._get_table_for_residue(segment, target_residue_number, table_provider)
@@ -132,6 +138,7 @@ class DihedralContext(object):
                 self._get_atom_names(target_atom_1)
                 raise Exception("unexpected number of to atoms selected (> 1) %d" % num_to_atom)
             return target_atom_1
+    
     
         def get_atom_info(self, segment, from_atom, key_1):
             residue_number_1 = from_atom.residueNum() + key_1.offset
@@ -240,6 +247,7 @@ class DistanceContext:
         to_atom_name = self._translate_atom_name_from_table(to_residue_type, to_atom_name, table)
         
         #TODO remove select atom with translation
+        #code here is strange and repeating
         to_atom = Atom_utils._select_atom_with_translation(self.segment, self.to_residue_number, to_atom_name)
         
         if len(to_atom) == 0:
@@ -309,20 +317,31 @@ class Distance_component_factory(Atom_component_factory):
     
 #TODO: check if previous residue offsets are included
 class Random_coil_context :
+    
+    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
+        return  table.get_translation_to_table(residue_type,atom_name)
+            
     def __init__(self,atom,offset,table):
         
-        self._table = table
+        self.complete = False
         
-        segment = atom.segmentName()
+        atom_name  = atom.atomName()
+        residue_type = atom.residueName()
+        atom_name = self._translate_atom_name_to_table(residue_type, atom_name, table)
         
-        self.offset = offset
-        
-        from_residue_number = atom.residueNum()
-        
-        self.to_residue_number = from_residue_number + offset
-        self.to_residue_type = Atom_utils._get_residue_type(segment, from_residue_number + offset)
-        
-        self.complete = True
+        if atom_name in table.get_target_atoms():
+            self._table = table
+            
+            segment = atom.segmentName()
+            
+            self.offset = offset
+            
+            from_residue_number = atom.residueNum()
+            
+            self.to_residue_number = from_residue_number + offset
+            self.to_residue_type = Atom_utils._get_residue_type(segment, from_residue_number + offset)
+            
+            self.complete = True
 
 class Disulphide_context :
     def __init__(self,atom,table):
@@ -539,7 +558,7 @@ class Base_potential(object):
     
     ALL = '(all)'
             
-    def __init__(self):
+    def __init__(self,simulation):
         self._segment_manager = Segment_Manager.get_segment_manager()
         self._table_manager = Table_manager.get_default_table_manager()
         self._observed_shifts = Observed_shift_table()
@@ -547,6 +566,7 @@ class Base_potential(object):
         self._component_factories = {}
         self._cache_list_data = {}
         self._freeze  = False
+        self._simulation = simulation
     
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._shift_calculator = None
@@ -556,6 +576,9 @@ class Base_potential(object):
         self._component_to_result = None
         self._active_components = None
         self._verbose = False
+    
+    def set_simulation(self,simulation):
+        self._simulation = simulation 
         
     def set_frozen(self,on):
         self._freeze =  (on == True)
@@ -572,6 +595,7 @@ class Base_potential(object):
 
 
     def _build_active_components_list(self, target_atom_ids, components=None, force=False):
+        result = []
         if force or not self._freeze  or  self._active_components == None:
             if self._verbose:
                 print '   filtering components %s' % self.get_abbreviated_name(),
@@ -584,26 +608,39 @@ class Base_potential(object):
             if components == None: 
                 components =  self._get_component_list() 
                  
-            result  =  components.build_selection_list(test)
+            if components != None:
+                result  =  components.build_selection_list(test)
 
             if self._verbose:
-                print ' %i reduced to %i' % (len(components),len(self._active_components))
+                
+                if self._active_components != None:
+                    num_active_components = len(self._active_components)
+                else:
+                    num_active_components = 0
+                    if components  != None:
+                        num_active_components = len(components)
+                print ' %i reduced to %i' % (len(components),num_active_components)
         else:
             result = self._active_components
         
         return result
-    
+     
     def _get_components(self):
-        return self._get_component_list().get_native_components()
+        atom_components =  self._get_component_list()
+        if atom_components != None:
+            atom_components = atom_components.get_native_components()
+        return {'ATOM' : atom_components,
+                'SIMU' : self._simulation}
     
     def _calc_component_shift(self, index):
         
         component_to_result = array.array('i', [0])
-        results = array.array('d',[0.0])
+        ensemble_results = CDSSharedVectorFloat(1,self._simulation)
         components = self._get_components()
         active_components = array.array('i', [index])
-        self._shift_calculator(components,results,component_to_result, active_components=active_components)
-        
+        self._shift_calculator(components,ensemble_results,component_to_result, active_components=active_components)
+        results = CDSVectorFloat(1)
+        ensemble_results.average_into(results)
         return results[0]
       
     
@@ -655,11 +692,12 @@ class Base_potential(object):
     def _create_components_for_residue(self, name, segment, target_residue_number, atom_selection):
         selected_atoms = intersection(Atom_utils._select_atom_with_translation(segment, target_residue_number), atom_selection)
         
-        component_factory = self._component_factories[name]
-        table_source =  self._get_table_source()
-        if component_factory.is_residue_acceptable(segment,target_residue_number,self._segment_manager):
-            component_list =  self._component_list_data[name]
-            component_factory.create_components(component_list, table_source, segment, target_residue_number,selected_atoms)
+        if name in self._component_factories:
+            component_factory = self._component_factories[name]
+            table_source =  self._get_table_source()
+            if component_factory.is_residue_acceptable(segment,target_residue_number,self._segment_manager):
+                component_list =  self._component_list_data[name]
+                component_factory.create_components(component_list, table_source, segment, target_residue_number,selected_atoms)
 
     
     def _build_component_list(self,name,global_atom_selection):
@@ -705,12 +743,14 @@ class Base_potential(object):
 #    TODO put 'ATOM' in a constant and rename to BB_ATOM?
     def _get_component_list(self,name=None):
         if name == None:
-            name  = 'ATOM'
+            name  = self._get_target_atom_list_name()
         if not name in self._component_list_data:
             self._component_list_data[name] = self._create_component_list(name)
             self._build_component_list(name,"(all)")
         return self._component_list_data[name]
     
+    def _get_target_atom_list_name(self):
+        return 'ATOM'
     
     # TODO: make these internal
     def _get_component(self, index, name=None):
@@ -737,7 +777,10 @@ class Base_potential(object):
     
     def get_target_atom_ids(self):
         components = self._get_component_list()
-        return  components.get_component_atom_ids()
+        result  =  []
+        if components != None:
+            result  =  components.get_component_atom_ids()
+        return  result
         
     def _calc_single_atom_shift(self, target_atom_id):
         components =  self._get_component_list()
@@ -753,7 +796,10 @@ class Base_potential(object):
     def calc_force_set(self,target_atom_ids,force_factors,forces):
         if self._have_derivative():
             components = self._get_components()
-            self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._get_active_components())
+            #TODO: move simulation outr of components and into constructor (for simplicity and symmetry with shift calculators)
+            #TODO: do shift calculators use components fully?
+            if self._force_calculator != None:
+                self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._get_active_components())
             
     
     def calc_single_atom_force_set(self,target_atom_id,force_factor,forces):
@@ -789,13 +835,21 @@ class Base_potential(object):
     #TODO: unify with ring random coil and disuphide shift calculators
     def calc_shifts(self, target_atom_ids, results):
        
-        components = self._get_components()
-        self._shift_calculator(components,results,self._component_to_result, active_components=self._get_active_components())
+        if self._shift_calculator != None:
+            #TODO: get components doesn't work here
+            components = self._get_components()
+            self._shift_calculator(components,results,self._component_to_result, active_components=self._get_active_components())
+             
+
+            
+
+            
+
 
 class Distance_based_potential(Base_potential):
     
-    def __init__(self,  smoothed = False, fast=False):
-        super(Distance_based_potential, self).__init__()
+    def __init__(self, simulation, smoothed = False, fast=False):
+        super(Distance_based_potential, self).__init__(simulation)
         self._smoothed = smoothed
         #TODO: sort placement out, move to non bonded
         #
@@ -808,7 +862,7 @@ class Distance_based_potential(Base_potential):
         
     #TODO: move to base potential
     def _get_shift_calculator(self):
-        result  = Fast_distance_shift_calculator(self._smoothed, name=self.get_abbreviated_name())
+        result  = Fast_distance_shift_calculator(self._simulation, self._smoothed, name=self.get_abbreviated_name())
         result.set_verbose(self._verbose)
         return result
     
@@ -838,7 +892,41 @@ class Distance_based_potential(Base_potential):
         return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=0,
                                                 distance_atom_index_2=1,coefficent_index=2,
                                                 exponent_index=3)
+    
+#    @abstractmethod
+    def _get_distance_list_name(self):
+        return 'ATOM'
 
+    def _get_target_and_distant_atom_ids(self, index):
+        list_name = self._get_distance_list_name()
+        values  = self._get_component(index,list_name)
+        
+        indices = self._get_indices()
+        distance_atom_index_1 = indices.distance_atom_index_1
+        distance_atom_index_2 = indices.distance_atom_index_2
+        target_atom = values[distance_atom_index_1]
+        distance_atom = values[distance_atom_index_2]
+        return target_atom, distance_atom
+
+    def _get_distance_components(self):
+        list_name  = self._get_distance_list_name()
+        return self._get_component_list(list_name)
+        
+        
+    def _get_coefficient_and_exponent(self, index):
+        list_name  = self._get_distance_list_name()
+        
+        values = self._get_component(index,list_name)
+        
+        indices = self._get_indices()
+        
+        coefficient_index = indices.coefficient_index
+        exponent_index = indices.exponent_index
+        
+        coefficient = values[coefficient_index]
+        exponent = values[exponent_index]
+        
+        return coefficient, exponent
 
     #TODO move this to su classes when required   
     def _create_component_list(self, name):
@@ -881,14 +969,16 @@ class Distance_potential(Distance_based_potential):
     '''
 
 
-    def __init__(self, fast=False):
-        super(Distance_potential, self).__init__(smoothed = False, fast=fast)
+    def __init__(self, simulation, fast=False):
+        super(Distance_potential, self).__init__(simulation,smoothed = False, fast=fast)
         
         '''
         Constructor
         '''
         
         self._add_component_factory(Distance_component_factory())
+
+
     
     def _get_indices(self):
         return super(Distance_potential, self)._get_indices()
@@ -905,13 +995,18 @@ class Distance_potential(Distance_based_potential):
         print self._get_number_components()
         result = []
         for from_index,to_index,value,exponent in self._get_all_components():
-            from_atom = self._get_atom_name(from_index)
-            to_atom = self._get_atom_name(to_index)
+            from_atom = Atom_utils._get_atom_name(from_index)
+            to_atom = Atom_utils._get_atom_name(to_index)
             
             template = '[%s] - [%s] %7.3f %7.3f'
             values = from_atom, to_atom, value, exponent
             result.append( template % values)
         return '\n'.join(result)
+
+    
+
+
+    
 
     
     def dump(self):
@@ -931,8 +1026,8 @@ class Distance_potential(Distance_based_potential):
 
 
 class Extra_potential(Distance_based_potential):
-    def __init__(self):
-        super(Extra_potential, self).__init__()
+    def __init__(self,simulation):
+        super(Extra_potential, self).__init__(simulation)
         
         self._add_component_factory(Extra_component_factory())
         
@@ -943,6 +1038,8 @@ class Extra_potential(Distance_based_potential):
     def _get_table_source(self):
         return self._table_manager.get_extra_table
     
+    
+
 
     def _get_indices(self):
         return Distance_based_potential.Indices(target_atom_index=0,distance_atom_index_1=1,
@@ -977,12 +1074,15 @@ class Extra_potential(Distance_based_potential):
         return result
     
 
+
+
+
     
 class RandomCoilShifts(Base_potential):
     
 
-    def __init__(self):
-        super(RandomCoilShifts, self).__init__()
+    def __init__(self, simulation):
+        super(RandomCoilShifts, self).__init__(simulation)
         
         self._add_component_factory(Random_coil_component_factory())
         self._shift_calculator = self._get_shift_calculator()
@@ -1019,7 +1119,7 @@ class RandomCoilShifts(Base_potential):
             return Native_component_list(format='if')
     
     def _get_shift_calculator(self):
-        result = Fast_random_coil_shift_calculator(name=self.get_abbreviated_name())
+        result = Fast_random_coil_shift_calculator(self._simulation, name=self.get_abbreviated_name())
         result.set_verbose(self._verbose)
         
         return result
@@ -1027,8 +1127,8 @@ class RandomCoilShifts(Base_potential):
 class Disulphide_shift_calculator(Base_potential):
     
 
-    def __init__(self):
-        super(Disulphide_shift_calculator, self).__init__()
+    def __init__(self,simulation):
+        super(Disulphide_shift_calculator, self).__init__(simulation)
         
         self._add_component_factory(Disulphide_shift_component_factory())
 
@@ -1053,6 +1153,7 @@ class Disulphide_shift_calculator(Base_potential):
         components = self._get_component_list()
         return components.get_component(index)[1]
 
+
     def __str__(self): 
         result = []
         for i,elem in enumerate(self._get_component_list()):
@@ -1062,12 +1163,15 @@ class Disulphide_shift_calculator(Base_potential):
             string = template % (i, atom_name,shift)
             result.append(string)
         return '\n'.join(result)
+    
+    
+
 
 class Dihedral_potential(Base_potential):
 
     
-    def __init__(self):
-        Base_potential.__init__(self)
+    def __init__(self,simulation):
+        Base_potential.__init__(self,simulation)
         self._add_component_factory(Dihedral_component_factory())
     
         self._shift_calculator = self._get_shift_calculator()
@@ -1085,16 +1189,30 @@ class Dihedral_potential(Base_potential):
                     self._calc_single_force_set(index,force_factor,forces)
         return forces
         
+        
+        
     def get_abbreviated_name(self):
         return DIHEDRAL
 
     def _get_shift_calculator(self):
-        result = Fast_dihedral_shift_calculator(name=self.get_abbreviated_name())
+#        if self._fast:
+        result = Fast_dihedral_shift_calculator(self._simulation, name=self.get_abbreviated_name())
         result.set_verbose(self._verbose)
+#        else:
+#            result = Dihedral_shift_calculator()
         return result
     
     def _get_table_source(self):
         return self._table_manager.get_dihedral_table
+
+    def _get_distance_components(self):
+        return self._get_component_list()
+    
+
+        
+
+
+
     
     def dump(self):
         result  = []
@@ -1146,8 +1264,7 @@ class Dihedral_potential(Base_potential):
                                 value, exponent
             result.append( template % values)
         return '\n'.join(result)
-    
-    'TODO remove this is not used it is now called nativley'
+
     def _get_dihedral_angle(self, dihedral_1_atom_id_1, dihedral_1_atom_id_2, 
                                  dihedral_2_atom_id_1, dihedral_2_atom_id_2):
         
@@ -1157,7 +1274,35 @@ class Dihedral_potential(Base_potential):
         atom_4  = Atom_utils._get_atom_by_index(dihedral_2_atom_id_2)
         
         return Dihedral(atom_1,atom_2,atom_3,atom_4).value();
+    
+    
 
+
+
+
+    def _get_dihedral_atom_ids(self, index):
+        component = self._get_component(index)
+        
+        dihedrals = component[1:5]
+        return dihedrals
+
+
+    def _get_coefficient(self, index):
+        component = self._get_component(index)
+        coefficient = component[5]
+        return coefficient
+
+
+    def _get_parameters(self, index):
+        component = self._get_component(index)
+        parameters = component[6:11]
+        parameter_0, parameter_1, parameter_2, parameter_3, parameter_4 = parameters
+        return parameter_0, parameter_3, parameter_1, parameter_4, parameter_2
+    
+    
+    def _get_force_parameters(self,index):
+        return self._get_parameters(index)[:-1]
+    
     def _get_force_calculator(self):
         result = Fast_dihedral_force_calculator(name=self.get_abbreviated_name())
         result.set_verbose(self._verbose)
@@ -1169,8 +1314,8 @@ class Dihedral_potential(Base_potential):
         
 class Sidechain_potential(Distance_based_potential):
     
-    def __init__(self):
-        super(Sidechain_potential, self).__init__()
+    def __init__(self, simulation):
+        super(Sidechain_potential, self).__init__(simulation)
         self._add_component_factory(Sidechain_component_factory())
         
         
@@ -1180,8 +1325,14 @@ class Sidechain_potential(Distance_based_potential):
     def _get_indices(self):
         return super(Sidechain_potential, self)._get_indices()
     
+        
+
+    
     def  get_abbreviated_name(self):
         return SIDE_CHAIN
+    
+
+
     
     def dump(self):
         result  = []
@@ -1216,8 +1367,10 @@ class Backbone_atom_indexer:
         target_atoms = table.get_target_atoms()
         return target_atoms
 
+
     def _get_table_index(self, table):
         return table._table['index']
+
 
     def _get_table_offset(self, table):
         target_atoms = self._get_target_atoms(table)
@@ -1480,13 +1633,17 @@ class Ring_coefficient_component_factory(Ring_sidechain_component_factory,Backbo
                     for ring_id in ring_ids:
                         self.create_ring_components(component_list, table, segment, residue_number, ring_id)
 
+
+
+
+
 class Ring_Potential(Base_potential):
 
     
     RING_ATOM_IDS = 1
     
-    def __init__(self):
-        super(Ring_Potential, self).__init__()
+    def __init__(self, simulation):
+        super(Ring_Potential, self).__init__(simulation)
         
         self._add_component_factory(Ring_backbone_component_factory())
         self._add_component_factory(Ring_coefficient_component_factory())
@@ -1501,7 +1658,10 @@ class Ring_Potential(Base_potential):
 
         
     def _get_force_calculator(self):
+#        if self._fast:
         result = Fast_ring_force_calculator(name=self.get_abbreviated_name())
+#        else:
+#            result =  Ring_force_calculator()
         result.set_verbose(self._verbose)
         return result
             
@@ -1517,6 +1677,8 @@ class Ring_Potential(Base_potential):
             self._setup_ring_calculator(self._shift_calculator)
             self._setup_ring_calculator(self._force_calculator)
 
+         
+
     def _setup_ring_calculator(self,calculator):
         calculator._set_coef_components(self._get_component_list('COEF').get_native_components(), self._get_component_list('COEF').get_native_component_offsets())
         calculator._set_ring_components(self._get_component_list('RING').get_native_components())
@@ -1524,32 +1686,44 @@ class Ring_Potential(Base_potential):
         calculator._set_centre_cache(self._get_cache_list('CENT'))
     
     def _get_ring_data_calculator(self):
-        result = Fast_ring_data_calculator()
+        result = Fast_ring_data_calculator(self._simulation)
         result.set_verbose(self._verbose)
         return result
+    
+        
         
     def get_abbreviated_name(self):
         return RING
 
     def _get_shift_calculator(self):
-        result = Fast_ring_shift_calculator(name=self.get_abbreviated_name())
+#        if self._fast:
+        result = Fast_ring_shift_calculator(self._simulation,name=self.get_abbreviated_name())
         result.set_verbose(self._verbose)
+#        else:
+#            result = Ring_shift_calculator()
         return result
     
         
     def _get_table_source(self):
         return self._table_manager.get_ring_table
     
+    def _get_distance_components(self):
+        return self._get_component_list('ATOM')
+
+
     
     def _calc_component_shift(self, index):
-        components = self._create_component_list('ATOM')
-        component = self._get_component_list()[index]
-        components.add_component(component)
-        results = array.array('d',[0.0])
-        self._setup_ring_calculator(self._shift_calculator)
+
         self._setup_ring_calculator(self._shift_calculator)
         component_to_result  = array.array('i',[0])
-        self._shift_calculator(components.get_native_components(),results,component_to_result, active_components=array.array('i',[0]))
+        
+        ensemble_results = CDSSharedVectorFloat(1,self._simulation)
+        components = self._get_components()
+        active_components = array.array('i', [index])
+        self._shift_calculator(components,ensemble_results,component_to_result, active_components=active_components)
+        results = CDSVectorFloat(1)
+        ensemble_results.average_into(results)
+        
         return results[0]
     
     
@@ -1562,6 +1736,8 @@ class Ring_Potential(Base_potential):
         rings = self._get_component_list('RING')
 
         self._ring_data_calculator(rings, normals, centres)
+    
+
 
     def _create_component_list(self, name):
         if name == 'ATOM':
@@ -1661,12 +1837,12 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
     
 class Non_bonded_list(object):
     
-    def __init__(self,cutoff_distance= 5.0,jitter=0.2,update_frequency=5, min_residue_separation = 2):
+    def __init__(self,simulation,cutoff_distance= 5.0,jitter=0.2,update_frequency=5, min_residue_separation = 2):
         self._cutoff_distance = cutoff_distance
         self._jitter = jitter
         self._update_frequency =update_frequency
         self._min_residue_seperation = min_residue_separation
-        
+        self._simulation=  simulation
         self._reset()
         
 
@@ -1687,7 +1863,7 @@ class Non_bonded_list(object):
         return self._cutoff_distance
     
     def _get_non_bonded_calculator(self):
-        result = Fast_non_bonded_calculator(self._min_residue_seperation, self._cutoff_distance, self._jitter)
+        result = Fast_non_bonded_calculator(self._simulation,self._min_residue_seperation, self._cutoff_distance, self._jitter)
         return result
     
     def _get_cutoff_distance_2(self):
@@ -1734,8 +1910,11 @@ class Non_bonded_list(object):
     
     def get_num_target_atoms(self):
         return self._num_target_atoms
-    
-    
+
+
+
+
+            
     def __str__(self):
         result  = []
         
@@ -1858,20 +2037,20 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
 # remote_atom_type_id exponent coefficient_by target_atom_id
 class Non_bonded_potential(Distance_based_potential):
 
-    def __init__(self,smoothed=True):
-        super(Non_bonded_potential, self).__init__(smoothed=smoothed)
+    def __init__(self,simulation,smoothed=True):
+        super(Non_bonded_potential, self).__init__(simulation,smoothed=smoothed)
         
         self._add_component_factory(Non_bonded_backbone_component_factory())
         self._add_component_factory(Non_bonded_remote_component_factory())
         self._add_component_factory(Non_bonded_coefficient_factory())
         self._add_component_factory(Null_component_factory('NBLT'))
         
-        self._non_bonded_list = Non_bonded_list()
-        self._component_set = None
+        self._non_bonded_list = Non_bonded_list(self._simulation)
+        self._component_set = {}
         self._selected_components =  None
     
     def _get_shift_calculator(self):
-        result  = Fast_non_bonded_shift_calculator(smoothed=self._smoothed, name = self.get_abbreviated_name())
+        result  = Fast_non_bonded_shift_calculator(self._simulation, smoothed=self._smoothed, name = self.get_abbreviated_name())
         result.set_verbose(self._verbose)
         return result
     
@@ -1893,6 +2072,11 @@ class Non_bonded_potential(Distance_based_potential):
     def _get_indices(self):
         return Distance_based_potential.Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
     
+    def _get_target_atom_list_name(self):
+        return 'ATOM'
+    
+    def _get_distance_list_name(self):
+        return 'NBLT'
 
     def _get_non_bonded_list(self):
         non_bonded_list = self._get_component_list('NBLT')
@@ -1916,6 +2100,7 @@ class Non_bonded_potential(Distance_based_potential):
             self.update_non_bonded_list()
         
         if change == TARGET_ATOM_IDS_CHANGED:
+            #TODO why does this need to be selected rather than active?
             self._selected_components = self._build_selected_components(target_atom_ids)
 
         
@@ -1933,10 +2118,13 @@ class Non_bonded_potential(Distance_based_potential):
             self._non_bonded_list.update()
         self._get_non_bonded_list()
         
+
     
     def calc_single_atom_force_set(self, target_atom_id, force_factor, forces):
+#        self.update_non_bonded_list()
         return Distance_based_potential.calc_single_atom_force_set(self, target_atom_id, force_factor, forces)
     
+
     
     class Base_indexer(object):
         
@@ -2057,6 +2245,9 @@ class Non_bonded_potential(Distance_based_potential):
                     i+= 1
                     yield chem_type,sphere
 
+                         
+            
+                
         
     #TODO centralise table manager (each sub potential has its own table manager at the moment)
     #TODO complete
@@ -2226,27 +2417,27 @@ class Non_bonded_potential(Distance_based_potential):
             
 
     def _get_components(self):
-        if self._component_set ==  None:
-            target_component_list = self._get_component_list('ATOM')
-            native_target_atom_list = target_component_list.get_native_components()
-            
-            remote_component_list = self._get_component_list('NBRM')
-            native_remote_atom_list = remote_component_list.get_native_components()
-            
-            coefficient_list = self._get_component_list('COEF')
-            native_coefficient_list = coefficient_list.get_native_components()
-    
-            non_bonded_list = self._get_component_list('NBLT')
-            
-            self._component_set = {'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
-                          'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
-                          'OFFS' : 0}
+#TODO: check if this has speed implications
+#         if self._component_set ==  None:
+        target_component_list = self._get_component_list('ATOM')
+        native_target_atom_list = target_component_list.get_native_components()
+        
+        remote_component_list = self._get_component_list('NBRM')
+        native_remote_atom_list = remote_component_list.get_native_components()
+        
+        coefficient_list = self._get_component_list('COEF')
+        native_coefficient_list = coefficient_list.get_native_components()
+
+        non_bonded_list = self._get_component_list('NBLT')
+        
+        self._component_set.update({'NBLT':non_bonded_list, 'ATOM':native_target_atom_list, 
+                                    'NBRM':native_remote_atom_list, 'COEF':native_coefficient_list,
+                                    'SIMU' : self._simulation})
         
         return self._component_set
     
     def _build_selected_components(self, target_atom_ids):
                 
-        target_component_list = self._get_component_list('ATOM')
         non_bonded_list =  self._get_component_list('NBLT')
 
         
@@ -2291,21 +2482,808 @@ class Non_bonded_potential(Distance_based_potential):
         
         component_to_result = array.array('i',[0,])
         
-        results = array.array('d',[0.0])
+        i_results = CDSSharedVectorFloat(1,self._simulation)
 
-        calc(components,results,component_to_result, active_components=active_components)
- 
+        calc(components,i_results,component_to_result, active_components=active_components)
+        
+        results = CDSVectorFloat(1)
+        i_results.average_into(results)
+        
         return results[0]
     
     def _get_active_components(self):
+        #TODO: return self._active_components??
         return self._selected_components
-        self._force_calculator(components, self._component_to_result, force_factors, forces, active_components=self._selected_components)
+
+class Hbond_atom_type_indexer(object):
+    __metaclass__ = ABCMeta
+    
+   
+    def __init__(self,table_manager):
+        super(Hbond_atom_type_indexer, self).__init__()
+        
+        self._index = {}
+        self._inverted_index = {}
+        self._max_index = 0
+            
+        self._build_index(table_manager)
+    
+    def get_name(self):
+        return 'hydrogen bond atom type'
+
+    def _get_table(self,name):
+        return Table_manager.get_default_table_manager().get_hydrogen_bond_table(name)
+    
+    def _get_table_name(self):
+        return HBOND
+    
+    def _get_tables_by_index(self, table_manager):
+        table_index_map = {}
+        
+        for residue_type in table_manager.get_residue_types_for_table(self._get_table_name()):
+            table = self._get_table(residue_type)
+            index  = table._table['index']
+            table_index_map[index]=table
+        
+        keys = table_index_map.keys()
+        keys.sort()
+        result = []
+        
+        for key in keys:
+            result.append(table_index_map[key])
+        
+        return tuple(result) 
+
+    def add_key(self, key):
+        if not key in self._index:
+            self._index[key] = self._max_index
+            self._inverted_index[self._max_index] = key
+            self._max_index += 1
+
+    @abstractmethod
+    def get_keys(self, table):
+        pass
+
+    def _build_index(self, table_manager):
+        self._get_table('base')
+        
+        tables_by_index = self._get_tables_by_index(table_manager)
+        
+        for table in tables_by_index:
+            for key in self.get_keys(table):
+                self.add_key(key)
+                                    
+    def get_index_for_key(self,key):
+        return self._index[key]
+    
+    def get_key_for_index(self,index):
+        return self._inverted_index[index]
+    
+    def get_max_index(self):
+        return self._max_index
+    
+    def iter_keys(self):
+        for index in range(self._max_index):
+            yield self._inverted_index[index] 
+
+class Hbond_donor_atom_type_indexer(Hbond_atom_type_indexer):
+    
+    def __init__(self, table_manager):
+        Hbond_atom_type_indexer.__init__(self, table_manager)
+
+    def get_keys(self, table):
+
+        return table.get_donor_types()
+
+class Hbond_acceptor_atom_type_indexer(Hbond_atom_type_indexer):
+    
+    def __init__(self, table_manager):
+        Hbond_atom_type_indexer.__init__(self, table_manager)
+
+    def get_keys(self, table):
+
+        return table.get_acceptor_types()
+            
+         
+class Hbond_backbone_indexer_base(object):
+    __metaclass__ = ABCMeta
+     
+    
+    def __init__(self,table_manager):
+        super(Hbond_backbone_indexer_base, self).__init__()
+         
+        self._index = {}
+        self._inverted_index = {}
+        self._max_index = 0
+             
+        self._build_index(table_manager)
+     
+    @abstractmethod
+    def get_name(self):
+        pass
+ 
+    def _get_table(self,name):
+        return Table_manager.get_default_table_manager().get_hydrogen_bond_table(name)
+     
+    def _get_table_name(self):
+        return HBOND
+     
+    def _get_tables_by_index(self, table_manager):
+        table_index_map = {}
+         
+        for residue_type in table_manager.get_residue_types_for_table(self._get_table_name()):
+            table = self._get_table(residue_type)
+            index  = table._table['index']
+            table_index_map[index]=table
+         
+        keys = table_index_map.keys()
+        keys.sort()
+        result = []
+         
+        for key in keys:
+            result.append(table_index_map[key])
+         
+        return tuple(result) 
+     
+    @abstractmethod
+    def _get_targets(self, table):
+        pass
+
+    #TODO: replace with util code
+    def _iter_atom_ids(self):
+        segment_manager = Segment_Manager.get_segment_manager()
+        for segment in segment_manager.get_segments():
+            info =  segment_manager.get_segment_info(segment)
+            for atom_index in range(info.first_atom_index,info.last_atom_index):
+                yield atom_index
+
+    def _iter_tables_and_targets(self, table_manager):
+       tables_by_index = self._get_tables_by_index(table_manager)
+       for table in tables_by_index: 
+           for target, donor_or_acceptor in self._get_targets(table):
+               yield table, target, donor_or_acceptor
+ 
+
+    def _find_bonded_index(self, atom_index, atom_selector):
+        segment,residue,atom_name  = Atom_utils._get_atom_info_from_index(atom_index)
+        if atom_selector[0] == '.':
+            if atom_name  == atom_selector[1]:
+                for bonded_index in  Atom_utils._get_bonded_atom_ids(atom_index):
+                    segid,residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
+                    if bonded_atom_name  ==  atom_selector[2]:
+                        return bonded_index
+        return -1
+        
+    @abstractmethod
+    def _get_key(self, bonded_index, donor_or_acceptor):
+        pass
+
+
+    def _add_new_key(self, bonded_index, donor_or_acceptor):
+        key = self._get_key(bonded_index, donor_or_acceptor)
+        if not key == None and not key in self._index:
+            self._index[key] = self._max_index
+            self._inverted_index[self._max_index] = key
+            self._max_index += 1
+
+    def _build_index(self, table_manager):
+        self._get_table('base')
+         
+        tables_by_index = self._get_tables_by_index(table_manager)
          
 
+        for atom_index in self._iter_atom_ids():
+            for table,target, donor_or_acceptor in self._iter_tables_and_targets(table_manager):
+                for atom_selector in  table.get_atom_selector(target):
+                    bonded_index  = self._find_bonded_index(atom_index,atom_selector)
+                    if bonded_index > -1:
+                        self._add_new_key(bonded_index, donor_or_acceptor)
+                                 
+                         
+    def get_index_for_key(self,key):
+        return self._index[key]
+     
+    def get_key_for_index(self,index):
+        return self._inverted_index[index]
+     
+    def get_max_index(self):
+        return self._max_index
+     
+    def iter_keys(self):
+        for index in range(self._max_index):
+            yield self._inverted_index[index] 
+            
+class Hbond_backbone_donor_and_acceptor_indexer(Hbond_backbone_indexer_base):
 
-from pyPot import PyPot
+    def __init__(self, table_manager):
+        super(Hbond_backbone_donor_and_acceptor_indexer, self).__init__(table_manager)
 
-class Xcamshift(PyPot):
+    def _get_targets(self, table):
+        for target in table.get_donor_types():
+            yield target, DONOR 
+        for target in table.get_acceptor_types():
+            yield target, ACCEPTOR
+
+    def _get_key(self, bonded_index, donor_or_acceptor):
+        segid, residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
+        return segid, residue, bonded_atom_name
+
+    def get_name(self):
+        return 'hbond donor or acceptor' 
+              
+             
+class Hbond_backbone_donor_indexer(Hbond_backbone_indexer_base):
+ 
+    def __init__(self, table_manager):
+        super(Hbond_backbone_donor_indexer, self).__init__(table_manager)
+         
+    def _get_targets(self, table):
+        for target in table.get_donor_types():
+            yield target, DONOR
+
+    def _get_key(self, bonded_index, donor_or_acceptor):
+        segid, residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
+        if donor_or_acceptor == DONOR:
+            result = segid, residue, bonded_atom_name
+        return result
+    
+    def get_name(self):
+        return 'hbond donor'
+     
+class Hbond_backbone_acceptor_indexer(Hbond_backbone_indexer_base):
+ 
+    def __init__(self, table_manager):
+        super(Hbond_backbone_acceptor_indexer, self).__init__(table_manager)
+         
+    def _get_targets(self, table):
+        for target in table.get_acceptor_types():
+            yield target, ACCEPTOR
+
+    def _get_key(self, bonded_index, donor_or_acceptor):
+        result = None
+        segid, residue, bonded_atom_name = Atom_utils._get_atom_info_from_index(bonded_index)
+        if donor_or_acceptor == ACCEPTOR:
+            result = segid, residue, bonded_atom_name
+        return result
+    
+    def get_name(self):
+        return 'hbond acceptor'
+
+class Hydrogen_bond_context:
+
+    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
+        return  table.get_translation_to_table(residue_type,atom_name)
+
+   
+    
+    def __init__(self,atom,offset_data,table, indexer):
+        segid, res_num,atom_name = Atom_utils._get_atom_info_from_index(atom.index())
+        offset, offset_atom_name =  offset_data
+        
+        residue_type = Atom_utils._get_residue_type_from_atom_id(atom.index())
+        atom_name =  self._translate_atom_name_to_table(residue_type, atom_name, table)
+        
+        self.complete = False
+        
+        if atom_name in table.get_target_atoms():
+            self.target_atom_index = atom.index()
+            
+            offset_resnum = res_num + offset
+            offset_atoms  = Atom_utils.find_atom_ids(segid, offset_resnum, offset_atom_name)
+            
+                
+            if len(offset_atoms) == 1:
+                hbond_key = segid, offset_resnum, offset_atom_name
+                self.hbond_index = indexer.get_index_for_key(hbond_key)
+                self.complete =  True
+                self.coeffs = []
+                for coeff_id in 'DIST','ANG1','ANG2':
+                    self.coeffs.append(table.get_energy_offset_correction(offset_data, coeff_id,atom_name))
+                        
+            elif len(offset_atoms) > 1:
+                msg = 'unexpected multiple atoms found for hbond with atom %s and offset %s'
+                print >> stderr, msg % (Atom_utils._get_atom_name(atom.index()), `offset`)
+                return
+
+
+class Hydrogen_bond_component_factory(Atom_component_factory):
+    def __init__(self):
+        self._indexer = indexer = Hbond_backbone_donor_and_acceptor_indexer(Table_manager.get_default_table_manager())
+        
+    #TODO: remove just kept to satisfy an abstract method declaration
+    def _translate_atom_name(self, atom_name, context):
+        pass
+
+    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
+        
+        return  table.get_translation_to_table(residue_type,atom_name)
+    
+    def _build_contexts(self, atom, table):
+        contexts = []
+        for offset in table.get_energy_term_offsets():
+            context = Hydrogen_bond_context(atom,offset,table, self._indexer)
+            if context.complete:
+                contexts.append(context)
+        return contexts
+    
+    def _get_component_for_atom(self, atom, context):
+
+        result = None
+        if context.complete:
+            result = [context.target_atom_index,context.hbond_index]
+            result.extend(context.coeffs)
+        return tuple(result)
+
+    
+    def get_table_name(self):
+        return 'ATOM'
+
+
+    
+class Hydrogen_bond_base_donor_acceptor_context(object):
+    def __init__(self, atom, table, type_indexer, backbone_hydrogen_bond_indexer):
+        self.complete = False
+        
+        self.direct_atom_id = atom.index()
+        segid,residue,atom_name = Atom_utils._get_atom_info_from_index(self.direct_atom_id)
+        
+        for donor_acceptor_type in self.get_donor_acceptor_types(table):
+            for atom_selector in  list(table.get_atom_selector(donor_acceptor_type)):
+                residue_type = atom.residueName()
+                if atom_selector[0] == '.' or atom_selector[0] == residue_type:
+                    if atom_name == atom_selector[2]:
+                        self.atom_type_id = type_indexer.get_index_for_key(donor_acceptor_type)
+                        
+                        attached_atom_ids = Atom_utils._get_bonded_atom_ids(self.direct_atom_id)
+                        for attached_atom_id in attached_atom_ids:
+                            attached_segid,attached_residue,attached_atom_name = Atom_utils._get_atom_info_from_index(attached_atom_id)
+                            if attached_atom_name ==  atom_selector[1]:
+                                self.indirect_atom_id = attached_atom_id
+                                if atom_selector[0] == ".":
+                                    key = segid,residue,atom_name
+                                    self.backbone = backbone_hydrogen_bond_indexer.get_index_for_key(key)
+                                else:
+                                    self.backbone = -1
+                                self.complete =  True
+                       
+    @abstractmethod            
+    def get_donor_acceptor_types(self,table):
+        pass
+    
+    @abstractmethod
+    def get_atom_type_indexer(self):
+        pass
+    
+    @staticmethod
+    def get_backbone_hydrogen_bond_indexer():
+        return Hbond_backbone_donor_and_acceptor_indexer(Table_manager.get_default_table_manager())
+    
+class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
+    
+    def __init__(self,atom,table,atom_type_indexer, backbone_indexer):
+        #TODO could we avoid static methods for this
+        self.type = DONOR
+        super(Hydrogen_bond_donor_context, self).__init__(atom, table, atom_type_indexer, backbone_indexer)
+        
+    def get_donor_acceptor_types(self,table):
+        return  table.get_donor_types()
+    
+    @staticmethod    
+    def get_atom_type_indexer():
+        return Hbond_donor_atom_type_indexer(Table_manager.get_default_table_manager())
+    
+
+class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
+    
+    def __init__(self,atom, table,atom_type_indexer, backbone_indexer):
+        self.type = ACCEPTOR
+        super(Hydrogen_bond_acceptor_context, self).__init__(atom, table, atom_type_indexer, backbone_indexer)
+        
+    def get_donor_acceptor_types(self,table):
+        return  table.get_acceptor_types()
+
+    @staticmethod
+    def get_atom_type_indexer():
+        return Hbond_acceptor_atom_type_indexer(Table_manager.get_default_table_manager())
+
+        
+class Hydrogen_bond_donor_acceptor_component_factory(Atom_component_factory):
+    def __init__(self):
+        self.index = 0
+        
+    def is_residue_acceptable(self, segment, residue_number, segment_manager):
+        return True
+    
+    #TODO: remove just kept to satisfy an abstract method declaration
+    def _translate_atom_name(self, atom_name, context):
+        pass
+
+    def _translate_atom_name_to_table(self, residue_type, atom_name,table):
+        
+        return  table.get_translation_to_table(residue_type,atom_name)
+    
+    @abstractmethod
+    def _build_context(self,atom,table):
+        pass
+    
+    def _build_contexts(self, atom, table):
+        contexts = []
+        context = self._build_context(atom, table)
+        if context.complete:
+            contexts.append(context)
+        return contexts
+    
+    @abstractmethod
+    def _build_component(self, context):
+        pass
+    
+    def _get_component_for_atom(self, atom, context):
+        result = None
+        if context.complete:
+            result = self._build_component(context)
+        return result
+
+    def _build_component(self,context):
+        component = None
+        if context.complete:
+            component = (self.index, context.direct_atom_id, context.indirect_atom_id, context.type, context.atom_type_id, context.backbone) 
+            self.index+=1
+        return component
+    
+DONOR = 0
+ACCEPTOR = 1
+class Hydrogen_bond_donor_component_factory(Hydrogen_bond_donor_acceptor_component_factory):
+    def __init__(self):
+        super(Hydrogen_bond_donor_component_factory, self).__init__()
+        self.atom_type_indexer = Hydrogen_bond_donor_context.get_atom_type_indexer()
+        self.backbone_indexer = Hydrogen_bond_donor_context.get_backbone_hydrogen_bond_indexer()
+        
+    def get_table_name(self):
+        return 'DONR'
+    
+    def _build_context(self,atom,table):
+        return Hydrogen_bond_donor_context(atom, table,self.atom_type_indexer, self.backbone_indexer)
+    
+
+class Hydrogen_bond_acceptor_component_factory(Hydrogen_bond_donor_acceptor_component_factory):
+    def __init__(self):
+        super(Hydrogen_bond_acceptor_component_factory, self).__init__()
+        self.atom_type_indexer = Hydrogen_bond_acceptor_context.get_atom_type_indexer()
+        self.backbone_indexer = Hydrogen_bond_acceptor_context.get_backbone_hydrogen_bond_indexer()
+        
+    def get_table_name(self):
+        return 'ACCP'
+    
+    def _build_context(self,atom, table):
+        return Hydrogen_bond_acceptor_context(atom, table, self.atom_type_indexer, self.backbone_indexer)
+    
+
+class Hydrogen_bond_parameter_factory(Component_factory):
+
+    def __init__(self):
+        self._accessed = False
+            
+    def is_residue_acceptable(self, segment, residue_number, segment_manager):
+        return True
+    
+    def get_table_name(self):
+        return 'PARA'
+    
+    def create_components(self, component_list, table_source, segment, target_residue_number, selected_atoms):
+        #TODO: this is hack!
+        if not self._accessed:
+            table_manager = Table_manager.get_default_table_manager()
+            hydrogen_bond_table  =  table_manager.get_hydrogen_bond_table(None)
+            
+            number_donors = len(hydrogen_bond_table.get_donor_types())
+            number_acceptors = len(hydrogen_bond_table.get_acceptor_types())
+            
+            
+            index = 0
+            for i,donor in enumerate(hydrogen_bond_table.get_donor_types()):
+                for j,acceptor in enumerate(hydrogen_bond_table.get_acceptor_types()):
+                    for term_index,term_id in enumerate(hydrogen_bond_table.get_energy_term_ids()):
+                        sub_result = [index,term_index,i,j]
+                        values  =  hydrogen_bond_table.get_energy_terms(donor, acceptor,term_id)
+                        for elem in 'p1','p2','p3','p4','p5', 'p6','r','s':
+                            sub_result.append(values[elem])
+                        component_list.add_component(tuple(sub_result))
+                        index+=1
+            self._accessed = True
+        return component_list#
+
+class Hydrogen_bond_donor_lookup_factory(Component_factory):
+    
+    def __init__(self):
+        self._accessed = False
+        
+    def is_residue_acceptable(self, segment, residue_number, segment_manager):
+        return True
+    
+    def get_table_name(self):
+        return 'DIDX'
+    
+    def create_components(self, component_list, table_source, segment, target_residue_number, selected_atoms):
+        #TODO: this is hack!
+        if not self._accessed:
+            table_manager = Table_manager.get_default_table_manager()
+            hydrogen_bond_table  =  table_manager.get_hydrogen_bond_table(None)
+            
+            index = 0
+            num_acceptor_types = len(hydrogen_bond_table.get_acceptor_types())
+            num_donor_types = len(hydrogen_bond_table.get_donor_types())
+            for i in range(num_acceptor_types):
+                elems  =  [(i*num_acceptor_types) + j for j in range(num_donor_types)]
+                component  = [i,num_acceptor_types]
+                component.extend(elems)
+                component_list.add_component(tuple(component))
+            self._accessed = True
+                
+        return component_list
+
+class Hydrogen_bond_acceptor_lookup_factory(Component_factory):
+    
+    def __init__(self):
+        self._accessed = False
+
+    def is_residue_acceptable(self, segment, residue_number, segment_manager):
+        return True
+    
+    def get_table_name(self):
+        return 'AIDX'
+    
+    def create_components(self, component_list, table_source, segment, target_residue_number, selected_atoms):
+        #TODO: this is hack!
+        if not self._accessed:
+            table_manager = Table_manager.get_default_table_manager()
+            hydrogen_bond_table  =  table_manager.get_hydrogen_bond_table(None)
+            
+            index = 0
+            num_acceptor_types = len(hydrogen_bond_table.get_acceptor_types())
+            num_donor_types = len(hydrogen_bond_table.get_donor_types())
+            for i in range(num_acceptor_types):
+                for j in  range(num_donor_types):
+                    donor_index = (i*num_acceptor_types) + j
+                    num_param_types = len(hydrogen_bond_table.get_energy_term_ids())
+                    param_type_indices = [(i*num_acceptor_types) + (j*num_acceptor_types) + k for k in range(num_param_types)]
+                     
+                    component  = [index, i,j]
+                    component.extend(param_type_indices)
+                    
+                    component_list.add_component(tuple(component))
+            self._accessed = True
+            
+        return component_list
+    
+class Hydrogen_bond_potential(Base_potential):
+
+    def __init__(self,simulation,smoothed=True):
+        super(Hydrogen_bond_potential, self).__init__(simulation)
+        self._force_calculator = self._get_force_calculator()
+        self._shift_calculator =  self._get_shift_calculator()
+        
+        self._add_component_factory(Hydrogen_bond_acceptor_component_factory())
+        self._add_component_factory(Hydrogen_bond_donor_component_factory())
+        
+        self._add_component_factory(Hydrogen_bond_component_factory()) 
+        self._add_component_factory(Hydrogen_bond_parameter_factory())
+        self._add_component_factory(Hydrogen_bond_donor_lookup_factory())
+        self._add_component_factory(Hydrogen_bond_acceptor_lookup_factory())
+        #TODO: sort null component factorys
+#         self._add_component_factory(Null_component_factory('HBLT'))
+        
+        self._hydrogen_bond_energies =  allocate_array(0,'f')
+        self._component_set =  {}
+        
+        self._hydrogen_bond_energy_calculator = self._get_hydrogen_bond_energy_calculator()
+    
+          
+    def _get_active_components(self):
+        print "WARNING all components used for hbond shift calculation!" 
+        return None
+
+    def _get_components(self):
+        self._component_set  = super(Hydrogen_bond_potential, self)._get_components()
+        
+        for name in 'DONR','ACCP','PARA','DIDX','AIDX':
+            self._component_set[name] = self._get_component_list(name).get_native_components()
+        
+
+        self._component_set['HBLT'] =  self._hydrogen_bond_energies
+        
+        return self._component_set
+        
+    
+    def __str__(self):
+        def get_donor_acceptor_string(result, type_string, name):
+            result.append(name)
+            result.append('-' * len(name) )
+            result.append('')
+            result.append('---------------------------------------------------------------------')
+            result.append('ind  indirect atom                 direct atom                 hbond ')
+            result.append('ex   ----------------------------  --------------------------- ------')
+            result.append('     id    segid   res      atom   id    segid   res      atom id    ')
+            result.append('---  ---   ------  -------  ----   --    -----   -------- ---- ------')
+            
+            for donor_acceptor in self._get_component_list(type_string): #             print donor
+                index_string = '%-i.' % (donor_acceptor[0] + 1)
+                type_index = '%-i' % donor_acceptor[4]
+                values = '%s %s - %s %s' % (index_string.ljust(4), Atom_utils._get_atom_name(donor_acceptor[2]), Atom_utils._get_atom_name(donor_acceptor[1]), type_index)
+                result.append(values)
+        
+        def get_index_strings(result,type_string):
+            if type_string == 'DIDX':
+                result.append('donor indices')
+                result.append('----- -------')
+                result.append('')
+                result.append('index  acceptor count  acceptor indices')
+                result.append('-----  --------------  ----------------')
+                result.append('')
+                for component in self._get_component_list(type_string):
+                    result_string = '%-4i   %-4i           ' % component[:2]
+                    for index in component[2:]:
+                        result_string += ' %i' % index
+                    result.append(result_string )
+                    
+            if type_string == 'AIDX':
+                result.append('acceptor indices')
+                result.append('-------- -------')
+                result.append('')
+                result.append('index  donor index  acceptor index  parameter indices')
+                result.append('-----  -----------  --------------  -----------------')
+                result.append('')
+                for component in self._get_component_list(type_string):
+                    result_string = '%-4i   %-4i         %-4i           ' % component[:3]
+                    for index in component[3:]:
+                        result_string += ' %i' % index
+                    result.append(result_string ) 
+            
+#             'DIDX'
+#             'AIDX'
+            return result
+        
+        def get_para_string(result):
+            result.append('parameters')
+            result.append('----------')
+            result.append('')
+            result.append('index  term id  donor id  acceptor id  p1        p2       p3      p4       p5       p6       s        r')
+            result.append('-----  -------  --------  -----------  -------  -------  -------  -------  -------  -------  -------  -------')
+            format = '%-3i    %-3i      %-3i       %-3i          '
+            for component in self._get_component_list('PARA'):
+                parameters =  '  '.join([('%7.3f' % param).ljust(7) for param in component[4:]])
+                result.append(format % component[:4] + parameters)
+        
+        result = []
+        
+        
+        get_donor_acceptor_string(result,  'DONR', 'donors')
+        result.append('')
+        get_donor_acceptor_string(result,  'ACCP', 'acceptors')
+        result.append('')
+        get_index_strings(result,'DIDX')
+        result.append('')
+        get_index_strings(result,'AIDX')
+        result.append('')
+        get_para_string(result)
+        
+
+        return '\n'.join(result)
+#         self._add_component_factory(Non_bonded_backbone_component_factory())
+#         self._add_component_factory(Non_bonded_remote_component_factory())
+#         self._add_component_factory(Non_bonded_coefficient_factory())
+#         self._add_component_factory(Null_component_factory('NBLT'))
+#         
+#         self._non_bonded_list = Non_bonded_list(self._simulation)
+#         self._component_set = {}
+#         self._selected_components =  None
+    def _have_derivative(self):
+        return False
+    
+    def _get_hydrogen_bond_energy_calculator(self):
+        return Fast_hydrogen_bond_calculator(self._simulation)
+    
+    def _get_shift_calculator(self):
+        result  = Fast_hydrogen_bond_shift_calculator(self._simulation, name = self.get_abbreviated_name())
+        result.set_verbose(self._verbose)
+        return result
+     
+    def _get_force_calculator(self):
+        return None
+#         result = Hydrogen_bond_force_calculator( smoothed=self._smoothed, name = self.get_abbreviated_name())
+#         result.set_verbose(self._verbose)
+#         return result
+    
+    def set_verbose(self, on=True):
+        pass
+#         print "not implemented"
+#         Distance_based_potential.set_verbose(self,on)
+#         self._non_bonded_list.set_verbose(on)
+            
+    def _get_table_source(self):
+        return Table_manager.get_default_table_manager().get_hydrogen_bond_table
+        
+    def get_abbreviated_name(self):
+        return HBOND
+    
+#     def _get_indices(self):
+#         return Distance_based_potential.Indices(target_atom_index=0, distance_atom_index_1=0, distance_atom_index_2=1, coefficent_index=2, exponent_index=3)
+    
+    def _get_target_atom_list_name(self):
+        return 'ATOM'
+
+#     def _get_non_bonded_list(self):
+#         non_bonded_list = self._get_component_list('NBLT')
+#         
+#         target_atom_list = self._get_component_list('ATOM')
+#         
+#         remote_atom_list = self._get_component_list('NBRM')
+#         
+#         coefficient_list  = self._get_component_list('COEF')
+#         updated = self._non_bonded_list.get_boxes(target_atom_list, remote_atom_list, non_bonded_list, coefficient_list)
+#         
+#         return non_bonded_list
+    def _update_hydrogen_bond_list(self,increment=True):
+        if increment:
+            zero_array(self._hydrogen_bond_energies)
+            self._hydrogen_bond_energy_calculator(self._get_components(), self._hydrogen_bond_energies)
+
+    def _build_selected_components(self, target_atom_ids):
+        #TODO: cleanup and merge        
+        atom_components = self._get_component_list('ATOM')
+       
+        target_atom_ids  = []
+        for i,component in enumerate(atom_components):
+            if component[0] not in target_atom_ids:
+                target_atom_ids.append(component[0])
+        component_to_target = [target_atom_ids.index(atom_component[0]) for atom_component in atom_components]   
+        return  component_to_target
+        
+
+    def _reset_hydrogen_bond_list(self):
+        table_manager = Table_manager.get_default_table_manager()
+        num_donors_and_acceptors = Hbond_backbone_donor_and_acceptor_indexer(table_manager).get_max_index()
+        if len(self._hydrogen_bond_energies) != num_donors_and_acceptors:
+            resize_array(self._hydrogen_bond_energies, num_donors_and_acceptors * 3)
+            zero_array(self._hydrogen_bond_energies) #                 for i in range(len(self._hydrogen_bond_energies)):
+
+    def _prepare(self, change, target_atom_ids):
+        super(Hydrogen_bond_potential, self)._prepare(change, target_atom_ids)
+        
+        
+        if change == STRUCTURE_CHANGED:
+            self._reset_hydrogen_bond_list()
+
+        
+        if change == ROUND_CHANGED:
+            self._update_hydrogen_bond_list()
+        
+        if change == TARGET_ATOM_IDS_CHANGED:
+            self._selected_components = self._build_selected_components(target_atom_ids)
+        
+            
+
+    def _create_component_list(self, name):
+        if name == "ATOM":
+            result = Native_component_list(format='iiddd')
+        elif name == "HDONOR":
+            result = Native_component_list(format='ii')
+        elif name == 'ACCP' or name == 'DONR':
+            result = Native_component_list(format='i' * 6)
+        elif name == 'DIDX':
+            result = Native_component_list(format='i' * 3)
+        elif name == 'AIDX':
+            result = Native_component_list(format='i' * 6)
+        elif name == 'PARA':
+            result = Native_component_list(format = (('i'*4) +('f'*8)))
+        else:
+            raise Exception(name)
+        return result
+        
+class Xcamshift(PyEnsemblePot):
+
+    
+    
+    
 
 
     def _get_force_factor_calculator(self):
@@ -2314,21 +3292,23 @@ class Xcamshift(PyPot):
     
             
             
-    def __init__(self, verbose=False):
-        super(Xcamshift, self).__init__("xcamshift")
+    def __init__(self, name="xcamshift_instance", verbose=False):
+        super(Xcamshift, self).__init__(name)
         self.potential = [
-                          RandomCoilShifts(),
-                          Distance_potential(),
-                          Extra_potential(),
-                          Dihedral_potential(),
-                          Sidechain_potential(),
-                          Ring_Potential(),
-                          Non_bonded_potential(),
-                          Disulphide_shift_calculator()
+                          RandomCoilShifts(self.ensembleSimulation()),
+                          Distance_potential(self.ensembleSimulation()),
+                          Extra_potential(self.ensembleSimulation()),
+                          Dihedral_potential(self.ensembleSimulation()),
+                          Sidechain_potential(self.ensembleSimulation()),
+                          Ring_Potential(self.ensembleSimulation()),
+                          Non_bonded_potential(self.ensembleSimulation()),
+                          Disulphide_shift_calculator(self.ensembleSimulation()),
+                          Hydrogen_bond_potential(self.ensembleSimulation())
                           ]
         self._verbose=verbose
         self._shift_table = Observed_shift_table()
         self._shift_cache = None
+        self._ensemble_shift_cache = None 
         self._out_array =  None
         self._energy_term_cache = None
         self._energy_calculator = self._get_energy_calculator()
@@ -2339,6 +3319,10 @@ class Xcamshift(PyPot):
         self._active_target_atom_ids = None
         self._factors = None
 
+        self._prepare(STRUCTURE_CHANGED, None)
+    
+    
+    
 
     def set_verbose(self,on=True):
         for potential in self.potential:
@@ -2347,13 +3331,24 @@ class Xcamshift(PyPot):
         self._energy_calculator.set_verbose(on)
         self._verbose=on
     
+        
+    def remove_named_sub_potential(self,name, quiet=False):
+       if not quiet:
+           print 'warning sub potential %s removed' % name
+       sub_pot  = self.get_named_sub_potential(name)
+       self.potential.remove(sub_pot)
+
+      
+    
     def _get_energy_term_cache(self):
         if self._energy_term_cache == None:
             self._energy_term_cache = self._create_energy_term_cache()
         return self._energy_term_cache
     
     def _update_calculator(self, calculator):
-        calculator.set_calculated_shifts(self._shift_cache)
+        #TODO: make sure the shift cache is always valid
+        if self._shift_cache !=None:
+            calculator.set_calculated_shifts(self._shift_cache)
         calculator.set_observed_shifts(self._shift_table.get_native_shifts(self._get_active_target_atom_ids()))
         calculator.set_energy_term_cache(self._get_energy_term_cache().get_native_components())
     
@@ -2363,16 +3358,15 @@ class Xcamshift(PyPot):
     def update_force_factor_calculator(self):
         self._update_calculator(self._force_factor_calculator)
     
-    #TODO:  might be better to have a prepapre shift cache function    
-    def clear_shift_cache(self):
-        if self._shift_cache != None:
-            zero_array(self._shift_cache)
         
     def get_sub_potential_names(self):
         return [potential.get_abbreviated_name() for potential in self.potential]
     
     def _get_energy_calculator(self):
+#        if self._fast:
         result  = Fast_energy_calculator()
+#        else:
+#            result  = Energy_calculator()
         result.set_verbose(self._verbose)
         
         return result
@@ -2389,7 +3383,9 @@ class Xcamshift(PyPot):
             msg = template % (name,all_potential_names)
             raise Exception(msg)
         return result
-#    
+    
+
+           
     def print_shifts(self):
         result  = [0] * Segment_Manager().get_number_atoms()
         
@@ -2444,18 +3440,25 @@ class Xcamshift(PyPot):
         result = list(result)
         result.sort()
         return result
-    
-    def _calc_shift_cache(self,target_atom_ids):
+
+    def _create_shift_cache(self, shift_cache, cache_size, ensembleSimulation=None):
+        if shift_cache == None:
+            if None.__class__ == ensembleSimulation.__class__:
+                shift_cache = CDSVectorFloat(cache_size)
+            else:
+                shift_cache = CDSSharedVectorFloat(cache_size,ensembleSimulation)
+        else:
+            shift_cache.resize(cache_size)
+            
+        return shift_cache
+
+    def _calc_shift_cache(self,target_atom_ids, shift_cache):
         if self._verbose:
             start_time =  time()
             
-        if self._shift_cache == None:
-            self._shift_cache =  allocate_array(len(target_atom_ids),'d')
-        elif len(self._shift_cache) != len(target_atom_ids):
-            resize_array(self._shift_cache, len(target_atom_ids))
         
-        self.clear_shift_cache()
-        self._calc_shifts(target_atom_ids, self._shift_cache)
+        shift_cache.clear()
+        self._calc_shifts(target_atom_ids, shift_cache)
         
         if self._verbose:
             end_time = time()
@@ -2472,15 +3475,57 @@ class Xcamshift(PyPot):
         if target_atom_ids  == None:
             target_atom_ids = self._get_all_component_target_atom_ids() 
             
-  
-        if result == None or len(result) < len(target_atom_ids):
-            result = array.array('d',[0.0] *len(target_atom_ids))
+#          or len(result) < len(target_atom_ids)
+        if result == None:
+            if self._shift_cache == None:
+                self._shift_cache = self._create_shift_cache(self._shift_cache, len(target_atom_ids))
+            result = self._shift_cache
         
-        self._calc_shifts(target_atom_ids, result)
+        if self._ensemble_shift_cache ==  None:
+            self._ensemble_shift_cache =  self._create_shift_cache(self._ensemble_shift_cache, len(target_atom_ids), self.ensembleSimulation())
+            
+        
+        
+        if len(result) !=  len(target_atom_ids):
+            result.resize(len(target_atom_ids))
+            
+        if len(self._ensemble_shift_cache) !=  len(target_atom_ids):
+            self._ensemble_shift_cache.resize(len(target_atom_ids))
+            
+            
+        self._calc_shifts(target_atom_ids, self._ensemble_shift_cache)
+        self._average_shift_cache(self._ensemble_shift_cache,result)
         
         #TODO review whole funtion and resturn types
         return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(result))
+    
+    def print_shifts(self,out=sys.stdout):
+        #TODO: this is protein specific
+        ATOM_NAMES = 'HA','CA','HN','N','C','CB'
+        atom_keys,shifts = self.calc_shifts()
         
+        seg_residue = {}
+        for i,(seg,residue,atom) in enumerate(atom_keys):
+          #TODO: this is protein specific
+          if atom == 'HA1':
+            atom ='HA'
+          seg_residue.setdefault((seg,residue),{})[atom] = shifts[i]
+          
+        print >> out, 'SEGID     RESID    RES   %7s  %7s  %7s  %7s  %7s  %7s' % ATOM_NAMES 
+        
+        for seg,residue in sorted(seg_residue):
+          residue_type = Atom_utils._get_residue_type(seg,residue)
+          out_seg = '|%s|' % seg
+          out_seg.ljust(6)
+          print >> out, '%s        %-5i   %4s ' % (out_seg,residue,residue_type),
+          for name in ATOM_NAMES:
+              if name in seg_residue[seg,residue]:
+                  shift = '%7.4f' % seg_residue[seg,residue][name]
+                  print >> out,shift.rjust(8),
+              else:
+                  print >> out,  '       .',
+          print >> out
+            
     #TODO: add standalone mode flag or wrap in a external wrapper that call round changed etc    
     def _calc_shifts(self, target_atom_ids=None, result=None):
                 
@@ -2508,7 +3553,7 @@ class Xcamshift(PyPot):
         print 'deprecated remove use _calc_shifts'
         target_atom_ids =  self._get_all_component_target_atom_ids()
         self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
-        result_shifts  = allocate_array(len(target_atom_ids))
+        result_shifts  = CDSSharedVectorFloat(len(target_atom_ids),self.ensembleSimulation())
         self._calc_shifts(target_atom_ids, result_shifts)
         for target_atom_id, shift in zip(target_atom_ids,result_shifts):
             result[target_atom_id] =  shift
@@ -2525,8 +3570,10 @@ class Xcamshift(PyPot):
 
     def _calc_single_atom_shift(self,target_atom_id):
         #TODO: could be better
-        self._shift_cache = allocate_array(1)
-        self._calc_shift_cache([target_atom_id,])
+        self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, 1, self.ensembleSimulation())
+        self._shift_cache = self._create_shift_cache(self._shift_cache, 1)
+        self._calc_shift_cache([target_atom_id,], self._ensemble_shift_cache)
+        self._average_shift_cache()
         return  self._shift_cache [0]
     
     
@@ -2542,6 +3589,14 @@ class Xcamshift(PyPot):
         flat_bottom_constant  = constants_table.get_flat_bottom_constant()
         return flat_bottom_limit * flat_bottom_constant
     
+
+    def _adjust_shift(self, shift_diff, flat_bottom_shift_limit):
+        result  = 0.0
+        if (shift_diff > 0.0):
+            result = shift_diff-flat_bottom_shift_limit
+        else:
+            result = shift_diff + flat_bottom_shift_limit
+        return result
     
 #    TODO: investigate need for atom name and residue_type for these lookups do they need caching?
 #          how does cacmshift do it 
@@ -2570,6 +3625,9 @@ class Xcamshift(PyPot):
         atom_name = constants_table.get_translation_to_table(residue_type,atom_name)
                 
         return constants_table.get_tanh_y_offset(atom_name)
+    
+
+        
 
     def get_shift_difference(self, target_atom_index):
         
@@ -2587,18 +3645,27 @@ class Xcamshift(PyPot):
         
         #TODO: setting a single atom shift with self._calc_single_atom_shift(target_atom_index) doesn't work as the 
         # and then using a single index doesn't work as the energy terms are indexed as well
-        self._calc_shift_cache(self._get_active_target_atom_ids())
-        self.update_energy_calculator()
-
+        
+        active_target_atom_ids = self._get_active_target_atom_ids()
+        
         #TODO: this is a hack remove!        
-        active_target_atom_ids =  self._get_active_target_atom_ids()
         if active_target_atom_ids == None:
             
             active_target_indices = array.array('i',[0])
             active_target_atom_ids =  array.array('i',[target_atom_index])
         else:
             active_target_indices =  array.array('i',[active_target_atom_ids.index(target_atom_index)])
+
+        self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, len(active_target_atom_ids), self.ensembleSimulation())
+        self._shift_cache = self._create_shift_cache(self._shift_cache,len(active_target_atom_ids))
+        
+        self._calc_shift_cache(active_target_atom_ids, self._ensemble_shift_cache)
+        self._average_shift_cache()
+        
+        self.update_energy_calculator()
+        
         return self._energy_calculator(active_target_atom_ids,active_target_indices)
+
         
     
     def _calc_force_set_with_potentials(self, target_atom_ids, forces, potentials_list):
@@ -2609,6 +3676,7 @@ class Xcamshift(PyPot):
         
         self._calc_factors(target_atom_ids, self._factors)
         for potential in potentials_list:
+            potential.set_simulation(self.ensembleSimulation())
             potential.calc_force_set(target_atom_ids,self._factors,forces)
         
              
@@ -2696,6 +3764,8 @@ class Xcamshift(PyPot):
 
 
     def get_selected_atom_ids(self):
+       
+        
         return   self._shift_table.get_atom_indices()
 
     def _get_active_target_atom_ids(self):
@@ -2723,7 +3793,9 @@ class Xcamshift(PyPot):
             print 'do prepare %s' % change
             
         if change == STRUCTURE_CHANGED:
-            self.clear_shift_cache()
+            #TODO: make sure shift cache is always valid
+            if self._ensemble_shift_cache != None:
+                self._ensemble_shift_cache.clear()
             self._active_target_atom_ids = None
             
         if change == TARGET_ATOM_IDS_CHANGED:
@@ -2735,6 +3807,10 @@ class Xcamshift(PyPot):
             self._active_target_atom_ids = None
             self.update_energy_calculator()
         
+        if change ==  ROUND_CHANGED:
+            if self._ensemble_shift_cache != None:
+                self._ensemble_shift_cache.clear()
+                
         self._prepare_potentials(change, data)
          
         
@@ -2775,34 +3851,44 @@ class Xcamshift(PyPot):
         num_atoms = Segment_Manager.get_segment_manager().get_number_atoms()
         result = self._out_array
         if result == None:
-            result = Out_array(num_atoms)
+            result = Out_array(num_atoms,self.ensembleSimulation())
         else:
             result.realloc(num_atoms)
         return result
+        
+
 
         
-    def calcEnergy(self, prepare =  True, active_target_atom_ids = None):
+    def _calc_energy(self, prepare =  True, active_target_atom_ids = None):
         if self._verbose:
             start_time = time()
-
+ 
         if active_target_atom_ids == None:
             active_target_atom_ids = self._get_active_target_atom_ids()
-            
-        if prepare:
-            self._prepare(TARGET_ATOM_IDS_CHANGED,active_target_atom_ids)
-            self._prepare(ROUND_CHANGED,None)
-            self._calc_shift_cache(active_target_atom_ids)
-            
-
+             
+             
+ 
         self.update_energy_calculator()
+        energy = self._energy_calculator(active_target_atom_ids)
         
         if self._verbose:
             end_time =  time()
             print 'energy calculation completed in %.17g seconds ' % (end_time-start_time), "seconds"
+             
+        return energy
+    
+    
+
+    def _average_shift_cache(self, ensemble_shift_cache=None,shift_cache=None):
+        
+        if shift_cache == None:
+            shift_cache = self._shift_cache
             
-        return self._energy_calculator(active_target_atom_ids)
-    
-    
+        if ensemble_shift_cache ==  None:
+            ensemble_shift_cache  = self._ensemble_shift_cache
+            
+        ensemble_shift_cache.average_into(shift_cache)
+        return shift_cache
 
     def _calc_derivs(self, derivs, active_target_atom_ids ,potentials=None):
         
@@ -2811,25 +3897,14 @@ class Xcamshift(PyPot):
         self._calc_force_set(active_target_atom_ids, out_array, potentials)
         out_array.add_forces_to_result(derivs)
 
-    def calcEnergyAndDerivs(self,derivs):
+    def calcEnergyAndDerivList(self,derivs):
         if self._verbose:
             print "start energy and derivatives"
-            start_time = time()
-        
-        if self._verbose:
-            print 'start_prepare'
-            prepare_start_time =  time()
+            start_time = time() 
             
-        target_atom_ids = self._get_active_target_atom_ids()
-        self._prepare(ROUND_CHANGED, None)
-        self._calc_shift_cache(target_atom_ids)
-        if self._verbose:
-            prepare_end_time = time()
-            print 'prepare completed in %.17g seconds' %(prepare_end_time-prepare_start_time)
+        energy = PyEnsemblePot.calcEnergyAndDerivList(self,derivs) 
 
-        energy = self.calcEnergy( active_target_atom_ids=target_atom_ids, prepare=False)
 
-        self._calc_derivs(derivs, target_atom_ids)
         
         
         if self._verbose:
@@ -2837,6 +3912,52 @@ class Xcamshift(PyPot):
         
             print "energy and derivatives completed in %.17g " %  (end_time-start_time)," second\ns"
         return energy
+
+    def calcEnergyAndDerivsMaybe0(self,  derivListPtr,  ensembleSimulationPtr,  calcDerivatives):
+
+        
+        if self._verbose:
+            print 'start_prepare'
+            prepare_start_time =  time()  
+            
+        self._prepare(ROUND_CHANGED, None)
+        
+        if self._verbose:
+            prepare_end_time = time()
+            print 'prepare completed in %.17g seconds' %(prepare_end_time-prepare_start_time)
+
+        return 0.0 
+
+    def calcEnergyAndDerivsMaybe1(self,  derivListPtr,  ensembleSimulationPtr,  calcDerivatives):
+        target_atom_ids = self._get_active_target_atom_ids()
+        
+        ensemble_size =  self.ensembleSimulation().size()
+        cache_size = len(target_atom_ids)
+        self._ensemble_shift_cache = self._create_shift_cache(self._ensemble_shift_cache, cache_size, self.ensembleSimulation())
+        self._shift_cache = self._create_shift_cache(self._shift_cache, cache_size)
+                                                              
+        self._calc_shift_cache(target_atom_ids, self._ensemble_shift_cache)
+        
+        return 0.0 
+
+        
+    def calcEnergyAndDerivsMaybe2(self,  derivListPtr,  ensembleSimulationPtr,  calcDerivatives):
+        self._average_shift_cache()
+        
+        return 0.0
+
+    def calcEnergyAndDerivsMaybe3(self,  derivListPtr,  ensembleSimulationPtr,  calcDerivatives):
+
+        target_atom_ids = self._get_active_target_atom_ids()
+        energy = self._calc_energy( active_target_atom_ids=target_atom_ids)
+        return energy
+
+    def calcEnergyAndDerivsMaybe4(self,  derivListPtr,  ensembleSimulationPtr,  calcDerivatives):
+        if calcDerivatives:
+            target_atom_ids = self._get_active_target_atom_ids()
+            self._calc_derivs(int(derivListPtr), target_atom_ids)        
+        return 0.0
+
     
     def _set_frozen(self,on=True):
         for potential in self.potential:
@@ -2853,3 +3974,6 @@ class Xcamshift(PyPot):
         self._prepare(TARGET_ATOM_IDS_CHANGED, None)
         #TODO: do we need a  set froze here
 
+    
+
+ 

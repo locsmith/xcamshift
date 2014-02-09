@@ -8,12 +8,8 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
-# camshift 1.35.0  disu table
-# post corrected CB component by  -12.62275  [11.361637-12.62275]
+# backbone random coil chemical shifts from camshift 1.35.0
 ---
-target_atoms: ["HA", "CA", "HN", "N", "C", "CB"]
 
-data:  
-        [DISU, CYS] :   {HA:    0.01155515, CA:   -2.85170038, HN:  -0.10605545, N:   -1.41314415, C:   -0.37088135, CB:   -1.261113}
-
+atoms:     [HA, CA, C, CB]
 

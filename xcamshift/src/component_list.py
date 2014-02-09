@@ -206,14 +206,19 @@ class Native_component_list(Component_list):
         struct =  Struct('iii')
         
         ids =  self.get_component_atom_ids()
-        
+        num_ids = 0
+        if len(ids) > 0:
+            num_ids = max(ids)+1
         struct_size = struct.size
-        bytes =  ctypes.create_string_buffer(struct_size * len(ids))
-        
-        for i,id in enumerate(ids):
-            start,end = self.get_component_range(id)
-            native_component = id,start,end-start
-            struct.pack_into(bytes, struct_size * i, *native_component)
+        bytes =  ctypes.create_string_buffer(struct_size * num_ids)
+         
+        for id in range(num_ids):
+            if id in ids:
+                start,end = self.get_component_range(id)
+                native_component = id,start,end-start
+            else:
+                native_component = id,-1,-1
+            struct.pack_into(bytes, struct_size * id, *native_component)
         
         return bytes
 
