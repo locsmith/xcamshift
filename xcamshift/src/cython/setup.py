@@ -28,13 +28,6 @@ xplor_path =      os.environ['xc_xplor_root']          # '/home/garyt/programs/x
 architecture =    os.environ['xc_architecture']        # 'Linux_i686'
 python_version =  os.environ['xc_python_version']      # '2.6'
 
-#xplor_path =      '/home/garyt/programs/xplor-nih/2.31.0'
-#architecture =    'Linux_i686'
-#python_version =  '2.6'
-
-
-#print xplor_path,architecture,python_version
-
 
 params = {'path'           : xplor_path,
           'architecture'   : architecture,
@@ -56,6 +49,7 @@ ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx", '
                          extra_compile_args=["-O3"],
                          extra_link_args=extra_link_args,
                          include_dirs=include_dirs),
+
 				       
                Extension("pyEnsemblePot",  ["PyEnsemblePotProxy.cc",'pyEnsemblePot.pyx'],   
                          define_macros = [('CPLUSPLUS', '1') ,
@@ -63,9 +57,10 @@ ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx", '
                         
                          language="c++",
                          extra_compile_args=["-O3"],
-                        extra_link_args=extra_link_args,
+                         extra_link_args=extra_link_args,
                          include_dirs=include_dirs),
                
+
                Extension("fast_segment_manager",  ["Cython_segment_manager.pyx"],
                          define_macros = [('CPLUSPLUS', '1') ,
                                           ('USE_CDS_NAMESPACE', '1')],
@@ -74,7 +69,9 @@ ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx", '
                          extra_compile_args=["-O3"],
                          extra_link_args=extra_link_args,
                          include_dirs=include_dirs)
+
             ]
+
 
 if False:
     for e in ext_modules:
