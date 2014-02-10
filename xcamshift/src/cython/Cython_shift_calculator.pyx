@@ -1203,26 +1203,27 @@ cdef class Fast_ring_shift_calculator(Base_shift_calculator):
         cdef int component_index
         cdef int offset
         
-        for factor_index in range(len(active_components)):
-            component_index = active_components[factor_index] 
-            
-            target_atom_id = self._compiled_components[component_index].target_atom_id
-            atom_type_id = self._compiled_components[component_index].atom_type_id
-
-            shift = 0.0
-        
-            coeff_offset =  self._compiled_coef_components.get_id_offsets(atom_type_id)
-
-            for coef_offset in range(coeff_offset[0].offset,coeff_offset[0].offset+coeff_offset[0].length):
-#                TODO: remove magic numbers or add structs
-                coef_component = self._compiled_coef_components.get_component(coef_offset)
+        if self._num_ring_components > 0:
+            for factor_index in range(len(active_components)):
+                component_index = active_components[factor_index] 
                 
-                ring_id = coef_component[0].ring_id
-                coefficient = coef_component[0].coefficient
-                shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
+                target_atom_id = self._compiled_components[component_index].target_atom_id
+                atom_type_id = self._compiled_components[component_index].atom_type_id
+    
+                shift = 0.0
                 
-            offset = self.ensemble_array_offset(component_to_target[factor_index])
-            shift_cache.addToResult(offset,shift)
+                coeff_offset =  self._compiled_coef_components.get_id_offsets(atom_type_id)
+    
+                for coef_offset in range(coeff_offset[0].offset,coeff_offset[0].offset+coeff_offset[0].length):
+    #                TODO: remove magic numbers or add structs
+                    coef_component = self._compiled_coef_components.get_component(coef_offset)
+                    
+                    ring_id = coef_component[0].ring_id
+                    coefficient = coef_component[0].coefficient
+                    shift += self._calc_sub_component_shift(target_atom_id,  ring_id, coefficient)
+                    
+                offset = self.ensemble_array_offset(component_to_target[factor_index])
+                shift_cache.addToResult(offset,shift)
         
         if self._verbose:
             end_time = time()
@@ -2539,9 +2540,10 @@ cdef class Fast_ring_force_calculator(Base_force_calculator):
         cdef int factor_index 
         cdef int component_index
         
-        for factor_index in range(len(self._active_components)):
-            component_index = self._active_components[factor_index] 
-            self._ring_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
+        if self._num_ring_components > 0:
+            for factor_index in range(len(self._active_components)):
+                component_index = self._active_components[factor_index] 
+                self._ring_calc_single_force_set(component_index,force_factors[component_to_result[factor_index]],force)
             
     cdef inline void _ring_calc_single_force_set(self,  int index, float force_factor, Out_array forces): 
         cdef int atom_type_id  = self._compiled_components[index].atom_type_id

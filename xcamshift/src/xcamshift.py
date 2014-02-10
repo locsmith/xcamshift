@@ -1481,7 +1481,7 @@ class Disulphide_shift_component_factory(Atom_component_factory, Ring_factory_ba
         return 'ATOM'
 
     
-class Ring_backbone_component_factory (Atom_component_factory, Ring_factory_base):
+class Ring_backbone_component_factory (Atom_component_factory):
     
     
     def get_table_name(self):
@@ -1497,10 +1497,9 @@ class Ring_backbone_component_factory (Atom_component_factory, Ring_factory_base
     
     def _build_contexts(self, atom, table):
         contexts = []
-        if  self._have_targets(table):
-            context = Ring_backbone_context(atom,table)
-            if context.complete:
-                contexts.append(context)
+        context = Ring_backbone_context(atom,table)
+        if context.complete:
+            contexts.append(context)
         return contexts
 
 class Ring_sidechain_component_factory(Residue_component_factory,Ring_factory_base):
