@@ -22,6 +22,7 @@ class Test(unittest2.TestCase):
 
     def testName(self):
         data = Xplor_reader(self.file_name).read()
+        self.assertEqual(len(data),601)
         
 
 
