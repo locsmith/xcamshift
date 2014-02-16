@@ -4,9 +4,11 @@ Created on 11 Feb 2014
 @author: garyt
 '''
 import re
+from collections import namedtuple
 from atomSel import AtomSel
 import sys
 
+Shift_data = namedtuple('Shift_data', ('atom_id','shift','error','weight','atom_class'))
 DEFAULT_CLASS='DEFAULT'
 DEFAULT_WEIGHT=1.0
 
@@ -19,7 +21,7 @@ class Xplor_reader:
         print >> sys.stderr, msg % self._file_name
         print >> sys.stderr, "WARNING insufficient data validation being done!!"
         
-        result = []
+        results = []
         with open(self._file_name,'r') as file:
             weight = DEFAULT_WEIGHT
             atom_class = DEFAULT_CLASS
@@ -40,16 +42,14 @@ class Xplor_reader:
                         raise Exception(msg(len(selection),matches[0]))
                     else:
                         atom_id  =  selection[0].index()
-                    distance_fields  = matches[1].split()
+                    shift_fields  = matches[1].split()
                     
-                    for i,field in enumerate(distance_fields):
-                        distance_fields[i] = float(field)
-                    line_data = [atom_id]
-                    line_data.extend(distance_fields)
-                    line_data.append(weight)
-                    line_data.append(atom_class)
-                    result.append(line_data)
-        return result
+                    for i,field in enumerate(shift_fields):
+                        shift_fields[i] = float(field)
+                    result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=shift_fields[1],weight=weight,atom_class=DEFAULT_CLASS)
+
+                    results.append(result)
+        return results
 #                     last_bracket_index = line.find(')')
 #                     print line[:last_bracket_index], line[last_bracket_index:]
             
