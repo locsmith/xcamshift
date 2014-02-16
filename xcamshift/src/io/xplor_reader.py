@@ -7,6 +7,7 @@ import re
 from atomSel import AtomSel
 import sys
 
+DEFAULT_CLASS='DEFAULT'
 DEFAULT_WEIGHT=1.0
 
 class Xplor_reader:
@@ -21,6 +22,7 @@ class Xplor_reader:
         result = []
         with open(self._file_name,'r') as file:
             weight = DEFAULT_WEIGHT
+            atom_class = DEFAULT_CLASS
             for line in file:
                 assign_keyword_re = re.compile('^\s*[Aa][Ss][Ss][Ii][Gg]?[Nn]? (\(.*\))(.+)')
                 
@@ -45,6 +47,7 @@ class Xplor_reader:
                     line_data = [atom_id]
                     line_data.extend(distance_fields)
                     line_data.append(weight)
+                    line_data.append(atom_class)
                     result.append(line_data)
         return result
 #                     last_bracket_index = line.find(')')

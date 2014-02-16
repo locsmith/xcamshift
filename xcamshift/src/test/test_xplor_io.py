@@ -34,6 +34,7 @@ class Test(unittest2.TestCase):
             self.assertAlmostEqual(alvin_shift_format[key][TEST_DATA_SHIFT],elem[1])
             self.assertAlmostEqual(alvin_shift_format[key][TEST_DATA_ERROR],elem[2])
             self.assertAlmostEqual(1.0,elem[3])
+            self.assertEqual('DEFAULT', elem[4])
         
 
 
