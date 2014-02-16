@@ -29,7 +29,7 @@ class Xplor_reader:
         with self.get_file() as file:
             weight = DEFAULT_WEIGHT
             atom_class = DEFAULT_CLASS
-            for line in file:
+            for line_no,line in enumerate(file):
                 
                 assign_keyword_re = re.compile('^\s*[Aa][Ss][Ss][Ii][Gg]?[Nn]? (\(.*\))(.+)')
                 
@@ -43,10 +43,11 @@ class Xplor_reader:
                         pass
                     
                     if len(selection) > 1 or len(selection) == 0:
-                        msg = "atom selection must select a single atom , got %i from %s"
-                        raise Exception(msg % (len(selection),matches[0]))
+                        msg = "atom selection must select a single atom , got %i from %s at line %i in file %s:\n\t%s"
+                        raise Exception(msg(len(selection),matches[0],line_no,self._file_name,line))
                     else:
                         atom_id  =  selection[0].index()
+                        
                     shift_fields  = matches[1].split()
                     
                     for i,field in enumerate(shift_fields):
