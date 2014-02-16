@@ -52,8 +52,17 @@ class Xplor_reader:
                     
                     for i,field in enumerate(shift_fields):
                         shift_fields[i] = float(field)
-                    result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=shift_fields[1],weight=weight,atom_class=DEFAULT_CLASS)
+                         
+                        
+#                     shift  = line_data.extend(shift_fields)
+#                     line_data.append(1.0)
+                    if len(shift_fields) == 1:
+                        print >> sys.stderr, "warning error set to 0.1, not a sensible value"
+                        error = 0.1
+                    elif len(shift_fields) == 2:
+                        error = shift_fields[1]
 
+                    result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=error,weight=weight,atom_class=DEFAULT_CLASS)
                     results.append(result)
         return results
 #                     last_bracket_index = line.find(')')

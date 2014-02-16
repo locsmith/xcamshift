@@ -11,6 +11,27 @@ import unittest2
 from test.alvin_2L1A_test_shifts import alvin_shift_format
 from utils import Atom_utils
 
+#TODO this acts as a stream and a context manager and an Xplor_reader
+class Test_xplor_reader(Xplor_reader):
+    def __init__(self,strings):
+        Xplor_reader.__init__(self,'no file!')
+        self._strings = strings
+        
+    def get_file(self):
+        return self
+    
+    def __exit__(self,type, value, traceback):
+        pass
+    
+    def __enter__(self):
+        return self
+    
+    def __len__(self):
+        return len(self._strings)
+    
+    def __getitem__(self, key):
+        return self._strings[key]
+            
 class Test(unittest2.TestCase):
 
 
@@ -37,32 +58,21 @@ class Test(unittest2.TestCase):
             self.assertEqual('DEFAULT', elem[4])
              
     def test_bad_atom_selection(self):
-        #TODO this acts as a stream and a context manager and an Xplor_reader
-        class Test_xplor_reader(Xplor_reader):
-            def __init__(self,strings):
-                Xplor_reader.__init__(self,'no file!')
-                self._strings = strings
-                
-            def get_file(self):
-                return self
-            
-            def __exit__(self,type, value, traceback):
-                pass
-            
-            def __enter__(self):
-                return self
-            
-            def __len__(self):
-                return len(self._strings)
-            
-            def __getitem__(self, key):
-                return self._strings[key]
+
             
         with self.assertRaises(Exception) as exception:       
             Test_xplor_reader(("assign (resid 20 and (name HA or name C)) 127.0 0.1",)).read()
             
         with self.assertRaises(Exception) as exception:       
             Test_xplor_reader(("assign (resid 20 and name HK) 127.0 0.1",)).read()
+            
+    def test_unweighted_shift(self):
+        results = Test_xplor_reader(("assign (resid 20 and name HA) 127.0",)).read()
+        self.assertEqual(len(results),1)
+        
+        self.assertAlmostEqual(results[0].error,0.1)
+        self.assertAlmostEqual(results[0].shift,127.0)
+        self.assertAlmostEqual(results[0].weight,1.0)
 
 
 if __name__ == "__main__":
