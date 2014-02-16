@@ -22,7 +22,7 @@ class Test(unittest2.TestCase):
        
 
 
-    def testName(self):
+    def test_alvins_data(self):
         data = Xplor_reader(self.file_name).read()
         self.assertEqual(len(data),601)
         for elem in data:
@@ -35,9 +35,36 @@ class Test(unittest2.TestCase):
             self.assertAlmostEqual(alvin_shift_format[key][TEST_DATA_ERROR],elem[2])
             self.assertAlmostEqual(1.0,elem[3])
             self.assertEqual('DEFAULT', elem[4])
-        
+             
+    def test_bad_atom_selection(self):
+        #TODO this acts as a stream and a context manager and an Xplor_reader
+        class Test_xplor_reader(Xplor_reader):
+            def __init__(self,strings):
+                Xplor_reader.__init__(self,'no file!')
+                self._strings = strings
+                
+            def get_file(self):
+                return self
+            
+            def __exit__(self,type, value, traceback):
+                pass
+            
+            def __enter__(self):
+                return self
+            
+            def __len__(self):
+                return len(self._strings)
+            
+            def __getitem__(self, key):
+                return self._strings[key]
+            
+        with self.assertRaises(Exception) as exception:       
+            Test_xplor_reader(("assign (resid 20 and (name HA or name C)) 127.0 0.1",)).read()
+            
+        with self.assertRaises(Exception) as exception:       
+            Test_xplor_reader(("assign (resid 20 and name HK) 127.0 0.1",)).read()
 
 
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
+    #import sys;sys.argv = ['', 'Test.test_alvins_data']
     unittest.main()

@@ -15,17 +15,22 @@ DEFAULT_WEIGHT=1.0
 class Xplor_reader:
     def __init__(self,file_name):
         self._file_name = file_name
-        
+       
+
+    def get_file(self):
+        return open(self._file_name, 'r')
+
     def read(self):
         msg = "WARNING reading cs data from %s with a very primitive xplor data reader"
         print >> sys.stderr, msg % self._file_name
         print >> sys.stderr, "WARNING insufficient data validation being done!!"
         
         results = []
-        with open(self._file_name,'r') as file:
+        with self.get_file() as file:
             weight = DEFAULT_WEIGHT
             atom_class = DEFAULT_CLASS
             for line in file:
+                
                 assign_keyword_re = re.compile('^\s*[Aa][Ss][Ss][Ii][Gg]?[Nn]? (\(.*\))(.+)')
                 
                 matches = assign_keyword_re.match(line).groups()
@@ -37,9 +42,9 @@ class Xplor_reader:
                     except:
                         pass
                     
-                    if len(selection) > 1:
+                    if len(selection) > 1 or len(selection) == 0:
                         msg = "atom selection must select a single atom , got %i from %s"
-                        raise Exception(msg(len(selection),matches[0]))
+                        raise Exception(msg % (len(selection),matches[0]))
                     else:
                         atom_id  =  selection[0].index()
                     shift_fields  = matches[1].split()
