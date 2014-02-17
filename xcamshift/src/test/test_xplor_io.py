@@ -74,6 +74,14 @@ class Test(unittest2.TestCase):
         self.assertAlmostEqual(results[0].shift,127.0)
         self.assertAlmostEqual(results[0].weight,1.0)
 
+    def test_wrong_number_of_data_items(self):
+
+        with self.assertRaises(Exception) as exception:       
+            Test_xplor_reader(("assign (resid 20 and name HA)",)).read()
+
+        with self.assertRaises(Exception) as exception:       
+            Test_xplor_reader(("assign (resid 20 and name HA) 1.0 1.0 1.0",)).read()
+        
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_alvins_data']

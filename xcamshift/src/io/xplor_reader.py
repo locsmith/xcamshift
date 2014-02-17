@@ -49,13 +49,14 @@ class Xplor_reader:
                         atom_id  =  selection[0].index()
                         
                     shift_fields  = matches[1].split()
-                    
+                    if len(shift_fields) <1 or len(shift_fields) > 2:
+                        msg = "no shifts or too many shifts [%i] found at line %i in file %s:\n\t%s"
+                        raise Exception(msg % (len(shift_fields), line_no,self._file_name,line))
+                                         
                     for i,field in enumerate(shift_fields):
                         shift_fields[i] = float(field)
                          
-                        
-#                     shift  = line_data.extend(shift_fields)
-#                     line_data.append(1.0)
+
                     if len(shift_fields) == 1:
                         print >> sys.stderr, "warning error set to 0.1, not a sensible value"
                         error = 0.1
