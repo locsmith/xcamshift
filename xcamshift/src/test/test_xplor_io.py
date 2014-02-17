@@ -17,7 +17,7 @@ class Test_xplor_reader(Xplor_reader):
         Xplor_reader.__init__(self,'no file!')
         self._strings = strings
         
-    def get_file(self):
+    def get_line_source(self):
         return self
     
     def __exit__(self,type, value, traceback):
