@@ -4,7 +4,7 @@ Created on 11 Feb 2014
 @author: garyt
 '''
 import unittest
-from io.xplor_reader import Xplor_reader
+from shift_io.xplor_reader import Xplor_reader
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
