@@ -24,7 +24,7 @@ class Xplor_reader:
     def raise_exception(self, msg):
         line_position = 'line %i in file \'%s\', line data:\n|%s|' % (self.line_index+1, self._file_name, self.line)
         msg = '%s %s' % (msg, line_position)
-        print msg
+        
         raise Exception(msg)
 
 
@@ -45,6 +45,30 @@ class Xplor_reader:
             
         return atom_id
 
+
+    def check_number_shift_fields_or_raise(self, shift_fields):
+        if len(shift_fields) < 1 or len(shift_fields) > 2:
+            self.raise_exception("no shifts or too many shifts [found = %i, expected 1-2] found at" % len(shift_fields))
+
+
+    def convert_fields_to_float_or_raise(self, shift_fields):
+        for field_index, field in enumerate(shift_fields):
+            try:
+                shift_fields[field_index] = float(field)
+            except:
+                msg = "couldn't convert field %i [value=|%s|] to a float" % (field_index+1, shift_fields[field_index])
+                self.raise_exception(msg)
+        return shift_fields
+
+
+    def get_error_or_default_error(self, shift_fields):
+        if len(shift_fields) == 1:
+            print >> sys.stderr, "warning error set to 0.1, not a sensible value"
+            error = 0.1
+        elif len(shift_fields) == 2:
+            error = shift_fields[1]
+        return error
+
     def read(self):
         msg = "WARNING reading cs data from %s with a very primitive xplor data reader"
         print >> sys.stderr, msg % self._file_name
@@ -64,24 +88,15 @@ class Xplor_reader:
                     atom_id = self.get_selection_or_raise(matches)
                         
                     shift_fields  = matches[1].split()
-                    if len(shift_fields) <1 or len(shift_fields) > 2:
-                        msg = "no shifts or too many shifts [%i] found at line %i in lines %s:\n\t%s"
-                        raise Exception(msg % (len(shift_fields), line_index,self._file_name,line))
-                                         
-                    for i,field in enumerate(shift_fields):
-                        try:
-                            shift_fields[i] = float(field)
-                        except:
-                            msg = "couldn't convert field %i [%s] to a float at line %i in lines %s:\n\t%s"
-                            raise Exception(msg % (i,shift_fields[i], line_index, self._file_name,line))
+                    
+                    self.check_number_shift_fields_or_raise(shift_fields)
+                     
+                    shif_fields = self.convert_fields_to_float_or_raise(shift_fields)
 
-                    if len(shift_fields) == 1:
-                        print >> sys.stderr, "warning error set to 0.1, not a sensible value"
-                        error = 0.1
-                    elif len(shift_fields) == 2:
-                        error = shift_fields[1]
+                    error = self.get_error_or_default_error(shift_fields)
 
                     result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=error,weight=weight,atom_class=DEFAULT_CLASS)
+                    
                     results.append(result)
         return results
 #                     last_bracket_index = line.find(')')
