@@ -99,7 +99,6 @@ class Xplor_reader:
                     
                     results.append(result)
         return results
-#                     last_bracket_index = line.find(')')
-#                     print line[:last_bracket_index], line[last_bracket_index:]
+
             
         
