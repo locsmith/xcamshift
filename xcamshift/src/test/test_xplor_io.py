@@ -81,6 +81,11 @@ class Test(unittest2.TestCase):
 
         with self.assertRaises(Exception) as exception:       
             Test_xplor_reader(("assign (resid 20 and name HA) 1.0 1.0 1.0",)).read()
+
+    def test_bad_float_format(self):
+       
+       with self.assertRaises(Exception) as exception:       
+            Test_xplor_reader(("assign (resid 20 and name HA) 1.,0",)).read() 
         
 
 if __name__ == "__main__":

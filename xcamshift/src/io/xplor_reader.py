@@ -54,8 +54,11 @@ class Xplor_reader:
                         raise Exception(msg % (len(shift_fields), line_no,self._file_name,line))
                                          
                     for i,field in enumerate(shift_fields):
-                        shift_fields[i] = float(field)
-                         
+                        try:
+                            shift_fields[i] = float(field)
+                        except:
+                            msg = "couldn't convert field %i [%s] to a float at line %i in file %s:\n\t%s"
+                            raise Exception(msg % (i,shift_fields[i], line_no, self._file_name,line))
 
                     if len(shift_fields) == 1:
                         print >> sys.stderr, "warning error set to 0.1, not a sensible value"
