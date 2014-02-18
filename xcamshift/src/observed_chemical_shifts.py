@@ -22,11 +22,23 @@ class Observed_shift_table(object):
     classdocs
     '''
 
-    def __init__(self,shift_data={}):
-        self._chemical_shifts = self.process_observed_shifts(shift_data)
+    def __init__(self,shift_data={},format='map'):
+        if format ==  'map':
+            self._chemical_shifts = self._process_observed_shift_map(shift_data)
+        elif format == 'xplor':
+            self._chemical_shifts =  self._process_xplor_shifts(shift_data)
+        else:
+            raise Exception("unexpected shift format %s" % format)
+            
         self._native_shifts = None
-        
-    def process_observed_shifts(self,shift_data):
+    
+    def _process_xplor_shifts(self,shift_data):
+        result = {}
+        for datum in shift_data:
+            result[datum.atom_id] = datum.shift
+        return result
+             
+    def _process_observed_shift_map(self,shift_data):
         result  = {}
         for key in shift_data:
             if len(key) == 2:

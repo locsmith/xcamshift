@@ -3979,12 +3979,7 @@ class Xcamshift(PyEnsemblePot):
     
     def addResraints(self,lines):
         data = Xplor_reader().read(lines)
-        
-        shifts = {}
-        for datum in data:
-            key  = Atom_utils._get_atom_info_from_index(datum.atom_id)
-            shifts[key] = datum.shift
-        observed_shifts = Observed_shift_table(shifts)
+        observed_shifts = Observed_shift_table(data,format='xplor')
         self.set_observed_shifts(observed_shifts)
 
             
