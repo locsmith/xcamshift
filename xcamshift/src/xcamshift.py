@@ -8,6 +8,7 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
+from shift_io.xplor_reader import Xplor_reader
 '''
 Created on 27 Dec 2011
 
@@ -3975,6 +3976,19 @@ class Xcamshift(PyEnsemblePot):
         self._prepare(STRUCTURE_CHANGED, None)
         self._prepare(TARGET_ATOM_IDS_CHANGED, None)
         #TODO: do we need a  set froze here
+    
+    def addResraints(self,lines):
+        data = Xplor_reader().read(lines)
+        
+        shifts = {}
+        for datum in data:
+            key  = Atom_utils._get_atom_info_from_index(datum.atom_id)
+            shifts[key] = datum.shift
+        observed_shifts = Observed_shift_table(shifts)
+        self.set_observed_shifts(observed_shifts)
+
+            
+
 
     
 

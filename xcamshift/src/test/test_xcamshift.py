@@ -836,10 +836,16 @@ class TestXcamshift(unittest2.TestCase):
 
     def test_scale_energy_and_derivs_well(self):
         self._test_scale_energy_and_derivs(ala_3.ala_3_test_shifts_well, ala_3.ala_3_energies_well, {})
+ 
+    def test_add_restraints(self):
+        xcamshift = Xcamshift()
+        xcamshift.addResraints(open('test_data/3_ala/3ala_xplor.shifts').read())
+        self._test_scale_energy_and_derivs(ala_3.ala_3_test_shifts_well, ala_3.ala_3_energies_well, {})
+
         
 def run_tests():
 #     unittest2.main(module='test.test_xcamshift')
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_scale_energy_and_derivs_well')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_add_restraints')
     
 if __name__ == "__main__":
     run_tests()
