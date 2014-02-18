@@ -3894,14 +3894,17 @@ class Xcamshift(PyEnsemblePot):
         out_array = self._get_out_array()
         self.update_force_factor_calculator()
         self._calc_force_set(active_target_atom_ids, out_array, potentials)
-        out_array.add_forces_to_result(derivs)
+        out_array.add_forces_to_result(derivs,weight=self.scale())
 
+    def calcEnergy(self):
+        return super(Xcamshift, self).calcEnergy() * self.scale()
+        
     def calcEnergyAndDerivList(self,derivs):
         if self._verbose:
             print "start energy and derivatives"
             start_time = time() 
             
-        energy = PyEnsemblePot.calcEnergyAndDerivList(self,derivs) 
+        energy = PyEnsemblePot.calcEnergyAndDerivList(self,derivs) * self.scale()
 
 
         

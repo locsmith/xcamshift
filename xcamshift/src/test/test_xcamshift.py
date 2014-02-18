@@ -802,11 +802,44 @@ class TestXcamshift(unittest2.TestCase):
 #        xcamshift.calcEnergy()
 #        for potential_name in xcamshift.get_sub_potential_names():
 #            potential  = xcamshift.get_named_sub_potential(potential_name)
-#            self.assertTrue(potential._fast, potential_name)        
+#            self.assertTrue(potential._fast, potential_name)   
+     
+    def test_scale_energy(self):
+        xcamshift = self._make_xcamshift(ala_3.ala_3_test_shifts_harmonic)
+        SCALE = 0.5
+        xcamshift.setScale(SCALE)
+        expected_energy = ala_3.ala_3_energies_harmonic[TOTAL_ENERGY] * SCALE
+        
+        self._test_total_energy(xcamshift, expected_energy)
 
+
+    def _scale_forces(self, forces, scale):
+        expected_forces = {}
+        for key, forces in forces.items():
+            expected_forces[key] = forces[0] * scale, forces[1] * scale, forces[2] * scale
+        
+        return expected_forces
+    
+    def _test_scale_energy_and_derivs(self,shifts, expected_energies, expected_forces):
+        xcamshift = self._make_xcamshift(shifts)
+        SCALE = 0.5
+        xcamshift.setScale(SCALE)
+        
+        xcamshift.update_force_factor_calculator()
+        expected_energy = expected_energies[TOTAL_ENERGY] * SCALE
+        expected_forces = self._scale_forces(expected_forces,SCALE) 
+        
+        self._test_force_sets(xcamshift, expected_energy, expected_forces)
+        
+    def test_scale_energy_and_derivs_tanh(self):
+        self._test_scale_energy_and_derivs(ala_3.ala_3_test_shifts_tanh, ala_3.ala_3_energies_tanh, ala_3.ala_3_total_forces_tanh)
+
+    def test_scale_energy_and_derivs_well(self):
+        self._test_scale_energy_and_derivs(ala_3.ala_3_test_shifts_well, ala_3.ala_3_energies_well, {})
+        
 def run_tests():
-    unittest2.main(module='test.test_xcamshift')
-#     unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_non_bonded_distances_found')
+#     unittest2.main(module='test.test_xcamshift')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_scale_energy_and_derivs_well')
     
 if __name__ == "__main__":
     run_tests()
