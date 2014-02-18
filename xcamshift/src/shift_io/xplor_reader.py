@@ -13,16 +13,12 @@ DEFAULT_CLASS='DEFAULT'
 DEFAULT_WEIGHT=1.0
 
 class Xplor_reader:
-    def __init__(self,file_name):
-        self._file_name = file_name
-       
-
-    def get_line_source(self):
-        return open(self._file_name, 'r')
+    def __init__(self):
+        pass
 
 
     def raise_exception(self, msg):
-        line_position = 'line %i in file \'%s\', line data:\n|%s|' % (self.line_index+1, self._file_name, self.line)
+        line_position = 'line %i in input, line data:\n|%s|' % (self.line_index+1, self.line)
         msg = '%s %s' % (msg, line_position)
         
         raise Exception(msg)
@@ -69,35 +65,34 @@ class Xplor_reader:
             error = shift_fields[1]
         return error
 
-    def read(self):
+    def read(self,lines):
         msg = "WARNING reading cs data from %s with a very primitive xplor data reader"
-        print >> sys.stderr, msg % self._file_name
         print >> sys.stderr, "WARNING insufficient data validation being done!!"
         
         results = []
-        with self.get_line_source() as lines:
-            weight = DEFAULT_WEIGHT
-            atom_class = DEFAULT_CLASS
-            for self.line_index,self.line in enumerate(lines):
-                
-                assign_keyword_re = re.compile('^\s*[Aa][Ss][Ss][Ii][Gg]?[Nn]? (\(.*\))(.+)')
-                
-                matches = assign_keyword_re.match(self.line).groups()
-                
-                if len(matches) > 1:
-                    atom_id = self.get_selection_or_raise(matches)
-                        
-                    shift_fields  = matches[1].split()
-                    
-                    self.check_number_shift_fields_or_raise(shift_fields)
-                     
-                    shif_fields = self.convert_fields_to_float_or_raise(shift_fields)
 
-                    error = self.get_error_or_default_error(shift_fields)
-
-                    result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=error,weight=weight,atom_class=DEFAULT_CLASS)
+        weight = DEFAULT_WEIGHT
+        atom_class = DEFAULT_CLASS
+        for self.line_index,self.line in enumerate(lines.strip().split("\n")):
+            
+            assign_keyword_re = re.compile('^\s*[Aa][Ss][Ss][Ii][Gg]?[Nn]?\s+(\(.*\))\s+(.+)')
+            
+            matches = assign_keyword_re.match(self.line).groups()
+            
+            if len(matches) > 1:
+                atom_id = self.get_selection_or_raise(matches)
                     
-                    results.append(result)
+                shift_fields  = matches[1].split()
+                
+                self.check_number_shift_fields_or_raise(shift_fields)
+                 
+                shif_fields = self.convert_fields_to_float_or_raise(shift_fields)
+
+                error = self.get_error_or_default_error(shift_fields)
+
+                result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=error,weight=weight,atom_class=DEFAULT_CLASS)
+                
+                results.append(result)
         return results
 
             

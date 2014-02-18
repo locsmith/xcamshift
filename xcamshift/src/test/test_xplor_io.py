@@ -11,26 +11,6 @@ import unittest2
 from test.alvin_2L1A_test_shifts import alvin_shift_format
 from utils import Atom_utils
 
-#TODO this acts as a stream and a context manager and an Xplor_reader
-class Test_xplor_reader(Xplor_reader):
-    def __init__(self,strings):
-        Xplor_reader.__init__(self,'no file!')
-        self._strings = strings
-        
-    def get_line_source(self):
-        return self
-    
-    def __exit__(self,type, value, traceback):
-        pass
-    
-    def __enter__(self):
-        return self
-    
-    def __len__(self):
-        return len(self._strings)
-    
-    def __getitem__(self, key):
-        return self._strings[key]
             
 class Test(unittest2.TestCase):
 
@@ -44,7 +24,7 @@ class Test(unittest2.TestCase):
 
 
     def test_alvins_data(self):
-        data = Xplor_reader(self.file_name).read()
+        data = Xplor_reader().read(open(self.file_name).read())
         self.assertEqual(len(data),601)
         for elem in data:
             TEST_DATA_SHIFT = 0
@@ -61,13 +41,13 @@ class Test(unittest2.TestCase):
 
             
         with self.assertRaises(Exception) as exception:       
-            Test_xplor_reader(("assign (resid 20 and (name HA or name C)) 127.0 0.1",)).read()
+            Xplor_reader().read("assign (resid 20 and (name HA or name C)) 127.0 0.1")
             
         with self.assertRaises(Exception) as exception:       
-            Test_xplor_reader(("assign (resid 20 and name HK) 127.0 0.1",)).read()
+            Xplor_reader().read("assign (resid 20 and name HK) 127.0 0.1")
             
     def test_unweighted_shift(self):
-        results = Test_xplor_reader(("assign (resid 20 and name HA) 127.0",)).read()
+        results = Xplor_reader().read("assign (resid 20 and name HA) 127.0")
         self.assertEqual(len(results),1)
         
         self.assertAlmostEqual(results[0].error,0.1)
@@ -77,15 +57,15 @@ class Test(unittest2.TestCase):
     def test_wrong_number_of_data_items(self):
 
         with self.assertRaises(Exception) as exception:       
-            Test_xplor_reader(("assign (resid 20 and name HA)",)).read()
+            Xplor_reader().read("assign (resid 20 and name HA)")
 
         with self.assertRaises(Exception) as exception:       
-            Test_xplor_reader(("assign (resid 20 and name HA) 1.0 1.0 1.0",)).read()
+            Xplor_reader().read("assign (resid 20 and name HA) 1.0 1.0 1.0")
 
     def test_bad_float_format(self):
        
        with self.assertRaises(Exception) as exception:       
-            Test_xplor_reader(("assign (resid 20 and name HA) 1.,0",)).read() 
+            Xplor_reader().read("assign (resid 20 and name HA) 1.,0") 
         
 
 if __name__ == "__main__":
