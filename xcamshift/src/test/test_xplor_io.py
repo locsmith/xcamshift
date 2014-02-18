@@ -50,7 +50,7 @@ class Test(unittest2.TestCase):
         results = Xplor_reader().read("assign (resid 20 and name HA) 127.0")
         self.assertEqual(len(results),1)
         
-        self.assertAlmostEqual(results[0].error,0.1)
+        self.assertAlmostEqual(results[0].error,None)
         self.assertAlmostEqual(results[0].shift,127.0)
         self.assertAlmostEqual(results[0].weight,1.0)
 

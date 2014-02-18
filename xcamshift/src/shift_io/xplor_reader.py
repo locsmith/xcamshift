@@ -59,10 +59,7 @@ class Xplor_reader:
 
     def get_error_or_default_error(self, shift_fields):
         if len(shift_fields) == 1:
-            msg = "warning error set to 0.1, not a sensible value at line %s:\n|%s|\n" 
-            msg = msg %  (self.line_index+1,self.line)
-            print >> sys.stderr, msg
-            error = 0.1
+            error = None
         elif len(shift_fields) == 2:
             error = shift_fields[1]
         return error
