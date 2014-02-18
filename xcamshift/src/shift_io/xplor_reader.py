@@ -59,7 +59,9 @@ class Xplor_reader:
 
     def get_error_or_default_error(self, shift_fields):
         if len(shift_fields) == 1:
-            print >> sys.stderr, "warning error set to 0.1, not a sensible value"
+            msg = "warning error set to 0.1, not a sensible value at line %s:\n|%s|\n" 
+            msg = msg %  (self.line_index+1,self.line)
+            print >> sys.stderr, msg
             error = 0.1
         elif len(shift_fields) == 2:
             error = shift_fields[1]
@@ -79,7 +81,9 @@ class Xplor_reader:
             
             matches = assign_keyword_re.match(self.line).groups()
             
-            if len(matches) > 1:
+            if matches == None:
+                self.raise_exception("line doesn't contain a correctly formated assign statement")
+            elif len(matches) > 1 and len(matches) < 3:
                 atom_id = self.get_selection_or_raise(matches)
                     
                 shift_fields  = matches[1].split()
@@ -93,6 +97,8 @@ class Xplor_reader:
                 result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=error,weight=weight,atom_class=DEFAULT_CLASS)
                 
                 results.append(result)
+            else:
+                self.raise_exception("internal error unexpected number of matches [%i] for assign statement" % len(matces))
         return results
 
             

@@ -66,6 +66,11 @@ class Test(unittest2.TestCase):
        
        with self.assertRaises(Exception) as exception:       
             Xplor_reader().read("assign (resid 20 and name HA) 1.,0") 
+            
+    def test_badly_spelt_assign(self):
+        
+        with self.assertRaises(Exception) as exception:       
+            Xplor_reader().read("asign (resid 20 and name HA) 1.0 1.0")
         
 
 if __name__ == "__main__":
