@@ -3977,10 +3977,28 @@ class Xcamshift(PyEnsemblePot):
         self._prepare(TARGET_ATOM_IDS_CHANGED, None)
         #TODO: do we need a  set froze here
     
-    def addResraints(self,lines):
+    def addRestraints(self,lines):
         data = Xplor_reader().read(lines)
         observed_shifts = Observed_shift_table(data,format='xplor')
         self.set_observed_shifts(observed_shifts)
+        
+        energy_term_cache = self._get_energy_term_cache()
+        target_atom_ids  = self._get_active_target_atom_ids()
+
+        for elem in data:
+            error  = elem.error
+            if error != None:
+                id  = elem.atom_id
+                index  = target_atom_ids.index(id)
+                component = list(energy_term_cache.get_component(index))
+                component[1] = elem.error
+                component = tuple(component)
+                energy_term_cache.replace_component(index, component)
+                
+                
+                
+            
+            
 
             
 

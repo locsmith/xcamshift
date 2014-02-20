@@ -839,13 +839,52 @@ class TestXcamshift(unittest2.TestCase):
  
     def test_add_restraints(self):
         xcamshift = Xcamshift()
-        xcamshift.addResraints(open('test_data/3_ala/3ala_xplor.shifts').read())
+        xcamshift.addRestraints(open('test_data/3_ala/3ala_xplor.shifts').read())
         self._test_scale_energy_and_derivs(ala_3.ala_3_test_shifts_well, ala_3.ala_3_energies_well, {})
+        
 
+    def assert_deriv_list_is_zero(self, derivs):
+        #TODO: remember you can't print a derivs array it will cause a seg fault
+        derivs_array = derivs.get(currentSimulation())
+        for elem in derivs_array:
+            self.assertSequenceAlmostEqual(elem, (0.0, 0.0, 0.0), delta=1e-3)
+
+
+    def _shifts_and_errors_to_xplor_retraint_list(self, shifts, errors):
+        result = []
+        for key in shifts:
+            shift = shifts[key]
+            error = errors[key]
+            shift += error
+            result.append('assign (resid %i and name %s)    %10.6f   %10.6f' % (key[0], key[1], shift, error))
+        
+        restraints = '\n'.join(result)
+        return restraints
+
+    def test_change_energy_well(self):
+        xcamshift = Xcamshift()
+        
+        shifts =ala_3.ala_3_test_shifts_well
+        errors = ala_3.ala_3_flat_bottom_offsets
+        
+        restraints = self._shifts_and_errors_to_xplor_retraint_list(shifts,errors)
+
+        xcamshift.addRestraints(restraints)
+        
+        xcamshift.remove_named_sub_potential('HBOND')
+        xcamshift.update_force_factor_calculator()
+        
+        derivs = DerivList()
+        derivs.init(currentSimulation())
+        energy = xcamshift.calcEnergyAndDerivs(derivs)
+        
+        self.assert_deriv_list_is_zero(derivs)
+        self.assertAlmostEqual(energy, 0.0)
+        
         
 def run_tests():
-#     unittest2.main(module='test.test_xcamshift')
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_add_restraints')
+    unittest2.main(module='test.test_xcamshift')
+#     unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_change_energy_well')
     
 if __name__ == "__main__":
     run_tests()
