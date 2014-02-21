@@ -72,9 +72,9 @@ class Xplor_reader:
 
         weight = DEFAULT_WEIGHT
         atom_class = DEFAULT_CLASS
+        assign_keyword_re = re.compile('^\s*[Aa][Ss][Ss][Ii][Gg]?[Nn]?\s+(\(.*\))\s+(.+)')
         for self.line_index,self.line in enumerate(lines.strip().split("\n")):
             
-            assign_keyword_re = re.compile('^\s*[Aa][Ss][Ss][Ii][Gg]?[Nn]?\s+(\(.*\))\s+(.+)')
             
             matches = assign_keyword_re.match(self.line).groups()
             
