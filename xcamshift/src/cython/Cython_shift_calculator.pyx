@@ -1803,7 +1803,8 @@ cdef class Fast_energy_calculator:
         
         cdef float shift_diffs
         cdef Constant_cache* energy_terms
-
+        cdef float atom_energy
+        
         shift_diff = self._get_shift_difference(target_atom_index, index)
         energy_terms = self._get_energy_terms(index)
         
@@ -1818,16 +1819,16 @@ cdef class Fast_energy_calculator:
             
             
             if adjusted_shift_diff < end_harmonic:
-                energy += (adjusted_shift_diff/scale_harmonic)**2
+                atom_energy = (adjusted_shift_diff/scale_harmonic)**2 
             else:
                 tanh_amplitude = energy_terms[0].tanh_amplitude
                 tanh_elongation = energy_terms[0].tanh_elongation
                 tanh_y_offset = energy_terms[0].tanh_y_offset
                 
                 tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
-                energy += tanh_amplitude * tanh(tanh_argument) + tanh_y_offset;
-
-
+                atom_energy = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset 
+                
+            energy += atom_energy * energy_terms[0].weight
         return energy
 
 cdef class Fast_force_factor_calculator(Fast_energy_calculator):

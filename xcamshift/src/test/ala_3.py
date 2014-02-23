@@ -22,6 +22,15 @@ ala_3_total_shifts =  {
 }
  
  
+ala_3_test_weights = {
+    (2, "CA") : 1.0,
+    (2, "CB") : 1.0,
+    (2, "C") :  1.0,
+    (2, "HA") : 1.0,
+    (2, "HN") : 2.0,
+    (2, "N") :  1.0   
+}
+
 ala_3_test_shifts_harmonic = {
     (2, "CA") : 54.6395,
     (2, "CB") : 15.3505,

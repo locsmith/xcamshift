@@ -36,6 +36,7 @@ from component_list import Component_list
 from common_constants import TARGET_ATOM_IDS_CHANGED
 from cython.shift_calculators import Out_array
 from ensembleSimulation import   EnsembleSimulation
+from array import array
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -880,6 +881,75 @@ class TestXcamshift(unittest2.TestCase):
         
         self.assert_deriv_list_is_zero(derivs)
         self.assertAlmostEqual(energy, 0.0)
+        
+
+    def _shifts_and_weights_to_xplor_retraint_list(self, shifts, weights):
+        result = []
+        for key in shifts:
+            shift = shifts[key]
+            weight = weights[key]
+            result.append('weight  %10.6f' % weight)
+            result.append('assign (resid %i and name %s)    %10.6f' % (key[0], key[1], shift))
+        
+        restraints = '\n'.join(result)
+        return restraints
+    
+    
+
+    def _calc_weighted_energies(self, weights, energies):
+        energy = 0.0
+        for key in energies:
+            if key != 'total':
+                energy += energies[key] * weights[key]
+        
+        return energy
+
+
+    def _do_test_change_weights(self, shifts, weights, expected_factors, expected_energies):
+        xcamshift = Xcamshift()
+        
+        restraints = self._shifts_and_weights_to_xplor_retraint_list(shifts, weights)
+        
+        xcamshift.addRestraints(restraints)
+        xcamshift.remove_named_sub_potential('HBOND')
+        xcamshift.update_force_factor_calculator()
+        
+        number_atoms = Segment_Manager().get_number_atoms()
+        derivs = DerivList()
+        derivs.init(currentSimulation())
+        
+        # do an initial calculation of derivs to ensure everything is initialised....
+        energy = xcamshift.calcEnergyAndDerivs(derivs)
+        
+        target_atom_ids = xcamshift._get_active_target_atom_ids()
+        
+        factors = array('f', [0.0] * len(target_atom_ids))
+        xcamshift._calc_factors(target_atom_ids, factors)
+        
+        for i, target_atom_id in enumerate(target_atom_ids):
+            key = tuple(Atom_utils._get_atom_info_from_index(target_atom_id)[1:])
+            self.assertAlmostEqual(factors[i] / expected_factors[key], weights[key], places=4)
+        
+        expected_energy = self._calc_weighted_energies(weights, expected_energies)
+        self.assertAlmostEqual(expected_energy / energy, 1.0, places=6)
+
+    def test_change_weight_harmonic(self):
+        
+        shifts =ala_3.ala_3_test_shifts_harmonic
+        weights =  ala_3.ala_3_test_weights
+        expected_factors = ala_3.ala_3_factors_harmonic
+        expected_energies = ala_3.ala_3_energies_harmonic
+        
+        self._do_test_change_weights(shifts, weights, expected_factors, expected_energies)
+
+    def test_change_weight_tanh(self):
+        
+        shifts =ala_3.ala_3_test_shifts_tanh
+        weights =  ala_3.ala_3_test_weights
+        expected_factors = ala_3.ala_3_factors_tanh
+        expected_energies = ala_3.ala_3_energies_tanh
+        
+        self._do_test_change_weights(shifts, weights, expected_factors, expected_energies)         
         
         
 def run_tests():

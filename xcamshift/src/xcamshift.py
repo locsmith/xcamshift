@@ -3995,6 +3995,16 @@ class Xcamshift(PyEnsemblePot):
                 component = tuple(component)
                 energy_term_cache.replace_component(index, component)
                 
+            weight = elem.weight
+            id  = elem.atom_id
+            index  = target_atom_ids.index(id)
+            component = list(energy_term_cache.get_component(index))
+            if weight != component[4]:
+                component[4] =  weight
+                component = tuple(component)
+                energy_term_cache.replace_component(index, component)
+
+                
                 
                 
             
