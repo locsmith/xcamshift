@@ -44,6 +44,16 @@ class Component_list(object):
         for component in components:
             self._basic_add_component(component)
         self._clear_component_offsets()
+    
+    def replace_component(self,index,component):
+        atom_id = self._components[index][0]
+        range = self.get_component_range(atom_id)
+        if range[1]-range[0] == 1:
+            self._component_ids.remove(atom_id)
+        del self._components[index]
+        self.add_component(component)
+        
+        
         
     def get_all_components(self):
         return tuple(self._components)
@@ -83,6 +93,7 @@ class Component_list(object):
         return self._components[i]
         
     def _index_components(self, components):
+#         print components
         component_id_list =[]
         for component in components:
             component_id_list.append(component[0])
@@ -91,7 +102,9 @@ class Component_list(object):
         reversed_component_id_list.reverse()
         
         result = {}
+#         print self._component_ids
         for component_id in self._component_ids:
+#             print component_id_list, component_id
             start = component_id_list.index(component_id)
             end = len(component_id_list) - reversed_component_id_list.index(component_id)
             result[component_id] = (start,end)

@@ -36,6 +36,7 @@ from component_list import Component_list
 from common_constants import TARGET_ATOM_IDS_CHANGED
 from cython.shift_calculators import Out_array
 from ensembleSimulation import   EnsembleSimulation
+from array import array
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -802,11 +803,158 @@ class TestXcamshift(unittest2.TestCase):
 #        xcamshift.calcEnergy()
 #        for potential_name in xcamshift.get_sub_potential_names():
 #            potential  = xcamshift.get_named_sub_potential(potential_name)
-#            self.assertTrue(potential._fast, potential_name)        
+#            self.assertTrue(potential._fast, potential_name)   
+     
+    def test_scale_energy(self):
+        xcamshift = self._make_xcamshift(ala_3.ala_3_test_shifts_harmonic)
+        SCALE = 0.5
+        xcamshift.setScale(SCALE)
+        expected_energy = ala_3.ala_3_energies_harmonic[TOTAL_ENERGY] * SCALE
+        
+        self._test_total_energy(xcamshift, expected_energy)
 
+
+    def _scale_forces(self, forces, scale):
+        expected_forces = {}
+        for key, forces in forces.items():
+            expected_forces[key] = forces[0] * scale, forces[1] * scale, forces[2] * scale
+        
+        return expected_forces
+    
+    def _test_scale_energy_and_derivs(self,shifts, expected_energies, expected_forces):
+        xcamshift = self._make_xcamshift(shifts)
+        SCALE = 0.5
+        xcamshift.setScale(SCALE)
+        
+        xcamshift.update_force_factor_calculator()
+        expected_energy = expected_energies[TOTAL_ENERGY] * SCALE
+        expected_forces = self._scale_forces(expected_forces,SCALE) 
+        
+        self._test_force_sets(xcamshift, expected_energy, expected_forces)
+        
+    def test_scale_energy_and_derivs_tanh(self):
+        self._test_scale_energy_and_derivs(ala_3.ala_3_test_shifts_tanh, ala_3.ala_3_energies_tanh, ala_3.ala_3_total_forces_tanh)
+
+    def test_scale_energy_and_derivs_well(self):
+        self._test_scale_energy_and_derivs(ala_3.ala_3_test_shifts_well, ala_3.ala_3_energies_well, {})
+ 
+    def test_add_restraints(self):
+        xcamshift = Xcamshift()
+        xcamshift.addRestraints(open('test_data/3_ala/3ala_xplor.shifts').read())
+        self._test_scale_energy_and_derivs(ala_3.ala_3_test_shifts_well, ala_3.ala_3_energies_well, {})
+        
+
+    def assert_deriv_list_is_zero(self, derivs):
+        #TODO: remember you can't print a derivs array it will cause a seg fault
+        derivs_array = derivs.get(currentSimulation())
+        for elem in derivs_array:
+            self.assertSequenceAlmostEqual(elem, (0.0, 0.0, 0.0), delta=1e-3)
+
+
+    def _shifts_and_errors_to_xplor_retraint_list(self, shifts, errors):
+        result = []
+        for key in shifts:
+            shift = shifts[key]
+            error = errors[key]
+            shift += error
+            result.append('assign (resid %i and name %s)    %10.6f   %10.6f' % (key[0], key[1], shift, error))
+        
+        restraints = '\n'.join(result)
+        return restraints
+
+    def test_change_energy_well(self):
+        xcamshift = Xcamshift()
+        
+        shifts =ala_3.ala_3_test_shifts_well
+        errors = ala_3.ala_3_flat_bottom_offsets
+        
+        restraints = self._shifts_and_errors_to_xplor_retraint_list(shifts,errors)
+
+        xcamshift.addRestraints(restraints)
+        
+        xcamshift.remove_named_sub_potential('HBOND')
+        xcamshift.update_force_factor_calculator()
+        
+        derivs = DerivList()
+        derivs.init(currentSimulation())
+        energy = xcamshift.calcEnergyAndDerivs(derivs)
+        
+        self.assert_deriv_list_is_zero(derivs)
+        self.assertAlmostEqual(energy, 0.0)
+        
+
+    def _shifts_and_weights_to_xplor_retraint_list(self, shifts, weights):
+        result = []
+        for key in shifts:
+            shift = shifts[key]
+            weight = weights[key]
+            result.append('weight  %10.6f' % weight)
+            result.append('assign (resid %i and name %s)    %10.6f' % (key[0], key[1], shift))
+        
+        restraints = '\n'.join(result)
+        return restraints
+    
+    
+
+    def _calc_weighted_energies(self, weights, energies):
+        energy = 0.0
+        for key in energies:
+            if key != 'total':
+                energy += energies[key] * weights[key]
+        
+        return energy
+
+
+    def _do_test_change_weights(self, shifts, weights, expected_factors, expected_energies):
+        xcamshift = Xcamshift()
+        
+        restraints = self._shifts_and_weights_to_xplor_retraint_list(shifts, weights)
+        
+        xcamshift.addRestraints(restraints)
+        xcamshift.remove_named_sub_potential('HBOND')
+        xcamshift.update_force_factor_calculator()
+        
+        number_atoms = Segment_Manager().get_number_atoms()
+        derivs = DerivList()
+        derivs.init(currentSimulation())
+        
+        # do an initial calculation of derivs to ensure everything is initialised....
+        energy = xcamshift.calcEnergyAndDerivs(derivs)
+        
+        target_atom_ids = xcamshift._get_active_target_atom_ids()
+        
+        factors = array('f', [0.0] * len(target_atom_ids))
+        xcamshift._calc_factors(target_atom_ids, factors)
+        
+        for i, target_atom_id in enumerate(target_atom_ids):
+            key = tuple(Atom_utils._get_atom_info_from_index(target_atom_id)[1:])
+            self.assertAlmostEqual(factors[i] / expected_factors[key], weights[key], places=4)
+        
+        expected_energy = self._calc_weighted_energies(weights, expected_energies)
+        self.assertAlmostEqual(expected_energy / energy, 1.0, places=6)
+
+    def test_change_weight_harmonic(self):
+        
+        shifts =ala_3.ala_3_test_shifts_harmonic
+        weights =  ala_3.ala_3_test_weights
+        expected_factors = ala_3.ala_3_factors_harmonic
+        expected_energies = ala_3.ala_3_energies_harmonic
+        
+        self._do_test_change_weights(shifts, weights, expected_factors, expected_energies)
+
+    def test_change_weight_tanh(self):
+        
+        shifts =ala_3.ala_3_test_shifts_tanh
+        weights =  ala_3.ala_3_test_weights
+        expected_factors = ala_3.ala_3_factors_tanh
+        expected_energies = ala_3.ala_3_energies_tanh
+        
+        self._do_test_change_weights(shifts, weights, expected_factors, expected_energies)         
+        
+        
 def run_tests():
     unittest2.main(module='test.test_xcamshift')
-#     unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_non_bonded_distances_found')
+#     unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_change_energy_well')
     
 if __name__ == "__main__":
     run_tests()

@@ -8,6 +8,7 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
+from shift_io.xplor_reader import Xplor_reader
 '''
 Created on 27 Dec 2011
 
@@ -3894,14 +3895,17 @@ class Xcamshift(PyEnsemblePot):
         out_array = self._get_out_array()
         self.update_force_factor_calculator()
         self._calc_force_set(active_target_atom_ids, out_array, potentials)
-        out_array.add_forces_to_result(derivs)
+        out_array.add_forces_to_result(derivs,weight=self.scale())
 
+    def calcEnergy(self):
+        return super(Xcamshift, self).calcEnergy() * self.scale()
+        
     def calcEnergyAndDerivList(self,derivs):
         if self._verbose:
             print "start energy and derivatives"
             start_time = time() 
             
-        energy = PyEnsemblePot.calcEnergyAndDerivList(self,derivs) 
+        energy = PyEnsemblePot.calcEnergyAndDerivList(self,derivs) * self.scale()
 
 
         
@@ -3972,6 +3976,42 @@ class Xcamshift(PyEnsemblePot):
         self._prepare(STRUCTURE_CHANGED, None)
         self._prepare(TARGET_ATOM_IDS_CHANGED, None)
         #TODO: do we need a  set froze here
+    
+    def addRestraints(self,lines):
+        data = Xplor_reader().read(lines)
+        observed_shifts = Observed_shift_table(data,format='xplor')
+        self.set_observed_shifts(observed_shifts)
+        
+        energy_term_cache = self._get_energy_term_cache()
+        target_atom_ids  = self._get_active_target_atom_ids()
+
+        for elem in data:
+            error  = elem.error
+            if error != None:
+                id  = elem.atom_id
+                index  = target_atom_ids.index(id)
+                component = list(energy_term_cache.get_component(index))
+                component[1] = elem.error
+                component = tuple(component)
+                energy_term_cache.replace_component(index, component)
+                
+            weight = elem.weight
+            id  = elem.atom_id
+            index  = target_atom_ids.index(id)
+            component = list(energy_term_cache.get_component(index))
+            if weight != component[4]:
+                component[4] =  weight
+                component = tuple(component)
+                energy_term_cache.replace_component(index, component)
+
+                
+                
+                
+            
+            
+
+            
+
 
     
 

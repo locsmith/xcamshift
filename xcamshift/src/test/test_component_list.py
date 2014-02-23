@@ -258,6 +258,18 @@ class  Test_native_component_list(Test_component_list):
         result_2  = test_dump_component_offsets(self._component_list.get_native_component_offsets())
 
         self.assertEqual(EXPECTED_2, result_2)
+
+    def test_get_native_component_offsets(self):
+        self._component_list.set_format('ii')
+        self._component_list.add_components(TEST_DATA_1)
+
+        self._component_list.replace_component(2, (3,4))
+        EXPECTED_NEW_SEQUENCE = (1, 2), (1, 3), (3, 4)
+        self.assertSequenceEqual(self._component_list, EXPECTED_NEW_SEQUENCE)
+
+        ranges  = [self._component_list.get_component_range(i) for i in self._component_list.get_component_atom_ids()]
+        EXPECTED_NEW_RANGES = (0, 2), (2, 3)
+        self.assertSequenceEqual(ranges, EXPECTED_NEW_RANGES)
         
         
 if __name__ == "__main__":

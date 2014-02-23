@@ -22,6 +22,15 @@ ala_3_total_shifts =  {
 }
  
  
+ala_3_test_weights = {
+    (2, "CA") : 1.0,
+    (2, "CB") : 1.0,
+    (2, "C") :  1.0,
+    (2, "HA") : 1.0,
+    (2, "HN") : 2.0,
+    (2, "N") :  1.0   
+}
+
 ala_3_test_shifts_harmonic = {
     (2, "CA") : 54.6395,
     (2, "CB") : 15.3505,
@@ -55,15 +64,25 @@ END_HARMONIC_H = 4.0
 END_HARMONIC_CN =  20.0
 OFFSET = 0.5
 
+ala_3_flat_bottom_offsets =  {
+    (2, "CA") :  FLAT_BOTTOM_CA,
+    (2, "CB") :  FLAT_BOTTOM_CB,
+    (2, "C") :   FLAT_BOTTOM_C,
+    (2, "HA") :  FLAT_BOTTOM_HA,
+    (2, "HN") :  FLAT_BOTTOM_HN,
+    (2, "N") :   FLAT_BOTTOM_N
+
+}
+
 ala_3_test_shifts_tanh = {
 #      N        HN        CA        HA        CB         C
 #    120.2627    8.2373   52.6395    4.2651   18.3505  177.7649
-    (2, "CA") : ala_3_test_shifts_well[(2, "CA")] + FLAT_BOTTOM_CA + END_HARMONIC_CN + OFFSET,
-    (2, "CB") : ala_3_test_shifts_well[(2, "CB")] + FLAT_BOTTOM_CB + END_HARMONIC_CN + OFFSET,
-    (2, "C") :  ala_3_test_shifts_well[(2, "C")]  + FLAT_BOTTOM_C  + END_HARMONIC_CN + OFFSET,
-    (2, "HA") : ala_3_test_shifts_well[(2, "HA")] + FLAT_BOTTOM_HA + END_HARMONIC_H + OFFSET,
-    (2, "HN") : ala_3_test_shifts_well[(2, "HN")] + FLAT_BOTTOM_HN + END_HARMONIC_H + OFFSET,
-    (2, "N") :  ala_3_test_shifts_well[(2, "N")]  + FLAT_BOTTOM_N  + END_HARMONIC_CN + OFFSET
+    (2, "CA") : ala_3_test_shifts_well[(2, "CA")] + ala_3_flat_bottom_offsets[(2, "CA")] + END_HARMONIC_CN + OFFSET,
+    (2, "CB") : ala_3_test_shifts_well[(2, "CB")] + ala_3_flat_bottom_offsets[(2, "CB")] + END_HARMONIC_CN + OFFSET,
+    (2, "C") :  ala_3_test_shifts_well[(2, "C")]  + ala_3_flat_bottom_offsets[(2, "C")]  + END_HARMONIC_CN + OFFSET,
+    (2, "HA") : ala_3_test_shifts_well[(2, "HA")] + ala_3_flat_bottom_offsets[(2, "HA")] + END_HARMONIC_H  + OFFSET,
+    (2, "HN") : ala_3_test_shifts_well[(2, "HN")] + ala_3_flat_bottom_offsets[(2, "HN")] + END_HARMONIC_H  + OFFSET,
+    (2, "N") :  ala_3_test_shifts_well[(2, "N")]  + ala_3_flat_bottom_offsets[(2, "N")]  + END_HARMONIC_CN + OFFSET
 }
 
 ala_3_energies_harmonic = {
