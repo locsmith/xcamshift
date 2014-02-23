@@ -48,13 +48,14 @@ class Xplor_reader:
 
 
     def convert_fields_to_float_or_raise(self, shift_fields):
+        result = []
         for field_index, field in enumerate(shift_fields):
             try:
-                shift_fields[field_index] = float(field)
+                result.append(float(field))
             except:
                 msg = "couldn't convert field %i [value=|%s|] to a float" % (field_index+1, shift_fields[field_index])
                 self.raise_exception(msg)
-        return shift_fields
+        return result
 
 
     def get_error_or_default_error(self, shift_fields):
