@@ -73,30 +73,50 @@ class Xplor_reader:
 
         weight = DEFAULT_WEIGHT
         atom_class = DEFAULT_CLASS
+        
         assign_keyword_re = re.compile('^\s*[Aa][Ss][Ss][Ii][Gg]?[Nn]?\s+(\(.*\))\s+(.+)')
-        for self.line_index,self.line in enumerate(lines.strip().split("\n")):
-            
-            
-            matches = assign_keyword_re.match(self.line).groups()
-            
-            if matches == None:
-                self.raise_exception("line doesn't contain a correctly formated assign statement")
-            elif len(matches) > 1 and len(matches) < 3:
-                atom_id = self.get_selection_or_raise(matches)
+        
+        matchers = (assign_keyword_re,'ASSI',(1,3)),
                     
-                shift_fields  = matches[1].split()
-                
-                self.check_number_shift_fields_or_raise(shift_fields)
-                 
-                shif_fields = self.convert_fields_to_float_or_raise(shift_fields)
+        for self.line_index,self.line in enumerate(lines.strip().split("\n")):
+            line_complete = False
 
-                error = self.get_error_or_default_error(shift_fields)
-
-                result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=error,weight=weight,atom_class=DEFAULT_CLASS)
+            self.line = self.line.strip()
+            
+            for matcher,name,range in matchers:
                 
-                results.append(result)
-            else:
-                self.raise_exception("internal error unexpected number of matches [%i] for assign statement" % len(matces))
+                
+                if not self.line.upper().startswith(name):
+                    continue
+                
+                match = matcher.match(self.line)
+                matches = None
+                if match:
+                    matches = match.groups()
+
+                
+                if name == 'ASSI':
+                    if matches != None and (len(matches) > range[0] and len(matches) < range[1]):
+                        atom_id = self.get_selection_or_raise(matches)
+                            
+                        shift_fields  = matches[1].split()
+                        
+                        self.check_number_shift_fields_or_raise(shift_fields)
+                         
+                        shift_fields = self.convert_fields_to_float_or_raise(shift_fields)
+        
+                        error = self.get_error_or_default_error(shift_fields)
+        
+                        result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=error,weight=weight,atom_class=DEFAULT_CLASS)
+                        
+                        results.append(result)
+                        line_complete = True
+                    else:
+                        self.raise_exception("line doesn't contain a correctly formated assign statement:\n%s" % self.line )
+
+
+            if line_complete != True:
+                raise Exception("unexpected expression %s" % self.line)
         return results
 
             
