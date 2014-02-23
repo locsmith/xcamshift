@@ -71,7 +71,35 @@ class Test(unittest2.TestCase):
         
         with self.assertRaises(Exception) as exception:       
             Xplor_reader().read("asign (resid 20 and name HA) 1.0 1.0")
+            
+    def test_weight(self):
+        test_text = """assign (resid 20 and name HA) 1.0
+                       weight 2.0 
+                       assign (resid 20 and name C)  3.0
+                       weight 1.0
+                       assign (resid 20 and name CB) 4.0"""
+                
+                        
+        expected = (Atom_utils.find_atom_ids('A   ', 20, 'HA')[0],1.0,None,1.0),\
+                   (Atom_utils.find_atom_ids('A   ', 20, 'C')[0], 3.0,None,2.0),\
+                   (Atom_utils.find_atom_ids('A   ', 20, 'CB')[0],4.0,None,1.0)
+                            
+        result  = Xplor_reader().read(test_text) 
+        for elem,expected_result in zip(result,expected):
+            self.assertEqual(elem.atom_id, expected_result[0])
+            self.assertEqual(elem.shift, expected_result[1])
+            self.assertEqual(elem.error, expected_result[2])
+            self.assertEqual(elem.weight, expected_result[3])
+            
+    def test_weight_bad_format(self):
+        with self.assertRaises(Exception) as exception:       
+            Xplor_reader().read("weght 1.0")
+
+        with self.assertRaises(Exception) as exception:       
+            Xplor_reader().read("weight 1,0")
         
+        with self.assertRaises(Exception) as exception:       
+            Xplor_reader().read("weight")           
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_alvins_data']

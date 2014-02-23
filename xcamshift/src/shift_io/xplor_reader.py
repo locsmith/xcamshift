@@ -75,9 +75,9 @@ class Xplor_reader:
         atom_class = DEFAULT_CLASS
         
         assign_keyword_re = re.compile('^\s*[Aa][Ss][Ss][Ii][Gg]?[Nn]?\s+(\(.*\))\s+(.+)')
+        weight_keyword_re = re.compile('^\s*[Ww][Ee][Ii][Gg][Hh]?[Tt]?\s+(.+)')
         
-        matchers = (assign_keyword_re,'ASSI',(1,3)),
-                    
+        matchers = (assign_keyword_re,'ASSI',(1,3)),(weight_keyword_re,'WEIG',(0,2))
         for self.line_index,self.line in enumerate(lines.strip().split("\n")):
             line_complete = False
 
@@ -115,6 +115,15 @@ class Xplor_reader:
                         self.raise_exception("line doesn't contain a correctly formated assign statement:\n%s" % self.line )
 
 
+                elif name == 'WEIG':
+                    if matches != None and (len(matches) > range[0] and len(matches) < range[1]):
+                        weight = self.convert_fields_to_float_or_raise(matches)[0] 
+                        
+                        line_complete = True
+                        
+                        break 
+                    else:
+                        self.raise_exception("line doesn't contain a correctly formated weight statement:\n%s" % self.line )
             if line_complete != True:
                 raise Exception("unexpected expression %s" % self.line)
         return results
