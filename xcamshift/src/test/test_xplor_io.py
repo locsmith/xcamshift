@@ -100,6 +100,34 @@ class Test(unittest2.TestCase):
         
         with self.assertRaises(Exception) as exception:       
             Xplor_reader().read("weight")           
+    
+    def test_class(self):
+        test_text = """assign (resid 20 and name HA) 1.0
+                       class  name_1
+                       assign (resid 20 and name C)  3.0
+                       class  name_2
+                       assign (resid 20 and name CB) 4.0"""
+                
+                        
+        expected = (Atom_utils.find_atom_ids('A   ', 20, 'HA')[0],1.0,None,1.0,'DEFAULT'),\
+                   (Atom_utils.find_atom_ids('A   ', 20, 'C')[0], 3.0,None,1.0,'name_1'),\
+                   (Atom_utils.find_atom_ids('A   ', 20, 'CB')[0],4.0,None,1.0,'name_2')
+                            
+        result  = Xplor_reader().read(test_text) 
+        for elem,expected_result in zip(result,expected):
+            self.assertEqual(elem.atom_id, expected_result[0])
+            self.assertEqual(elem.shift, expected_result[1])
+            self.assertEqual(elem.error, expected_result[2])
+            self.assertEqual(elem.weight, expected_result[3])
+            self.assertEqual(elem.atom_class, expected_result[4])
+            
+    def test_class_bad_format(self):
+        with self.assertRaises(Exception) as exception:       
+            Xplor_reader().read("class")
+
+        with self.assertRaises(Exception) as exception:       
+            Xplor_reader().read("class 1 0")
+        
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_alvins_data']

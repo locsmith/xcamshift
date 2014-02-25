@@ -65,6 +65,10 @@ class Xplor_reader:
             error = shift_fields[1]
         return error
 
+
+    def raise_bad_statement(self,name):
+        return self.raise_exception("line doesn't contain a correctly formated %s statement:\n%s" % (name,self.line))
+
     def read(self,lines):
         msg = "WARNING reading cs data from %s with a very primitive xplor data reader"
         print >> sys.stderr, "WARNING insufficient data validation being done!!"
@@ -76,15 +80,15 @@ class Xplor_reader:
         
         assign_keyword_re = re.compile('^\s*[Aa][Ss][Ss][Ii][Gg]?[Nn]?\s+(\(.*\))\s+(.+)')
         weight_keyword_re = re.compile('^\s*[Ww][Ee][Ii][Gg][Hh]?[Tt]?\s+(.+)')
+        class_keyword_re = re.compile('^\s*[Cc][Ll][Aa][Ss][Ss]?\s+(.+)')
         
-        matchers = (assign_keyword_re,'ASSI',(1,3)),(weight_keyword_re,'WEIG',(0,2))
+        matchers = (assign_keyword_re,'ASSI',(1,3)),(weight_keyword_re,'WEIG',(0,2)),(class_keyword_re,'CLAS',(0,2))
         for self.line_index,self.line in enumerate(lines.strip().split("\n")):
             line_complete = False
 
             self.line = self.line.strip()
             
             for matcher,name,range in matchers:
-                
                 
                 if not self.line.upper().startswith(name):
                     continue
@@ -107,12 +111,15 @@ class Xplor_reader:
         
                         error = self.get_error_or_default_error(shift_fields)
         
-                        result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=error,weight=weight,atom_class=DEFAULT_CLASS)
+                        result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=error,weight=weight,atom_class=atom_class)
                         
                         results.append(result)
                         line_complete = True
+                        break
+                        
                     else:
-                        self.raise_exception("line doesn't contain a correctly formated assign statement:\n%s" % self.line )
+                        self.raise_bad_statement('assign')
+                        
 
 
                 elif name == 'WEIG':
@@ -120,12 +127,24 @@ class Xplor_reader:
                         weight = self.convert_fields_to_float_or_raise(matches)[0] 
                         
                         line_complete = True
-                        
                         break 
                     else:
-                        self.raise_exception("line doesn't contain a correctly formated weight statement:\n%s" % self.line )
+                        self.raise_bad_statement('weight')
+                        
+                elif name == 'CLAS':
+                    if matches != None and (len(matches) > range[0] and len(matches) < range[1]):
+                        atom_class = matches[0].split()
+                        if len(atom_class) > 1:
+                            raise Exception()
+                        else:
+                            atom_class = atom_class[0]
+                        line_complete = True
+                        break
+                    else:
+                        self.raise_bad_statement('class')    
+                        
             if line_complete != True:
-                raise Exception("unexpected expression %s" % self.line)
+                raise Exception("unexpected expression |%s|" % self.line)
         return results
 
             
