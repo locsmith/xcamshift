@@ -3989,7 +3989,12 @@ class Xcamshift(PyEnsemblePot):
             error  = elem.error
             if error != None:
                 id  = elem.atom_id
-                index  = target_atom_ids.index(id)
+                try:
+                    index  = target_atom_ids.index(id)
+                except:
+                    selection_string = Atom_utils._get_atom_info_from_index(id)
+                    msg = "WARNING ignoring %s it is not an active atom for chemical shift calculation\ncontinuing..."
+                    print msg % selection_string
                 component = list(energy_term_cache.get_component(index))
                 component[1] = elem.error
                 component = tuple(component)
