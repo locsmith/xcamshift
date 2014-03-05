@@ -15,4 +15,5 @@ template class  CDSVectorBase<double,EnsembleSimulation::SharedAlloc>;
 template class CDSVector<float,0,CDS::DefaultAlloc>;
 template class  CDSVectorBase<float,CDS::DefaultAlloc>;
 template class CDSString<char>;
+template class CDSStringStreamBuf<char>;
 
