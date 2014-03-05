@@ -3,6 +3,8 @@
 #include "cdsVector.cc"
 #include "cdsString.hh"
 #include "cdsString.cc"
+#include "cdsSStream.hh"
+#include "cdsSStream.cc"
 #include "vec3.hh"
 #include "fixedVector.cc"
 #include "ensembleSimulation.hh"
