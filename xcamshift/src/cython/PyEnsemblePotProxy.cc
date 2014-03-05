@@ -52,7 +52,7 @@ float_type PyEnsemblePotProxy::callCyEnergyMaybeDerivs(DerivList& derivList, boo
 float_type PyEnsemblePotProxy::rms(){
 	return -1.0f;
 }
-int PyEnsemblePotProxy::violations(){
+float_type PyEnsemblePotProxy::violations(){
 	return -1;
 }
 int PyEnsemblePotProxy::numRestraints(){

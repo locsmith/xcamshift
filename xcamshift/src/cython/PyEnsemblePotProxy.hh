@@ -29,7 +29,7 @@ public:
   
   
   float_type rms();
-  int violations();
+  float_type violations();
   int numRestraints();
 };
 
