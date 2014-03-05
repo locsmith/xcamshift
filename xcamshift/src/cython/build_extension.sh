@@ -65,5 +65,5 @@ gcc -pthread -fno-strict-aliasing -g -O2 -DNDEBUG -g -fwrapv -O3 -Wall          
 -c pyEnsemblePotProxy_wrap_new_2.cpp
 
 #link
-gcc -shared build/temp.${xc_lower_platform}-${xc_architecture}-2.6/PyEnsemblePotProxy.o pyEnsemblePotProxy_wrap_new_2.o \
+gcc -shared build/temp.${xc_lower_platform}-${xc_architecture}-${xc_python_version}/PyEnsemblePotProxy.o pyEnsemblePotProxy_wrap_new_2.o \
     -lstdc++ -o _PyEnsemblePotProxy.so
