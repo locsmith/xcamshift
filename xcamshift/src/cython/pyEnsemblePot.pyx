@@ -4,8 +4,8 @@ from cython.xPyPot import PyPot
 cimport cpython.ref as cpy_ref
 from  xplor_access cimport Simulation, String, DerivList, EnsembleSimulation, EnsembleMemberSimulation, numSimulations
 from libc.stdio cimport printf
-from ensembleSimulation import  Simulation_simulationByID, fromSimulation
-numSimulations
+from ensembleSimulation import fromSimulation  
+from simulation import   Simulation_simulationByID
 #
 
 cdef extern from "instantiate.hh":
