@@ -36,7 +36,7 @@ public:
 
   //don't return anything useful yet
   float_type rms()        { return -1.; }
-  int        violations() { return -1; }
+  float_type violations() { return -1; }
   int        numRestraints() { return -1; }
 
   // return the python potential object

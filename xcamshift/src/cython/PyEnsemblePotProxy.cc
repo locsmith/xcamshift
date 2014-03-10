@@ -27,14 +27,23 @@ PyEnsemblePotProxy::~PyEnsemblePotProxy()
   unRegister(esim);
 }
 
-float_type PyEnsemblePotProxy::energyMaybeDerivs0(DerivList& derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 0);}
-float_type PyEnsemblePotProxy::energyMaybeDerivs1(DerivList &derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 1);}
-float_type PyEnsemblePotProxy::energyMaybeDerivs2(DerivList &derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 2);}
-float_type PyEnsemblePotProxy::energyMaybeDerivs3(DerivList &derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 3);}
-float_type PyEnsemblePotProxy::energyMaybeDerivs4(DerivList &derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 4);}
+//float_type PyEnsemblePotProxy::energyMaybeDerivs0(DerivList& derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 0);}
+//float_type PyEnsemblePotProxy::energyMaybeDerivs1(DerivList &derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 1);}
+//float_type PyEnsemblePotProxy::energyMaybeDerivs2(DerivList &derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 2);}
+//float_type PyEnsemblePotProxy::energyMaybeDerivs3(DerivList &derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 3);}
+//float_type PyEnsemblePotProxy::energyMaybeDerivs4(DerivList &derivList, bool calcDerivs){return callCyEnergyMaybeDerivs(derivList, calcDerivs, 4);}
 
 
-float_type PyEnsemblePotProxy::callCyEnergyMaybeDerivs(DerivList& derivList, bool calcDerivs, int i) {
+float_type PyEnsemblePotProxy::energyMaybeDerivs0(DerivList* derivList){return callCyEnergyMaybeDerivs(derivList, true, 0);}
+float_type PyEnsemblePotProxy::energyMaybeDerivs1(DerivList* derivList){return callCyEnergyMaybeDerivs(derivList, true, 1);}
+float_type PyEnsemblePotProxy::energyMaybeDerivs2(DerivList* derivList){return callCyEnergyMaybeDerivs(derivList, true, 2);}
+float_type PyEnsemblePotProxy::energyMaybeDerivs3(DerivList* derivList){return callCyEnergyMaybeDerivs(derivList, true, 3);}
+float_type PyEnsemblePotProxy::energyMaybeDerivs4(DerivList* derivList){return callCyEnergyMaybeDerivs(derivList, true, 4);}
+
+float_type PyEnsemblePotProxy::callCyEnergyMaybeDerivs(DerivList* derivList, bool calcDerivs, int i) {
+	if (derivList == 0){
+		calcDerivs = false;
+	}
 	PyGILState_STATE gstate;
 	gstate = PyGILState_Ensure();
 
@@ -42,7 +51,7 @@ float_type PyEnsemblePotProxy::callCyEnergyMaybeDerivs(DerivList& derivList, boo
 	/* evaluate result or handle exception */
 	int error;
 	float result = 0.0;
-	cy_call_calc_energy_and_derivs_maybe(m_obj,i,&derivList, esim, calcDerivs, &result, &error);
+	cy_call_calc_energy_and_derivs_maybe(m_obj,i,derivList, esim, calcDerivs, &result, &error);
 
 	/* Release the thread. No Python API allowed beyond this point. */
 	PyGILState_Release(gstate);
