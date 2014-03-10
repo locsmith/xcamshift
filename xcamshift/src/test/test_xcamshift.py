@@ -139,7 +139,7 @@ class TestXcamshift(unittest2.TestCase):
         PDBTool("test_data/3_ala/3ala.pdb").read()
         Segment_Manager.reset_segment_manager()
         Atom_utils.clear_cache()
-#         print "In method", self._testMethodName
+        print "In method", self._testMethodName
 
     def make_out_array(self):
 #        TODO: use segment manager
@@ -953,7 +953,7 @@ class TestXcamshift(unittest2.TestCase):
         
         
 def run_tests():
-    unittest2.main(module='test.test_xcamshift')
+    unittest2.main(module='test.test_xcamshift',failfast=True)
 #     unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_change_energy_well')
     
 if __name__ == "__main__":

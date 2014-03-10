@@ -8,6 +8,7 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
+from common_constants import TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED
 '''
 Created on 31 Dec 2011
 
@@ -591,6 +592,7 @@ class TestXcamshiftA4(unittest2.TestCase):
 
     def testComponentShiftsA4(self):
         xcamshift_potential =  self._get_xcamshift()
+        xcamshift_potential._prepare(ROUND_CHANGED, None)
         
         expected_shift_components = dict(ala_4.ala_4_expected_shift_components)
         for sub_potential_name in xcamshift_potential.get_sub_potential_names():

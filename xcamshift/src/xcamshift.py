@@ -2106,7 +2106,7 @@ class Non_bonded_potential(Distance_based_potential):
         
     def get_target_atom_ids(self):
         #TODO: this  call is required check why....
-        self.update_non_bonded_list(increment=False)
+#         self.update_non_bonded_list(increment=False)
         components = self._get_component_list('ATOM')
         return components.get_component_atom_ids()
     
@@ -3386,51 +3386,51 @@ class Xcamshift(PyEnsemblePot):
     
 
            
-    def print_shifts(self):
-        result  = [0] * Segment_Manager().get_number_atoms()
-        
-        result_elements = {}
-        
-        keys = []
-        for potential in self.potential:
-            num_atoms = len(result)
-            sub_result  = [0.0] * num_atoms
-            potential.set_shifts(sub_result)
-            key = potential.L()
-            keys.append(key)
-            result_elements[key] = sub_result
-        
-        
-        total = [sum(elems) for elems in zip(*result_elements.values())]
-        keys.append('TOTL')
-        
-        result_elements['TOTL'] = total
-        residues  = []
-        atoms = []
-        result_elements['ATOM'] =  atoms
-        result_elements['RESD'] =  residues
-        
-        keys.insert(0, 'RESD')
-        keys.insert(0,'ATOM')
-        
-        for i in range(num_atoms):
-            segments,residue,atom = Atom_utils._get_atom_info_from_index(i)
-            residues.append(('%5i' %residue))
-            atoms.append(atom)
-        
-        for key in keys:
-            values = []
-            print key.ljust(5),
-            for total,value in zip(result_elements['TOTL'],result_elements[key]):
-                if total > 0:
-                    if isinstance(value, float):
-                        string  = '%- 7.4f' % value
-                    else:
-                        string = value
-                    string = string.rjust(9)
-                    
-                    values.append(string)
-            print ' '.join(values)
+#     def print_shifts(self):
+#         result  = [0] * Segment_Manager().get_number_atoms()
+#         
+#         result_elements = {}
+#         
+#         keys = []
+#         for potential in self.potential:
+#             num_atoms = len(result)
+#             sub_result  = [0.0] * num_atoms
+#             potential.set_shifts(sub_result)
+#             key = potential.L()
+#             keys.append(key)
+#             result_elements[key] = sub_result
+#         
+#         
+#         total = [sum(elems) for elems in zip(*result_elements.values())]
+#         keys.append('TOTL')
+#         
+#         result_elements['TOTL'] = total
+#         residues  = []
+#         atoms = []
+#         result_elements['ATOM'] =  atoms
+#         result_elements['RESD'] =  residues
+#         
+#         keys.insert(0, 'RESD')
+#         keys.insert(0,'ATOM')
+#         
+#         for i in range(num_atoms):
+#             segments,residue,atom = Atom_utils._get_atom_info_from_index(i)
+#             residues.append(('%5i' %residue))
+#             atoms.append(atom)
+#         
+#         for key in keys:
+#             values = []
+#             print key.ljust(5),
+#             for total,value in zip(result_elements['TOTL'],result_elements[key]):
+#                 if total > 0:
+#                     if isinstance(value, float):
+#                         string  = '%- 7.4f' % value
+#                     else:
+#                         string = value
+#                     string = string.rjust(9)
+#                     
+#                     values.append(string)
+#             print ' '.join(values)
             
         
     def _get_all_component_target_atom_ids(self):
@@ -3502,6 +3502,8 @@ class Xcamshift(PyEnsemblePot):
     def print_shifts(self,out=sys.stdout):
         #TODO: this is protein specific
         ATOM_NAMES = 'HA','CA','HN','N','C','CB'
+        #TODO add an increment false flag
+        self._prepare(ROUND_CHANGED, None)
         atom_keys,shifts = self.calc_shifts()
         
         seg_residue = {}
@@ -3566,6 +3568,7 @@ class Xcamshift(PyEnsemblePot):
         self._shift_cache =  None
         self._energy_term_cache =  None
         self._prepare(SHIFT_DATA_CHANGED,None)
+        self._prepare(TARGET_ATOM_IDS_CHANGED,None)
         
 
     def _calc_single_atom_shift(self,target_atom_id):
