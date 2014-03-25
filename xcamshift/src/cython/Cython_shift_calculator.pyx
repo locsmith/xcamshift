@@ -11,7 +11,7 @@
 
 # cython: profile=False
 # cython: boundscheck=False    
-# cython: wraparound=False
+# cython: wraparound=True
 # cython: cdivision=True
 
 '''
