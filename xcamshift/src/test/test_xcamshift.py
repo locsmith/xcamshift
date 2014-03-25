@@ -931,7 +931,7 @@ class TestXcamshift(unittest2.TestCase):
             self.assertAlmostEqual(factors[i] / expected_factors[key], weights[key], places=4)
         
         expected_energy = self._calc_weighted_energies(weights, expected_energies)
-        self.assertAlmostEqual(expected_energy / energy, 1.0, places=6)
+        self.assertAlmostEqual(expected_energy / energy, 1.0, places=5)
 
     def test_change_weight_harmonic(self):
         
