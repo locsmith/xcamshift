@@ -748,10 +748,11 @@ class TestXcamshift(unittest2.TestCase):
         self.assertSequenceAlmostEqual(coefficents_1, expected_coefficients_1, self.DEFAULT_DECIMAL_PLACES)
 
     
-    def test_non_bonded_distances_found(self):
+
+    def _do_test_non_bonded_distances_found(self,selected_components, expected_non_bonded_pairs):
         non_bonded_list = Non_bonded_list(self.get_single_member_ensemble_simulation(),min_residue_separation=1)
         
-        expected_non_bonded_pairs = set(ala_3.ala3_expected_non_bonded_pairs)
+
         non_bonded_potential = Non_bonded_potential(self.get_single_member_ensemble_simulation())
         
         target_atoms = non_bonded_potential._create_component_list('ATOM')
@@ -766,7 +767,7 @@ class TestXcamshift(unittest2.TestCase):
         
         component_list = non_bonded_potential._get_component_list('NBLT')
         
-        non_bonded_list.get_boxes(target_atoms, remote_atoms, component_list, coefficient_list)
+        non_bonded_list.get_boxes(target_atoms, remote_atoms, component_list, coefficient_list,selected_components)
         
         for component in component_list:
             target_component_index,remote_component_index =  component[1:3]
@@ -783,7 +784,30 @@ class TestXcamshift(unittest2.TestCase):
 
         self.assertEmpty(expected_non_bonded_pairs)
             
+    def test_non_bonded_distances_found_subset(self):
+        expected_non_bonded_pairs = set(ala_3.ala3_expected_non_bonded_pairs)
+
+        keys = set()
+        for elem in expected_non_bonded_pairs:
+            key = Atom_utils.find_atom(elem[0][0],elem[0][1],elem[0][2])[0].index(),elem[0]
+            keys.add(key)
+        sorted_keys = sorted(keys)
+        removed_key  = sorted_keys[3][1]
+        del sorted_keys[3]
+
+        selected_components = array('i',range(len(keys)))
+        del selected_components[3]
+        selected_expected_non_bonded_pairs = set([elem for elem in expected_non_bonded_pairs if elem[0] != removed_key])
+
+        self._do_test_non_bonded_distances_found(selected_components, selected_expected_non_bonded_pairs)
         
+    def test_non_bonded_distances_found(self):
+        expected_non_bonded_pairs = set(ala_3.ala3_expected_non_bonded_pairs)
+
+
+        self._do_test_non_bonded_distances_found(None, expected_non_bonded_pairs)
+
+
     @staticmethod
     def list_test_shifts():
         for item in ala_3.ala_3_test_shifts_tanh.items():

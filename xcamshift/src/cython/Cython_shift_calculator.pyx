@@ -1668,7 +1668,7 @@ cdef class Fast_non_bonded_calculator:
         return len(data)/ sizeof(Non_bonded_remote_atom_component)
             
     @cython.profile(True)
-    def __call__(self, atom_list_1, atom_list_2,  Non_bonded_interaction_list non_bonded_lists):
+    def __call__(self, atom_list_1, atom_list_2,  Non_bonded_interaction_list non_bonded_lists, int[:] active_components):
         
         if self._verbose:
             print '***** BUILD NON BONDED ******'
@@ -1689,6 +1689,8 @@ cdef class Fast_non_bonded_calculator:
         
         non_bonded_lists.clear()
         
+        if active_components == None:
+
         for i in range(num_target_components):
             atom_id_1 = target_components[i].target_atom_id
 
@@ -1696,6 +1698,17 @@ cdef class Fast_non_bonded_calculator:
                 atom_id_2  = remote_components[j].remote_atom_id
                 if self._is_non_bonded(atom_id_1, atom_id_2):
                     non_bonded_lists.append(atom_id_1, i,j,i)
+        else:
+            for component_index in range(len(active_components)):
+                i = active_components[component_index]
+                atom_id_1 = target_components[i].target_atom_id
+
+                for j in range(num_remote_components):
+                    atom_id_2  = remote_components[j].remote_atom_id
+                    if self._is_non_bonded(atom_id_1, atom_id_2):
+                        non_bonded_lists.append(atom_id_1, i,j,component_index)
+
+
         if self._verbose:
             end_time = time()
             print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"
