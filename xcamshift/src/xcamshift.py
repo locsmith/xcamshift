@@ -3990,25 +3990,29 @@ class Xcamshift(PyEnsemblePot):
 
         for elem in data:
             error  = elem.error
-            if elem.atom_id in target_atom_ids:
-                index  = target_atom_ids.index(elem.atom_id)
-                if error != None:
-                    component = list(energy_term_cache.get_component(index))
-                    component[1] = elem.error
-                    component = tuple(component)
-                    energy_term_cache.replace_component(index, component)
-
-                weight = elem.weight
+            if error != None:
+                id  = elem.atom_id
+                try:
+                    index  = target_atom_ids.index(id)
+                except:
+                    selection_string = Atom_utils._get_atom_info_from_index(id)
+                    msg = "WARNING ignoring %s it is not an active atom for chemical shift calculation\ncontinuing..."
+                    print msg % selection_string
                 component = list(energy_term_cache.get_component(index))
-                
-                if weight != component[4]:
-                    component[4] =  weight
-                    component = tuple(component)
-                    energy_term_cache.replace_component(index, component)
-            else:
-                selection_string = '|%4s| %i @%s' % Atom_utils._get_atom_info_from_index(elem.atom_id)
-                msg = "WARNING ignoring  chemical shift restraint %s it is not an active atom for chemical shift calculation\ncontinuing..."
-                print msg % selection_string
+                component[1] = elem.error
+                component = tuple(component)
+                energy_term_cache.replace_component(index, component)
+
+            weight = elem.weight
+            id  = elem.atom_id
+            index  = target_atom_ids.index(id)
+            component = list(energy_term_cache.get_component(index))
+            if weight != component[4]:
+                component[4] =  weight
+                component = tuple(component)
+                energy_term_cache.replace_component(index, component)
+
+
 
 
 
