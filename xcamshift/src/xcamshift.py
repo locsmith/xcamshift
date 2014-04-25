@@ -3309,7 +3309,8 @@ class Xcamshift(PyEnsemblePot):
         def get_ensemble_shift_cache(self):
             return self._ensemble_shift_cache
 
-
+        def clear(self):
+            self._ensemble_shift_cache.clear()
 
     def __init__(self, name="xcamshift_instance", verbose=False):
         super(Xcamshift, self).__init__(name)
@@ -3468,7 +3469,7 @@ class Xcamshift(PyEnsemblePot):
             start_time =  time()
 
 
-        shift_cache._ensemble_shift_cache.clear()
+        shift_cache.clear()
         self._calc_shifts(target_atom_ids, shift_cache)
 
         if self._verbose:
@@ -3811,7 +3812,7 @@ class Xcamshift(PyEnsemblePot):
         if change == STRUCTURE_CHANGED:
             #TODO: make sure shift cache is always valid
             if self._calculated_shifts._ensemble_shift_cache != None:
-                self._calculated_shifts._ensemble_shift_cache.clear()
+                self._calculated_shifts.clear()
             self._active_target_atom_ids = None
 
         if change == TARGET_ATOM_IDS_CHANGED:
@@ -3825,7 +3826,7 @@ class Xcamshift(PyEnsemblePot):
 
         if change ==  ROUND_CHANGED:
             if self._calculated_shifts._ensemble_shift_cache != None:
-                self._calculated_shifts._ensemble_shift_cache.clear()
+                self._calculated_shifts.clear()
 
         self._prepare_potentials(change, data)
 
