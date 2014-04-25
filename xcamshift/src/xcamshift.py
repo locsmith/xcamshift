@@ -3297,14 +3297,11 @@ class Xcamshift(PyEnsemblePot):
             self._size = -1
             self._ensemble_simulation = ensemble_simulation
 
-        def _create_shift_cache(self, shift_cache, cache_size, ensembleSimulation=None):
-            if shift_cache == None:
-                if None.__class__ == ensembleSimulation.__class__:
-                    shift_cache = CDSVectorFloat(cache_size)
-                else:
-                    shift_cache = CDSSharedVectorFloat(cache_size,ensembleSimulation)
+        def _create_shift_cache(self, cache_size, ensembleSimulation=None):
+            if None.__class__ == ensembleSimulation.__class__:
+                shift_cache = CDSVectorFloat(cache_size)
             else:
-                shift_cache.resize(cache_size)
+                shift_cache = CDSSharedVectorFloat(cache_size,ensembleSimulation)
 
             return shift_cache
 
@@ -3314,10 +3311,10 @@ class Xcamshift(PyEnsemblePot):
                 raise Exception("internal error, output array size not defined!")
 
             if self._ensemble_shift_cache == None:
-                self._ensemble_shift_cache =  self._create_shift_cache(self._ensemble_shift_cache,self._size, self._ensemble_simulation)
+                self._ensemble_shift_cache =  self._create_shift_cache(self._size, self._ensemble_simulation)
 
             if self._shift_cache == None:
-                self._shift_cache =  self._create_shift_cache(self._shift_cache,self._size, None)
+                self._shift_cache =  self._create_shift_cache(self._size, None)
 
             self._ensemble_shift_cache.resize(self._size)
             self._shift_cache.resize(self._size)
