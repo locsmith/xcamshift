@@ -82,9 +82,9 @@ class TestXcamshift(unittest2.TestCase):
         xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, xcamshift._get_active_target_atom_ids())
 #       TODO:  xcamshift.calc_shifts()
 #       should replace upto BBBB but doesn't work...
-        xcamshift._calculated_shifts._ensemble_shift_cache = xcamshift._create_shift_cache(xcamshift._calculated_shifts._ensemble_shift_cache,len(xcamshift._get_active_target_atom_ids()),xcamshift.ensembleSimulation())
+        xcamshift._calculated_shifts._ensemble_shift_cache = xcamshift._calculated_shifts._create_shift_cache(xcamshift._calculated_shifts._ensemble_shift_cache,len(xcamshift._get_active_target_atom_ids()),xcamshift.ensembleSimulation())
         xcamshift._calc_shift_cache(xcamshift._get_active_target_atom_ids(), xcamshift._calculated_shifts._ensemble_shift_cache)
-        xcamshift._calculated_shifts._shift_cache =  xcamshift._create_shift_cache(xcamshift._calculated_shifts._shift_cache,len(xcamshift._get_active_target_atom_ids()))
+        xcamshift._calculated_shifts._shift_cache =  xcamshift._calculated_shifts._create_shift_cache(xcamshift._calculated_shifts._shift_cache,len(xcamshift._get_active_target_atom_ids()))
         xcamshift._average_shift_cache()
         #BBBB
         xcamshift.update_force_factor_calculator()

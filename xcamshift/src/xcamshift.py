@@ -3295,6 +3295,18 @@ class Xcamshift(PyEnsemblePot):
             self._ensemble_shift_cache = None
             self._shift_cache =  None
 
+        def _create_shift_cache(self, shift_cache, cache_size, ensembleSimulation=None):
+            if shift_cache == None:
+                if None.__class__ == ensembleSimulation.__class__:
+                    shift_cache = CDSVectorFloat(cache_size)
+                else:
+                    shift_cache = CDSSharedVectorFloat(cache_size,ensembleSimulation)
+            else:
+                shift_cache.resize(cache_size)
+
+            return shift_cache
+
+
 
     def __init__(self, name="xcamshift_instance", verbose=False):
         super(Xcamshift, self).__init__(name)
@@ -3447,16 +3459,6 @@ class Xcamshift(PyEnsemblePot):
         result.sort()
         return result
 
-    def _create_shift_cache(self, shift_cache, cache_size, ensembleSimulation=None):
-        if shift_cache == None:
-            if None.__class__ == ensembleSimulation.__class__:
-                shift_cache = CDSVectorFloat(cache_size)
-            else:
-                shift_cache = CDSSharedVectorFloat(cache_size,ensembleSimulation)
-        else:
-            shift_cache.resize(cache_size)
-
-        return shift_cache
 
     def _calc_shift_cache(self,target_atom_ids, shift_cache):
         if self._verbose:
@@ -3484,11 +3486,11 @@ class Xcamshift(PyEnsemblePot):
 #          or len(result) < len(target_atom_ids)
         if result == None:
             if self._calculated_shifts._shift_cache == None:
-                self._calculated_shifts._shift_cache = self._create_shift_cache(self._calculated_shifts._shift_cache, len(target_atom_ids))
+                self._calculated_shifts._shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._shift_cache, len(target_atom_ids))
             result = self._calculated_shifts._shift_cache
 
         if self._calculated_shifts._ensemble_shift_cache ==  None:
-            self._calculated_shifts._ensemble_shift_cache =  self._create_shift_cache(self._calculated_shifts._ensemble_shift_cache, len(target_atom_ids), self.ensembleSimulation())
+            self._calculated_shifts._ensemble_shift_cache =  self._calculated_shifts._create_shift_cache(self._calculated_shifts._ensemble_shift_cache, len(target_atom_ids), self.ensembleSimulation())
 
 
 
@@ -3579,8 +3581,8 @@ class Xcamshift(PyEnsemblePot):
 
     def _calc_single_atom_shift(self,target_atom_id):
         #TODO: could be better
-        self._calculated_shifts._ensemble_shift_cache = self._create_shift_cache(self._calculated_shifts._ensemble_shift_cache, 1, self.ensembleSimulation())
-        self._calculated_shifts._shift_cache = self._create_shift_cache(self._calculated_shifts._shift_cache, 1)
+        self._calculated_shifts._ensemble_shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._ensemble_shift_cache, 1, self.ensembleSimulation())
+        self._calculated_shifts._shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._shift_cache, 1)
         self._calc_shift_cache([target_atom_id,], self._calculated_shifts._ensemble_shift_cache)
         self._average_shift_cache()
         return  self._calculated_shifts._shift_cache [0]
@@ -3665,8 +3667,8 @@ class Xcamshift(PyEnsemblePot):
         else:
             active_target_indices =  array.array('i',[active_target_atom_ids.index(target_atom_index)])
 
-        self._calculated_shifts._ensemble_shift_cache = self._create_shift_cache(self._calculated_shifts._ensemble_shift_cache, len(active_target_atom_ids), self.ensembleSimulation())
-        self._calculated_shifts._shift_cache = self._create_shift_cache(self._calculated_shifts._shift_cache,len(active_target_atom_ids))
+        self._calculated_shifts._ensemble_shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._ensemble_shift_cache, len(active_target_atom_ids), self.ensembleSimulation())
+        self._calculated_shifts._shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._shift_cache,len(active_target_atom_ids))
 
         self._calc_shift_cache(active_target_atom_ids, self._calculated_shifts._ensemble_shift_cache)
         self._average_shift_cache()
@@ -3945,8 +3947,8 @@ class Xcamshift(PyEnsemblePot):
 
         ensemble_size =  self.ensembleSimulation().size()
         cache_size = len(target_atom_ids)
-        self._calculated_shifts._ensemble_shift_cache = self._create_shift_cache(self._calculated_shifts._ensemble_shift_cache, cache_size, self.ensembleSimulation())
-        self._calculated_shifts._shift_cache = self._create_shift_cache(self._calculated_shifts._shift_cache, cache_size)
+        self._calculated_shifts._ensemble_shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._ensemble_shift_cache, cache_size, self.ensembleSimulation())
+        self._calculated_shifts._shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._shift_cache, cache_size)
 
         self._calc_shift_cache(target_atom_ids, self._calculated_shifts._ensemble_shift_cache)
 
