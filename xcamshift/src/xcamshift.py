@@ -3465,7 +3465,7 @@ class Xcamshift(PyEnsemblePot):
             start_time =  time()
 
 
-        shift_cache.clear()
+        shift_cache._ensemble_shift_cache.clear()
         self._calc_shifts(target_atom_ids, shift_cache)
 
         if self._verbose:
@@ -3501,7 +3501,7 @@ class Xcamshift(PyEnsemblePot):
             self._calculated_shifts._ensemble_shift_cache.resize(len(target_atom_ids))
 
 
-        self._calc_shifts(target_atom_ids, self._calculated_shifts._ensemble_shift_cache)
+        self._calc_shifts(target_atom_ids, self._calculated_shifts)
         self._average_shift_cache(self._calculated_shifts._ensemble_shift_cache,result)
 
         #TODO review whole funtion and resturn types
@@ -3550,7 +3550,7 @@ class Xcamshift(PyEnsemblePot):
             self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
 
         for potential in self.potential:
-            potential.calc_shifts(target_atom_ids, result)
+            potential.calc_shifts(target_atom_ids, result._ensemble_shift_cache)
 
 
         if self._verbose:
@@ -3564,7 +3564,9 @@ class Xcamshift(PyEnsemblePot):
         target_atom_ids =  self._get_all_component_target_atom_ids()
         self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
         result_shifts  = CDSSharedVectorFloat(len(target_atom_ids),self.ensembleSimulation())
-        self._calc_shifts(target_atom_ids, result_shifts)
+        calculated_shifts = Xcamshift.Calculated_shifts()
+        calculated_shifts._ensemble_shift_cache = result_shifts
+        self._calc_shifts(target_atom_ids, calculated_shifts)
         for target_atom_id, shift in zip(target_atom_ids,result_shifts):
             result[target_atom_id] =  shift
 
@@ -3583,7 +3585,7 @@ class Xcamshift(PyEnsemblePot):
         #TODO: could be better
         self._calculated_shifts._ensemble_shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._ensemble_shift_cache, 1, self.ensembleSimulation())
         self._calculated_shifts._shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._shift_cache, 1)
-        self._calc_shift_cache([target_atom_id,], self._calculated_shifts._ensemble_shift_cache)
+        self._calc_shift_cache([target_atom_id,], self._calculated_shifts)
         self._average_shift_cache()
         return  self._calculated_shifts._shift_cache [0]
 
@@ -3670,7 +3672,7 @@ class Xcamshift(PyEnsemblePot):
         self._calculated_shifts._ensemble_shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._ensemble_shift_cache, len(active_target_atom_ids), self.ensembleSimulation())
         self._calculated_shifts._shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._shift_cache,len(active_target_atom_ids))
 
-        self._calc_shift_cache(active_target_atom_ids, self._calculated_shifts._ensemble_shift_cache)
+        self._calc_shift_cache(active_target_atom_ids, self._calculated_shifts)
         self._average_shift_cache()
 
         self.update_energy_calculator()
@@ -3950,7 +3952,7 @@ class Xcamshift(PyEnsemblePot):
         self._calculated_shifts._ensemble_shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._ensemble_shift_cache, cache_size, self.ensembleSimulation())
         self._calculated_shifts._shift_cache = self._calculated_shifts._create_shift_cache(self._calculated_shifts._shift_cache, cache_size)
 
-        self._calc_shift_cache(target_atom_ids, self._calculated_shifts._ensemble_shift_cache)
+        self._calc_shift_cache(target_atom_ids, self._calculated_shifts)
 
         return 0.0
 
