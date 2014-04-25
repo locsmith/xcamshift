@@ -84,7 +84,7 @@ class TestXcamshift(unittest2.TestCase):
 #       should replace upto BBBB but doesn't work...
         xcamshift._calculated_shifts.resize(len(xcamshift._get_active_target_atom_ids()))
         xcamshift._calc_shift_cache(xcamshift._get_active_target_atom_ids(), xcamshift._calculated_shifts)
-        xcamshift._average_shift_cache()
+        xcamshift._calculated_shifts.average()
         #BBBB
         xcamshift.update_force_factor_calculator()
 
