@@ -3306,6 +3306,9 @@ class Xcamshift(PyEnsemblePot):
 
             return shift_cache
 
+        def get_ensemble_shift_cache(self):
+            return self._ensemble_shift_cache
+
 
 
     def __init__(self, name="xcamshift_instance", verbose=False):
@@ -3550,7 +3553,7 @@ class Xcamshift(PyEnsemblePot):
             self._prepare(TARGET_ATOM_IDS_CHANGED, target_atom_ids)
 
         for potential in self.potential:
-            potential.calc_shifts(target_atom_ids, result._ensemble_shift_cache)
+            potential.calc_shifts(target_atom_ids, result.get_ensemble_shift_cache())
 
 
         if self._verbose:
