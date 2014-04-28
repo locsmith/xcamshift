@@ -974,9 +974,55 @@ class TestXcamshift(unittest2.TestCase):
         self._do_test_change_weights(shifts, weights, expected_factors, expected_energies)
 
 
+    def test_calculated_shifts_structure(self):
+        calculated_shifts = Xcamshift.Calculated_shifts(self.get_single_member_ensemble_simulation())
+
+        with self.assertRaises(Exception):
+            calculated_shifts.get_shift_cache()
+
+        with self.assertRaises(Exception):
+            calculated_shifts.get_ensemble_shift_cache()
+
+        calculated_shifts.clear()
+
+        with self.assertRaises(Exception):
+            calculated_shifts.average()
+
+        SIZE = 10
+
+        calculated_shifts.resize(SIZE)
+
+        self.assertEqual(len(calculated_shifts.get_ensemble_shift_cache()),SIZE)
+        self.assertEqual(len(calculated_shifts.get_shift_cache()),SIZE)
+
+        SIZE_2 = SIZE * 2
+
+        calculated_shifts.resize(SIZE_2)
+
+        self.assertEqual(len(calculated_shifts.get_ensemble_shift_cache()),SIZE_2)
+        self.assertEqual(len(calculated_shifts.get_shift_cache()),SIZE_2)
+
+        shift_cache = calculated_shifts.get_ensemble_shift_cache()
+        for i in range(20):
+            shift_cache[i] = i
+
+        calculated_shifts.average()
+
+        for i in range(20):
+            self.assertAlmostEqual(calculated_shifts.get_ensemble_shift_cache()[i], range(20)[i])
+
+        calculated_shifts.clear()
+        calculated_shifts.average()
+
+        for i in range(20):
+            self.assertAlmostEqual(calculated_shifts.get_ensemble_shift_cache()[i], 0)
+            self.assertAlmostEqual(calculated_shifts.get_shift_cache()[i], 0)
+
+
+
 def run_tests():
     unittest2.main(module='test.test_xcamshift',failfast=True)
-#     unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_change_energy_well')
+#     unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_calculated_shifts_structure')
 
 if __name__ == "__main__":
     run_tests()
