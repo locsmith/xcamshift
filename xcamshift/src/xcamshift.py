@@ -3298,6 +3298,7 @@ class Xcamshift(PyEnsemblePot):
             self._ensemble_simulation = ensemble_simulation
 
         def _create_shift_cache(self, cache_size, ensembleSimulation=None):
+
             if None.__class__ == ensembleSimulation.__class__:
                 shift_cache = CDSVectorFloat(cache_size)
             else:
@@ -3335,6 +3336,8 @@ class Xcamshift(PyEnsemblePot):
                 self._ensemble_shift_cache.clear()
 
         def average(self):
+            if self._shift_cache == None:
+                raise Exception("some shifts must be caclualted before you average")
             self._ensemble_shift_cache.average_into(self._shift_cache)
 
     def __init__(self, name="xcamshift_instance", verbose=False):
