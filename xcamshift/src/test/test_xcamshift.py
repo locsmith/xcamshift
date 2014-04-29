@@ -84,7 +84,6 @@ class TestXcamshift(unittest2.TestCase):
 #       should replace upto BBBB but doesn't work...
         xcamshift._calculated_shifts.resize(len(xcamshift._get_active_target_atom_ids()))
         xcamshift._calc_shift_cache(xcamshift._get_active_target_atom_ids(), xcamshift._calculated_shifts)
-        xcamshift._calculated_shifts.average()
         #BBBB
         xcamshift.update_force_factor_calculator()
 
@@ -985,9 +984,6 @@ class TestXcamshift(unittest2.TestCase):
 
         calculated_shifts.clear()
 
-        with self.assertRaises(Exception):
-            calculated_shifts.average()
-
         SIZE = 10
 
         calculated_shifts.resize(SIZE)
@@ -1005,14 +1001,17 @@ class TestXcamshift(unittest2.TestCase):
         shift_cache = calculated_shifts.get_ensemble_shift_cache()
         for i in range(20):
             shift_cache[i] = i
-
-        calculated_shifts.average()
+        calculated_shifts.shifts_added()
 
         for i in range(20):
-            self.assertAlmostEqual(calculated_shifts.get_ensemble_shift_cache()[i], range(20)[i])
+            self.assertAlmostEqual(calculated_shifts.get_ensemble_shift_cache()[i],i)
+
+        for i in range(20):
+            self.assertAlmostEqual(calculated_shifts.get_shift_cache()[i],i)
 
         calculated_shifts.clear()
-        calculated_shifts.average()
+        calculated_shifts.shifts_added()
+
 
         for i in range(20):
             self.assertAlmostEqual(calculated_shifts.get_ensemble_shift_cache()[i], 0)

@@ -3296,6 +3296,7 @@ class Xcamshift(PyEnsemblePot):
             self._shift_cache =  None
             self._size = -1
             self._ensemble_simulation = ensemble_simulation
+            self._dirty = False
 
         def _create_shift_cache(self, cache_size, ensembleSimulation=None):
 
@@ -3329,16 +3330,22 @@ class Xcamshift(PyEnsemblePot):
 
         def get_shift_cache(self):
             self._ensure_caches()
+            self._average()
             return self._shift_cache
 
         def clear(self):
             if self._ensemble_shift_cache != None:
                 self._ensemble_shift_cache.clear()
 
-        def average(self):
+        def shifts_added(self):
+            self._dirty=True
+
+        def _average(self):
             if self._shift_cache == None:
                 raise Exception("some shifts must be caclualted before you average")
-            self._ensemble_shift_cache.average_into(self._shift_cache)
+            if self._dirty:
+                self._ensemble_shift_cache.average_into(self._shift_cache)
+                self._dirty = False
 
     def __init__(self, name="xcamshift_instance", verbose=False):
         super(Xcamshift, self).__init__(name)
@@ -3398,7 +3405,7 @@ class Xcamshift(PyEnsemblePot):
     def _update_calculator(self, calculator):
         #TODO: make sure the shift cache is always valid
         if self._calculated_shifts._shift_cache !=None:
-            calculator.set_calculated_shifts(self._calculated_shifts._shift_cache)
+            calculator.set_calculated_shifts(self._calculated_shifts.get_shift_cache())
         calculator.set_observed_shifts(self._shift_table.get_native_shifts(self._get_active_target_atom_ids()))
         calculator.set_energy_term_cache(self._get_energy_term_cache().get_native_components())
 
@@ -3518,10 +3525,9 @@ class Xcamshift(PyEnsemblePot):
 #          or len(result) < len(target_atom_ids)
         self._calculated_shifts.resize(len(target_atom_ids))
         self._calc_shifts(target_atom_ids, self._calculated_shifts)
-        self._calculated_shifts.average()
 
         #TODO review whole funtion and resturn types
-        return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(self._calculated_shifts._shift_cache))
+        return (target_atom_ids_as_selection_strings(target_atom_ids), tuple(self._calculated_shifts.get_shift_cache()))
 
     def print_shifts(self,out=sys.stdout):
         #TODO: this is protein specific
@@ -3567,6 +3573,7 @@ class Xcamshift(PyEnsemblePot):
 
         for potential in self.potential:
             potential.calc_shifts(target_atom_ids, result.get_ensemble_shift_cache())
+        result.shifts_added()
 
 
         if self._verbose:
@@ -3602,8 +3609,7 @@ class Xcamshift(PyEnsemblePot):
         #TODO: could be better
         self._calculated_shifts.resize(1)
         self._calc_shift_cache([target_atom_id,], self._calculated_shifts)
-        self._calculated_shifts.average()
-        return  self._calculated_shifts._shift_cache [0]
+        return  self._calculated_shifts.get_shift_cache() [0]
 
 
 
@@ -3687,7 +3693,6 @@ class Xcamshift(PyEnsemblePot):
 
         self._calculated_shifts.resize(len(active_target_atom_ids))
         self._calc_shift_cache(active_target_atom_ids, self._calculated_shifts)
-        self._calculated_shifts.average()
 
         self.update_energy_calculator()
 
@@ -3958,8 +3963,6 @@ class Xcamshift(PyEnsemblePot):
 
 
     def calcEnergyAndDerivsMaybe2(self,  derivListPtr,  ensembleSimulationPtr,  calcDerivatives):
-        self._calculated_shifts.average()
-
         return 0.0
 
     def calcEnergyAndDerivsMaybe3(self,  derivListPtr,  ensembleSimulationPtr,  calcDerivatives):
