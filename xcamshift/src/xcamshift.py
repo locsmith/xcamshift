@@ -836,7 +836,7 @@ class Base_potential(object):
     #TODO: unify with ring random coil and disuphide shift calculators
     def calc_shifts(self, target_atom_ids, calculated_shifts):
 
-        results =  calculated_shifts.get_ensemble_shift_cache()
+        results =  calculated_shifts.get_ensemble_shift_cache(self.get_abbreviated_name())
         if self._shift_calculator != None:
             #TODO: get components doesn't work here
             components = self._get_components()
@@ -1147,7 +1147,7 @@ class Disulphide_shift_calculator(Base_potential):
 
     #TODO: this is the same as for the random coild shifts
     def calc_shifts(self, target_atom_ids, calculated_shifts):
-        result = calculated_shifts.get_ensemble_shift_cache()
+        result = calculated_shifts.get_ensemble_shift_cache(self.get_abbreviated_name())
         components = self._get_component_list()
         for i, component_index in enumerate(self._active_components):
             result[self._component_to_result[i]] += components[component_index][1]
@@ -3326,7 +3326,7 @@ class Xcamshift(PyEnsemblePot):
         def resize(self,size):
             self._size=size
 
-        def get_ensemble_shift_cache(self):
+        def get_ensemble_shift_cache(self,name):
             self._ensure_caches()
             return self._ensemble_shift_cache
 
