@@ -3294,12 +3294,16 @@ class Xcamshift(PyEnsemblePot):
 
     class Calculated_shifts:
         def __init__(self, ensemble_simulation):
+            self._sub_ensemble_shift_caches = {}
             self._ensemble_shift_cache = None
             self._shift_cache =  None
             self._size = -1
             self._ensemble_simulation = ensemble_simulation
             self._dirty = False
+            self._weighted = False
 
+        def set_weigted(self,flag):
+            self._weighted = flag ==  True
         def _create_shift_cache(self, cache_size, ensembleSimulation=None):
 
             if None.__class__ == ensembleSimulation.__class__:
@@ -3309,7 +3313,7 @@ class Xcamshift(PyEnsemblePot):
 
             return shift_cache
 
-        def _ensure_caches(self):
+        def _ensure_caches(self,name=None):
             if self._size < 0:
 #                 return
                 raise Exception("internal error, output array size not defined!")
@@ -3317,30 +3321,52 @@ class Xcamshift(PyEnsemblePot):
             if self._ensemble_shift_cache == None:
                 self._ensemble_shift_cache =  self._create_shift_cache(self._size, self._ensemble_simulation)
 
+            if self._weighted and name not in self._sub_ensemble_shift_caches:
+                self._sub_ensemble_shift_caches[name] = self._create_shift_cache(self._size, self._ensemble_simulation)
+
             if self._shift_cache == None:
                 self._shift_cache =  self._create_shift_cache(self._size, None)
 
             self._ensemble_shift_cache.resize(self._size)
             self._shift_cache.resize(self._size)
+            if self._weighted and name != None:
+                self._sub_ensemble_shift_caches[name].resize(self._size)
 
         def resize(self,size):
             self._size=size
 
         def get_ensemble_shift_cache(self,name):
-            self._ensure_caches()
-            return self._ensemble_shift_cache
+            self._ensure_caches(name)
+
+            if self._weighted:
+                result = self._sub_ensemble_shift_caches[name]
+            else:
+                result = self._ensemble_shift_cache
+            return result
 
         def get_shift_cache(self):
             self._ensure_caches()
+            if self._weighted:
+                self._sum()
             self._average()
             return self._shift_cache
 
         def clear(self):
-            if self._ensemble_shift_cache != None:
-                self._ensemble_shift_cache.clear()
+            if self._weighted:
+                for sub_ensemble_shift_cache in self._sub_ensemble_shift_caches.values():
+                    sub_ensemble_shift_cache.clear()
+            else:
+                if self._ensemble_shift_cache != None:
+                    self._ensemble_shift_cache.clear()
+
+
 
         def shifts_added(self):
             self._dirty=True
+
+        def _sum(self):
+            for sub_ensemble_shift_cache in self._sub_ensemble_shift_caches.values():
+                self._ensemble_shift_cache += sub_ensemble_shift_cache
 
         def _average(self):
             if self._shift_cache == None:
