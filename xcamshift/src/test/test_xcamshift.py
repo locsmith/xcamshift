@@ -1018,6 +1018,14 @@ class TestXcamshift(unittest2.TestCase):
             self.assertAlmostEqual(calculated_shifts.get_ensemble_shift_cache(DUMMY_POT_NAME)[i], 0)
             self.assertAlmostEqual(calculated_shifts.get_shift_cache()[i], 0)
 
+    def test_weighted_shifts_same_as_unweighted(self):
+        xcamshift_pot = self._make_xcamshift()
+        shifts = xcamshift_pot.calc_shifts()
+        xcamshift_pot._calculated_shifts.set_weigted(True)
+        xcamshift_pot._calculated_shifts.clear()
+        shifts_weighted =xcamshift_pot.calc_shifts()
+        self.assertSequenceAlmostEqual(shifts[1], shifts_weighted[1])
+
 
 
 def run_tests():

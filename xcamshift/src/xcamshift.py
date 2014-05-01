@@ -3355,8 +3355,7 @@ class Xcamshift(PyEnsemblePot):
             if self._weighted:
                 for sub_ensemble_shift_cache in self._sub_ensemble_shift_caches.values():
                     sub_ensemble_shift_cache.clear()
-            else:
-                if self._ensemble_shift_cache != None:
+            if self._ensemble_shift_cache != None:
                     self._ensemble_shift_cache.clear()
 
 
@@ -3366,7 +3365,7 @@ class Xcamshift(PyEnsemblePot):
 
         def _sum(self):
             for sub_ensemble_shift_cache in self._sub_ensemble_shift_caches.values():
-                self._ensemble_shift_cache += sub_ensemble_shift_cache
+                self._ensemble_shift_cache +=  sub_ensemble_shift_cache
 
         def _average(self):
             if self._shift_cache == None:
