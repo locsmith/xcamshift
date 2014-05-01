@@ -3313,7 +3313,8 @@ class Xcamshift(PyEnsemblePot):
             self._ensemble_simulation = ensemble_simulation
             self._dirty = False
             self._weighted = False
-            self._weights = {}
+            self._sub_potential_weights = {}
+            
 
         def set_weighted(self,flag):
             self._weighted = flag ==  True
@@ -3354,7 +3355,7 @@ class Xcamshift(PyEnsemblePot):
 
             if self._weighted:
                 result = self._sub_ensemble_shift_caches[name]
-                self._weights[name] =  weight
+                self._sub_potential_weights[name] =  weight
             else:
                 result = self._ensemble_shift_cache
             return result
