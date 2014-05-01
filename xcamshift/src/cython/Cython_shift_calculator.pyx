@@ -1706,15 +1706,15 @@ cdef class Fast_non_bonded_calculator:
                     atom_id_2  = remote_components[j].remote_atom_id
                     if self._is_non_bonded(atom_id_1, atom_id_2):
                         non_bonded_lists.append(atom_id_1, i,j,i)
-            else:
-                for component_index in range(len(active_components)):
-                    i = active_components[component_index]
-                    atom_id_1 = target_components[i].target_atom_id
+        else:
+            for component_index in range(len(active_components)):
+                i = active_components[component_index]
+                atom_id_1 = target_components[i].target_atom_id
 
-                    for j in range(num_remote_components):
-                        atom_id_2  = remote_components[j].remote_atom_id
-                        if self._is_non_bonded(atom_id_1, atom_id_2):
-                            non_bonded_lists.append(atom_id_1, i,j,component_index)
+                for j in range(num_remote_components):
+                    atom_id_2  = remote_components[j].remote_atom_id
+                    if self._is_non_bonded(atom_id_1, atom_id_2):
+                        non_bonded_lists.append(atom_id_1, i,j,component_index)
 
 
         if self._verbose:
