@@ -989,23 +989,23 @@ class TestXcamshift(unittest2.TestCase):
 
         calculated_shifts.resize(SIZE)
 
-        self.assertEqual(len(calculated_shifts.get_ensemble_shift_cache(DUMMY_POT_NAME)),SIZE)
+        self.assertEqual(len(calculated_shifts.get_ensemble_shift_cache(DUMMY_POT_NAME,1.0)),SIZE)
         self.assertEqual(len(calculated_shifts.get_shift_cache()),SIZE)
 
         SIZE_2 = SIZE * 2
 
         calculated_shifts.resize(SIZE_2)
 
-        self.assertEqual(len(calculated_shifts.get_ensemble_shift_cache(DUMMY_POT_NAME)),SIZE_2)
+        self.assertEqual(len(calculated_shifts.get_ensemble_shift_cache(DUMMY_POT_NAME,1.0)),SIZE_2)
         self.assertEqual(len(calculated_shifts.get_shift_cache()),SIZE_2)
 
-        shift_cache = calculated_shifts.get_ensemble_shift_cache(DUMMY_POT_NAME)
+        shift_cache = calculated_shifts.get_ensemble_shift_cache(DUMMY_POT_NAME,1.0)
         for i in range(20):
             shift_cache[i] = i
         calculated_shifts.shifts_added()
 
         for i in range(20):
-            self.assertAlmostEqual(calculated_shifts.get_ensemble_shift_cache(DUMMY_POT_NAME)[i],i)
+            self.assertAlmostEqual(calculated_shifts.get_ensemble_shift_cache(DUMMY_POT_NAME,1.0)[i],i)
 
         for i in range(20):
             self.assertAlmostEqual(calculated_shifts.get_shift_cache()[i],i)
@@ -1015,7 +1015,7 @@ class TestXcamshift(unittest2.TestCase):
 
 
         for i in range(20):
-            self.assertAlmostEqual(calculated_shifts.get_ensemble_shift_cache(DUMMY_POT_NAME)[i], 0)
+            self.assertAlmostEqual(calculated_shifts.get_ensemble_shift_cache(DUMMY_POT_NAME,1.0)[i], 0)
             self.assertAlmostEqual(calculated_shifts.get_shift_cache()[i], 0)
 
     def test_weighted_shifts_same_as_unweighted(self):

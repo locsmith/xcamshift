@@ -568,6 +568,7 @@ class Base_potential(object):
         self._cache_list_data = {}
         self._freeze  = False
         self._simulation = simulation
+        self._weight=1.0
 
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._shift_calculator = None
@@ -836,7 +837,7 @@ class Base_potential(object):
     #TODO: unify with ring random coil and disuphide shift calculators
     def calc_shifts(self, target_atom_ids, calculated_shifts):
 
-        results =  calculated_shifts.get_ensemble_shift_cache(self.get_abbreviated_name())
+        results =  calculated_shifts.get_ensemble_shift_cache(self.get_abbreviated_name(),self._weight)
         if self._shift_calculator != None:
             #TODO: get components doesn't work here
             components = self._get_components()
@@ -1147,7 +1148,7 @@ class Disulphide_shift_calculator(Base_potential):
 
     #TODO: this is the same as for the random coild shifts
     def calc_shifts(self, target_atom_ids, calculated_shifts):
-        result = calculated_shifts.get_ensemble_shift_cache(self.get_abbreviated_name())
+        result = calculated_shifts.get_ensemble_shift_cache(self.get_abbreviated_name(),self._weight)
         components = self._get_component_list()
         for i, component_index in enumerate(self._active_components):
             result[self._component_to_result[i]] += components[component_index][1]
@@ -3301,9 +3302,11 @@ class Xcamshift(PyEnsemblePot):
             self._ensemble_simulation = ensemble_simulation
             self._dirty = False
             self._weighted = False
+            self._weights = {}
 
         def set_weighted(self,flag):
             self._weighted = flag ==  True
+
         def _create_shift_cache(self, cache_size, ensembleSimulation=None):
 
             if None.__class__ == ensembleSimulation.__class__:
@@ -3335,11 +3338,12 @@ class Xcamshift(PyEnsemblePot):
         def resize(self,size):
             self._size=size
 
-        def get_ensemble_shift_cache(self,name):
+        def get_ensemble_shift_cache(self,name,weight=1.0):
             self._ensure_caches(name)
 
             if self._weighted:
                 result = self._sub_ensemble_shift_caches[name]
+                self._weights[name] =  weight
             else:
                 result = self._ensemble_shift_cache
             return result
