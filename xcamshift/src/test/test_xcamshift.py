@@ -33,7 +33,8 @@ from utils import Atom_utils
 import sys
 from table_manager import Table_manager
 from component_list import Component_list
-from common_constants import TARGET_ATOM_IDS_CHANGED
+from common_constants import TARGET_ATOM_IDS_CHANGED, DISULPHIDE, HBOND,\
+    RANDOM_COIL
 from cython.shift_calculators import Out_array
 from ensembleSimulation import   EnsembleSimulation
 from array import array
@@ -1026,7 +1027,21 @@ class TestXcamshift(unittest2.TestCase):
         shifts_weighted =xcamshift_pot.calc_shifts()
         self.assertSequenceAlmostEqual(shifts[1], shifts_weighted[1])
 
+    def test_weights(self):
+        xcamshift_pot = self._make_xcamshift()
 
+        FIXED =  RANDOM_COIL,DISULPHIDE,HBOND
+        for sub_pot_name in xcamshift_pot.get_sub_potential_names():
+            sub_pot = xcamshift_pot.get_named_sub_potential(sub_pot_name)
+
+            if sub_pot_name in FIXED:
+                with self.assertRaises(Exception):
+                    sub_pot.setWeight(0.1)
+            else:
+                sub_pot.setWeight
+
+            with self.assertRaises(Exception):
+                sub_pot.setWeight(-0.1)
 
 def run_tests():
     unittest2.main(module='test.test_xcamshift',failfast=True)

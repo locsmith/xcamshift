@@ -579,6 +579,11 @@ class Base_potential(object):
         self._active_components = None
         self._verbose = False
 
+    def setWeight(self,weight):
+        if weight < 0.0:
+            raise Exception ("%s: weight can't be negative, got %f!" % (self.get_abbreviated_name(),weight))
+        self._weight = weight
+
     def set_simulation(self,simulation):
         self._simulation = simulation
 
@@ -1090,6 +1095,8 @@ class RandomCoilShifts(Base_potential):
         self._add_component_factory(Random_coil_component_factory())
         self._shift_calculator = self._get_shift_calculator()
 
+    def setWeight(self, weight):
+        raise Exception("%: you can't weight a fixed chemical shift contribution!" % self.get_abbreviated_name())
 
     def get_abbreviated_name(self):
         return RANDOM_COIL
@@ -1135,6 +1142,8 @@ class Disulphide_shift_calculator(Base_potential):
 
         self._add_component_factory(Disulphide_shift_component_factory())
 
+    def setWeight(self, weight):
+        raise Exception("%: you can't weight a fixed chemical shift contribution!" % self.get_abbreviated_name())
 
     def get_abbreviated_name(self):
         return DISULPHIDE
@@ -3080,6 +3089,8 @@ class Hydrogen_bond_potential(Base_potential):
 
         self._hydrogen_bond_energy_calculator = self._get_hydrogen_bond_energy_calculator()
 
+    def setWeight(self, weight):
+        raise Exception("%: you can't weight a fixed chemical shift contribution!" % self.get_abbreviated_name())
 
     def _get_active_components(self):
         print "WARNING all components used for hbond shift calculation!"
