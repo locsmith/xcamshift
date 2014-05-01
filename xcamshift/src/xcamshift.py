@@ -3302,7 +3302,7 @@ class Xcamshift(PyEnsemblePot):
             self._dirty = False
             self._weighted = False
 
-        def set_weigted(self,flag):
+        def set_weighted(self,flag):
             self._weighted = flag ==  True
         def _create_shift_cache(self, cache_size, ensembleSimulation=None):
 
