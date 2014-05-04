@@ -559,7 +559,7 @@ class Base_potential(object):
 
     ALL = '(all)'
 
-    def __init__(self,simulation):
+    def __init__(self,simulation,weight=1.0):
         self._segment_manager = Segment_Manager.get_segment_manager()
         self._table_manager = Table_manager.get_default_table_manager()
         self._observed_shifts = Observed_shift_table()
@@ -568,7 +568,7 @@ class Base_potential(object):
         self._cache_list_data = {}
         self._freeze  = False
         self._simulation = simulation
-        self._weight=1.0
+        self._weight=weight
 
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._shift_calculator = None
@@ -1090,10 +1090,11 @@ class RandomCoilShifts(Base_potential):
 
 
     def __init__(self, simulation):
-        super(RandomCoilShifts, self).__init__(simulation)
+        super(RandomCoilShifts, self).__init__(simulation,weight=0.0)
 
         self._add_component_factory(Random_coil_component_factory())
         self._shift_calculator = self._get_shift_calculator()
+
 
     def setWeight(self, weight):
         raise Exception("%: you can't weight a fixed chemical shift contribution!" % self.get_abbreviated_name())
@@ -1138,7 +1139,7 @@ class Disulphide_shift_calculator(Base_potential):
 
 
     def __init__(self,simulation):
-        super(Disulphide_shift_calculator, self).__init__(simulation)
+        super(Disulphide_shift_calculator, self).__init__(simulation, weight=0.0)
 
         self._add_component_factory(Disulphide_shift_component_factory())
 
@@ -3306,18 +3307,28 @@ class Xcamshift(PyEnsemblePot):
 
     class Calculated_shifts:
         def __init__(self, ensemble_simulation):
-            self._sub_ensemble_shift_caches = {}
+            self._ensemble_simulation = ensemble_simulation
+            self._size = -1
+            self._dirty = False
+
             self._ensemble_shift_cache = None
             self._shift_cache =  None
-            self._size = -1
-            self._ensemble_simulation = ensemble_simulation
-            self._dirty = False
+
             self._weighted = False
-            self._sub_potential_weights = {}
-            
+            self._sub_potential_weights = {}        # weight from the potential
+            self._sub_ensemble_shift_caches = {}    # ensemble shifts from each sub potential
+            self._shift_distance_cache = None       # the total shift distance
+            self._shift_weights = {}                # averaged shifts from each sub potential
+
 
         def set_weighted(self,flag):
             self._weighted = flag ==  True
+
+
+        def get_weights(self,name):
+            if not name in self._sub_potential_weights:
+                raise Exception('%s is not in the list of weighted sub potentials' % name)
+            return self._shift_weights[name]
 
         def _create_shift_cache(self, cache_size, ensembleSimulation=None):
 
@@ -3328,7 +3339,10 @@ class Xcamshift(PyEnsemblePot):
 
             return shift_cache
 
-        def _ensure_caches(self,name=None):
+        def _ensure_caches(self,name=None,weight=0.0):
+            if self._weighted:
+                self._sub_potential_weights[name] =  weight
+
             if self._size < 0:
 #                 return
                 raise Exception("internal error, output array size not defined!")
@@ -3336,26 +3350,38 @@ class Xcamshift(PyEnsemblePot):
             if self._ensemble_shift_cache == None:
                 self._ensemble_shift_cache =  self._create_shift_cache(self._size, self._ensemble_simulation)
 
-            if self._weighted and name not in self._sub_ensemble_shift_caches:
-                self._sub_ensemble_shift_caches[name] = self._create_shift_cache(self._size, self._ensemble_simulation)
+
+            if self._weighted and name != None:
+                if name not in self._sub_ensemble_shift_caches:
+                    self._sub_ensemble_shift_caches[name] = self._create_shift_cache(self._size, self._ensemble_simulation)
+
+                if weight >0.0:
+                    if name not in self._shift_weights:
+                        self._shift_weights[name] = self._create_shift_cache(self._size)
+
+                    if self._shift_distance_cache == None:
+                        self._shift_distance_cache = self._create_shift_cache(self._size)
+
 
             if self._shift_cache == None:
                 self._shift_cache =  self._create_shift_cache(self._size, None)
 
             self._ensemble_shift_cache.resize(self._size)
             self._shift_cache.resize(self._size)
-            if self._weighted and name != None:
+
+            if self._weighted and name != None and weight > 0.0:
                 self._sub_ensemble_shift_caches[name].resize(self._size)
+                self._shift_weights[name].resize(self._size)
+                self._shift_distance_cache.resize(self._size)
 
         def resize(self,size):
             self._size=size
 
-        def get_ensemble_shift_cache(self,name,weight=1.0):
-            self._ensure_caches(name)
+        def get_ensemble_shift_cache(self,name,weight):
+            self._ensure_caches(name,weight)
 
             if self._weighted:
                 result = self._sub_ensemble_shift_caches[name]
-                self._sub_potential_weights[name] =  weight
             else:
                 result = self._ensemble_shift_cache
             return result
@@ -3364,6 +3390,7 @@ class Xcamshift(PyEnsemblePot):
             self._ensure_caches()
             if self._weighted:
                 self._sum()
+                self._calc_weights()
             self._average()
             return self._shift_cache
 
@@ -3371,6 +3398,9 @@ class Xcamshift(PyEnsemblePot):
             if self._weighted:
                 for sub_ensemble_shift_cache in self._sub_ensemble_shift_caches.values():
                     sub_ensemble_shift_cache.clear()
+                for sub_potential_weights in self._sub_potential_weights.values():
+                    sub_potential_weights.clear()
+
             if self._ensemble_shift_cache != None:
                     self._ensemble_shift_cache.clear()
 
@@ -3379,16 +3409,39 @@ class Xcamshift(PyEnsemblePot):
         def shifts_added(self):
             self._dirty=True
 
+        def _get_sub_shift_cache(self,name):
+            self._ensure_caches(name)
+            return self._shift_weights[name]
+
+
         def _sum(self):
-            for sub_ensemble_shift_cache in self._sub_ensemble_shift_caches.values():
-                self._ensemble_shift_cache +=  sub_ensemble_shift_cache
+            if self._weighted:
+                for sub_ensemble_shift_cache in self._sub_ensemble_shift_caches.values():
+                    self._ensemble_shift_cache +=  sub_ensemble_shift_cache
+
+        def _calc_weights(self):
+            pass
+
 
         def _average(self):
             if self._shift_cache == None:
-                raise Exception("some shifts must be caclualted before you average")
+                raise Exception("some shifts must be calculated before you average")
             if self._dirty:
                 self._ensemble_shift_cache.average_into(self._shift_cache)
+                if self._weighted:
+                    for sub_potential_name in self._sub_ensemble_shift_caches:
+                        if self._sub_potential_weights[sub_potential_name] > 0.0:
+                            self._sub_ensemble_shift_caches[sub_potential_name].average_into(self._shift_weights[sub_potential_name])
+
+                            self._shift_weights[sub_potential_name].abs()
+                            self._shift_distance_cache += self._shift_weights[sub_potential_name]
+
+                    for sub_potential_name in self._sub_ensemble_shift_caches:
+                        if self._sub_potential_weights[sub_potential_name] > 0.0:
+                            self._shift_weights[sub_potential_name] /= self._shift_distance_cache
+
                 self._dirty = False
+
 
     def __init__(self, name="xcamshift_instance", verbose=False):
         super(Xcamshift, self).__init__(name)

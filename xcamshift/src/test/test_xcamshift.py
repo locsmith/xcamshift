@@ -26,7 +26,7 @@ from test.xdists import xdists_ala_3
 from test.dihedrals import dihedrals_ala_3
 from cython.fast_segment_manager import Segment_Manager
 from test.sidechains import sidechains_ala_3
-from test.ala_3 import ala_3_total_shifts
+from test.ala_3 import ala_3_total_shifts, ala_3_sub_potential_shifts
 from test import sidechains, ala_3
 from observed_chemical_shifts import Observed_shift_table
 from utils import Atom_utils
@@ -1027,14 +1027,23 @@ class TestXcamshift(unittest2.TestCase):
         shifts_weighted =xcamshift_pot.calc_shifts()
         self.assertSequenceAlmostEqual(shifts[1], shifts_weighted[1])
 
+
+
     def test_weights(self):
+        def get_key(sub_potential_name, target_atom_id):
+            key = [sub_potential_name]
+            atom_key = Atom_utils._get_atom_info_from_index(target_atom_id)
+            key.extend(atom_key)
+            key = tuple(key)
+            return key
+
         xcamshift_pot = self._make_xcamshift()
 
         FIXED =  RANDOM_COIL,DISULPHIDE,HBOND
-        for sub_pot_name in xcamshift_pot.get_sub_potential_names():
-            sub_pot = xcamshift_pot.get_named_sub_potential(sub_pot_name)
+        for sub_potential_name in xcamshift_pot.get_sub_potential_names():
+            sub_pot = xcamshift_pot.get_named_sub_potential(sub_potential_name)
 
-            if sub_pot_name in FIXED:
+            if sub_potential_name in FIXED:
                 with self.assertRaises(Exception):
                     sub_pot.setWeight(0.1)
             else:
@@ -1043,9 +1052,36 @@ class TestXcamshift(unittest2.TestCase):
             with self.assertRaises(Exception):
                 sub_pot.setWeight(-0.1)
 
+        xcamshift_pot._calculated_shifts.set_weighted(True)
+        xcamshift_pot.calc_shifts()
+        target_atom_ids =  xcamshift_pot._get_all_component_target_atom_ids()
+
+        total_shifts = {}
+        for sub_potential_name in xcamshift_pot.get_sub_potential_names():
+            sub_potential  = xcamshift_pot.get_named_sub_potential(sub_potential_name)
+            if sub_potential._weight > 0.0:
+                for target_atom_id in target_atom_ids:
+                    key = get_key(sub_potential_name, target_atom_id)
+                    total_shifts.setdefault(target_atom_id,0.0)
+                    total_shifts[target_atom_id] += abs(ala_3_sub_potential_shifts[key])
+
+        for sub_potential_name in xcamshift_pot.get_sub_potential_names():
+            sub_potential  = xcamshift_pot.get_named_sub_potential(sub_potential_name)
+
+
+            if sub_potential._weight > 0.0:
+                weights = xcamshift_pot._calculated_shifts.get_weights(sub_potential_name)
+                for target_atom_id,weight in zip(target_atom_ids,weights):
+                    key = get_key(sub_potential_name, target_atom_id)
+                    expected  = abs(ala_3_sub_potential_shifts[key])/total_shifts[target_atom_id]
+                    self.assertAlmostEqual(weight,expected)
+
+
+        xcamshift_pot._calculated_shifts
+
 def run_tests():
     unittest2.main(module='test.test_xcamshift',failfast=True)
-#     unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_calculated_shifts_structure')
+#     unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_weights')
 
 if __name__ == "__main__":
     run_tests()

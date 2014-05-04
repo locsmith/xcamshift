@@ -318,6 +318,24 @@ cdef class CDSVectorFloat:
         result = self.data[0][key]
         return result
 
+    def __iadd__(self, CDSVectorFloat other):
+        for i in range(self.data[0].size()):
+            self.data[0][i] += other.data[0][i]
+
+        return self
+
+    def __idiv__(self, CDSVectorFloat other):
+        for i in range(self.data[0].size()):
+            self.data[0][i] /= other.data[0][i]
+
+        return self
+
+    def abs(self):
+        for i in range(self.data[0].size()):
+            self.data[0][i] = fabs(self.data[0][i])
+
+        return self
+
     def __del__(self):
         del self.data
 
