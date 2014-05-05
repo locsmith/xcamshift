@@ -1422,7 +1422,8 @@ cdef class Fast_hydrogen_bond_calculator:
 
         cdef bond_angle_ids bond_angle_atom_ids
 
-        cdef char *seg_1, *seg_2
+        cdef char *seg_1
+        cdef char *seg_2
         cdef int residue_1, residue_2
 
         cdef Hydrogen_bond_parameter params_dist
@@ -1634,7 +1635,8 @@ cdef class Fast_non_bonded_calculator:
     cdef inline bint  _is_non_bonded(self, int atom_id_1, int atom_id_2):
 
         cdef Atom atom_1, atom_2
-        cdef char *seg_1, *seg_2
+        cdef char *seg_1
+        cdef char *seg_2
         cdef int residue_1, residue_2
         cdef bint is_non_bonded
         cdef float distance
