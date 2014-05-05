@@ -25,23 +25,25 @@ Cython.Compiler.Options.annotate = True
 
 # change path and architecture to match local installation
 xplor_path =      os.environ['xc_xplor_root']          # '/home/garyt/programs/xplor-nih/2.31.0'
-architecture =    os.environ['xc_architecture']        # 'Linux_i686'
+architecture =    os.environ['xc_architecture']        # 'i686'
+platform =        os.environ['xc_platform']            # 'Linux'
 python_version =  os.environ['xc_python_version']      # '2.6'
 
 
 params = {'path'           : xplor_path,
           'architecture'   : architecture,
+          'platform'       : platform,
           'python_version' : python_version}
 
 include_templates=[ '{path}/common',
             '{path}/CDSlib',
-            '{path}/arch/{architecture}/include']
+            '{path}/arch/{platform}_{architecture}/include']
 include_dirs = [template.format(**params) for template in include_templates]
 
-extra_link_arg_templates=['-L{path}/python/bin.{architecture}/lib/python{python_version}/config']
+extra_link_arg_templates=['-L{path}/python/bin.{platform}_{architecture}/lib/python{python_version}/config']
 extra_link_args =  [template.format(**params) for template in extra_link_arg_templates]
 
-ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx", 'sharedCDSVectorFactory.cc'],
+ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx",'sharedCDSVectorFactory.cc'],
                          define_macros = [('CPLUSPLUS', '1') ,
                                           ('USE_CDS_NAMESPACE', '1')],
                         

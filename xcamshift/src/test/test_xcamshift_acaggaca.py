@@ -8,6 +8,7 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
+from common_constants import ROUND_CHANGED
 '''
 Created on 27 Feb 2013
 
@@ -111,6 +112,7 @@ class  TestXcamshiftACAGGACA(unittest2.TestCase):
         PDBTool("test_data/acaggaca/acaggaca.pdb").read()
         
         xcamshift = Xcamshift()
+        xcamshift._prepare(ROUND_CHANGED,None)
         xcamshift.remove_named_sub_potential('HBOND')
         shifts = xcamshift.calc_shifts()
         

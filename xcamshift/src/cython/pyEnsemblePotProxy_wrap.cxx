@@ -2940,29 +2940,32 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 /* -------- TYPES TABLE (BEGIN) -------- */
 
 #define SWIGTYPE_p_CDSListT_Simulation_const_p_10_t swig_types[0]
-#define SWIGTYPE_p_CDSListT_double_10_t swig_types[1]
-#define SWIGTYPE_p_CDS__Semaphore swig_types[2]
-#define SWIGTYPE_p_CoordComparer swig_types[3]
-#define SWIGTYPE_p_DerivList swig_types[4]
-#define SWIGTYPE_p_EnsemblePot swig_types[5]
-#define SWIGTYPE_p_EnsembleSimulation swig_types[6]
-#define SWIGTYPE_p_Modified swig_types[7]
-#define SWIGTYPE_p_ModifiedBase swig_types[8]
-#define SWIGTYPE_p_Pot swig_types[9]
-#define SWIGTYPE_p_PyEnsemblePotProxy swig_types[10]
-#define SWIGTYPE_p_Simulation swig_types[11]
-#define SWIGTYPE_p_String swig_types[12]
-#define SWIGTYPE_p_bool swig_types[13]
-#define SWIGTYPE_p_char swig_types[14]
-#define SWIGTYPE_p_double swig_types[15]
-#define SWIGTYPE_p_f_p_Pot__void swig_types[16]
-#define SWIGTYPE_p_f_r_rc_Pot__p_void swig_types[17]
-#define SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t swig_types[18]
-#define SWIGTYPE_p_rc_EnsemblePot swig_types[19]
-#define SWIGTYPE_p_rc_Pot swig_types[20]
-#define SWIGTYPE_p_void swig_types[21]
-static swig_type_info *swig_types[23];
-static swig_module_info swig_module = {swig_types, 22, 0, 0, 0, 0};
+#define SWIGTYPE_p_CDSListT_VarEnsWeights_10_t swig_types[1]
+#define SWIGTYPE_p_CDSListT_double_10_t swig_types[2]
+#define SWIGTYPE_p_CDS__Semaphore swig_types[3]
+#define SWIGTYPE_p_CoordComparer swig_types[4]
+#define SWIGTYPE_p_DerivList swig_types[5]
+#define SWIGTYPE_p_EnsemblePot swig_types[6]
+#define SWIGTYPE_p_EnsembleSimulation swig_types[7]
+#define SWIGTYPE_p_Modified swig_types[8]
+#define SWIGTYPE_p_ModifiedBase swig_types[9]
+#define SWIGTYPE_p_Pot swig_types[10]
+#define SWIGTYPE_p_PyEnsemblePotProxy swig_types[11]
+#define SWIGTYPE_p_Simulation swig_types[12]
+#define SWIGTYPE_p_String swig_types[13]
+#define SWIGTYPE_p__object swig_types[14]
+#define SWIGTYPE_p_bool swig_types[15]
+#define SWIGTYPE_p_char swig_types[16]
+#define SWIGTYPE_p_double swig_types[17]
+#define SWIGTYPE_p_f_p_Pot__void swig_types[18]
+#define SWIGTYPE_p_f_r_rc_Pot__p_void swig_types[19]
+#define SWIGTYPE_p_rc_DerivedPotT_EnsWeights_t swig_types[20]
+#define SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t swig_types[21]
+#define SWIGTYPE_p_rc_EnsemblePot swig_types[22]
+#define SWIGTYPE_p_rc_Pot swig_types[23]
+#define SWIGTYPE_p_void swig_types[24]
+static swig_type_info *swig_types[26];
+static swig_module_info swig_module = {swig_types, 25, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3462,12 +3465,14 @@ SWIGINTERN PyObject *_wrap_new_Modified(PyObject *SWIGUNUSEDPARM(self), PyObject
   };
   Modified *result = 0 ;
   
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O:new_Modified",kwnames,&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_ModifiedBase, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_Modified" "', argument " "1"" of type '" "ModifiedBase *""'"); 
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"|O:new_Modified",kwnames,&obj0)) SWIG_fail;
+  if (obj0) {
+    res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_ModifiedBase, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_Modified" "', argument " "1"" of type '" "ModifiedBase *""'"); 
+    }
+    arg1 = reinterpret_cast< ModifiedBase * >(argp1);
   }
-  arg1 = reinterpret_cast< ModifiedBase * >(argp1);
   {
     try {
       result = (Modified *)new Modified(arg1);
@@ -4775,6 +4780,572 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_m_obj_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  PyObject *arg2 = (PyObject *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:PyEnsemblePotProxy_m_obj_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_m_obj_set" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  {
+    try {
+      fromPy( arg2, obj1 );
+    }
+    catch ( PyConvert_TypeError e ) {
+      PyErr_SetString(PyExc_TypeError,
+        String("argument 2: expected type: ") + e.mess);
+      goto fail;
+    }
+    catch ( PyConvert_RangeError e ) {
+      PyErr_SetString(PyExc_IndexError,
+        String("argument 2: bad number: ") + e.mess);
+      goto fail;
+    }
+    catch ( PyConvert_Exception e ) {
+      PyErr_SetString(PyExc_TypeError,
+        String("swig/py exception: ") + e.mess);
+      goto fail;
+    }
+    catch ( CDS::exception e ) {
+      PyErr_SetString(PyExc_TypeError,
+        String("xplor-nih exception: ") + e.mess);
+      return NULL;
+    }
+  }
+  {
+    try {
+      if (arg1) (*arg1)->m_obj = arg2;
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_m_obj_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:PyEnsemblePotProxy_m_obj_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_m_obj_get" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  {
+    try {
+      result = (PyObject *) ((*arg1)->m_obj);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = result;
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_energyMaybeDerivs0(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  DerivList *arg2 = (DerivList *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2", NULL 
+  };
+  float_type result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_energyMaybeDerivs0",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs0" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs0" "', argument " "2"" of type '" "DerivList *""'"); 
+  }
+  arg2 = reinterpret_cast< DerivList * >(argp2);
+  {
+    try {
+      result = (float_type)(*arg1)->energyMaybeDerivs0(arg2);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_energyMaybeDerivs1(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  DerivList *arg2 = (DerivList *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2", NULL 
+  };
+  float_type result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_energyMaybeDerivs1",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs1" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs1" "', argument " "2"" of type '" "DerivList *""'"); 
+  }
+  arg2 = reinterpret_cast< DerivList * >(argp2);
+  {
+    try {
+      result = (float_type)(*arg1)->energyMaybeDerivs1(arg2);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_energyMaybeDerivs2(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  DerivList *arg2 = (DerivList *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2", NULL 
+  };
+  float_type result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_energyMaybeDerivs2",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs2" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs2" "', argument " "2"" of type '" "DerivList *""'"); 
+  }
+  arg2 = reinterpret_cast< DerivList * >(argp2);
+  {
+    try {
+      result = (float_type)(*arg1)->energyMaybeDerivs2(arg2);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_energyMaybeDerivs3(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  DerivList *arg2 = (DerivList *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2", NULL 
+  };
+  float_type result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_energyMaybeDerivs3",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs3" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs3" "', argument " "2"" of type '" "DerivList *""'"); 
+  }
+  arg2 = reinterpret_cast< DerivList * >(argp2);
+  {
+    try {
+      result = (float_type)(*arg1)->energyMaybeDerivs3(arg2);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_energyMaybeDerivs4(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  DerivList *arg2 = (DerivList *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2", NULL 
+  };
+  float_type result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_energyMaybeDerivs4",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs4" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs4" "', argument " "2"" of type '" "DerivList *""'"); 
+  }
+  arg2 = reinterpret_cast< DerivList * >(argp2);
+  {
+    try {
+      result = (float_type)(*arg1)->energyMaybeDerivs4(arg2);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_callCyEnergyMaybeDerivs(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  DerivList *arg2 = (DerivList *) 0 ;
+  bool arg3 ;
+  int arg4 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  bool val3 ;
+  int ecode3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2",(char *)"arg3",(char *)"arg4", NULL 
+  };
+  float_type result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO:PyEnsemblePotProxy_callCyEnergyMaybeDerivs",kwnames,&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_callCyEnergyMaybeDerivs" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_callCyEnergyMaybeDerivs" "', argument " "2"" of type '" "DerivList *""'"); 
+  }
+  arg2 = reinterpret_cast< DerivList * >(argp2);
+  ecode3 = SWIG_AsVal_bool(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "PyEnsemblePotProxy_callCyEnergyMaybeDerivs" "', argument " "3"" of type '" "bool""'");
+  } 
+  arg3 = static_cast< bool >(val3);
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "PyEnsemblePotProxy_callCyEnergyMaybeDerivs" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  {
+    try {
+      result = (float_type)(*arg1)->callCyEnergyMaybeDerivs(arg2,arg3,arg4);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_ensembleSimulation(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  EnsembleSimulation *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:PyEnsemblePotProxy_ensembleSimulation",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_ensembleSimulation" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  {
+    try {
+      result = (EnsembleSimulation *)(*arg1)->ensembleSimulation();
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_EnsembleSimulation, 0 |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_rms(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
@@ -4831,7 +5402,7 @@ SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_violations(PyObject *SWIGUNUSEDPAR
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject * obj0 = 0 ;
-  int result;
+  float_type result;
   
   if (!PyArg_ParseTuple(args,(char *)"O:PyEnsemblePotProxy_violations",&obj0)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
@@ -4841,7 +5412,7 @@ SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_violations(PyObject *SWIGUNUSEDPAR
   arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
   {
     try {
-      result = (int)(*arg1)->violations();
+      result = (float_type)(*arg1)->violations();
     }
     catch (CDS::out_of_range e) {
       PyErr_SetString(PyExc_IndexError,
@@ -4868,7 +5439,7 @@ SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_violations(PyObject *SWIGUNUSEDPAR
       goto fail;
     }
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  resultobj = SWIG_From_double(static_cast< double >(result));
   return resultobj;
 fail:
   return NULL;
@@ -5040,47 +5611,35 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_energyMaybeDerivs0(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_energyMaybeDerivsPre(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
-  DerivList *arg2 = 0 ;
-  bool arg3 ;
+  DerivList *arg2 = (DerivList *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   void *argp2 = 0 ;
   int res2 = 0 ;
-  bool val3 ;
-  int ecode3 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *)"arg2",(char *) "calcDerivs", NULL 
+    (char *) "self",(char *)"arg2", NULL 
   };
   float_type result;
   
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO:PyEnsemblePotProxy_energyMaybeDerivs0",kwnames,&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_energyMaybeDerivsPre",kwnames,&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs0" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_energyMaybeDerivsPre" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
   }
   arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
-  res2 = SWIG_ConvertPtr(obj1, &argp2, SWIGTYPE_p_DerivList,  0 );
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs0" "', argument " "2"" of type '" "DerivList &""'"); 
-  }
-  if (!argp2) {
-    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "PyEnsemblePotProxy_energyMaybeDerivs0" "', argument " "2"" of type '" "DerivList &""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_energyMaybeDerivsPre" "', argument " "2"" of type '" "DerivList *""'"); 
   }
   arg2 = reinterpret_cast< DerivList * >(argp2);
-  ecode3 = SWIG_AsVal_bool(obj2, &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs0" "', argument " "3"" of type '" "bool""'");
-  } 
-  arg3 = static_cast< bool >(val3);
   {
     try {
-      result = (float_type)(*arg1)->energyMaybeDerivs0(*arg2,arg3);
+      result = (float_type)(*arg1)->energyMaybeDerivsPre(arg2);
     }
     catch (CDS::out_of_range e) {
       PyErr_SetString(PyExc_IndexError,
@@ -5114,269 +5673,35 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_energyMaybeDerivs1(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_energyMaybeDerivsPost(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
-  DerivList *arg2 = 0 ;
-  bool arg3 ;
+  DerivList *arg2 = (DerivList *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   void *argp2 = 0 ;
   int res2 = 0 ;
-  bool val3 ;
-  int ecode3 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *)"arg2",(char *) "calcDerivs", NULL 
+    (char *) "self",(char *)"arg2", NULL 
   };
   float_type result;
   
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO:PyEnsemblePotProxy_energyMaybeDerivs1",kwnames,&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_energyMaybeDerivsPost",kwnames,&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs1" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_energyMaybeDerivsPost" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
   }
   arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
-  res2 = SWIG_ConvertPtr(obj1, &argp2, SWIGTYPE_p_DerivList,  0 );
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs1" "', argument " "2"" of type '" "DerivList &""'"); 
-  }
-  if (!argp2) {
-    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "PyEnsemblePotProxy_energyMaybeDerivs1" "', argument " "2"" of type '" "DerivList &""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_energyMaybeDerivsPost" "', argument " "2"" of type '" "DerivList *""'"); 
   }
   arg2 = reinterpret_cast< DerivList * >(argp2);
-  ecode3 = SWIG_AsVal_bool(obj2, &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs1" "', argument " "3"" of type '" "bool""'");
-  } 
-  arg3 = static_cast< bool >(val3);
   {
     try {
-      result = (float_type)(*arg1)->energyMaybeDerivs1(*arg2,arg3);
-    }
-    catch (CDS::out_of_range e) {
-      PyErr_SetString(PyExc_IndexError,
-        String("PyConvert error: ") + e.mess);
-      goto fail;
-    }
-    catch (PyConvert_Exception e) {
-      PyErr_SetString(PyExc_TypeError,
-        String("PyConvert error: ") + e.mess);
-      goto fail;
-    }
-    catch (CDS::exception e) {
-      PyErr_SetString(PyExc_SystemError,
-        String("xplor-nih error: ") + e.mess);
-      goto fail;
-    }
-    catch (...) {
-      cout << "py: caught unknown exception\n";
-      PyErr_SetString(PyExc_SystemError,
-        "py: caught unknown exception");
-      cout.flush();
-      cerr.flush();
-      abort();
-      goto fail;
-    }
-  }
-  resultobj = SWIG_From_double(static_cast< double >(result));
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_energyMaybeDerivs2(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
-  PyObject *resultobj = 0;
-  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
-  DerivList *arg2 = 0 ;
-  bool arg3 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  bool val3 ;
-  int ecode3 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  char *  kwnames[] = {
-    (char *) "self",(char *)"arg2",(char *) "calcDerivs", NULL 
-  };
-  float_type result;
-  
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO:PyEnsemblePotProxy_energyMaybeDerivs2",kwnames,&obj0,&obj1,&obj2)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs2" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
-  }
-  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
-  res2 = SWIG_ConvertPtr(obj1, &argp2, SWIGTYPE_p_DerivList,  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs2" "', argument " "2"" of type '" "DerivList &""'"); 
-  }
-  if (!argp2) {
-    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "PyEnsemblePotProxy_energyMaybeDerivs2" "', argument " "2"" of type '" "DerivList &""'"); 
-  }
-  arg2 = reinterpret_cast< DerivList * >(argp2);
-  ecode3 = SWIG_AsVal_bool(obj2, &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs2" "', argument " "3"" of type '" "bool""'");
-  } 
-  arg3 = static_cast< bool >(val3);
-  {
-    try {
-      result = (float_type)(*arg1)->energyMaybeDerivs2(*arg2,arg3);
-    }
-    catch (CDS::out_of_range e) {
-      PyErr_SetString(PyExc_IndexError,
-        String("PyConvert error: ") + e.mess);
-      goto fail;
-    }
-    catch (PyConvert_Exception e) {
-      PyErr_SetString(PyExc_TypeError,
-        String("PyConvert error: ") + e.mess);
-      goto fail;
-    }
-    catch (CDS::exception e) {
-      PyErr_SetString(PyExc_SystemError,
-        String("xplor-nih error: ") + e.mess);
-      goto fail;
-    }
-    catch (...) {
-      cout << "py: caught unknown exception\n";
-      PyErr_SetString(PyExc_SystemError,
-        "py: caught unknown exception");
-      cout.flush();
-      cerr.flush();
-      abort();
-      goto fail;
-    }
-  }
-  resultobj = SWIG_From_double(static_cast< double >(result));
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_energyMaybeDerivs3(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
-  PyObject *resultobj = 0;
-  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
-  DerivList *arg2 = 0 ;
-  bool arg3 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  bool val3 ;
-  int ecode3 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  char *  kwnames[] = {
-    (char *) "self",(char *)"arg2",(char *) "calcDerivs", NULL 
-  };
-  float_type result;
-  
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO:PyEnsemblePotProxy_energyMaybeDerivs3",kwnames,&obj0,&obj1,&obj2)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs3" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
-  }
-  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
-  res2 = SWIG_ConvertPtr(obj1, &argp2, SWIGTYPE_p_DerivList,  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs3" "', argument " "2"" of type '" "DerivList &""'"); 
-  }
-  if (!argp2) {
-    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "PyEnsemblePotProxy_energyMaybeDerivs3" "', argument " "2"" of type '" "DerivList &""'"); 
-  }
-  arg2 = reinterpret_cast< DerivList * >(argp2);
-  ecode3 = SWIG_AsVal_bool(obj2, &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs3" "', argument " "3"" of type '" "bool""'");
-  } 
-  arg3 = static_cast< bool >(val3);
-  {
-    try {
-      result = (float_type)(*arg1)->energyMaybeDerivs3(*arg2,arg3);
-    }
-    catch (CDS::out_of_range e) {
-      PyErr_SetString(PyExc_IndexError,
-        String("PyConvert error: ") + e.mess);
-      goto fail;
-    }
-    catch (PyConvert_Exception e) {
-      PyErr_SetString(PyExc_TypeError,
-        String("PyConvert error: ") + e.mess);
-      goto fail;
-    }
-    catch (CDS::exception e) {
-      PyErr_SetString(PyExc_SystemError,
-        String("xplor-nih error: ") + e.mess);
-      goto fail;
-    }
-    catch (...) {
-      cout << "py: caught unknown exception\n";
-      PyErr_SetString(PyExc_SystemError,
-        "py: caught unknown exception");
-      cout.flush();
-      cerr.flush();
-      abort();
-      goto fail;
-    }
-  }
-  resultobj = SWIG_From_double(static_cast< double >(result));
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_energyMaybeDerivs4(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
-  PyObject *resultobj = 0;
-  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
-  DerivList *arg2 = 0 ;
-  bool arg3 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  bool val3 ;
-  int ecode3 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  char *  kwnames[] = {
-    (char *) "self",(char *)"arg2",(char *) "calcDerivs", NULL 
-  };
-  float_type result;
-  
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO:PyEnsemblePotProxy_energyMaybeDerivs4",kwnames,&obj0,&obj1,&obj2)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs4" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
-  }
-  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
-  res2 = SWIG_ConvertPtr(obj1, &argp2, SWIGTYPE_p_DerivList,  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs4" "', argument " "2"" of type '" "DerivList &""'"); 
-  }
-  if (!argp2) {
-    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "PyEnsemblePotProxy_energyMaybeDerivs4" "', argument " "2"" of type '" "DerivList &""'"); 
-  }
-  arg2 = reinterpret_cast< DerivList * >(argp2);
-  ecode3 = SWIG_AsVal_bool(obj2, &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "PyEnsemblePotProxy_energyMaybeDerivs4" "', argument " "3"" of type '" "bool""'");
-  } 
-  arg3 = static_cast< bool >(val3);
-  {
-    try {
-      result = (float_type)(*arg1)->energyMaybeDerivs4(*arg2,arg3);
+      result = (float_type)(*arg1)->energyMaybeDerivsPost(arg2);
     }
     catch (CDS::out_of_range e) {
       PyErr_SetString(PyExc_IndexError,
@@ -5768,6 +6093,236 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_addEnsWeights(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  rc_EnsWeights *arg2 = 0 ;
+  float_type arg3_defvalue = 1.0 ;
+  float_type *arg3 = (float_type *) &arg3_defvalue ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2",(char *) "mult", NULL 
+  };
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO|O:PyEnsemblePotProxy_addEnsWeights",kwnames,&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_addEnsWeights" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2, SWIGTYPE_p_rc_DerivedPotT_EnsWeights_t,  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_addEnsWeights" "', argument " "2"" of type '" "rc_EnsWeights &""'"); 
+  }
+  if (!argp2) {
+    SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "PyEnsemblePotProxy_addEnsWeights" "', argument " "2"" of type '" "rc_EnsWeights &""'"); 
+  }
+  arg2 = reinterpret_cast< rc_EnsWeights * >(argp2);
+  if (obj2) {
+    {
+      // first try to use any wrapped C++ object
+      float_type *  tmpPtr;
+      if ( SWIGPY_ConvertPtr(obj2,(void **)(&tmpPtr),
+          SWIGTYPE_p_double, 0) != -1 ) {
+        if (!tmpPtr) {
+          PyErr_SetString(PyExc_TypeError,
+            String("argument 3: got None, expected type: float_type const &"));
+          goto fail;
+        }
+        arg3 = copyWithNew(tmpPtr);
+      } else {
+        try {
+          fromPyWithNew( arg3, obj2 );
+        }
+        catch ( PyConvert_TypeError e ) {
+          PyErr_SetString(PyExc_TypeError,
+            String("argument 3: expected type: ") + e.mess);
+          delete arg3;
+          arg3 = 0;
+          goto fail;
+        }
+        catch ( PyConvert_RangeError e ) {
+          PyErr_SetString(PyExc_IndexError,
+            String("argument 3: bad number: ") + e.mess);
+          delete arg3;
+          arg3 = 0;
+          goto fail;
+        }
+        catch ( PyConvert_Exception e ) {
+          PyErr_SetString(PyExc_TypeError,
+            String("swig/py exception: ") + e.mess);
+          delete arg3;
+          arg3 = 0;
+          goto fail;
+        }
+        catch ( CDS::exception e ) {
+          PyErr_SetString(PyExc_TypeError,
+            String("xplor-nih exception: ") + e.mess);
+          delete arg3;
+          return NULL;
+        }
+      }
+    }
+  }
+  {
+    try {
+      (*arg1)->addEnsWeights(*arg2,(float_type const &)*arg3);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    delete arg3;
+  }
+  return resultobj;
+fail:
+  {
+    delete arg3;
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_getEnsWeights(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  SwigValueWrapper< CDSList< VarEnsWeights > > result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:PyEnsemblePotProxy_getEnsWeights",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_getEnsWeights" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > const *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  {
+    try {
+      result = (*arg1)->getEnsWeights();
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_NewPointerObj((new CDSList< VarEnsWeights >(static_cast< const CDSList< VarEnsWeights >& >(result))), SWIGTYPE_p_CDSListT_VarEnsWeights_10_t, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_updateEnsWeights(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  bool arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "modified", NULL 
+  };
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_updateEnsWeights",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_updateEnsWeights" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  ecode2 = SWIG_AsVal_bool(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "PyEnsemblePotProxy_updateEnsWeights" "', argument " "2"" of type '" "bool""'");
+  } 
+  arg2 = static_cast< bool >(val2);
+  {
+    try {
+      (*arg1)->updateEnsWeights(arg2);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_useSimEnsWeights(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
@@ -5918,6 +6473,212 @@ fail:
   {
     delete arg2;
   }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_calcWDerivs(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:PyEnsemblePotProxy_calcWDerivs",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_calcWDerivs" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  {
+    try {
+      result = (bool)(*arg1)->calcWDerivs();
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_setCalcWDerivs(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  bool *arg2 = 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "d", NULL 
+  };
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_setCalcWDerivs",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_setCalcWDerivs" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  {
+    // first try to use any wrapped C++ object
+    bool *  tmpPtr;
+    if ( SWIGPY_ConvertPtr(obj1,(void **)(&tmpPtr),
+        SWIGTYPE_p_bool, 0) != -1 ) {
+      if (!tmpPtr) {
+        PyErr_SetString(PyExc_TypeError,
+          String("argument 2: got None, expected type: bool const &"));
+        goto fail;
+      }
+      arg2 = copyWithNew(tmpPtr);
+    } else {
+      try {
+        fromPyWithNew( arg2, obj1 );
+      }
+      catch ( PyConvert_TypeError e ) {
+        PyErr_SetString(PyExc_TypeError,
+          String("argument 2: expected type: ") + e.mess);
+        delete arg2;
+        arg2 = 0;
+        goto fail;
+      }
+      catch ( PyConvert_RangeError e ) {
+        PyErr_SetString(PyExc_IndexError,
+          String("argument 2: bad number: ") + e.mess);
+        delete arg2;
+        arg2 = 0;
+        goto fail;
+      }
+      catch ( PyConvert_Exception e ) {
+        PyErr_SetString(PyExc_TypeError,
+          String("swig/py exception: ") + e.mess);
+        delete arg2;
+        arg2 = 0;
+        goto fail;
+      }
+      catch ( CDS::exception e ) {
+        PyErr_SetString(PyExc_TypeError,
+          String("xplor-nih exception: ") + e.mess);
+        delete arg2;
+        return NULL;
+      }
+    }
+  }
+  {
+    try {
+      (*arg1)->setCalcWDerivs((bool const &)*arg2);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    delete arg2;
+  }
+  return resultobj;
+fail:
+  {
+    delete arg2;
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_ensWeightsInfo(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  rc_DerivedPot< PyEnsemblePotProxy > *arg1 = (rc_DerivedPot< PyEnsemblePotProxy > *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  String result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:PyEnsemblePotProxy_ensWeightsInfo",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_ensWeightsInfo" "', argument " "1"" of type '" "rc_DerivedPot< PyEnsemblePotProxy > const *""'"); 
+  }
+  arg1 = reinterpret_cast< rc_DerivedPot< PyEnsemblePotProxy > * >(argp1);
+  {
+    try {
+      result = (*arg1)->ensWeightsInfo();
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  {
+    resultobj = toPy( (String)result );
+  }
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -7066,22 +7827,94 @@ SWIGINTERN PyObject *PyEnsemblePotProxy_swigregister(PyObject *SWIGUNUSEDPARM(se
   return SWIG_Py_Void();
 }
 
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_LetterClass_m_obj_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  PyEnsemblePotProxy *arg1 = (PyEnsemblePotProxy *) 0 ;
+  PyObject *arg2 = (PyObject *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:PyEnsemblePotProxy_LetterClass_m_obj_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_PyEnsemblePotProxy, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_LetterClass_m_obj_set" "', argument " "1"" of type '" "PyEnsemblePotProxy *""'"); 
+  }
+  arg1 = reinterpret_cast< PyEnsemblePotProxy * >(argp1);
+  {
+    try {
+      fromPy( arg2, obj1 );
+    }
+    catch ( PyConvert_TypeError e ) {
+      PyErr_SetString(PyExc_TypeError,
+        String("argument 2: expected type: ") + e.mess);
+      goto fail;
+    }
+    catch ( PyConvert_RangeError e ) {
+      PyErr_SetString(PyExc_IndexError,
+        String("argument 2: bad number: ") + e.mess);
+      goto fail;
+    }
+    catch ( PyConvert_Exception e ) {
+      PyErr_SetString(PyExc_TypeError,
+        String("swig/py exception: ") + e.mess);
+      goto fail;
+    }
+    catch ( CDS::exception e ) {
+      PyErr_SetString(PyExc_TypeError,
+        String("xplor-nih exception: ") + e.mess);
+      return NULL;
+    }
+  }
+  if (arg1) (arg1)->m_obj = arg2;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_LetterClass_m_obj_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  PyEnsemblePotProxy *arg1 = (PyEnsemblePotProxy *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:PyEnsemblePotProxy_LetterClass_m_obj_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_PyEnsemblePotProxy, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_LetterClass_m_obj_get" "', argument " "1"" of type '" "PyEnsemblePotProxy *""'"); 
+  }
+  arg1 = reinterpret_cast< PyEnsemblePotProxy * >(argp1);
+  result = (PyObject *) ((arg1)->m_obj);
+  resultobj = result;
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_new_PyEnsemblePotProxy_LetterClass(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   String *arg1 = 0 ;
   String *arg2 = 0 ;
   Simulation *arg3 = (Simulation *) 0 ;
+  PyObject *arg4 = (PyObject *) 0 ;
   void *argp3 = 0 ;
   int res3 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
   char *  kwnames[] = {
-    (char *)"arg1",(char *)"arg2",(char *)"arg3", NULL 
+    (char *)"arg1",(char *)"arg2",(char *)"arg3",(char *) "obj", NULL 
   };
   PyEnsemblePotProxy *result = 0 ;
   
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO:new_PyEnsemblePotProxy_LetterClass",kwnames,&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO:new_PyEnsemblePotProxy_LetterClass",kwnames,&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
   {
     // first try to use any wrapped C++ object
     String *  tmpPtr;
@@ -7177,7 +8010,32 @@ SWIGINTERN PyObject *_wrap_new_PyEnsemblePotProxy_LetterClass(PyObject *SWIGUNUS
   arg3 = reinterpret_cast< Simulation * >(argp3);
   {
     try {
-      result = (PyEnsemblePotProxy *)new PyEnsemblePotProxy((String const &)*arg1,(String const &)*arg2,arg3);
+      fromPy( arg4, obj3 );
+    }
+    catch ( PyConvert_TypeError e ) {
+      PyErr_SetString(PyExc_TypeError,
+        String("argument 4: expected type: ") + e.mess);
+      goto fail;
+    }
+    catch ( PyConvert_RangeError e ) {
+      PyErr_SetString(PyExc_IndexError,
+        String("argument 4: bad number: ") + e.mess);
+      goto fail;
+    }
+    catch ( PyConvert_Exception e ) {
+      PyErr_SetString(PyExc_TypeError,
+        String("swig/py exception: ") + e.mess);
+      goto fail;
+    }
+    catch ( CDS::exception e ) {
+      PyErr_SetString(PyExc_TypeError,
+        String("xplor-nih exception: ") + e.mess);
+      return NULL;
+    }
+  }
+  {
+    try {
+      result = (PyEnsemblePotProxy *)new PyEnsemblePotProxy((String const &)*arg1,(String const &)*arg2,arg3,arg4);
     }
     catch (CDS::out_of_range e) {
       PyErr_SetString(PyExc_IndexError,
@@ -7219,6 +8077,495 @@ fail:
   {
     delete arg2;
   }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_PyEnsemblePotProxy_LetterClass(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  PyEnsemblePotProxy *arg1 = (PyEnsemblePotProxy *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_PyEnsemblePotProxy_LetterClass",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_PyEnsemblePotProxy, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_PyEnsemblePotProxy_LetterClass" "', argument " "1"" of type '" "PyEnsemblePotProxy *""'"); 
+  }
+  arg1 = reinterpret_cast< PyEnsemblePotProxy * >(argp1);
+  {
+    try {
+      delete arg1;
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_LetterClass_energyMaybeDerivs0(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  PyEnsemblePotProxy *arg1 = (PyEnsemblePotProxy *) 0 ;
+  DerivList *arg2 = (DerivList *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2", NULL 
+  };
+  float_type result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_LetterClass_energyMaybeDerivs0",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_PyEnsemblePotProxy, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_LetterClass_energyMaybeDerivs0" "', argument " "1"" of type '" "PyEnsemblePotProxy *""'"); 
+  }
+  arg1 = reinterpret_cast< PyEnsemblePotProxy * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_LetterClass_energyMaybeDerivs0" "', argument " "2"" of type '" "DerivList *""'"); 
+  }
+  arg2 = reinterpret_cast< DerivList * >(argp2);
+  {
+    try {
+      result = (float_type)(arg1)->energyMaybeDerivs0(arg2);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_LetterClass_energyMaybeDerivs1(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  PyEnsemblePotProxy *arg1 = (PyEnsemblePotProxy *) 0 ;
+  DerivList *arg2 = (DerivList *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2", NULL 
+  };
+  float_type result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_LetterClass_energyMaybeDerivs1",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_PyEnsemblePotProxy, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_LetterClass_energyMaybeDerivs1" "', argument " "1"" of type '" "PyEnsemblePotProxy *""'"); 
+  }
+  arg1 = reinterpret_cast< PyEnsemblePotProxy * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_LetterClass_energyMaybeDerivs1" "', argument " "2"" of type '" "DerivList *""'"); 
+  }
+  arg2 = reinterpret_cast< DerivList * >(argp2);
+  {
+    try {
+      result = (float_type)(arg1)->energyMaybeDerivs1(arg2);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_LetterClass_energyMaybeDerivs2(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  PyEnsemblePotProxy *arg1 = (PyEnsemblePotProxy *) 0 ;
+  DerivList *arg2 = (DerivList *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2", NULL 
+  };
+  float_type result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_LetterClass_energyMaybeDerivs2",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_PyEnsemblePotProxy, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_LetterClass_energyMaybeDerivs2" "', argument " "1"" of type '" "PyEnsemblePotProxy *""'"); 
+  }
+  arg1 = reinterpret_cast< PyEnsemblePotProxy * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_LetterClass_energyMaybeDerivs2" "', argument " "2"" of type '" "DerivList *""'"); 
+  }
+  arg2 = reinterpret_cast< DerivList * >(argp2);
+  {
+    try {
+      result = (float_type)(arg1)->energyMaybeDerivs2(arg2);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_LetterClass_energyMaybeDerivs3(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  PyEnsemblePotProxy *arg1 = (PyEnsemblePotProxy *) 0 ;
+  DerivList *arg2 = (DerivList *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2", NULL 
+  };
+  float_type result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_LetterClass_energyMaybeDerivs3",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_PyEnsemblePotProxy, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_LetterClass_energyMaybeDerivs3" "', argument " "1"" of type '" "PyEnsemblePotProxy *""'"); 
+  }
+  arg1 = reinterpret_cast< PyEnsemblePotProxy * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_LetterClass_energyMaybeDerivs3" "', argument " "2"" of type '" "DerivList *""'"); 
+  }
+  arg2 = reinterpret_cast< DerivList * >(argp2);
+  {
+    try {
+      result = (float_type)(arg1)->energyMaybeDerivs3(arg2);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_LetterClass_energyMaybeDerivs4(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  PyEnsemblePotProxy *arg1 = (PyEnsemblePotProxy *) 0 ;
+  DerivList *arg2 = (DerivList *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2", NULL 
+  };
+  float_type result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO:PyEnsemblePotProxy_LetterClass_energyMaybeDerivs4",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_PyEnsemblePotProxy, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_LetterClass_energyMaybeDerivs4" "', argument " "1"" of type '" "PyEnsemblePotProxy *""'"); 
+  }
+  arg1 = reinterpret_cast< PyEnsemblePotProxy * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_LetterClass_energyMaybeDerivs4" "', argument " "2"" of type '" "DerivList *""'"); 
+  }
+  arg2 = reinterpret_cast< DerivList * >(argp2);
+  {
+    try {
+      result = (float_type)(arg1)->energyMaybeDerivs4(arg2);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_LetterClass_callCyEnergyMaybeDerivs(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  PyEnsemblePotProxy *arg1 = (PyEnsemblePotProxy *) 0 ;
+  DerivList *arg2 = (DerivList *) 0 ;
+  bool arg3 ;
+  int arg4 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  bool val3 ;
+  int ecode3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *)"arg2",(char *)"arg3",(char *)"arg4", NULL 
+  };
+  float_type result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO:PyEnsemblePotProxy_LetterClass_callCyEnergyMaybeDerivs",kwnames,&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_PyEnsemblePotProxy, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_LetterClass_callCyEnergyMaybeDerivs" "', argument " "1"" of type '" "PyEnsemblePotProxy *""'"); 
+  }
+  arg1 = reinterpret_cast< PyEnsemblePotProxy * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_DerivList, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEnsemblePotProxy_LetterClass_callCyEnergyMaybeDerivs" "', argument " "2"" of type '" "DerivList *""'"); 
+  }
+  arg2 = reinterpret_cast< DerivList * >(argp2);
+  ecode3 = SWIG_AsVal_bool(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "PyEnsemblePotProxy_LetterClass_callCyEnergyMaybeDerivs" "', argument " "3"" of type '" "bool""'");
+  } 
+  arg3 = static_cast< bool >(val3);
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "PyEnsemblePotProxy_LetterClass_callCyEnergyMaybeDerivs" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  {
+    try {
+      result = (float_type)(arg1)->callCyEnergyMaybeDerivs(arg2,arg3,arg4);
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_LetterClass_ensembleSimulation(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  PyEnsemblePotProxy *arg1 = (PyEnsemblePotProxy *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  EnsembleSimulation *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:PyEnsemblePotProxy_LetterClass_ensembleSimulation",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_PyEnsemblePotProxy, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEnsemblePotProxy_LetterClass_ensembleSimulation" "', argument " "1"" of type '" "PyEnsemblePotProxy *""'"); 
+  }
+  arg1 = reinterpret_cast< PyEnsemblePotProxy * >(argp1);
+  {
+    try {
+      result = (EnsembleSimulation *)(arg1)->ensembleSimulation();
+    }
+    catch (CDS::out_of_range e) {
+      PyErr_SetString(PyExc_IndexError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (PyConvert_Exception e) {
+      PyErr_SetString(PyExc_TypeError,
+        String("PyConvert error: ") + e.mess);
+      goto fail;
+    }
+    catch (CDS::exception e) {
+      PyErr_SetString(PyExc_SystemError,
+        String("xplor-nih error: ") + e.mess);
+      goto fail;
+    }
+    catch (...) {
+      cout << "py: caught unknown exception\n";
+      PyErr_SetString(PyExc_SystemError,
+        "py: caught unknown exception");
+      cout.flush();
+      cerr.flush();
+      abort();
+      goto fail;
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_EnsembleSimulation, 0 |  0 );
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -7279,7 +8626,7 @@ SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_LetterClass_violations(PyObject *S
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject * obj0 = 0 ;
-  int result;
+  float_type result;
   
   if (!PyArg_ParseTuple(args,(char *)"O:PyEnsemblePotProxy_LetterClass_violations",&obj0)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_PyEnsemblePotProxy, 0 |  0 );
@@ -7289,7 +8636,7 @@ SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_LetterClass_violations(PyObject *S
   arg1 = reinterpret_cast< PyEnsemblePotProxy * >(argp1);
   {
     try {
-      result = (int)(arg1)->violations();
+      result = (float_type)(arg1)->violations();
     }
     catch (CDS::out_of_range e) {
       PyErr_SetString(PyExc_IndexError,
@@ -7316,7 +8663,7 @@ SWIGINTERN PyObject *_wrap_PyEnsemblePotProxy_LetterClass_violations(PyObject *S
       goto fail;
     }
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  resultobj = SWIG_From_double(static_cast< double >(result));
   return resultobj;
 fail:
   return NULL;
@@ -7425,55 +8772,6 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_delete_PyEnsemblePotProxy_LetterClass(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  PyEnsemblePotProxy *arg1 = (PyEnsemblePotProxy *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject * obj0 = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:delete_PyEnsemblePotProxy_LetterClass",&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_PyEnsemblePotProxy, SWIG_POINTER_DISOWN |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_PyEnsemblePotProxy_LetterClass" "', argument " "1"" of type '" "PyEnsemblePotProxy *""'"); 
-  }
-  arg1 = reinterpret_cast< PyEnsemblePotProxy * >(argp1);
-  {
-    try {
-      delete arg1;
-    }
-    catch (CDS::out_of_range e) {
-      PyErr_SetString(PyExc_IndexError,
-        String("PyConvert error: ") + e.mess);
-      goto fail;
-    }
-    catch (PyConvert_Exception e) {
-      PyErr_SetString(PyExc_TypeError,
-        String("PyConvert error: ") + e.mess);
-      goto fail;
-    }
-    catch (CDS::exception e) {
-      PyErr_SetString(PyExc_SystemError,
-        String("xplor-nih error: ") + e.mess);
-      goto fail;
-    }
-    catch (...) {
-      cout << "py: caught unknown exception\n";
-      PyErr_SetString(PyExc_SystemError,
-        "py: caught unknown exception");
-      cout.flush();
-      cerr.flush();
-      abort();
-      goto fail;
-    }
-  }
-  resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
 SWIGINTERN PyObject *PyEnsemblePotProxy_LetterClass_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
@@ -7510,22 +8808,34 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"PyEnsemblePotProxy_instanceData", _wrap_PyEnsemblePotProxy_instanceData, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_help", _wrap_PyEnsemblePotProxy_help, METH_VARARGS, NULL},
 	 { (char *)"delete_PyEnsemblePotProxy", _wrap_delete_PyEnsemblePotProxy, METH_VARARGS, NULL},
-	 { (char *)"PyEnsemblePotProxy_rms", _wrap_PyEnsemblePotProxy_rms, METH_VARARGS, NULL},
-	 { (char *)"PyEnsemblePotProxy_violations", _wrap_PyEnsemblePotProxy_violations, METH_VARARGS, NULL},
-	 { (char *)"PyEnsemblePotProxy_numRestraints", _wrap_PyEnsemblePotProxy_numRestraints, METH_VARARGS, NULL},
-	 { (char *)"PyEnsemblePotProxy_calcEnergy", _wrap_PyEnsemblePotProxy_calcEnergy, METH_VARARGS, NULL},
-	 { (char *)"PyEnsemblePotProxy_calcEnergyAndDerivs", (PyCFunction) _wrap_PyEnsemblePotProxy_calcEnergyAndDerivs, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_m_obj_set", _wrap_PyEnsemblePotProxy_m_obj_set, METH_VARARGS, NULL},
+	 { (char *)"PyEnsemblePotProxy_m_obj_get", _wrap_PyEnsemblePotProxy_m_obj_get, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_energyMaybeDerivs0", (PyCFunction) _wrap_PyEnsemblePotProxy_energyMaybeDerivs0, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"PyEnsemblePotProxy_energyMaybeDerivs1", (PyCFunction) _wrap_PyEnsemblePotProxy_energyMaybeDerivs1, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"PyEnsemblePotProxy_energyMaybeDerivs2", (PyCFunction) _wrap_PyEnsemblePotProxy_energyMaybeDerivs2, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"PyEnsemblePotProxy_energyMaybeDerivs3", (PyCFunction) _wrap_PyEnsemblePotProxy_energyMaybeDerivs3, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"PyEnsemblePotProxy_energyMaybeDerivs4", (PyCFunction) _wrap_PyEnsemblePotProxy_energyMaybeDerivs4, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_callCyEnergyMaybeDerivs", (PyCFunction) _wrap_PyEnsemblePotProxy_callCyEnergyMaybeDerivs, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_ensembleSimulation", _wrap_PyEnsemblePotProxy_ensembleSimulation, METH_VARARGS, NULL},
+	 { (char *)"PyEnsemblePotProxy_rms", _wrap_PyEnsemblePotProxy_rms, METH_VARARGS, NULL},
+	 { (char *)"PyEnsemblePotProxy_violations", _wrap_PyEnsemblePotProxy_violations, METH_VARARGS, NULL},
+	 { (char *)"PyEnsemblePotProxy_numRestraints", _wrap_PyEnsemblePotProxy_numRestraints, METH_VARARGS, NULL},
+	 { (char *)"PyEnsemblePotProxy_calcEnergy", _wrap_PyEnsemblePotProxy_calcEnergy, METH_VARARGS, NULL},
+	 { (char *)"PyEnsemblePotProxy_calcEnergyAndDerivs", (PyCFunction) _wrap_PyEnsemblePotProxy_calcEnergyAndDerivs, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_energyMaybeDerivsPre", (PyCFunction) _wrap_PyEnsemblePotProxy_energyMaybeDerivsPre, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_energyMaybeDerivsPost", (PyCFunction) _wrap_PyEnsemblePotProxy_energyMaybeDerivsPost, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"PyEnsemblePotProxy_simulation", _wrap_PyEnsemblePotProxy_simulation, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_ensWeight", (PyCFunction) _wrap_PyEnsemblePotProxy_ensWeight, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"PyEnsemblePotProxy_ensWeights", _wrap_PyEnsemblePotProxy_ensWeights, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_setEnsWeights", (PyCFunction) _wrap_PyEnsemblePotProxy_setEnsWeights, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_addEnsWeights", (PyCFunction) _wrap_PyEnsemblePotProxy_addEnsWeights, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_getEnsWeights", _wrap_PyEnsemblePotProxy_getEnsWeights, METH_VARARGS, NULL},
+	 { (char *)"PyEnsemblePotProxy_updateEnsWeights", (PyCFunction) _wrap_PyEnsemblePotProxy_updateEnsWeights, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"PyEnsemblePotProxy_useSimEnsWeights", _wrap_PyEnsemblePotProxy_useSimEnsWeights, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_setUseSimEnsWeights", (PyCFunction) _wrap_PyEnsemblePotProxy_setUseSimEnsWeights, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_calcWDerivs", _wrap_PyEnsemblePotProxy_calcWDerivs, METH_VARARGS, NULL},
+	 { (char *)"PyEnsemblePotProxy_setCalcWDerivs", (PyCFunction) _wrap_PyEnsemblePotProxy_setCalcWDerivs, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_ensWeightsInfo", _wrap_PyEnsemblePotProxy_ensWeightsInfo, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_potName", _wrap_PyEnsemblePotProxy_potName, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_instanceName", _wrap_PyEnsemblePotProxy_instanceName, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_resetPotName", (PyCFunction) _wrap_PyEnsemblePotProxy_resetPotName, METH_VARARGS | METH_KEYWORDS, NULL},
@@ -7548,12 +8858,21 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"PyEnsemblePotProxy_registerTo", (PyCFunction) _wrap_PyEnsemblePotProxy_registerTo, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"PyEnsemblePotProxy_unRegister", (PyCFunction) _wrap_PyEnsemblePotProxy_unRegister, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"PyEnsemblePotProxy_swigregister", PyEnsemblePotProxy_swigregister, METH_VARARGS, NULL},
+	 { (char *)"PyEnsemblePotProxy_LetterClass_m_obj_set", _wrap_PyEnsemblePotProxy_LetterClass_m_obj_set, METH_VARARGS, NULL},
+	 { (char *)"PyEnsemblePotProxy_LetterClass_m_obj_get", _wrap_PyEnsemblePotProxy_LetterClass_m_obj_get, METH_VARARGS, NULL},
 	 { (char *)"new_PyEnsemblePotProxy_LetterClass", (PyCFunction) _wrap_new_PyEnsemblePotProxy_LetterClass, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"delete_PyEnsemblePotProxy_LetterClass", _wrap_delete_PyEnsemblePotProxy_LetterClass, METH_VARARGS, NULL},
+	 { (char *)"PyEnsemblePotProxy_LetterClass_energyMaybeDerivs0", (PyCFunction) _wrap_PyEnsemblePotProxy_LetterClass_energyMaybeDerivs0, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_LetterClass_energyMaybeDerivs1", (PyCFunction) _wrap_PyEnsemblePotProxy_LetterClass_energyMaybeDerivs1, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_LetterClass_energyMaybeDerivs2", (PyCFunction) _wrap_PyEnsemblePotProxy_LetterClass_energyMaybeDerivs2, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_LetterClass_energyMaybeDerivs3", (PyCFunction) _wrap_PyEnsemblePotProxy_LetterClass_energyMaybeDerivs3, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_LetterClass_energyMaybeDerivs4", (PyCFunction) _wrap_PyEnsemblePotProxy_LetterClass_energyMaybeDerivs4, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_LetterClass_callCyEnergyMaybeDerivs", (PyCFunction) _wrap_PyEnsemblePotProxy_LetterClass_callCyEnergyMaybeDerivs, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"PyEnsemblePotProxy_LetterClass_ensembleSimulation", _wrap_PyEnsemblePotProxy_LetterClass_ensembleSimulation, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_LetterClass_rms", _wrap_PyEnsemblePotProxy_LetterClass_rms, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_LetterClass_violations", _wrap_PyEnsemblePotProxy_LetterClass_violations, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_LetterClass_numRestraints", _wrap_PyEnsemblePotProxy_LetterClass_numRestraints, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_LetterClass_help", _wrap_PyEnsemblePotProxy_LetterClass_help, METH_VARARGS, NULL},
-	 { (char *)"delete_PyEnsemblePotProxy_LetterClass", _wrap_delete_PyEnsemblePotProxy_LetterClass, METH_VARARGS, NULL},
 	 { (char *)"PyEnsemblePotProxy_LetterClass_swigregister", PyEnsemblePotProxy_LetterClass_swigregister, METH_VARARGS, NULL},
 	 { NULL, NULL, 0, NULL }
 };
@@ -7586,6 +8905,7 @@ static void *_p_rc_DerivedPotT_PyEnsemblePotProxy_tTo_p_rc_Pot(void *x, int *SWI
     return (void *)((rc_Pot *)  ((rc_DerivedPot< PyEnsemblePotProxy > *) x));
 }
 static swig_type_info _swigt__p_CDSListT_Simulation_const_p_10_t = {"_p_CDSListT_Simulation_const_p_10_t", "CDSList< Simulation const *,10 > *|CDSList< Simulation const * > *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_CDSListT_VarEnsWeights_10_t = {"_p_CDSListT_VarEnsWeights_10_t", "CDSList< VarEnsWeights,10 > *|CDSList< VarEnsWeights > *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_CDSListT_double_10_t = {"_p_CDSListT_double_10_t", "CDSList< double,10 > *|CDSList< double > *|CDSList< float_type > *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_CDS__Semaphore = {"_p_CDS__Semaphore", "MutexType *|CDS::Semaphore *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_CoordComparer = {"_p_CoordComparer", "CoordComparer *", 0, 0, (void*)0, 0};
@@ -7598,11 +8918,13 @@ static swig_type_info _swigt__p_Pot = {"_p_Pot", "Pot *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_PyEnsemblePotProxy = {"_p_PyEnsemblePotProxy", "PyEnsemblePotProxy *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_Simulation = {"_p_Simulation", "Simulation *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_String = {"_p_String", "String *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p__object = {"_p__object", "_object *|PyObject *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_bool = {"_p_bool", "bool *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "float_type *|double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_f_p_Pot__void = {"_p_f_p_Pot__void", "void (*)(Pot *)", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_f_r_rc_Pot__p_void = {"_p_f_r_rc_Pot__p_void", "void *(*)(rc_Pot &)", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_rc_DerivedPotT_EnsWeights_t = {"_p_rc_DerivedPotT_EnsWeights_t", "rc_DerivedPot< EnsWeights > *|rc_EnsWeights *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_rc_DerivedPotT_PyEnsemblePotProxy_t = {"_p_rc_DerivedPotT_PyEnsemblePotProxy_t", "rc_DerivedPot< PyEnsemblePotProxy > *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_rc_Pot = {"_p_rc_Pot", "rc_Pot *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_rc_EnsemblePot = {"_p_rc_EnsemblePot", 0, 0, 0, 0, 0};
@@ -7610,6 +8932,7 @@ static swig_type_info _swigt__p_void = {"_p_void", "void *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CDSListT_Simulation_const_p_10_t,
+  &_swigt__p_CDSListT_VarEnsWeights_10_t,
   &_swigt__p_CDSListT_double_10_t,
   &_swigt__p_CDS__Semaphore,
   &_swigt__p_CoordComparer,
@@ -7622,11 +8945,13 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_PyEnsemblePotProxy,
   &_swigt__p_Simulation,
   &_swigt__p_String,
+  &_swigt__p__object,
   &_swigt__p_bool,
   &_swigt__p_char,
   &_swigt__p_double,
   &_swigt__p_f_p_Pot__void,
   &_swigt__p_f_r_rc_Pot__p_void,
+  &_swigt__p_rc_DerivedPotT_EnsWeights_t,
   &_swigt__p_rc_DerivedPotT_PyEnsemblePotProxy_t,
   &_swigt__p_rc_EnsemblePot,
   &_swigt__p_rc_Pot,
@@ -7634,6 +8959,7 @@ static swig_type_info *swig_type_initial[] = {
 };
 
 static swig_cast_info _swigc__p_CDSListT_Simulation_const_p_10_t[] = {  {&_swigt__p_CDSListT_Simulation_const_p_10_t, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_CDSListT_VarEnsWeights_10_t[] = {  {&_swigt__p_CDSListT_VarEnsWeights_10_t, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_CDSListT_double_10_t[] = {  {&_swigt__p_CDSListT_double_10_t, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_CDS__Semaphore[] = {  {&_swigt__p_CDS__Semaphore, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_CoordComparer[] = {  {&_swigt__p_CoordComparer, 0, 0, 0},{0, 0, 0, 0}};
@@ -7646,11 +8972,13 @@ static swig_cast_info _swigc__p_Pot[] = {  {&_swigt__p_Pot, 0, 0, 0},  {&_swigt_
 static swig_cast_info _swigc__p_PyEnsemblePotProxy[] = {  {&_swigt__p_PyEnsemblePotProxy, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_Simulation[] = {  {&_swigt__p_Simulation, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_String[] = {  {&_swigt__p_String, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p__object[] = {  {&_swigt__p__object, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_bool[] = {  {&_swigt__p_bool, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_double[] = {  {&_swigt__p_double, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_f_p_Pot__void[] = {  {&_swigt__p_f_p_Pot__void, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_f_r_rc_Pot__p_void[] = {  {&_swigt__p_f_r_rc_Pot__p_void, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_rc_DerivedPotT_EnsWeights_t[] = {  {&_swigt__p_rc_DerivedPotT_EnsWeights_t, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_rc_DerivedPotT_PyEnsemblePotProxy_t[] = {  {&_swigt__p_rc_DerivedPotT_PyEnsemblePotProxy_t, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_rc_EnsemblePot[] = {{&_swigt__p_rc_EnsemblePot, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_rc_Pot[] = {  {&_swigt__p_rc_Pot, 0, 0, 0},  {&_swigt__p_rc_DerivedPotT_PyEnsemblePotProxy_t, _p_rc_DerivedPotT_PyEnsemblePotProxy_tTo_p_rc_Pot, 0, 0},  {&_swigt__p_rc_EnsemblePot, _p_rc_EnsemblePotTo_p_rc_Pot, 0, 0},{0, 0, 0, 0}};
@@ -7658,6 +8986,7 @@ static swig_cast_info _swigc__p_void[] = {  {&_swigt__p_void, 0, 0, 0},{0, 0, 0,
 
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CDSListT_Simulation_const_p_10_t,
+  _swigc__p_CDSListT_VarEnsWeights_10_t,
   _swigc__p_CDSListT_double_10_t,
   _swigc__p_CDS__Semaphore,
   _swigc__p_CoordComparer,
@@ -7670,11 +8999,13 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_PyEnsemblePotProxy,
   _swigc__p_Simulation,
   _swigc__p_String,
+  _swigc__p__object,
   _swigc__p_bool,
   _swigc__p_char,
   _swigc__p_double,
   _swigc__p_f_p_Pot__void,
   _swigc__p_f_r_rc_Pot__p_void,
+  _swigc__p_rc_DerivedPotT_EnsWeights_t,
   _swigc__p_rc_DerivedPotT_PyEnsemblePotProxy_t,
   _swigc__p_rc_EnsemblePot,
   _swigc__p_rc_Pot,
