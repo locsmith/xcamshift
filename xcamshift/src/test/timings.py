@@ -34,6 +34,7 @@ from cython.shift_calculators import allocate_array
 from nanotime import now
 from array import array
 from cython.shift_calculators import Non_bonded_bins
+from derivList import DerivList
 
 
 test_function = None
@@ -131,9 +132,17 @@ class Test(unittest2.TestCase):
                 self.derivs = derivs
                 self.xcamshift = xcamshift
                 self.potential_list = potential_list
-                self.result  = {}
-                for i in range(Segment_Manager.get_segment_manager().get_number_atoms()):
-                    self.result[i]=None
+                self.result  = DerivList()
+                self._esim=None
+                self.result.init(self.get_single_member_ensemble_simulation())
+
+
+            def get_single_member_ensemble_simulation(self):
+                if self._esim.__class__ ==  None.__class__:
+                    #TODO note EnsembleSimulation can't have a single member that causes a crash!
+                    # therefore a hack
+                    self._esim =  Xcamshift().ensembleSimulation()
+                return self._esim
 
             def __call__(self):
                 start = time.clock()
