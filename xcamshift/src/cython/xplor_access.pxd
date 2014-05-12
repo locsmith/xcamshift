@@ -63,6 +63,13 @@ cdef extern from "cdsVector.hh":
         T& operator[] (int) nogil
         void set(T&)
 
+cdef extern from "cdsList.hh":
+    cdef cppclass CDSList[T]:
+        int size() nogil
+        CDSList[T]&  resize(int) nogil
+        void append(T) nogil
+        T& operator[] (int) nogil
+
 
 cdef extern from "sharedCDSVectorFactory.hh" namespace "SharedCDSVectorFactory":
     void clearSharedVector(void *) nogil

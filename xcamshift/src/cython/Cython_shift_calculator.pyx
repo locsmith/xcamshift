@@ -30,8 +30,9 @@ from vec3 import Vec3 as python_vec3
 from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
 from xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList,\
      clearSharedVector, EnsembleSimulation, createSharedVector, getSharedVectorValue, resizeSharedVector,\
-     addToSharedVectorValue, getSharedVectorValue, deleteSharedVector, setSharedVectorValue, BondAngle
-from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
+     addToSharedVectorValue, getSharedVectorValue, deleteSharedVector, setSharedVectorValue, BondAngle, \
+     CDSList
+from libc.math cimport cos,sin,  fabs, tanh, pow, cosh, ceil
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from time import time
@@ -1605,6 +1606,142 @@ cdef class Fast_hydrogen_bond_shift_calculator(Base_shift_calculator):
             end_time = time()
             print '   hydrogen bond shift components ' ,self._name,len(self._num_components), 'in', "%.17g" % (end_time-start_time), "seconds"
 
+cdef class Non_bonded_bins:
+
+    cdef int _min_residue_seperation
+    cdef float _cutoff_distance
+    cdef float _jitter
+    cdef float _full_cutoff_distance
+    cdef bint _verbose
+    cdef EnsembleSimulation* _simulation
+
+    cdef float _spacing
+    cdef int x_steps, y_steps, z_steps
+
+    cdef float _x_min,_y_min,_z_min
+
+    cdef CDSVector[CDSVector[CDSVector[CDSList[int]]]] bins
+
+    cdef inline int max(self,int val_1,int val_2):
+        if val_1 > val_2:
+            return val_1
+        else:
+            return val_2
+
+    cdef inline int min(self,int val_1,int val_2):
+        if val_1 < val_2:
+            return val_1
+        else:
+            return val_2
+
+    def __init__(self,simulation, int min_residue_seperation=2, float cutoff_distance=5.0, float jitter=0.2):
+        self._simulation = simulationAsNative(simulation)
+
+        self._min_residue_seperation =  min_residue_seperation
+        self._cutoff_distance =  cutoff_distance
+        self._jitter = jitter
+        self._spacing =  self._cutoff_distance + self._jitter
+        self._verbose =  False
+
+    cdef inline void _clear_bins(self,):
+        self.bins.resize(self.x_steps);
+        for i in range(self.x_steps):
+            self.bins[i].resize(self.y_steps)
+            for j in range(self.y_steps):
+                self.bins[i][j].resize(self.z_steps)
+                for k in range(self.z_steps):
+                    self.bins[i][j][k].resize(0)
+
+    def add_to_bins(self,int[:] atom_ids):
+        cdef float huge = 1e30
+
+        cdef float x_min = huge
+        cdef float y_min = huge
+        cdef float z_min = huge
+
+        cdef float x_max = -huge
+        cdef float y_max = -huge
+        cdef float z_max = -huge
+
+        cdef Vec3 pos
+        cdef int atom_id
+
+        for atom_id in atom_ids:
+
+            pos = self._simulation[0].atomByID(atom_id).pos()
+
+            if pos.x()<x_min:
+                x_min = pos.x()
+            if pos.y()<y_min:
+                y_min = pos.y()
+            if pos.z()<z_min:
+                z_min = pos.z()
+
+            if pos.x()>x_max:
+                x_max = pos.x()
+            if pos.y()>y_max:
+                y_max = pos.y()
+            if pos.z()>z_max:
+                z_max = pos.z()
+
+        self.x_steps = self.max(1, <int>ceil( (x_max - x_min) / self._spacing))
+        self.y_steps = self.max(1, <int>ceil( (y_max - y_min) / self._spacing))
+        self.z_steps = self.max(1, <int>ceil( (z_max - z_min) / self._spacing))
+
+        self._clear_bins()
+
+
+        self._x_min = x_min
+        self._y_min = y_min
+        self._z_min = z_min
+
+        for atom_id in atom_ids:
+            self._add_to_bin(atom_id)
+
+    cdef inline void _add_to_bin(self, int atom_id):
+        cdef Vec3 pos = self._simulation[0].atomByID(atom_id).pos()
+        cdef int x_bin = self._find_x_bin(pos.x())
+        cdef int y_bin = self._find_y_bin(pos.y())
+        cdef int z_bin = self._find_z_bin(pos.z())
+
+        self.bins[x_bin][y_bin][z_bin].append(atom_id);
+
+    cdef inline int _find_x_bin(self, float x):
+        return self.max(0,self.min(self.x_steps-1,(int)((x-self._x_min)/self._spacing)))
+
+    cdef inline int _find_y_bin(self, float y):
+        return self.max(0,self.min(self.y_steps-1,(int)((y-self._y_min)/self._spacing)))
+
+    cdef inline int _find_z_bin(self, float z):
+        return self.max(0,self.min(self.z_steps-1,(int)((z-self._z_min)/self._spacing)))
+
+    def dump(self):
+        for i in range(self.x_steps):
+            for j in range(self.y_steps):
+                for k in range(self.z_steps):
+                    print i,j,k,self.bins[i][j][k].size()
+
+    def get_bin(self,x,y,z):
+        result  = []
+        for i in range(self.bins[x][y][z].size()):
+            result.append(self.bins[x][y][z][i])
+        return result
+# cdef class New_fast_non_bonded_calculator:
+#     cdef int _min_residue_seperation
+#     cdef float _cutoff_distance
+#     cdef float _jitter
+#     cdef float _full_cutoff_distance
+#     cdef bint _verbose
+#     cdef EnsembleSimulation* _simulation
+#
+#     def __init__(self,simulation, min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
+#         self._simulation = simulationAsNative(simulation)
+#
+#         self._min_residue_seperation =  min_residue_seperation
+#         self._cutoff_distance =  cutoff_distance
+#         self._jitter = jitter
+#         self._full_cutoff_distance =  self._cutoff_distance + self._jitter
+#         self._verbose =  False
 
 cdef class Fast_non_bonded_calculator:
     cdef int _min_residue_seperation

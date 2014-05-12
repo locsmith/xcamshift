@@ -37,6 +37,7 @@ from common_constants import TARGET_ATOM_IDS_CHANGED
 from cython.shift_calculators import Out_array
 from ensembleSimulation import   EnsembleSimulation
 from array import array
+from cython.shift_calculators import Non_bonded_bins
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -975,6 +976,58 @@ class TestXcamshift(unittest2.TestCase):
         self._do_test_change_weights(shifts, weights, expected_factors, expected_energies)         
         
         
+    def test_new_fast_non_bonded_list(self):
+        EXPECTED_BINS = {   0   : (0, 1, 0),
+                            1   : (0, 1, 0),
+                            2   : (0, 0, 0),
+                            3   : (0, 1, 0),
+                            4   : (0, 0, 0),
+                            5   : (0, 0, 1),
+                            6   : (0, 1, 1),
+                            7   : (0, 1, 0),
+                            8   : (0, 1, 1),
+                            9   : (0, 0, 0),
+                            10  : (0, 0, 0),
+                            11  : (0, 0, 1),
+                            12  : (0, 0, 0),
+                            13  : (0, 0, 0),
+                            14  : (0, 0, 0),
+                            15  : (0, 0, 0),
+                            16  : (0, 0, 0),
+                            17  : (0, 0, 0),
+                            18  : (0, 0, 0),
+                            19  : (0, 0, 0),
+                            20  : (0, 0, 0),
+                            21  : (0, 0, 0),
+                            22  : (0, 0, 0),
+                            23  : (0, 0, 0),
+                            24  : (1, 0, 0),
+                            25  : (1, 0, 0),
+                            26  : (1, 0, 0),
+                            27  : (1, 0, 0),
+                            28  : (1, 0, 0),
+                            29  : (1, 0, 0),
+                            30  : (1, 0, 0),
+                            31  : (1, 0, 0),
+                            32  : (1, 0, 0)
+        }
+
+        binner = Non_bonded_bins(self.get_single_member_ensemble_simulation(),cutoff_distance=5.0)
+        atom_ids  = array('i',range(Segment_Manager().get_number_atoms()))
+
+        binner.add_to_bins(atom_ids)
+
+        for x in 0,1:
+            for y in 0,1:
+                for z in 0,1:
+                    for atom_id in binner.get_bin(x,y,z):
+                        self.assertEqual((x,y,z),EXPECTED_BINS[atom_id])
+                        del EXPECTED_BINS[atom_id]
+        self.assertEmpty(EXPECTED_BINS)
+
+
+
+
 def run_tests():
     unittest2.main(module='test.test_xcamshift',failfast=True)
 #     unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_change_energy_well')
