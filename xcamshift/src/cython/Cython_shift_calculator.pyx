@@ -322,6 +322,7 @@ cdef  class Non_bonded_interaction_list:
     cdef int length
     cdef int size_increment
     cdef int RECORD_LENGTH
+    cdef int resize_count
 
     def __cinit__(self, int length=0, double fill_factor=1.0):
         self.data = new CDSVector[int]()
@@ -329,16 +330,22 @@ cdef  class Non_bonded_interaction_list:
         self.length =  0
         self.size_increment =  20
         self.RECORD_LENGTH = 4
+        self.resize_count = 0
 
     def test_append(self,int target_atom_id, int target_id, int remote_id, component_index):
         self.append(target_atom_id,  target_id,  remote_id, component_index)
 
+    def get_resize_count(self):
+        return self.resize_count
+
     def clear(self):
         self.length = 0
+        self.resize_count = 0
 
     cdef inline void append(self, int target_atom_id, int target_id, int remote_id, int component_index):
 
         if  self.data[0].size()*self.RECORD_LENGTH <= self.length*self.RECORD_LENGTH:
+            self.resize_count+=1
             self.resize()
         self.data[0][self.length] = target_atom_id
         self.data[0][self.length+1] = target_id
