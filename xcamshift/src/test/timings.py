@@ -159,7 +159,7 @@ class Test(unittest2.TestCase):
                 return result
             Test_xcamshift_subpotential(xcamshift, None, make_result_array_forces())()
         run()
-        cProfile.runctx('run()',globals(),locals(),filename='/home/garyt/test.profile')
+        cProfile.runctx('run()',globals(),locals(),filename='/tmp/test.profile')
         for i in range(10):
             run()
 
