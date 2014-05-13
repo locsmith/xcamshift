@@ -145,11 +145,11 @@ class Test(unittest2.TestCase):
                 return self._esim
 
             def __call__(self):
-                start = time.clock()
+                start = now()
                 for i in range(10):
                     energy = self.xcamshift.calcEnergyAndDerivs(self.result)
-                end =  time.clock()
-                print '%4.3f ms / cycle' % ((end-start)/10.0*1000)
+                end =  now()
+                print '%4.3f ms / cycle' % ((end-start).seconds()*1000.0/10.0)
 
         def run():
             def make_result_array_forces():
