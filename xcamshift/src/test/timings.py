@@ -109,7 +109,7 @@ class Test(unittest2.TestCase):
         result = [None] * num_atoms
         return result
 
-    def test_timings(self):
+    def _needs_repair_test_timings(self):
 
         xcamshift = self.make_xcamshift(gb3.gb3_zero_shifts)
 
