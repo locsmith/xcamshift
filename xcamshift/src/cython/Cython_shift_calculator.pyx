@@ -82,6 +82,11 @@ cdef struct Distance_component:
       float coefficient
       float exponent
 
+cdef struct Vec3_int:
+    int x
+    int y
+    int z
+
 cdef struct Dihedral_component:
       int target_atom
       int[4] dihedral_atoms
@@ -1714,6 +1719,11 @@ cdef class Non_bonded_bins:
 
     cdef inline int _find_z_bin(self, float z):
         return self.max(0,self.min(self.z_steps-1,(int)((z-self._z_min)/self._spacing)))
+
+    cdef void _find_bin(self, Vec3& pos, Vec3_int& bin) nogil:
+        bin.x = self._find_x_bin(pos.x())
+        bin.y = self._find_y_bin(pos.y())
+        bin.z = self._find_z_bin(pos.z())
 
     def dump(self):
         for i in range(self.x_steps):
