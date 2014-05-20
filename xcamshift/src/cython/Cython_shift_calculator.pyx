@@ -1639,10 +1639,9 @@ cdef class Non_bonded_bins:
         else:
             return val_2
 
-    def __init__(self,simulation, int min_residue_seperation=2, float cutoff_distance=5.0, float jitter=0.2):
+    def __init__(self,simulation, float cutoff_distance=5.0, float jitter=0.2):
         self._simulation = simulationAsNative(simulation)
 
-        self._min_residue_seperation =  min_residue_seperation
         self._cutoff_distance =  cutoff_distance
         self._jitter = jitter
         self._spacing =  self._cutoff_distance + self._jitter
@@ -1776,22 +1775,23 @@ cdef class Non_bonded_bins:
         for i in range(self.bins[x][y][z].size()):
             result.append(self.bins[x][y][z][i])
         return result
-# cdef class New_fast_non_bonded_calculator:
-#     cdef int _min_residue_seperation
-#     cdef float _cutoff_distance
-#     cdef float _jitter
-#     cdef float _full_cutoff_distance
-#     cdef bint _verbose
-#     cdef EnsembleSimulation* _simulation
-#
-#     def __init__(self,simulation, min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
-#         self._simulation = simulationAsNative(simulation)
-#
-#         self._min_residue_seperation =  min_residue_seperation
-#         self._cutoff_distance =  cutoff_distance
-#         self._jitter = jitter
-#         self._full_cutoff_distance =  self._cutoff_distance + self._jitter
-#         self._verbose =  False
+
+cdef class New_fast_non_bonded_calculator:
+    cdef int _min_residue_seperation
+    cdef float _cutoff_distance
+    cdef float _jitter
+    cdef float _full_cutoff_distance
+    cdef bint _verbose
+    cdef EnsembleSimulation* _simulation
+
+    def __init__(self,simulation, min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
+        self._simulation = simulationAsNative(simulation)
+
+        self._min_residue_seperation =  min_residue_seperation
+        self._cutoff_distance =  cutoff_distance
+        self._jitter = jitter
+        self._full_cutoff_distance =  self._cutoff_distance + self._jitter
+        self._verbose =  False
 
 cdef class Fast_non_bonded_calculator:
     cdef int _min_residue_seperation
