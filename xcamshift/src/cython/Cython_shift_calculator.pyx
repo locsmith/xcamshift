@@ -1655,7 +1655,47 @@ cdef class Non_bonded_bins:
             for j in range(self.y_steps):
                 self.bins[i][j].resize(self.z_steps)
                 for k in range(self.z_steps):
-                    self.bins[i][j][k].resize(0)
+                     self.bins[i][j][k].resize(0)
+
+    cdef void _find_neighbors(self, int x_bin, int y_bin, int z_bin, CDSList[Vec3_int]& result):
+        cdef int x_min =self.max(x_bin-1,0)
+        cdef int y_min =self.max(y_bin-1,0)
+        cdef int z_min =self.max(z_bin-1,0)
+
+        cdef int x_max = self.min(x_bin+1,self.x_steps-1)
+        cdef int y_max = self.min(y_bin+1,self.y_steps-1)
+        cdef int z_max = self.min(z_bin+1,self.z_steps-1)
+
+        cdef int x, y,z
+        cdef Vec3_int bin
+
+        result.resize(0)
+
+        for x in range(x_min,x_max+1):
+            for y in range (y_min,y_max+1):
+                for z in range (z_min, z_max+1):
+                    bin.x=x
+                    bin.y=y
+                    bin.z=z
+                    result.append(bin)
+
+
+
+    def find_neighbors(self, pos):
+        cdef CDSList[Vec3_int] bins
+        result = []
+
+        x,y,z = pos
+        self._find_neighbors(x,y,z,bins)
+
+        result = []
+        for i in range(bins.size()):
+            bin  = bins[i].x,bins[i].y,bins[i].z
+            result.append(bin)
+
+        return tuple(result)
+
+
 
     def add_to_bins(self,int[:] atom_ids):
         cdef float huge = 1e30
@@ -1720,7 +1760,7 @@ cdef class Non_bonded_bins:
     cdef inline int _find_z_bin(self, float z):
         return self.max(0,self.min(self.z_steps-1,(int)((z-self._z_min)/self._spacing)))
 
-    cdef void _find_bin(self, Vec3& pos, Vec3_int& bin) nogil:
+    cdef void _find_bin(self, Vec3& pos, Vec3_int& bin):
         bin.x = self._find_x_bin(pos.x())
         bin.y = self._find_y_bin(pos.y())
         bin.z = self._find_z_bin(pos.z())
