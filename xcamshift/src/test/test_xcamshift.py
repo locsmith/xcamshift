@@ -1015,7 +1015,7 @@ class TestXcamshift(unittest2.TestCase):
         binner = Non_bonded_bins(self.get_single_member_ensemble_simulation(),cutoff_distance=5.0)
         atom_ids  = array('i',range(Segment_Manager().get_number_atoms()))
 
-        binner.add_to_bins(atom_ids)
+        binner._test_add_to_bins(atom_ids)
 
         for x in 0,1:
             for y in 0,1:
@@ -1065,7 +1065,7 @@ class TestXcamshift(unittest2.TestCase):
 
 def run_tests():
 #     unittest2.main(module='test.test_xcamshift',failfast=True)
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_neighbors_new_fast_non_bonded_list')
+    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_new_fast_non_bonded_list')
 
 if __name__ == "__main__":
     run_tests()

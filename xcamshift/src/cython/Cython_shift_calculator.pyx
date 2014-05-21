@@ -1755,15 +1755,15 @@ cdef class Non_bonded_bins:
         for i in range(num_components):
 
             atom_id = components[i].remote_atom_id
-            self._add_to_bin(atom_id)
+            self._add_to_bin(atom_id,i)
 
-    cdef inline void _add_to_bin(self, int atom_id):
+    cdef inline void _add_to_bin(self, int atom_id, int index):
         cdef Vec3 pos = self._simulation[0].atomByID(atom_id).pos()
         cdef int x_bin = self._find_x_bin(pos.x())
         cdef int y_bin = self._find_y_bin(pos.y())
         cdef int z_bin = self._find_z_bin(pos.z())
 
-        self.bins[x_bin][y_bin][z_bin].append(atom_id);
+        self.bins[x_bin][y_bin][z_bin].append(index);
 
     cdef inline int _find_x_bin(self, float x):
         return self.max(0,self.min(self.x_steps-1,(int)((x-self._x_min)/self._spacing)))
