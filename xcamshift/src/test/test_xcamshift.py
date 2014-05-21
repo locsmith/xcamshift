@@ -1035,7 +1035,7 @@ class TestXcamshift(unittest2.TestCase):
         binner = Non_bonded_bins(self.get_single_member_ensemble_simulation(),cutoff_distance=5.0)
         atom_ids  = array('i',range(Segment_Manager().get_number_atoms()))
 
-        binner.add_to_bins(atom_ids)
+        binner._test_add_to_bins(atom_ids)
         result  = binner.find_neighbors((0,0,0))
         self.assertEqual(result,EXPECTED)
 
@@ -1046,7 +1046,7 @@ class TestXcamshift(unittest2.TestCase):
         binner = Non_bonded_bins(self.get_single_member_ensemble_simulation(),cutoff_distance=5.0)
         atom_ids  = array('i',range(Segment_Manager().get_number_atoms()))
 
-        binner.add_to_bins(atom_ids)
+        binner._test_add_to_bins(atom_ids)
         result  = binner.find_neighbors((2,2,2))
         EXPECTED_2 = ((1,1,1), (1,1,2), (1,1,3),
                       (1,2,1), (1,2,2), (1,2,3),

@@ -1696,7 +1696,16 @@ cdef class Non_bonded_bins:
 
 
 
-    def add_to_bins(self,int[:] atom_ids):
+    def _test_add_to_bins(self,int[:] atom_ids):
+        cdef Non_bonded_remote_atom_component* components
+        num_components = len(atom_ids)
+        components = <Non_bonded_remote_atom_component*> malloc(num_components * sizeof(Non_bonded_remote_atom_component))
+        for i in range(num_components):
+            components[i].remote_atom_id = atom_ids[i]
+        self._add_components_to_bins(num_components, components)
+        free(components)
+
+    cdef void _add_components_to_bins(self, int num_components, Non_bonded_remote_atom_component* components):
         cdef float huge = 1e30
 
         cdef float x_min = huge
@@ -1710,7 +1719,11 @@ cdef class Non_bonded_bins:
         cdef Vec3 pos
         cdef int atom_id
 
-        for atom_id in atom_ids:
+        cdef int i
+
+        for i in range(num_components):
+
+            atom_id = components[i].remote_atom_id
 
             pos = self._simulation[0].atomByID(atom_id).pos()
 
@@ -1739,7 +1752,9 @@ cdef class Non_bonded_bins:
         self._y_min = y_min
         self._z_min = z_min
 
-        for atom_id in atom_ids:
+        for i in range(num_components):
+
+            atom_id = components[i].remote_atom_id
             self._add_to_bin(atom_id)
 
     cdef inline void _add_to_bin(self, int atom_id):
