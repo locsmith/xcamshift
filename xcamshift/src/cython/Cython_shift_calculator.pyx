@@ -398,6 +398,14 @@ cdef  class Non_bonded_interaction_list:
             result.append(self[i])
         return result
 
+    def dump(self):
+        result = []
+
+        for elem_tuple in self:
+            result.append(elem_tuple)
+        return tuple(result)
+
+
 cdef class Vec3_list:
     cdef CDSVector[Vec3] *data
 
