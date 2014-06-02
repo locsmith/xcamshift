@@ -1662,7 +1662,7 @@ cdef class Non_bonded_bins:
             for j in range(self.y_steps):
                 self.bins[i][j].resize(self.z_steps)
                 for k in range(self.z_steps):
-                     self.bins[i][j][k].resize(0)
+                    self.bins[i][j][k].resize(0)
 
     cdef void _find_neighbors(self, int x_bin, int y_bin, int z_bin, CDSList[Vec3_int]& result):
         cdef int x_min =self.max(x_bin-1,0)
