@@ -1793,6 +1793,9 @@ cdef class Non_bonded_bins:
                 for k in range(self.z_steps):
                     print i,j,k,self.bins[i][j][k].size()
 
+    cdef CDSList[int]& get_bin(self,Vec3_int& bin):
+        return self.bins[bin.x][bin.y][bin.z]
+
     def get_bin(self,x,y,z):
         result  = []
         for i in range(self.bins[x][y][z].size()):
