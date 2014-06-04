@@ -31,9 +31,10 @@ from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
 from xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList,\
      clearSharedVector, EnsembleSimulation, createSharedVector, getSharedVectorValue, resizeSharedVector,\
      addToSharedVectorValue, getSharedVectorValue, deleteSharedVector, setSharedVectorValue, BondAngle, \
-     CDSList
+     CDSList,FixedVector,FIVE
 from libc.math cimport cos,sin,  fabs, tanh, pow, cosh, ceil
 from libc.stdlib cimport malloc, free
+from libc.stdlib cimport abs as iabs
 from libc.string cimport strcmp
 from time import time
 from utils import Atom_utils
@@ -1814,6 +1815,10 @@ cdef class New_fast_non_bonded_calculator(Fast_non_bonded_calculator):
     @cython.profile(True)
     def __call__(self, atom_list_1, atom_list_2,  Non_bonded_interaction_list non_bonded_lists, int[:] active_components):
 
+        self.residue_numbers = self._simulation[0].residueNumArr()
+        self.segids = self._simulation[0].segmentNameArr()
+
+
         if self._verbose:
             print '***** BUILD NON BONDED ******'
 
@@ -1874,6 +1879,8 @@ cdef class Fast_non_bonded_calculator:
     cdef float _full_cutoff_distance
     cdef bint _verbose
     cdef EnsembleSimulation* _simulation
+    cdef CDSVector[int] residue_numbers
+    cdef CDSVector[FixedVector[char,FIVE]] segids
 
     def __init__(self,simulation, min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
         self._simulation = simulationAsNative(simulation)
@@ -1912,11 +1919,11 @@ cdef class Fast_non_bonded_calculator:
         atom_1 = self._simulation[0].atomByID(atom_id_1)
         atom_2 = self._simulation[0].atomByID(atom_id_2)
 
-        seg_1 =  <char *>atom_1.segmentName()
-        residue_1 = atom_1.residueNum()
+        seg_1 =  self.segids[atom_id_1].pointer()
+        residue_1 = self.residue_numbers[atom_id_1]
 
-        seg_2 = <char*>atom_2.segmentName()
-        residue_2 =  atom_2.residueNum()
+        seg_2 =  self.segids[atom_id_2].pointer()
+        residue_2 =  self.residue_numbers[atom_id_2]
 
         is_non_bonded = True
         if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
@@ -1940,6 +1947,9 @@ cdef class Fast_non_bonded_calculator:
     @cython.profile(True)
     def __call__(self, atom_list_1, atom_list_2,  Non_bonded_interaction_list non_bonded_lists, int[:] active_components):
 
+        self.residue_numbers = self._simulation[0].residueNumArr()
+        self.segids = self._simulation[0].segmentNameArr()
+        
         if self._verbose:
             print '***** BUILD NON BONDED ******'
 

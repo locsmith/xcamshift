@@ -922,9 +922,13 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
         self.assertTrue(old_time/3.0 > new_time)
 
+        print 'new  %4.3f ms / cycle' % (new_time*1000.0)
+        print 'new  %4.3f ms / cycle' % (old_time*1000.0)
+
+
 if __name__ == "__main__":
 #     TODO: add a way to run the complete test suite
-      unittest2.main(module='test.test_xcamshift_gb3',failfast=True)#, defaultTest='TestXcamshiftGB3.test_shift_averaging_identical_structures')
+      unittest2.main(module='test.test_xcamshift_gb3',failfast=True, defaultTest='TestXcamshiftGB3.test_new_fast_non_bonded_list')
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_averaging_two_structures')
