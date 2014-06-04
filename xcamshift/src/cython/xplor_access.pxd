@@ -5,17 +5,25 @@ Created on 31 Jul 2012
 '''
 from libc.string cimport const_char
 
+cdef extern from *:
+    ctypedef int FIVE "5"
+
+
 cdef extern from "cdsString.hh":
      cdef cppclass String:
           String(char* , int) nogil
-                  
+
+cdef extern from "fixedVector.hh":
+     cdef cppclass FixedVector[T,S]:
+         T& operator[](long) nogil
+         T* pointer() nogil
 
 cdef extern from "fixedVector.hh":
     cdef float norm(Vec3) nogil
     cdef float dot(Vec3&, Vec3&) nogil
     cdef Vec3 cross(Vec3&, Vec3&) nogil
 
-    
+
 cdef extern from "vec3.hh":
     cdef cppclass Vec3:
         Vec3() nogil
@@ -31,7 +39,7 @@ cdef extern from "vec3.hh":
         float& operator[](long) nogil
         bint operator==(Vec3&) nogil
         bint operator!=(Vec3&) nogil
-        
+
 cdef extern from "atom.hh":
     cdef cppclass Atom:
         const_char segmentName() nogil
@@ -40,14 +48,14 @@ cdef extern from "atom.hh":
         int   residueNum() nogil
         int index() nogil
         Vec3& pos() nogil
-        
+
 cdef extern from "dihedral.hh":
     cdef cppclass Dihedral:
         Dihedral() nogil
         Dihedral(Atom&, Atom&,
                  Atom&, Atom&) nogil
         float value() nogil
-        
+
 cdef extern from "bondAngle.hh":
      cdef cppclass BondAngle:
           BondAngle() nogil
@@ -79,7 +87,7 @@ cdef extern from "sharedCDSVectorFactory.hh" namespace "SharedCDSVectorFactory":
     void setSharedVectorValue(void * sharedVec, int offset ,double value) nogil
     void addToSharedVectorValue(void * sharedVec, int offset ,double value) nogil
     double getSharedVectorValue(void * sharedVec, int offset) nogil
-        
+
 
 
 cdef extern from 'simulation.hh':
@@ -94,16 +102,19 @@ cdef extern from 'simulation.hh':
 cdef extern from "simulation.hh" namespace "Simulation":
     Simulation* currentSimulation() nogil
     int numSimulations() nogil
-    
+
 cdef extern from 'ensembleSimulation.hh':
     cdef cppclass EnsembleMemberSimulation:
         int id() nogil
         int memberIndex() nogil
-        
+
     cdef cppclass EnsembleSimulation(Simulation):
          String name() nogil
          EnsembleMemberSimulation* member() nogil
          int rawID() nogil
+         CDSVector[int] residueNumArr() nogil
+         CDSVector[FixedVector[char,FIVE]] segmentNameArr() nogil
+         CDSVector[Vec3] atomPosArr() nogil
 
 
 cdef extern from "derivList.hh":

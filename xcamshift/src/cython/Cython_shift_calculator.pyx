@@ -1817,7 +1817,7 @@ cdef class New_fast_non_bonded_calculator(Fast_non_bonded_calculator):
 
         self.residue_numbers = self._simulation[0].residueNumArr()
         self.segids = self._simulation[0].segmentNameArr()
-
+        self.positions = self._simulation[0].atomPosArr()
 
         if self._verbose:
             print '***** BUILD NON BONDED ******'
@@ -1881,6 +1881,7 @@ cdef class Fast_non_bonded_calculator:
     cdef EnsembleSimulation* _simulation
     cdef CDSVector[int] residue_numbers
     cdef CDSVector[FixedVector[char,FIVE]] segids
+    cdef CDSVector[Vec3] positions
 
     def __init__(self,simulation, min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
         self._simulation = simulationAsNative(simulation)
@@ -1909,15 +1910,15 @@ cdef class Fast_non_bonded_calculator:
 
     cdef inline bint  _is_non_bonded(self, int atom_id_1, int atom_id_2):
 
-        cdef Atom atom_1, atom_2
+#         cdef Atom atom_1, atom_2
         cdef char *seg_1
         cdef char *seg_2
         cdef int residue_1, residue_2
         cdef bint is_non_bonded
         cdef float distance
 
-        atom_1 = self._simulation[0].atomByID(atom_id_1)
-        atom_2 = self._simulation[0].atomByID(atom_id_2)
+#         atom_1 = self._simulation[0].atomByID(atom_id_1)
+#         atom_2 = self._simulation[0].atomByID(atom_id_2)
 
         seg_1 =  self.segids[atom_id_1].pointer()
         residue_1 = self.residue_numbers[atom_id_1]
@@ -1929,7 +1930,7 @@ cdef class Fast_non_bonded_calculator:
         if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
             is_non_bonded = False
         else:
-            distance = norm(atom_1.pos() - atom_2.pos())
+            distance = norm(self.positions[atom_id_1] - self.positions[atom_id_2])
             is_non_bonded =  distance < self._full_cutoff_distance
         return is_non_bonded
 
@@ -1949,7 +1950,8 @@ cdef class Fast_non_bonded_calculator:
 
         self.residue_numbers = self._simulation[0].residueNumArr()
         self.segids = self._simulation[0].segmentNameArr()
-        
+        self.positions = self._simulation[0].atomPosArr()
+
         if self._verbose:
             print '***** BUILD NON BONDED ******'
 
