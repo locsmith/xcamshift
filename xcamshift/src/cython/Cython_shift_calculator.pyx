@@ -1796,7 +1796,7 @@ cdef class Non_bonded_bins:
     cdef CDSList[int]* get_bin(self,Vec3_int& bin):
         return &(self.bins[bin.x][bin.y][bin.z])
 
-    def get_bin(self,x,y,z):
+    def get_bin_python(self,x,y,z):
         result  = []
         for i in range(self.bins[x][y][z].size()):
             result.append(self.bins[x][y][z][i])

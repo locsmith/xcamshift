@@ -1020,7 +1020,7 @@ class TestXcamshift(unittest2.TestCase):
         for x in 0,1:
             for y in 0,1:
                 for z in 0,1:
-                    for atom_id in binner.get_bin(x,y,z):
+                    for atom_id in binner.get_bin_python(x,y,z):
                         self.assertEqual((x,y,z),EXPECTED_BINS[atom_id])
                         del EXPECTED_BINS[atom_id]
         self.assertEmpty(EXPECTED_BINS)
