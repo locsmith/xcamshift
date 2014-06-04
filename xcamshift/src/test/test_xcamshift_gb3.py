@@ -39,7 +39,8 @@ TOTAL_ENERGY = 'total'
 from cython.shift_calculators import Out_array
 from array import array
 from ensembleSimulation import EnsembleSimulation
-from cython.shift_calculators import CDSVectorFloat
+from cython.shift_calculators import CDSVectorFloat, New_fast_non_bonded_calculator, Fast_non_bonded_calculator
+from cython.shift_calculators import  Non_bonded_interaction_list
  
 def almostEqual(first, second, places = 7):
     result  = False
@@ -840,6 +841,49 @@ class TestXcamshiftGB3(unittest2.TestCase):
             if test != None:
                 self.assertDictEqual(latest, test)
             test=latest
+
+    def test_new_fast_non_bonded_list(self):
+        simulation =  self.get_single_member_ensemble_simulation()
+
+        new_nb_calculator = New_fast_non_bonded_calculator(simulation, 1)
+        old_nb_calculator = Fast_non_bonded_calculator(simulation, 1)
+
+        nb_potential = self._get_xcamshift().get_named_sub_potential(NON_BONDED)
+
+        components =  nb_potential._get_components()
+
+        atom_list_1 = components['ATOM']
+        atom_list_2 =  components['NBRM']
+        
+        non_bonded_lists = Non_bonded_interaction_list()
+        old_non_bonded_lists = Non_bonded_interaction_list()
+        
+        active_components = None
+        remote_components =nb_potential._get_component_list('NBRM')
+
+        new_nb_calculator(atom_list_1, atom_list_2, non_bonded_lists, active_components)
+
+        old_nb_calculator(atom_list_1, atom_list_2, old_non_bonded_lists, active_components)
+
+        seen_dists = set()
+        expected_dists = set()
+        for elem in non_bonded_lists.dump():
+            atom_id_1 = elem[0]
+            atom_id_2 = remote_components[elem[2]][0]
+
+            key = atom_id_1,atom_id_2
+
+            seen_dists.add(key)
+
+        for elem in old_non_bonded_lists.dump():
+            atom_id_1 = elem[0]
+            atom_id_2 = remote_components[elem[2]][0]
+
+            key = atom_id_1,atom_id_2
+
+            expected_dists.add(key)
+
+        self.assertEqual(seen_dists,expected_dists)
 
 
 if __name__ == "__main__":

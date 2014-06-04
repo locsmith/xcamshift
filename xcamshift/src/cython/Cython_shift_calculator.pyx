@@ -1802,22 +1802,70 @@ cdef class Non_bonded_bins:
             result.append(self.bins[x][y][z][i])
         return result
 
-cdef class New_fast_non_bonded_calculator:
-    cdef int _min_residue_seperation
-    cdef float _cutoff_distance
-    cdef float _jitter
-    cdef float _full_cutoff_distance
-    cdef bint _verbose
-    cdef EnsembleSimulation* _simulation
+cdef class New_fast_non_bonded_calculator(Fast_non_bonded_calculator):
+    cdef Non_bonded_bins _bins
 
     def __init__(self,simulation, min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
-        self._simulation = simulationAsNative(simulation)
+        super(New_fast_non_bonded_calculator, self).__init__(simulation, min_residue_seperation,cutoff_distance,jitter)
+        self._bins = Non_bonded_bins(simulation,cutoff_distance,jitter)
 
-        self._min_residue_seperation =  min_residue_seperation
-        self._cutoff_distance =  cutoff_distance
-        self._jitter = jitter
-        self._full_cutoff_distance =  self._cutoff_distance + self._jitter
-        self._verbose =  False
+
+
+    @cython.profile(True)
+    def __call__(self, atom_list_1, atom_list_2,  Non_bonded_interaction_list non_bonded_lists, int[:] active_components):
+
+        if self._verbose:
+            print '***** BUILD NON BONDED ******'
+
+        cdef  Non_bonded_target_component* target_components
+        cdef int num_target_components = self._bytes_to_target_components(atom_list_1,&target_components)
+
+        cdef Non_bonded_remote_atom_component* remote_components
+        cdef int num_remote_components = self._bytes_to_remote_components(atom_list_2,&remote_components)
+
+        cdef double start_time = 0.0
+        cdef double end_time = 0.0
+        if self._verbose:
+            start_time = time()
+
+
+        cdef int i, atom_id_1, atom_id_2
+        cdef Vec3_int bin_index
+        cdef CDSList[Vec3_int] neighbor_bins
+        cdef int j,k
+        cdef CDSList[int]* neighbors
+        non_bonded_lists.clear()
+        self._bins._add_components_to_bins(num_remote_components,remote_components)
+        if active_components == None:
+
+#             print 'num comp: ',num_target_components
+            for i in range(num_target_components):
+
+                atom_id_1 = target_components[i].target_atom_id
+                pos = self._simulation[0].atomPos(atom_id_1)
+                self._bins._find_bin(pos,bin_index)
+                self._bins._find_neighbors( bin_index.x,bin_index.y,bin_index.z, neighbor_bins)
+                for k in range(neighbor_bins.size()):
+                    neighbors  = self._bins.get_bin(neighbor_bins[k])
+
+                    for j in range(neighbors.size()):
+                        atom_id_2  = remote_components[neighbors[0][j]].remote_atom_id
+                        if self._is_non_bonded(atom_id_1, atom_id_2):
+                            non_bonded_lists.append(atom_id_1, i,neighbors[0][j],i)
+        else:
+            for component_index in range(len(active_components)):
+                i = active_components[component_index]
+                atom_id_1 = target_components[i].target_atom_id
+
+                for j in range(num_remote_components):
+                    atom_id_2  = remote_components[j].remote_atom_id
+                    if self._is_non_bonded(atom_id_1, atom_id_2):
+                        non_bonded_lists.append(atom_id_1, i,j,component_index)
+
+        if self._verbose:
+            end_time = time()
+            print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"
+
 
 cdef class Fast_non_bonded_calculator:
     cdef int _min_residue_seperation
