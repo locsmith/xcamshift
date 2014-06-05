@@ -920,7 +920,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
         old_time = (end - start).seconds()
 
-        self.assertTrue(old_time/2.0 > new_time)
+        self.assertTrue(new_time < old_time)
 
         print 'new  %4.3f ms / cycle' % (new_time*1000.0)
         print 'new  %4.3f ms / cycle' % (old_time*1000.0)
