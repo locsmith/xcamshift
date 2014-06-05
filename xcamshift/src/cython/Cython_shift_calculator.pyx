@@ -1861,11 +1861,20 @@ cdef class New_fast_non_bonded_calculator(Fast_non_bonded_calculator):
             for component_index in range(len(active_components)):
                 i = active_components[component_index]
                 atom_id_1 = target_components[i].target_atom_id
+                pos = self._simulation[0].atomPos(atom_id_1)
+                self._bins._find_bin(pos,bin_index)
+                self._bins._find_neighbors( bin_index.x,bin_index.y,bin_index.z, neighbor_bins)
+                for k in range(neighbor_bins.size()):
+                    neighbors  = self._bins.get_bin(neighbor_bins[k])
 
-                for j in range(num_remote_components):
-                    atom_id_2  = remote_components[j].remote_atom_id
-                    if self._is_non_bonded(atom_id_1, atom_id_2):
-                        non_bonded_lists.append(atom_id_1, i,j,component_index)
+                    for j in range(neighbors.size()):
+                            atom_id_2  = remote_components[neighbors[0][j]].remote_atom_id
+                            if self._is_non_bonded(atom_id_1, atom_id_2):
+                                non_bonded_lists.append(atom_id_1, i,neighbors[0][j],i)
+#                 for j in range(num_remote_components):
+#                     atom_id_2  = remote_components[j].remote_atom_id
+#                     if self._is_non_bonded(atom_id_1, atom_id_2):
+#                         non_bonded_lists.append(atom_id_1, i,j,component_index)
 
         if self._verbose:
             end_time = time()
