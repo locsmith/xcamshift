@@ -1902,9 +1902,9 @@ cdef class Fast_non_bonded_calculator:
 
         result = False
 
-        if strcmp(seg_1, seg_2) == 0:
-            sequence_distance =abs(residue_1-residue_2)
-            if sequence_distance < self._min_residue_seperation:
+        sequence_distance =iabs(residue_1-residue_2)
+        if sequence_distance < self._min_residue_seperation:
+            if strcmp(seg_1, seg_2) == 0:
                 result =True
         return result
 
