@@ -1894,7 +1894,7 @@ class Non_bonded_list(object):
                 print '  update boxes call count = ', self._box_update_count
 
             target_component_list.clear()
-            self._box_update_count = -1
+            self._box_update_count = 0
             self._non_bonded_calculation_count += 1
 
             native_target_atom_list = component_list_1.get_native_components()
