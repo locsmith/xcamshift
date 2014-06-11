@@ -1891,7 +1891,7 @@ class Non_bonded_list(object):
                 print '  skip boxes call count = ', self._box_update_count
         else:
             if self._verbose:
-                print '  update boxes call count = ', self._box_update_count
+                print '  !!CALC BOXES!! call count = ', self._box_update_count
 
             target_component_list.clear()
             self._box_update_count = 0
