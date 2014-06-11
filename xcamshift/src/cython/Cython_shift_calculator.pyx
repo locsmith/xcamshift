@@ -385,6 +385,9 @@ cdef  class Non_bonded_interaction_list:
             result.append(self[i])
         return result
 
+    def __str__(self):
+        return 'non bonded list, size: %i' % self.length
+
 cdef class Vec3_list:
     cdef CDSVector[Vec3] *data
 
