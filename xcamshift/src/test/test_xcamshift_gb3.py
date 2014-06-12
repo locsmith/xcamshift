@@ -201,12 +201,12 @@ class TestXcamshiftGB3(unittest2.TestCase):
      
     def test_non_bonded_components(self):
         #TODO: add common loading method for xcamshift
-        xcamshift =  self._get_xcamshift()
+        print 'WARNING using zero shifts with test_non_bonded_components as a hack to get _active_target_atom_ids correct!'
+        xcamshift = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
         sub_potential = xcamshift.get_named_sub_potential(NON_BONDED)
-        components = sub_potential._get_component_list('NBLT')
-        target_atom_ids = [component[0] for component in components]
-        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED,None)
         xcamshift._prepare(ROUND_CHANGED,None)
+        components = sub_potential._get_component_list('NBLT')
  
          
         non_bonded_components =  dict(gb3.gb3_component_shifts_non_bonded)
