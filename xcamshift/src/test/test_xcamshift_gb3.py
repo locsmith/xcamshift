@@ -771,7 +771,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 #            self.assertAlmostEqual(gb3.gb3_shifts[elem], -gb3.gb3_shift_diffs[elem], self.DEFAULT_DECIMAL_PLACES-3,  elem)
  
     def test_component_chemical_shifts_10_step(self):
-        xcamshift  = self._get_xcamshift()
+        xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        print 'WARNING using zero shifts with test_component_chemical_shifts_10_step as a hack to get _active_target_atom_ids corrrect!'
         for i,file_name in enumerate(gb3_10_steps.gb3_files):
             PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
             print file_name
