@@ -158,6 +158,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
  
          
     def _do_test_component_shifts(self, xcamshift, component_shifts):
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, None)
         xcamshift._prepare(ROUND_CHANGED, None)
         component_shifts_keys = component_shifts.keys()
         component_shifts_keys.sort()
@@ -185,7 +186,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
         return xcamshift
     
     def test_component_chemical_shifts(self):
-        xcamshift = self._get_xcamshift()
+        xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        print 'WARNING using zero shifts with test_component_chemical_shifts_10_step as a hack to get _active_target_atom_ids corrrect!'
         
          
         component_shifts = gb3.gb3_subpotential_shifts
