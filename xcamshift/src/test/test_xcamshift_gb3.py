@@ -161,6 +161,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
 
     def _do_test_component_shifts(self, xcamshift, component_shifts):
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, None)
         xcamshift._prepare(ROUND_CHANGED, None)
         component_shifts_keys = component_shifts.keys()
         component_shifts_keys.sort()
@@ -188,8 +189,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
         return xcamshift
 
     def test_component_chemical_shifts(self):
-        xcamshift = self._get_xcamshift()
-
+        xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        print 'WARNING using zero shifts with test_component_chemical_shifts_10_step as a hack to get _active_target_atom_ids corrrect!'
 
         component_shifts = gb3.gb3_subpotential_shifts
         self._do_test_component_shifts(xcamshift, component_shifts)
@@ -204,12 +205,12 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
     def test_non_bonded_components(self):
         #TODO: add common loading method for xcamshift
-        xcamshift =  self._get_xcamshift()
+        print 'WARNING using zero shifts with test_non_bonded_components as a hack to get _active_target_atom_ids correct!'
+        xcamshift = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
         sub_potential = xcamshift.get_named_sub_potential(NON_BONDED)
-        components = sub_potential._get_component_list('NBLT')
-        target_atom_ids = [component[0] for component in components]
-        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED,target_atom_ids)
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED,None)
         xcamshift._prepare(ROUND_CHANGED,None)
+        components = sub_potential._get_component_list('NBLT')
 
 
         non_bonded_components =  dict(gb3.gb3_component_shifts_non_bonded)
@@ -752,6 +753,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
     def test_force_components_10_step(self):
         xcamshift =  self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, None)
+
         for i,file in enumerate(gb3_10_steps.gb3_files):
             PDBTool("test_data/gb3_10_steps/%s" % file).read()
             print '%i/%i' % (i+1,len(gb3_10_steps.gb3_files)), file
@@ -772,7 +775,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 #            self.assertAlmostEqual(gb3.gb3_shifts[elem], -gb3.gb3_shift_diffs[elem], self.DEFAULT_DECIMAL_PLACES-3,  elem)
 
     def test_component_chemical_shifts_10_step(self):
-        xcamshift  = self._get_xcamshift()
+        xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+        print 'WARNING using zero shifts with test_component_chemical_shifts_10_step as a hack to get _active_target_atom_ids corrrect!'
         for i,file_name in enumerate(gb3_10_steps.gb3_files):
             PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
             print file_name
@@ -790,7 +794,9 @@ class TestXcamshiftGB3(unittest2.TestCase):
             self._do_test_shifts(xcamshift, component_shifts)
 
     def test_total_chemical_shifts_10_step(self):
-            xcamshift  = self._get_xcamshift_no_hbond()
+            xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
+            print 'WARNING using zero shifts with test_component_chemical_shifts_10_step as a hack to get _active_target_atom_ids corrrect!'
+
             for i,file_name in enumerate(gb3_10_steps.gb3_files):
                 PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
                 print 'coord file',file_name
@@ -928,8 +934,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
 if __name__ == "__main__":
 #     TODO: add a way to run the complete test suite
-      unittest2.main(module='test.test_xcamshift_gb3',failfast=True, defaultTest='TestXcamshiftGB3.test_new_fast_non_bonded_list_timing')
-#     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
+#     unittest2.main(module='test.test_xcamshift_gb3')#,failfast=True)#, defaultTest='TestXcamshiftGB3.test_new_fast_non_bonded_list_timing')
+    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components_10_step', exit=False)
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_averaging_two_structures')
 #      unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_averaging_identical_structures')
