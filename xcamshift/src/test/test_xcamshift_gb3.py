@@ -710,6 +710,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
 
 #       TODO: xcamshift should be created anew  for each passage through the loop but the non bonded list is too slow
+        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED,None)
         xcamshift._prepare(ROUND_CHANGED, None)
         xcamshift.calc_shifts(xcamshift._get_active_target_atom_ids())
         xcamshift.update_force_factor_calculator()
@@ -753,8 +754,6 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
     def test_force_components_10_step(self):
         xcamshift =  self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
-        xcamshift._prepare(TARGET_ATOM_IDS_CHANGED, None)
-
         for i,file in enumerate(gb3_10_steps.gb3_files):
             PDBTool("test_data/gb3_10_steps/%s" % file).read()
             print '%i/%i' % (i+1,len(gb3_10_steps.gb3_files)), file
@@ -934,8 +933,8 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
 if __name__ == "__main__":
 #     TODO: add a way to run the complete test suite
-#     unittest2.main(module='test.test_xcamshift_gb3')#,failfast=True)#, defaultTest='TestXcamshiftGB3.test_new_fast_non_bonded_list_timing')
-    unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components_10_step', exit=False)
+      unittest2.main(module='test.test_xcamshift_gb3',failfast=True)#, defaultTest='TestXcamshiftGB3.test_shift_averaging_identical_structures')
+#     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_averaging_two_structures')
 #      unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_averaging_identical_structures')
