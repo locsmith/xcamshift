@@ -1880,21 +1880,29 @@ class Non_bonded_list(object):
         if self._verbose:
              print "  BOX COUNT UPDATED TO: ", self._box_update_count
 
+
+    def _need_update(self):
+        result =None
+        if self._box_update_count < self._update_frequency:
+            if self._verbose:
+                print '  skip boxes call count = ', self._box_update_count
+                result = False
+        else:
+            if self._verbose:
+                print '  !!CALC BOXES!! call count = ', self._box_update_count
+            self._box_update_count = 0
+            result =  True
+        return result
+
     def get_boxes(self,component_list_1, component_list_2,target_component_list,coefficient_list, active_components):
 #        print self._box_update_count, se        if self._verbose:
         updated = False
         if self._verbose:
             print '  update, box_count= ',self._box_update_count
 
-        if self._box_update_count < self._update_frequency:
-            if self._verbose:
-                print '  skip boxes call count = ', self._box_update_count
-        else:
-            if self._verbose:
-                print '  !!CALC BOXES!! call count = ', self._box_update_count
+        if self._need_update():
 
             target_component_list.clear()
-            self._box_update_count = 0
             self._non_bonded_calculation_count += 1
 
             native_target_atom_list = component_list_1.get_native_components()
