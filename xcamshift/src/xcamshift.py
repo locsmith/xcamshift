@@ -1834,13 +1834,40 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
         return 'NBRM'
 
 
+class Non_bonded_update_checker:
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def needs_update(self):
+        pass
+
+class Incremented_non_bonded_update_checker(Non_bonded_update_checker):
+    def __init__(self, update_frequency):
+        self._update_frequency =update_frequency
+        self._box_update_count = self._update_frequency
+
+    def needs_update(self):
+        result = False
+        if self._box_update_count < self._update_frequency:
+            result = False
+        else:
+            self._box_update_count = 0
+            result =  True
+        return result
+
+    def update(self):
+        self._box_update_count += 1
+
+    def reset(self):
+        self._box_update_count = self._update_frequency
+
 
 class Non_bonded_list(object):
 
     def __init__(self,simulation,cutoff_distance= 5.0,jitter=0.2,update_frequency=5, min_residue_separation = 2):
         self._cutoff_distance = cutoff_distance
         self._jitter = jitter
-        self._update_frequency =update_frequency
+        self._updater_checker = Incremented_non_bonded_update_checker(update_frequency)
         self._min_residue_seperation = min_residue_separation
         self._simulation=  simulation
         self._reset()
@@ -1851,7 +1878,7 @@ class Non_bonded_list(object):
 
 
     def _reset(self):
-        self._box_update_count = self._update_frequency
+        self._updater_checker.reset()
         self._non_bonded = []
         self._non_bonded_calculation_count = 0
         self._non_bonded_call_count = 0
@@ -1876,22 +1903,19 @@ class Non_bonded_list(object):
 
 
     def update(self):
-        self._box_update_count +=1
+        self._updater_checker.update()
         if self._verbose:
              print "  BOX COUNT UPDATED TO: ", self._box_update_count
 
 
     def _need_update(self):
-        result =None
-        if self._box_update_count < self._update_frequency:
-            if self._verbose:
+        result =self._updater_checker.needs_update()
+        if self._verbose:
+            if result == False:
                 print '  skip boxes call count = ', self._box_update_count
-                result = False
-        else:
-            if self._verbose:
+
+            else:
                 print '  !!CALC BOXES!! call count = ', self._box_update_count
-            self._box_update_count = 0
-            result =  True
         return result
 
     def get_boxes(self,component_list_1, component_list_2,target_component_list,coefficient_list, active_components):
