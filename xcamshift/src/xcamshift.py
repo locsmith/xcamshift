@@ -1905,7 +1905,7 @@ class Non_bonded_list(object):
     def update(self):
         self._updater_checker.update()
         if self._verbose:
-             print "  BOX COUNT UPDATED TO: ", self._box_update_count
+            print "  BOX COUNT UPDATED TO: ", self._box_update_count
 
 
     def _need_update(self):
