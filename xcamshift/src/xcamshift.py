@@ -1844,7 +1844,7 @@ class Non_bonded_update_checker:
 class Incremented_non_bonded_update_checker(Non_bonded_update_checker):
     def __init__(self, update_frequency):
         self._update_frequency =update_frequency
-        self._box_update_count = self._update_frequency
+        self.reset()
 
     def needs_update(self):
         result = False
