@@ -1841,6 +1841,14 @@ class Non_bonded_update_checker:
     def needs_update(self):
         pass
 
+    @abstractmethod
+    def update(self):
+        pass
+
+    @abstractmethod
+    def reset(self):
+        pass
+
 class Incremented_non_bonded_update_checker(Non_bonded_update_checker):
     def __init__(self, update_frequency):
         self._update_frequency =update_frequency
