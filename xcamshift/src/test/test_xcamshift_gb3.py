@@ -19,7 +19,7 @@ from derivList import DerivList
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
-from xcamshift import  Xcamshift
+from xcamshift import  Xcamshift, Exact_grid_non_bonded_update_checker
 from shift_calculators import CDSSharedVectorFloat
 from atomSel import AtomSel
 from test import gb3, gb3_10_steps
@@ -930,10 +930,42 @@ class TestXcamshiftGB3(unittest2.TestCase):
         print 'new  %4.3f ms / cycle' % (new_time*1000.0)
         print 'new  %4.3f ms / cycle' % (old_time*1000.0)
 
+    def test_exact_update_checker(self):
+        simulation = currentSimulation()
+        checker = Exact_grid_non_bonded_update_checker(0.5)
+        expected_true = [1]
+        for i,file_name in enumerate(gb3_10_steps.gb3_files):
+
+            PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
+
+            if i == 1:
+                pos_10 = tuple(simulation.atomPos(10))
+
+            start = now()
+            checker.update()
+            end=now()
+
+            result = checker.needs_update()
+
+            if result == True:
+                self.assertTrue(i in expected_true)
+
+            print file_name, result,checker, (end-start).seconds()*1000.0
+
+        pos = simulation.atomPos(10)
+        pos[0] = pos_10[0]+0.50001
+        pos[1] = pos_10[1]
+        pos[2] = pos_10[2]
+
+        checker.update()
+        result = checker.needs_update()
+
+        self.assertTrue(result)
+
 
 if __name__ == "__main__":
 #     TODO: add a way to run the complete test suite
-      unittest2.main(module='test.test_xcamshift_gb3',failfast=True, defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step')
+      unittest2.main(module='test.test_xcamshift_gb3',failfast=True, defaultTest='TestXcamshiftGB3.test_exact_update_checker')
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_averaging_two_structures')
