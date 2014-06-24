@@ -31,8 +31,8 @@ from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
 from xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList,\
      clearSharedVector, EnsembleSimulation, createSharedVector, getSharedVectorValue, resizeSharedVector,\
      addToSharedVectorValue, getSharedVectorValue, deleteSharedVector, setSharedVectorValue, BondAngle, \
-     CDSList,FixedVector,FIVE
-from libc.math cimport cos,sin,  fabs, tanh, pow, cosh, ceil
+     CDSList,FixedVector,FIVE, currentSimulation
+from libc.math cimport cos,sin,  fabs, tanh, pow, cosh, ceil,sqrt
 from libc.stdlib cimport malloc, free
 from libc.stdlib cimport abs as iabs
 from libc.string cimport strcmp
@@ -42,6 +42,7 @@ from cpython cimport array
 import ctypes
 from component_list import  Component_list, Native_component_list
 from ensembleSimulation import EnsembleSimulation as pyEnsembleSimulation
+from cython.fast_segment_manager import Segment_Manager
 import math
 cdef double PI = math.pi
 
@@ -3233,4 +3234,102 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
             end_time = time()
             print '   distance shift components ' ,self._name,len(self._non_bonded_list), 'in', "%.17g" % (end_time-start_time), "seconds"
 
+
+cdef class Exact_grid_non_bonded_update_checker:
+
+    cdef CDSVector[Vec3] _save_pos
+    cdef float _max_shift_2
+    cdef float _tolerance_2
+    cdef bint _needs_update
+    cdef int _calls
+    cdef int _updates
+    cdef bint _updated
+    cdef bint _verbose
+
+    def __init__(self, tolerance):
+        self._tolerance_2 =  tolerance**2
+        self.reset()
+
+    def reset(self):
+        self._needs_update = False
+        self._save_pos.resize(0)
+        self._max_shift_2 = -1
+        self._calls = 0
+        self._updates = -1
+        self._updated =  False
+        self._verbose=False
+
+    def needs_update(self):
+        return self._needs_update
+
+    cdef inline float _abs2(self,Vec3 vec):
+        return dot(vec,vec)
+
+    def _get_number_atoms(self):
+        segment_manager =  Segment_Manager.get_segment_manager()
+        return  segment_manager.get_number_atoms()
+
+    def update(self):
+
+        self._calls+=1
+        self._updated=False
+
+        number_atoms = self._get_number_atoms()
+
+        simulation = currentSimulation()
+
+        self._needs_update=False
+
+        self._max_shift_2 = 0.0
+
+        cdef Vec3 pos
+        cdef Vec3 distances
+        cdef float distance_2
+
+        if self._save_pos.size() != number_atoms:
+            self._needs_update = False
+            self._update_saved_positions()
+        else:
+            for i in range(number_atoms):
+                pos = simulation.atomPos(i)
+                distances = pos-self._save_pos[i]
+                distance_2  =  self._abs2(distances)
+
+                if distance_2 > self._max_shift_2:
+                    self._max_shift_2 =  distance_2
+
+                if (distance_2 > self._tolerance_2 ):
+                    if self._verbose:
+                        print vec3_as_tuple(distances), vec3_as_tuple(pos), vec3_as_tuple(self._save_pos[i])
+                        print self.__class__.__name__, 'update! distance: %7.3f tolerance %7.3f' % (distance_2, self._tolerance_2)
+                    self._needs_update=True
+                    self._update_saved_positions()
+                    break
+
+    def _update_saved_positions(self):
+        if self._verbose:
+            print self.__class__.__name__,'save pos: %i atoms'
+
+        self._updates+=1
+        if self._updates > 0:
+            self._updated=True
+        number_atoms = self._get_number_atoms()
+
+        simulation = currentSimulation()
+        self._save_pos.resize(number_atoms)
+        for i in range(number_atoms):
+            self._save_pos[i] = simulation.atomPos(i)
+
+    def __str__(self):
+        result = [self.__class__.__name__]
+
+        result.append(':')
+
+        result.append('calls: %i' % self._calls)
+        result.append('updated: %s' % `self._updated`)
+        result.append('updates: %i' % self._updates)
+        result.append('num atoms: %i' % self._save_pos.size())
+        result.append('max move: %7.4f' % sqrt(self._max_shift_2))
+
+        return ' '.join(result)
 

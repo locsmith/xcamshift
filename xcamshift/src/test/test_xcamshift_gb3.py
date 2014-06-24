@@ -19,7 +19,7 @@ from derivList import DerivList
 from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
-from xcamshift import  Xcamshift, Exact_grid_non_bonded_update_checker
+from xcamshift import  Xcamshift
 from shift_calculators import CDSSharedVectorFloat
 from atomSel import AtomSel
 from test import gb3, gb3_10_steps
@@ -40,7 +40,7 @@ from cython.shift_calculators import Out_array
 from array import array
 from ensembleSimulation import EnsembleSimulation
 from cython.shift_calculators import CDSVectorFloat, New_fast_non_bonded_calculator, Fast_non_bonded_calculator
-from cython.shift_calculators import  Non_bonded_interaction_list
+from cython.shift_calculators import  Non_bonded_interaction_list ,Exact_grid_non_bonded_update_checker
 from nanotime import now
 from functools import partial
 
@@ -950,7 +950,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
             if result == True:
                 self.assertTrue(i in expected_true)
 
-            print file_name, result,checker, (end-start).seconds()*1000.0
+#             print file_name, result,checker, (end-start).seconds()*1000.0
 
         pos = simulation.atomPos(10)
         pos[0] = pos_10[0]+0.50001
@@ -965,7 +965,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
 if __name__ == "__main__":
 #     TODO: add a way to run the complete test suite
-      unittest2.main(module='test.test_xcamshift_gb3',failfast=True, defaultTest='TestXcamshiftGB3.test_exact_update_checker')
+      unittest2.main(module='test.test_xcamshift_gb3',failfast=True)#, defaultTest='TestXcamshiftGB3.test_exact_update_checker')
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_averaging_two_structures')

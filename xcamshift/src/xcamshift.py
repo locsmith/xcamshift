@@ -1871,95 +1871,7 @@ class Incremented_non_bonded_update_checker(Non_bonded_update_checker):
     def reset(self):
         self._box_update_count = self._update_frequency
 
-class Exact_grid_non_bonded_update_checker(Non_bonded_update_checker):
 
-    def __init__(self, tolerance):
-        self._tolerance_2 =  tolerance**2
-        self.reset()
-
-    def reset(self):
-        self._needs_update = False
-        self._save_pos =  None
-        self._max_shift_2 =  None
-        self._calls = 0
-        self._updates = -1
-        self._updated =  False
-        self._verbose=False
-
-    def needs_update(self):
-        return self._needs_update
-
-    def _abs2(self,vec):
-        return dot(vec,vec)
-
-    def _get_number_atoms(self):
-        segment_manager =  Segment_Manager.get_segment_manager()
-        return  segment_manager.get_number_atoms()
-
-    def update(self):
-
-        self._calls+=1
-        self._updated=False
-
-        number_atoms = self._get_number_atoms()
-
-        simulation = currentSimulation()
-
-        self._needs_update=False
-
-        self._max_shift_2 = 0.0
-
-        if self._save_pos == None or (len(self._save_pos) != number_atoms):
-            self._needs_update = False
-            self._update_saved_positions()
-        else:
-            for i in range(number_atoms):
-                pos = Vec3(simulation.atomPos(i)[0],simulation.atomPos(i)[1],simulation.atomPos(i)[2])
-                distance_2  =  self._abs2(pos-self._save_pos[i])
-
-                if distance_2 > self._max_shift_2:
-                    self._max_shift_2 =  distance_2
-
-                if (distance_2 > self._tolerance_2 ):
-                    if self._verbose:
-                        print pos-self._save_pos[i], pos,self._save_pos[i]
-                        print self.__class__.__name__, 'update! distance: %7.3f tolerance %7.3f' % (distance_2, self._tolerance_2)
-                    self._needs_update=True
-                    self._update_saved_positions()
-                    break
-
-
-
-
-    def _update_saved_positions(self):
-        if self._verbose:
-            print self.__class__.__name__,'save pos: %i atoms'
-
-        self._updates+=1
-        if self._updates > 0:
-            self._updated=True
-        number_atoms = self._get_number_atoms()
-
-        simulation = currentSimulation()
-        self._save_pos =  []
-        for i in range(number_atoms):
-            pos = Vec3(simulation.atomPos(i)[0],simulation.atomPos(i)[1],simulation.atomPos(i)[2])
-            self._save_pos.append(pos)
-
-
-
-    def __str__(self):
-        result = [self.__class__.__name__]
-
-        result.append(':')
-
-        result.append('calls: %i' % self._calls)
-        result.append('updated: %s' % `self._updated`)
-        result.append('updates: %i' % self._updates)
-        result.append('num atoms: %i' % len(self._save_pos))
-        result.append('max move: %7.4f' % sqrt(self._max_shift_2))
-
-        return ' '.join(result)
 
 class Non_bonded_list(object):
 
@@ -4142,16 +4054,5 @@ class Xcamshift(PyEnsemblePot):
                 component[4] =  weight
                 component = tuple(component)
                 energy_term_cache.replace_component(index, component)
-
-
-
-
-
-
-
-
-
-
-
 
 
