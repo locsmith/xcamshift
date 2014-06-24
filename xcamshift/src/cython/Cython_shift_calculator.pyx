@@ -46,6 +46,7 @@ from cython.fast_segment_manager import Segment_Manager
 import math
 cdef double PI = math.pi
 
+
 #TODO: should be ensembleSimulationAsNative
 cdef inline EnsembleSimulation* simulationAsNative(object simulation) except NULL:
     #TODO tell charles his __eq__ method has problems
@@ -3265,11 +3266,16 @@ cdef class Exact_grid_non_bonded_update_checker:
     cdef inline float _abs2(self,Vec3 vec):
         return dot(vec,vec)
 
-    def _get_number_atoms(self):
-        segment_manager =  Segment_Manager.get_segment_manager()
+    cdef int _get_number_atoms(self):
+        cdef object segment_manager =  Segment_Manager.get_segment_manager()
         return  segment_manager.get_number_atoms()
 
     def update(self):
+
+        cdef Vec3 pos
+        cdef Vec3 distances
+        cdef float distance_2
+        cdef int number_atoms
 
         self._calls+=1
         self._updated=False
@@ -3282,9 +3288,7 @@ cdef class Exact_grid_non_bonded_update_checker:
 
         self._max_shift_2 = 0.0
 
-        cdef Vec3 pos
-        cdef Vec3 distances
-        cdef float distance_2
+
 
         if self._save_pos.size() != number_atoms:
             self._needs_update = False
@@ -3306,7 +3310,10 @@ cdef class Exact_grid_non_bonded_update_checker:
                     self._update_saved_positions()
                     break
 
-    def _update_saved_positions(self):
+    cdef void  _update_saved_positions(self):
+        cdef int number_atoms
+        cdef Simulation* simulation
+
         if self._verbose:
             print self.__class__.__name__,'save pos: %i atoms'
 
