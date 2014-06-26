@@ -1885,7 +1885,7 @@ class Non_bonded_list(object):
         self._cutoff_distance = cutoff_distance
         self._jitter = jitter
         self._update_frequency=update_frequency
-        self._updater_checker = Incremented_non_bonded_update_checker(self._update_frequency)
+        self._updater_checker = Exact_grid_non_bonded_update_checker(self._jitter)
         self._min_residue_seperation = min_residue_separation
         self._simulation=  simulation
         self._reset()
@@ -1898,7 +1898,7 @@ class Non_bonded_list(object):
         if selection == Non_bonded_list.EXACT:
             self._updater_checker =  Exact_grid_non_bonded_update_checker(self._jitter)
         elif selection == Non_bonded_list.INCREMENTED:
-            Incremented_non_bonded_update_checker(self._update_frequency)
+            self._updater_checker = Incremented_non_bonded_update_checker(self._update_frequency)
         else:
             raise Exception('non bonded checker %s not recognised!' % `selection`)
 
@@ -2094,8 +2094,8 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
 # remote_atom_type_id exponent coefficient_by target_atom_id
 class Non_bonded_potential(Distance_based_potential):
 
-    EXACT =  Non_bonded_list.EXACT
-    INCREMENTED = Non_bonded_list.INCREMENTED
+    EXACT_NON_BONDED_CHECKER =  Non_bonded_list.EXACT
+    INCREMENTED_NON_BONDED_CHECKER = Non_bonded_list.INCREMENTED
 
     def __init__(self,simulation,smoothed=True):
         super(Non_bonded_potential, self).__init__(simulation,smoothed=smoothed)
@@ -3345,8 +3345,8 @@ class Hydrogen_bond_potential(Base_potential):
 class Xcamshift(PyEnsemblePot):
 
 
-
-
+    EXACT_NON_BONDED_CHECKER =  Non_bonded_potential.EXACT_NON_BONDED_CHECKER
+    INCREMENTED_NON_BONDED_CHECKER = Non_bonded_potential.INCREMENTED_NON_BONDED_CHECKER
 
 
     def _get_force_factor_calculator(self):
@@ -3394,6 +3394,8 @@ class Xcamshift(PyEnsemblePot):
         self._energy_calculator.set_verbose(on)
         self._verbose=on
 
+    def set_non_bonded_checker(self, selection):
+        self.get_named_sub_potential(NON_BONDED).set_non_bonded_checker(selection)
 
     def remove_named_sub_potential(self,name, quiet=False):
        if not quiet:

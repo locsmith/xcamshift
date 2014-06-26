@@ -181,6 +181,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
     def _get_xcamshift(self):
         xcamshift = Xcamshift()
+        xcamshift.set_non_bonded_checker(Xcamshift.INCREMENTED_NON_BONDED_CHECKER)
         return xcamshift
 
     def _get_xcamshift_no_hbond(self):
@@ -950,7 +951,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
             if result == True:
                 self.assertTrue(i in expected_true)
 
-#             print file_name, result,checker, (end-start).seconds()*1000.0
+            print file_name, result,checker, (end-start).seconds()*1000.0
 
         pos = simulation.atomPos(10)
         pos[0] = pos_10[0]+0.50001
