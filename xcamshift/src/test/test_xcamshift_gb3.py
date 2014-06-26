@@ -39,7 +39,10 @@ TOTAL_ENERGY = 'total'
 from cython.shift_calculators import Out_array
 from array import array
 from ensembleSimulation import EnsembleSimulation
-from cython.shift_calculators import CDSVectorFloat
+from cython.shift_calculators import CDSVectorFloat, New_fast_non_bonded_calculator, Fast_non_bonded_calculator
+from cython.shift_calculators import  Non_bonded_interaction_list ,Exact_grid_non_bonded_update_checker
+from nanotime import now
+from functools import partial
 
 def almostEqual(first, second, places = 7):
     result  = False
@@ -178,6 +181,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
     def _get_xcamshift(self):
         xcamshift = Xcamshift()
+        xcamshift.set_non_bonded_checker(Xcamshift.INCREMENTED_NON_BONDED_CHECKER)
         return xcamshift
 
     def _get_xcamshift_no_hbond(self):
@@ -188,7 +192,6 @@ class TestXcamshiftGB3(unittest2.TestCase):
     def test_component_chemical_shifts(self):
         xcamshift  = self._setup_xcamshift_with_shifts_table(gb3.gb3_zero_shifts)
         print 'WARNING using zero shifts with test_component_chemical_shifts_10_step as a hack to get _active_target_atom_ids corrrect!'
-
 
         component_shifts = gb3.gb3_subpotential_shifts
         self._do_test_component_shifts(xcamshift, component_shifts)
@@ -707,7 +710,6 @@ class TestXcamshiftGB3(unittest2.TestCase):
             return expected_forces
 
 
-
 #       TODO: xcamshift should be created anew  for each passage through the loop but the non bonded list is too slow
         xcamshift._prepare(TARGET_ATOM_IDS_CHANGED,None)
         xcamshift._prepare(ROUND_CHANGED, None)
@@ -715,7 +717,6 @@ class TestXcamshiftGB3(unittest2.TestCase):
         xcamshift.update_force_factor_calculator()
 
         for i, potential_name in enumerate(CAMSHIFT_SUB_POTENTIALS):
-
             out_string = '%s %i/%i:  ' % (potential_name,i+1, len(common_constants.CAMSHIFT_SUB_POTENTIALS))
             out_string = '%-20s' % out_string
             print out_string,
@@ -850,9 +851,122 @@ class TestXcamshiftGB3(unittest2.TestCase):
             test=latest
 
 
+    def _create_naive_and_fast_non_bonded_lists(self, nb_potential):
+        simulation = self.get_single_member_ensemble_simulation()
+
+        new_nb_calculator = New_fast_non_bonded_calculator(simulation, 1)
+        old_nb_calculator = Fast_non_bonded_calculator(simulation, 1)
+
+
+        components = nb_potential._get_components()
+
+        atom_list_1 = components['ATOM']
+        atom_list_2 = components['NBRM']
+
+        non_bonded_lists = Non_bonded_interaction_list()
+        old_non_bonded_lists = Non_bonded_interaction_list()
+
+        active_components = None
+
+        new_calc = partial(new_nb_calculator,atom_list_1, atom_list_2, non_bonded_lists, active_components)
+        old_calc = partial(old_nb_calculator,atom_list_1, atom_list_2, old_non_bonded_lists, active_components)
+
+        return new_calc, old_calc, non_bonded_lists, old_non_bonded_lists
+
+    def test_new_fast_non_bonded_list(self):
+
+        nb_potential = self._get_xcamshift().get_named_sub_potential(NON_BONDED)
+
+        new_calc, old_calc, non_bonded_lists, old_non_bonded_lists = self._create_naive_and_fast_non_bonded_lists(nb_potential)
+
+        new_calc()
+        old_calc()
+
+        remote_components = nb_potential._get_component_list('NBRM')
+
+        seen_dists = set()
+        expected_dists = set()
+        for elem in non_bonded_lists.dump():
+            atom_id_1 = elem[0]
+            atom_id_2 = remote_components[elem[2]][0]
+
+            key = atom_id_1,atom_id_2
+
+            seen_dists.add(key)
+
+        for elem in old_non_bonded_lists.dump():
+            atom_id_1 = elem[0]
+            atom_id_2 = remote_components[elem[2]][0]
+
+            key = atom_id_1,atom_id_2
+
+            expected_dists.add(key)
+
+        self.assertEqual(seen_dists,expected_dists)
+
+    def test_new_fast_non_bonded_list_timing(self):
+
+        nb_potential = self._get_xcamshift().get_named_sub_potential(NON_BONDED)
+
+        new_calc, old_calc, non_bonded_lists, old_non_bonded_lists = self._create_naive_and_fast_non_bonded_lists(nb_potential)
+
+        new_calc()
+        non_bonded_lists.clear()
+        start =  now()
+        new_calc()
+        end = now()
+
+        new_time = (end - start).seconds()
+
+        old_calc()
+        old_non_bonded_lists.clear()
+        start =  now()
+        old_calc()
+        end = now()
+
+        old_time = (end - start).seconds()
+
+        self.assertTrue(new_time < old_time)
+
+        print 'new  %4.3f ms / cycle' % (new_time*1000.0)
+        print 'new  %4.3f ms / cycle' % (old_time*1000.0)
+
+    def test_exact_update_checker(self):
+        simulation = currentSimulation()
+        checker = Exact_grid_non_bonded_update_checker(0.5)
+        expected_true = [1]
+        for i,file_name in enumerate(gb3_10_steps.gb3_files):
+
+            PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
+
+            if i == 1:
+                pos_10 = tuple(simulation.atomPos(10))
+
+            start = now()
+            checker.update()
+            end=now()
+
+            result = checker.needs_update()
+
+            if result == True:
+                self.assertTrue(i in expected_true)
+
+            print file_name, result,checker, (end-start).seconds()*1000.0
+
+        pos = simulation.atomPos(10)
+        pos[0] = pos_10[0]+0.50001
+        pos[1] = pos_10[1]
+        pos[2] = pos_10[2]
+
+        checker.update()
+        result = checker.needs_update()
+
+        self.assertTrue(result)
+
+
 if __name__ == "__main__":
 #     TODO: add a way to run the complete test suite
-      unittest2.main(module='test.test_xcamshift_gb3',failfast=True)#, defaultTest='TestXcamshiftGB3.test_shift_averaging_identical_structures')
+      unittest2.main(module='test.test_xcamshift_gb3',failfast=True)#, defaultTest='TestXcamshiftGB3.test_exact_update_checker')
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_total_forces_and_energy_10_step', exit=False)
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_force_components')
 #     unittest2.main(module='test.test_xcamshift_gb3',defaultTest='TestXcamshiftGB3.test_shift_averaging_two_structures')

@@ -30,9 +30,11 @@ from vec3 import Vec3 as python_vec3
 from common_constants import TARGET_ATOM_IDS_CHANGED, STRUCTURE_CHANGED
 from xplor_access cimport norm,Vec3, Dihedral, Atom,  dot,  cross,  Simulation, CDSVector, DerivList,\
      clearSharedVector, EnsembleSimulation, createSharedVector, getSharedVectorValue, resizeSharedVector,\
-     addToSharedVectorValue, getSharedVectorValue, deleteSharedVector, setSharedVectorValue, BondAngle
-from libc.math cimport cos,sin,  fabs, tanh, pow, cosh
+     addToSharedVectorValue, getSharedVectorValue, deleteSharedVector, setSharedVectorValue, BondAngle, \
+     CDSList,FixedVector,FIVE, currentSimulation
+from libc.math cimport cos,sin,  fabs, tanh, pow, cosh, ceil,sqrt
 from libc.stdlib cimport malloc, free
+from libc.stdlib cimport abs as iabs
 from libc.string cimport strcmp
 from time import time
 from utils import Atom_utils
@@ -40,8 +42,10 @@ from cpython cimport array
 import ctypes
 from component_list import  Component_list, Native_component_list
 from ensembleSimulation import EnsembleSimulation as pyEnsembleSimulation
+from cython.fast_segment_manager import Segment_Manager
 import math
 cdef double PI = math.pi
+
 
 #TODO: should be ensembleSimulationAsNative
 cdef inline EnsembleSimulation* simulationAsNative(object simulation) except NULL:
@@ -80,6 +84,11 @@ cdef struct Distance_component:
       int remote_atom_2
       float coefficient
       float exponent
+
+cdef struct Vec3_int:
+    int x
+    int y
+    int z
 
 cdef struct Dihedral_component:
       int target_atom
@@ -322,6 +331,7 @@ cdef  class Non_bonded_interaction_list:
     cdef int length
     cdef int size_increment
     cdef int RECORD_LENGTH
+    cdef int resize_count
 
     def __cinit__(self, int length=0, double fill_factor=1.0):
         self.data = new CDSVector[int]()
@@ -329,16 +339,22 @@ cdef  class Non_bonded_interaction_list:
         self.length =  0
         self.size_increment =  20
         self.RECORD_LENGTH = 4
+        self.resize_count = 0
 
     def test_append(self,int target_atom_id, int target_id, int remote_id, component_index):
         self.append(target_atom_id,  target_id,  remote_id, component_index)
 
+    def get_resize_count(self):
+        return self.resize_count
+
     def clear(self):
         self.length = 0
+        self.resize_count = 0
 
     cdef inline void append(self, int target_atom_id, int target_id, int remote_id, int component_index):
 
         if  self.data[0].size()*self.RECORD_LENGTH <= self.length*self.RECORD_LENGTH:
+            self.resize_count+=1
             self.resize()
         self.data[0][self.length] = target_atom_id
         self.data[0][self.length+1] = target_id
@@ -384,6 +400,14 @@ cdef  class Non_bonded_interaction_list:
         for i in range(self.length/self.RECORD_LENGTH):
             result.append(self[i])
         return result
+
+    def dump(self):
+        result = []
+
+        for elem_tuple in self:
+            result.append(elem_tuple)
+        return tuple(result)
+
 
     def __str__(self):
         return 'non bonded list, size: %i' % self.length
@@ -1601,6 +1625,266 @@ cdef class Fast_hydrogen_bond_shift_calculator(Base_shift_calculator):
             end_time = time()
             print '   hydrogen bond shift components ' ,self._name,len(self._num_components), 'in', "%.17g" % (end_time-start_time), "seconds"
 
+cdef class Non_bonded_bins:
+
+    cdef int _min_residue_seperation
+    cdef float _cutoff_distance
+    cdef float _jitter
+    cdef float _full_cutoff_distance
+    cdef bint _verbose
+    cdef EnsembleSimulation* _simulation
+
+    cdef float _spacing
+    cdef int x_steps, y_steps, z_steps
+
+    cdef float _x_min,_y_min,_z_min
+
+    cdef CDSVector[CDSVector[CDSVector[CDSList[int]]]] bins
+
+    cdef inline int max(self,int val_1,int val_2):
+        if val_1 > val_2:
+            return val_1
+        else:
+            return val_2
+
+    cdef inline int min(self,int val_1,int val_2):
+        if val_1 < val_2:
+            return val_1
+        else:
+            return val_2
+
+    def __init__(self,simulation, float cutoff_distance=5.0, float jitter=0.2):
+        self._simulation = simulationAsNative(simulation)
+
+        self._cutoff_distance =  cutoff_distance
+        self._jitter = jitter
+        self._spacing =  self._cutoff_distance + self._jitter
+        self._verbose =  False
+
+    cdef inline void _clear_bins(self,):
+        self.bins.resize(self.x_steps);
+        for i in range(self.x_steps):
+            self.bins[i].resize(self.y_steps)
+            for j in range(self.y_steps):
+                self.bins[i][j].resize(self.z_steps)
+                for k in range(self.z_steps):
+                    self.bins[i][j][k].resize(0)
+
+    cdef void _find_neighbors(self, int x_bin, int y_bin, int z_bin, CDSList[Vec3_int]& result):
+        cdef int x_min =self.max(x_bin-1,0)
+        cdef int y_min =self.max(y_bin-1,0)
+        cdef int z_min =self.max(z_bin-1,0)
+
+        cdef int x_max = self.min(x_bin+1,self.x_steps-1)
+        cdef int y_max = self.min(y_bin+1,self.y_steps-1)
+        cdef int z_max = self.min(z_bin+1,self.z_steps-1)
+
+        cdef int x, y,z
+        cdef Vec3_int bin
+
+        result.resize(0)
+
+        for x in range(x_min,x_max+1):
+            for y in range (y_min,y_max+1):
+                for z in range (z_min, z_max+1):
+                    bin.x=x
+                    bin.y=y
+                    bin.z=z
+                    result.append(bin)
+
+
+
+    def find_neighbors(self, pos):
+        cdef CDSList[Vec3_int] bins
+        result = []
+
+        x,y,z = pos
+        self._find_neighbors(x,y,z,bins)
+
+        result = []
+        for i in range(bins.size()):
+            bin  = bins[i].x,bins[i].y,bins[i].z
+            result.append(bin)
+
+        return tuple(result)
+
+
+
+    def _test_add_to_bins(self,int[:] atom_ids):
+        cdef Non_bonded_remote_atom_component* components
+        num_components = len(atom_ids)
+        components = <Non_bonded_remote_atom_component*> malloc(num_components * sizeof(Non_bonded_remote_atom_component))
+        for i in range(num_components):
+            components[i].remote_atom_id = atom_ids[i]
+        self._add_components_to_bins(num_components, components)
+        free(components)
+
+    cdef void _add_components_to_bins(self, int num_components, Non_bonded_remote_atom_component* components):
+        cdef float huge = 1e30
+
+        cdef float x_min = huge
+        cdef float y_min = huge
+        cdef float z_min = huge
+
+        cdef float x_max = -huge
+        cdef float y_max = -huge
+        cdef float z_max = -huge
+
+        cdef Vec3 pos
+        cdef int atom_id
+
+        cdef int i
+
+        for i in range(num_components):
+
+            atom_id = components[i].remote_atom_id
+
+            pos = self._simulation[0].atomByID(atom_id).pos()
+
+            if pos.x()<x_min:
+                x_min = pos.x()
+            if pos.y()<y_min:
+                y_min = pos.y()
+            if pos.z()<z_min:
+                z_min = pos.z()
+
+            if pos.x()>x_max:
+                x_max = pos.x()
+            if pos.y()>y_max:
+                y_max = pos.y()
+            if pos.z()>z_max:
+                z_max = pos.z()
+
+        self.x_steps = self.max(1, <int>ceil( (x_max - x_min) / self._spacing))
+        self.y_steps = self.max(1, <int>ceil( (y_max - y_min) / self._spacing))
+        self.z_steps = self.max(1, <int>ceil( (z_max - z_min) / self._spacing))
+
+        self._clear_bins()
+
+
+        self._x_min = x_min
+        self._y_min = y_min
+        self._z_min = z_min
+
+        for i in range(num_components):
+
+            atom_id = components[i].remote_atom_id
+            self._add_to_bin(atom_id,i)
+
+    cdef inline void _add_to_bin(self, int atom_id, int index):
+        cdef Vec3 pos = self._simulation[0].atomByID(atom_id).pos()
+        cdef int x_bin = self._find_x_bin(pos.x())
+        cdef int y_bin = self._find_y_bin(pos.y())
+        cdef int z_bin = self._find_z_bin(pos.z())
+
+        self.bins[x_bin][y_bin][z_bin].append(index);
+
+    cdef inline int _find_x_bin(self, float x):
+        return self.max(0,self.min(self.x_steps-1,(int)((x-self._x_min)/self._spacing)))
+
+    cdef inline int _find_y_bin(self, float y):
+        return self.max(0,self.min(self.y_steps-1,(int)((y-self._y_min)/self._spacing)))
+
+    cdef inline int _find_z_bin(self, float z):
+        return self.max(0,self.min(self.z_steps-1,(int)((z-self._z_min)/self._spacing)))
+
+    cdef void _find_bin(self, Vec3& pos, Vec3_int& bin):
+        bin.x = self._find_x_bin(pos.x())
+        bin.y = self._find_y_bin(pos.y())
+        bin.z = self._find_z_bin(pos.z())
+
+    def dump(self):
+        for i in range(self.x_steps):
+            for j in range(self.y_steps):
+                for k in range(self.z_steps):
+                    print i,j,k,self.bins[i][j][k].size()
+
+    cdef CDSList[int]* get_bin(self,Vec3_int& bin):
+        return &(self.bins[bin.x][bin.y][bin.z])
+
+    def get_bin_python(self,x,y,z):
+        result  = []
+        for i in range(self.bins[x][y][z].size()):
+            result.append(self.bins[x][y][z][i])
+        return result
+
+cdef class New_fast_non_bonded_calculator(Fast_non_bonded_calculator):
+    cdef Non_bonded_bins _bins
+
+    def __init__(self,simulation, min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
+        super(New_fast_non_bonded_calculator, self).__init__(simulation, min_residue_seperation,cutoff_distance,jitter)
+        self._bins = Non_bonded_bins(simulation,cutoff_distance,jitter)
+
+
+
+    @cython.profile(True)
+    def __call__(self, atom_list_1, atom_list_2,  Non_bonded_interaction_list non_bonded_lists, int[:] active_components):
+
+        self.residue_numbers = self._simulation[0].residueNumArr()
+        self.segids = self._simulation[0].segmentNameArr()
+        self.positions = self._simulation[0].atomPosArr()
+
+        if self._verbose:
+            print '***** BUILD NON BONDED ******'
+
+        cdef  Non_bonded_target_component* target_components
+        cdef int num_target_components = self._bytes_to_target_components(atom_list_1,&target_components)
+
+        cdef Non_bonded_remote_atom_component* remote_components
+        cdef int num_remote_components = self._bytes_to_remote_components(atom_list_2,&remote_components)
+
+        cdef double start_time = 0.0
+        cdef double end_time = 0.0
+        if self._verbose:
+            start_time = time()
+
+
+        cdef int i, atom_id_1, atom_id_2
+        cdef Vec3_int bin_index
+        cdef CDSList[Vec3_int] neighbor_bins
+        cdef int j,k
+        cdef CDSList[int]* neighbors
+        non_bonded_lists.clear()
+        self._bins._add_components_to_bins(num_remote_components,remote_components)
+        if active_components == None:
+
+#             print 'num comp: ',num_target_components
+            for i in range(num_target_components):
+
+                atom_id_1 = target_components[i].target_atom_id
+                pos = self._simulation[0].atomPos(atom_id_1)
+                self._bins._find_bin(pos,bin_index)
+                self._bins._find_neighbors( bin_index.x,bin_index.y,bin_index.z, neighbor_bins)
+                for k in range(neighbor_bins.size()):
+                    neighbors  = self._bins.get_bin(neighbor_bins[k])
+
+                    for j in range(neighbors.size()):
+                        atom_id_2  = remote_components[neighbors[0][j]].remote_atom_id
+                        if self._is_non_bonded(atom_id_1, atom_id_2):
+                            non_bonded_lists.append(atom_id_1, i,neighbors[0][j],i)
+        else:
+            for component_index in range(len(active_components)):
+                i = active_components[component_index]
+                atom_id_1 = target_components[i].target_atom_id
+                pos = self._simulation[0].atomPos(atom_id_1)
+                self._bins._find_bin(pos,bin_index)
+                self._bins._find_neighbors( bin_index.x,bin_index.y,bin_index.z, neighbor_bins)
+                for k in range(neighbor_bins.size()):
+                    neighbors  = self._bins.get_bin(neighbor_bins[k])
+
+                    for j in range(neighbors.size()):
+                            atom_id_2  = remote_components[neighbors[0][j]].remote_atom_id
+                            if self._is_non_bonded(atom_id_1, atom_id_2):
+                                non_bonded_lists.append(atom_id_1, i,neighbors[0][j],i)
+#                 for j in range(num_remote_components):
+#                     atom_id_2  = remote_components[j].remote_atom_id
+#                     if self._is_non_bonded(atom_id_1, atom_id_2):
+#                         non_bonded_lists.append(atom_id_1, i,j,component_index)
+
+        if self._verbose:
+            end_time = time()
+            print '   non bonded list targets: ',len(atom_list_1),' remotes: ', len(atom_list_2),' in', "%.17g" %  (end_time-start_time), "seconds"
+
 
 cdef class Fast_non_bonded_calculator:
     cdef int _min_residue_seperation
@@ -1609,6 +1893,9 @@ cdef class Fast_non_bonded_calculator:
     cdef float _full_cutoff_distance
     cdef bint _verbose
     cdef EnsembleSimulation* _simulation
+    cdef CDSVector[int] residue_numbers
+    cdef CDSVector[FixedVector[char,FIVE]] segids
+    cdef CDSVector[Vec3] positions
 
     def __init__(self,simulation, min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
         self._simulation = simulationAsNative(simulation)
@@ -1629,35 +1916,35 @@ cdef class Fast_non_bonded_calculator:
 
         result = False
 
-        if strcmp(seg_1, seg_2) == 0:
-            sequence_distance =abs(residue_1-residue_2)
-            if sequence_distance < self._min_residue_seperation:
+        sequence_distance =iabs(residue_1-residue_2)
+        if sequence_distance < self._min_residue_seperation:
+            if strcmp(seg_1, seg_2) == 0:
                 result =True
         return result
 
     cdef inline bint  _is_non_bonded(self, int atom_id_1, int atom_id_2):
 
-        cdef Atom atom_1, atom_2
+#         cdef Atom atom_1, atom_2
         cdef char *seg_1
         cdef char *seg_2
         cdef int residue_1, residue_2
         cdef bint is_non_bonded
         cdef float distance
 
-        atom_1 = self._simulation[0].atomByID(atom_id_1)
-        atom_2 = self._simulation[0].atomByID(atom_id_2)
+#         atom_1 = self._simulation[0].atomByID(atom_id_1)
+#         atom_2 = self._simulation[0].atomByID(atom_id_2)
 
-        seg_1 =  <char *>atom_1.segmentName()
-        residue_1 = atom_1.residueNum()
+        seg_1 =  self.segids[atom_id_1].pointer()
+        residue_1 = self.residue_numbers[atom_id_1]
 
-        seg_2 = <char*>atom_2.segmentName()
-        residue_2 =  atom_2.residueNum()
+        seg_2 =  self.segids[atom_id_2].pointer()
+        residue_2 =  self.residue_numbers[atom_id_2]
 
         is_non_bonded = True
         if self._filter_by_residue(seg_1, residue_1, seg_2, residue_2):
             is_non_bonded = False
         else:
-            distance = norm(atom_1.pos() - atom_2.pos())
+            distance = norm(self.positions[atom_id_1] - self.positions[atom_id_2])
             is_non_bonded =  distance < self._full_cutoff_distance
         return is_non_bonded
 
@@ -1674,6 +1961,10 @@ cdef class Fast_non_bonded_calculator:
 
     @cython.profile(True)
     def __call__(self, atom_list_1, atom_list_2,  Non_bonded_interaction_list non_bonded_lists, int[:] active_components):
+
+        self.residue_numbers = self._simulation[0].residueNumArr()
+        self.segids = self._simulation[0].segmentNameArr()
+        self.positions = self._simulation[0].atomPosArr()
 
         if self._verbose:
             print '***** BUILD NON BONDED ******'
@@ -2944,4 +3235,108 @@ cdef class Fast_non_bonded_shift_calculator(Fast_distance_shift_calculator):
             end_time = time()
             print '   distance shift components ' ,self._name,len(self._non_bonded_list), 'in', "%.17g" % (end_time-start_time), "seconds"
 
+
+cdef class Exact_grid_non_bonded_update_checker:
+
+    cdef CDSVector[Vec3] _save_pos
+    cdef float _max_shift_2
+    cdef float _tolerance_2
+    cdef bint _needs_update
+    cdef int _calls
+    cdef int _updates
+    cdef bint _updated
+    cdef bint _verbose
+
+    def __init__(self, tolerance):
+        self._tolerance_2 =  tolerance**2
+        self.reset()
+
+    def reset(self):
+        self._needs_update = False
+        self._save_pos.resize(0)
+        self._max_shift_2 = -1
+        self._calls = 0
+        self._updates = -1
+        self._updated =  False
+        self._verbose=False
+
+    def needs_update(self):
+        return self._needs_update
+
+    cdef inline float _abs2(self,Vec3 vec):
+        return dot(vec,vec)
+
+    cdef int _get_number_atoms(self):
+        cdef object segment_manager =  Segment_Manager.get_segment_manager()
+        return  segment_manager.get_number_atoms()
+
+    def update(self):
+
+        cdef Vec3 pos
+        cdef Vec3 distances
+        cdef float distance_2
+        cdef int number_atoms
+
+        self._calls+=1
+        self._updated=False
+
+        number_atoms = self._get_number_atoms()
+
+        simulation = currentSimulation()
+
+        self._needs_update=False
+
+        self._max_shift_2 = 0.0
+
+
+
+        if self._save_pos.size() != number_atoms:
+            self._needs_update = False
+            self._update_saved_positions()
+        else:
+            for i in range(number_atoms):
+                pos = simulation.atomPos(i)
+                distances = pos-self._save_pos[i]
+                distance_2  =  self._abs2(distances)
+
+                if distance_2 > self._max_shift_2:
+                    self._max_shift_2 =  distance_2
+
+                if (distance_2 > self._tolerance_2 ):
+                    if self._verbose:
+                        print vec3_as_tuple(distances), vec3_as_tuple(pos), vec3_as_tuple(self._save_pos[i])
+                        print self.__class__.__name__, 'update! distance: %7.3f tolerance %7.3f' % (distance_2, self._tolerance_2)
+                    self._needs_update=True
+                    self._update_saved_positions()
+                    break
+
+    cdef void  _update_saved_positions(self):
+        cdef int number_atoms
+        cdef Simulation* simulation
+
+        if self._verbose:
+            print self.__class__.__name__,'save pos: %i atoms'
+
+        self._updates+=1
+        if self._updates > 0:
+            self._updated=True
+        number_atoms = self._get_number_atoms()
+
+        simulation = currentSimulation()
+        self._save_pos.resize(number_atoms)
+        for i in range(number_atoms):
+            self._save_pos[i] = simulation.atomPos(i)
+
+    def __str__(self):
+        result = [self.__class__.__name__]
+
+        result.append(':')
+
+        result.append('calls: %i' % self._calls)
+        result.append('updated: %s' % `self._updated`)
+        result.append('updates: %i' % self._updates)
+        result.append('num atoms: %i' % self._save_pos.size())
+        result.append('max move: %7.4f' % sqrt(self._max_shift_2))
+
+        return ' '.join(result)
 

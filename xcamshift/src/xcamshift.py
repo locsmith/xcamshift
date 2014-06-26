@@ -8,30 +8,34 @@
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
-from shift_io.xplor_reader import Xplor_reader
 '''
 Created on 27 Dec 2011
 
 @author: garyt
 #TODO: need to translate from_atom names
 '''
-
 #TODO: add tests to exclude atoms/distances which are not defined
+#TODO: REMOVE!
 
-from cython.pyEnsemblePot import PyEnsemblePot
-from atomSel import AtomSel,intersection
-from component_list import Component_list, Native_component_list
-from dihedral import Dihedral
-from keys import Atom_key, Dihedral_key
-from observed_chemical_shifts import Observed_shift_table
-from cython.fast_segment_manager import Segment_Manager
-from table_manager import Table_manager
-from python_utils import tupleit
-from utils import Atom_utils, iter_residues_and_segments
+from abc import abstractmethod, ABCMeta
+import array#
+from math import sqrt
 import sys
+from time import time
+
 from common_constants import  BACK_BONE, XTRA, RANDOM_COIL, DIHEDRAL, SIDE_CHAIN, RING, NON_BONDED, DISULPHIDE, HBOND
 from common_constants import  TARGET_ATOM_IDS_CHANGED, ROUND_CHANGED, STRUCTURE_CHANGED, SHIFT_DATA_CHANGED
-from abc import abstractmethod, ABCMeta
+from component_list import Component_list, Native_component_list
+from keys import Atom_key, Dihedral_key
+from observed_chemical_shifts import Observed_shift_table
+from python_utils import tupleit
+from shift_io.xplor_reader import Xplor_reader
+from table_manager import Table_manager
+from utils import Atom_utils, iter_residues_and_segments
+
+from atomSel import AtomSel,intersection
+from cython.fast_segment_manager import Segment_Manager
+from cython.pyEnsemblePot import PyEnsemblePot
 from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedral_shift_calculator, \
                                      Fast_ring_shift_calculator, Fast_ring_data_calculator,          \
                                      Fast_non_bonded_calculator, Fast_energy_calculator,             \
@@ -45,11 +49,12 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
                                      Non_bonded_interaction_list,                                    \
                                      Fast_random_coil_shift_calculator, CDSSharedVectorFloat,        \
                                      Fast_hydrogen_bond_shift_calculator,CDSVectorFloat,             \
-                                     Fast_hydrogen_bond_calculator
-from time import time
-import array#
+                                     Fast_hydrogen_bond_calculator, New_fast_non_bonded_calculator,  \
+                                     Exact_grid_non_bonded_update_checker
+from dihedral import Dihedral
+from simulation import currentSimulation
+from vec3 import dot,Vec3
 
-#TODO: REMOVE!
 
 class Component_factory(object):
     __metaclass__ = ABCMeta
@@ -1834,13 +1839,53 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
         return 'NBRM'
 
 
+class Non_bonded_update_checker:
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def needs_update(self):
+        pass
+
+    @abstractmethod
+    def update(self):
+        pass
+
+    @abstractmethod
+    def reset(self):
+        pass
+
+class Incremented_non_bonded_update_checker(Non_bonded_update_checker):
+    def __init__(self, update_frequency):
+        self._update_frequency =update_frequency
+        self.reset()
+
+    def needs_update(self):
+        result = False
+        if self._box_update_count < self._update_frequency:
+            result = False
+        else:
+            self._box_update_count = 0
+            result =  True
+        return result
+
+    def update(self):
+        self._box_update_count += 1
+
+    def reset(self):
+        self._box_update_count = self._update_frequency
+
+
 
 class Non_bonded_list(object):
+
+    EXACT =  'EXACT'
+    INCREMENTED = 'INCREMENTED'
 
     def __init__(self,simulation,cutoff_distance= 5.0,jitter=0.2,update_frequency=5, min_residue_separation = 2):
         self._cutoff_distance = cutoff_distance
         self._jitter = jitter
-        self._update_frequency =update_frequency
+        self._update_frequency=update_frequency
+        self._updater_checker = Exact_grid_non_bonded_update_checker(self._jitter)
         self._min_residue_seperation = min_residue_separation
         self._simulation=  simulation
         self._reset()
@@ -1849,9 +1894,16 @@ class Non_bonded_list(object):
         self._verbose = False
         self._non_bonded_list_calculator = self._get_non_bonded_calculator()
 
+    def set_non_bonded_checker(self, selection):
+        if selection == Non_bonded_list.EXACT:
+            self._updater_checker =  Exact_grid_non_bonded_update_checker(self._jitter)
+        elif selection == Non_bonded_list.INCREMENTED:
+            self._updater_checker = Incremented_non_bonded_update_checker(self._update_frequency)
+        else:
+            raise Exception('non bonded checker %s not recognised!' % `selection`)
 
     def _reset(self):
-        self._box_update_count = self._update_frequency
+        self._updater_checker.reset()
         self._non_bonded = []
         self._non_bonded_calculation_count = 0
         self._non_bonded_call_count = 0
@@ -1863,7 +1915,7 @@ class Non_bonded_list(object):
         return self._cutoff_distance
 
     def _get_non_bonded_calculator(self):
-        result = Fast_non_bonded_calculator(self._simulation,self._min_residue_seperation, self._cutoff_distance, self._jitter)
+        result = New_fast_non_bonded_calculator(self._simulation,self._min_residue_seperation, self._cutoff_distance, self._jitter)
         return result
 
     def _get_cutoff_distance_2(self):
@@ -1876,9 +1928,20 @@ class Non_bonded_list(object):
 
 
     def update(self):
-        self._box_update_count +=1
+        self._updater_checker.update()
         if self._verbose:
-             print "  BOX COUNT UPDATED TO: ", self._box_update_count
+            print "  BOX COUNT UPDATED TO: ", self._box_update_count
+
+
+    def _needs_update(self):
+        result =self._updater_checker.needs_update()
+        if self._verbose:
+            if result == False:
+                print '  skip boxes call count = ', self._box_update_count
+
+            else:
+                print '  !!CALC BOXES!! call count = ', self._box_update_count
+        return result
 
     def get_boxes(self,component_list_1, component_list_2,target_component_list,coefficient_list, active_components):
 #        print self._box_update_count, se        if self._verbose:
@@ -1886,15 +1949,9 @@ class Non_bonded_list(object):
         if self._verbose:
             print '  update, box_count= ',self._box_update_count
 
-        if self._box_update_count < self._update_frequency:
-            if self._verbose:
-                print '  skip boxes call count = ', self._box_update_count
-        else:
-            if self._verbose:
-                print '  !!CALC BOXES!! call count = ', self._box_update_count
+        if self._needs_update():
 
             target_component_list.clear()
-            self._box_update_count = 0
             self._non_bonded_calculation_count += 1
 
             native_target_atom_list = component_list_1.get_native_components()
@@ -2037,6 +2094,9 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
 # remote_atom_type_id exponent coefficient_by target_atom_id
 class Non_bonded_potential(Distance_based_potential):
 
+    EXACT_NON_BONDED_CHECKER =  Non_bonded_list.EXACT
+    INCREMENTED_NON_BONDED_CHECKER = Non_bonded_list.INCREMENTED
+
     def __init__(self,simulation,smoothed=True):
         super(Non_bonded_potential, self).__init__(simulation,smoothed=smoothed)
 
@@ -2048,6 +2108,9 @@ class Non_bonded_potential(Distance_based_potential):
         self._non_bonded_list = Non_bonded_list(self._simulation)
         self._component_set = {}
         self._selected_components =  None
+
+    def set_non_bonded_checker(self, selection):
+        self._non_bonded_list.set_non_bonded_checker(selection)
 
     def _get_shift_calculator(self):
         result  = Fast_non_bonded_shift_calculator(self._simulation, smoothed=self._smoothed, name = self.get_abbreviated_name())
@@ -3282,8 +3345,8 @@ class Hydrogen_bond_potential(Base_potential):
 class Xcamshift(PyEnsemblePot):
 
 
-
-
+    EXACT_NON_BONDED_CHECKER =  Non_bonded_potential.EXACT_NON_BONDED_CHECKER
+    INCREMENTED_NON_BONDED_CHECKER = Non_bonded_potential.INCREMENTED_NON_BONDED_CHECKER
 
 
     def _get_force_factor_calculator(self):
@@ -3331,6 +3394,8 @@ class Xcamshift(PyEnsemblePot):
         self._energy_calculator.set_verbose(on)
         self._verbose=on
 
+    def set_non_bonded_checker(self, selection):
+        self.get_named_sub_potential(NON_BONDED).set_non_bonded_checker(selection)
 
     def remove_named_sub_potential(self,name, quiet=False):
        if not quiet:
@@ -4011,16 +4076,5 @@ class Xcamshift(PyEnsemblePot):
                 component[4] =  weight
                 component = tuple(component)
                 energy_term_cache.replace_component(index, component)
-
-
-
-
-
-
-
-
-
-
-
 
 
