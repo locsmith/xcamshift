@@ -3252,12 +3252,11 @@ cdef class Exact_grid_non_bonded_update_checker:
         self.reset()
 
     def reset(self):
-        self._needs_update = False
+        self._needs_update = True
         self._save_pos.resize(0)
         self._max_shift_2 = -1
         self._calls = 0
         self._updates = -1
-        self._updated =  False
         self._verbose=False
 
     def needs_update(self):
@@ -3272,43 +3271,45 @@ cdef class Exact_grid_non_bonded_update_checker:
 
     def update(self):
 
+
+        self._calls+=1
+
+        if self._update_needed():
+            self._update_saved_positions()
+            self._needs_update = True
+        else:
+            self._needs_update = False
+            if self._verbose:
+                print self.__class__.__name__, 'update! distance: %7.3f tolerance %7.3f' % (sqrt(self._max_shift_2), sqrt(self._tolerance_2))
+
+    cdef bint _update_needed(self):
         cdef Vec3 pos
         cdef Vec3 distances
         cdef float distance_2
         cdef int number_atoms
-
-        self._calls+=1
-        self._updated=False
-
-        number_atoms = self._get_number_atoms()
+        cdef bint result
 
         simulation = currentSimulation()
-
-        self._needs_update=False
-
+        number_atoms = self._get_number_atoms()
         self._max_shift_2 = 0.0
-
-
+        result = False
 
         if self._save_pos.size() != number_atoms:
-            self._needs_update = False
             self._update_saved_positions()
+            result = True
         else:
             for i in range(number_atoms):
                 pos = simulation.atomPos(i)
-                distances = pos-self._save_pos[i]
-                distance_2  =  self._abs2(distances)
+                distances = pos - self._save_pos[i]
+                distance_2 = self._abs2(distances)
 
                 if distance_2 > self._max_shift_2:
-                    self._max_shift_2 =  distance_2
+                    self._max_shift_2 = distance_2
 
-                if (distance_2 > self._tolerance_2 ):
-                    if self._verbose:
-                        print vec3_as_tuple(distances), vec3_as_tuple(pos), vec3_as_tuple(self._save_pos[i])
-                        print self.__class__.__name__, 'update! distance: %7.3f tolerance %7.3f' % (distance_2, self._tolerance_2)
-                    self._needs_update=True
-                    self._update_saved_positions()
+                if (distance_2 > self._tolerance_2):
+                    result = True
                     break
+        return result
 
     cdef void  _update_saved_positions(self):
         cdef int number_atoms
@@ -3318,8 +3319,6 @@ cdef class Exact_grid_non_bonded_update_checker:
             print self.__class__.__name__,'save pos: %i atoms'
 
         self._updates+=1
-        if self._updates > 0:
-            self._updated=True
         number_atoms = self._get_number_atoms()
 
         simulation = currentSimulation()
@@ -3333,7 +3332,7 @@ cdef class Exact_grid_non_bonded_update_checker:
         result.append(':')
 
         result.append('calls: %i' % self._calls)
-        result.append('updated: %s' % `self._updated`)
+        result.append('updated: %s' % `self._needs_update`)
         result.append('updates: %i' % self._updates)
         result.append('num atoms: %i' % self._save_pos.size())
         result.append('max move: %7.4f' % sqrt(self._max_shift_2))

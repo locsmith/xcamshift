@@ -934,7 +934,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
     def test_exact_update_checker(self):
         simulation = currentSimulation()
         checker = Exact_grid_non_bonded_update_checker(0.5)
-        expected_true = [1]
+        expected_true = [0,1]
         for i,file_name in enumerate(gb3_10_steps.gb3_files):
 
             PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
@@ -948,10 +948,11 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
             result = checker.needs_update()
 
+            #print i, file_name, result,checker, (end-start).seconds()*1000.0
+            
             if result == True:
                 self.assertTrue(i in expected_true)
 
-            print file_name, result,checker, (end-start).seconds()*1000.0
 
         pos = simulation.atomPos(10)
         pos[0] = pos_10[0]+0.50001
