@@ -69,7 +69,7 @@ ${xc_xplor_root}/bin/includeCC ${root}_wrap_new.cpp    \
 
 #compile
 
-g++ -c  ${root}_wrap_new_2.cpp                         \
+$CXX -c  ${root}_wrap_new_2.cpp                          \
   -O3                                                    \
   -ffast-math                                            \
   -funroll-loops                                         \
@@ -104,7 +104,7 @@ g++ -c  ${root}_wrap_new_2.cpp                         \
   -DSWIGPY_NOINCLUDE                                     \
 -o _${root}.o
 
-g++                                                        \
+$CXX                                                       \
 -dynamiclib                                                \
 -flat_namespace                                            \
 -undefined suppress                                        \
@@ -119,7 +119,7 @@ _${root}.o                                                  \
 -L${xc_xplor_root}/bin.${xc_platform}_${xc_architecture}/                   \
 -lswigpy-xplor
 
-g++                                        \
+$CXX                                       \
 -bundle                                    \
 -flat_namespace                            \
 -undefined suppress                        \
