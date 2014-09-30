@@ -91,7 +91,7 @@ g++ -c  ${root}_wrap_new_2.cpp                         \
 -DCPLUSPLUS                                                \
 -DUSE_CDS_NAMESPACE                                        \
 -I${xc_xplor_root}/python/                                 \
--I${xc_xplor_root}/arch/Darwin_13_x86_64/include           \
+-I${xc_xplor_root}/arch/${xc_platform}_${xc_architecture}/include           \
 -DSWIGPY_GLOBAL                                            \
 -I.                                                                                        \
 -I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 \
@@ -111,12 +111,12 @@ g++                                                        \
 -single_module                                             \
 _${root}.o                                                  \
 -o  lib${root}.dylib                                       \
--L${xc_xplor_root}/bin.Darwin_13_x86_64/                   \
+-L${xc_xplor_root}/bin.${xc_platform}_${xc_architecture}/                   \
 -u _PyMac_Error                                            \
 /System/Library/Frameworks/Python.framework/Versions/2.7/Python  \
 -ldl                                                       \
 -framework  CoreFoundation                                 \
--L${xc_xplor_root}/bin.Darwin_13_x86_64/                   \
+-L${xc_xplor_root}/bin.${xc_platform}_${xc_architecture}/                   \
 -lswigpy-xplor
 
 g++                                        \
@@ -125,7 +125,7 @@ g++                                        \
 -undefined suppress                        \
 _${root}.o                                 \
 -o _${root}.so                             \
--L${xc_xplor_root}/bin.Darwin_13_x86_64/   \
+-L${xc_xplor_root}/bin.${xc_platform}_${xc_architecture}/   \
 -lcommon                                   \
 -lswigpy-xplor                            \
 -lpy                                       \
