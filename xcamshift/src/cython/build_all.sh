@@ -1,4 +1,4 @@
-#!/bin/sh  
+#!/bin/sh
 
 unamestr=`uname`
 if [[ "$unamestr" == 'Linux' ]]; then
@@ -43,6 +43,10 @@ export xc_lower_platform=$(echo "${xc_platform}" | tr '[:upper:]' '[:lower:]')
 
 # this is where to find the cython executable
 export PYTHONPATH=/Users/garythompson/programs/cython/0.20.1
+
+# the interface used by xplor to call the ensemble code changed at some point
+# this controls whether the old or the new calling convention is used
+export xc_old_ensemble_interface=0
 
 ${xc_xplor_root}/bin/pyXplor setup.py build_ext --inplace 
 ./build_extension.sh 

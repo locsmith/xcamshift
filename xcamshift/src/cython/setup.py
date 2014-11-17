@@ -24,11 +24,13 @@ import Cython.Compiler.Options
 Cython.Compiler.Options.annotate = True
 
 # change path and architecture to match local installation
-xplor_path =      os.environ['xc_xplor_root']          # '/home/garyt/programs/xplor-nih/2.31.0'
-architecture =    os.environ['xc_architecture']        # 'i686'
-platform =        os.environ['xc_platform']            # 'Linux'
-python_version =  os.environ['xc_python_version']      # '2.6'
+xplor_path =               os.environ['xc_xplor_root']                  # '/home/garyt/programs/xplor-nih/2.31.0'
+architecture =             os.environ['xc_architecture']                # 'i686'
+platform =                 os.environ['xc_platform']                    # 'Linux'
+python_version =           os.environ['xc_python_version']              # '2.6'
+old_ensemble_interface =   os.environ['xc_old_ensemble_interface']      #  0 or 1 use 1 for older version of xplor < xxx.xxx
 
+extra_compile_args = ["-O3"]
 
 params = {'path'           : xplor_path,
           'architecture'   : architecture,
@@ -48,17 +50,18 @@ ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx",'s
                                           ('USE_CDS_NAMESPACE', '1')],
                         
                          language="c++",
-                         extra_compile_args=["-O3"],
+                         extra_compile_args=extra_compile_args,
                          extra_link_args=extra_link_args,
                          include_dirs=include_dirs),
 
 				       
                Extension("pyEnsemblePot",  ["PyEnsemblePotProxy.cc",'pyEnsemblePot.pyx'],   
                          define_macros = [('CPLUSPLUS', '1') ,
-                                           ('USE_CDS_NAMESPACE', '1')],
+                                          ('USE_CDS_NAMESPACE', '1') ,
+                                          ('OLD_ENSEMBLE_INTERFACE',old_ensemble_interface)],
                         
                          language="c++",
-                         extra_compile_args=["-O3"],
+                         extra_compile_args=extra_compile_args,
                          extra_link_args=extra_link_args,
                          include_dirs=include_dirs),
                
@@ -68,7 +71,7 @@ ext_modules = [Extension("shift_calculators",  ["Cython_shift_calculator.pyx",'s
                                           ('USE_CDS_NAMESPACE', '1')],
                         
                          language="c++",
-                         extra_compile_args=["-O3"],
+                         extra_compile_args=extra_compile_args,
                          extra_link_args=extra_link_args,
                          include_dirs=include_dirs)
 
