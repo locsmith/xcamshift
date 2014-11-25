@@ -506,9 +506,9 @@ class Sidechain_context():
 
                 self.complete = True
         else:
-            message = "NOTICE: couldn't find the atom %s:%i@%s"
+            message = "NOTICE: couldn't find the atom %s"
             data = segment, sidechain_residue_number, sidechain_atom_selection
-            print >> sys.stderr, message % data
+            print >> sys.stderr, message % Atom_utils._format_pretty_atom_name(*data)
 
 class Sidechain_component_factory(Atom_component_factory):
 
@@ -4057,7 +4057,7 @@ class Xcamshift(PyEnsemblePot):
             error  = elem.error
             id  = elem.atom_id
             if not id in target_atom_ids:
-                atom_name  = Atom_utils._get_pretty_atom_name(id)
+                atom_name  = Atom_utils._get_pretty_atom_name_from_index(id)
                 print "warning: cannot calculate a chemical shift for atom: '%s'" % atom_name
                 continue
 

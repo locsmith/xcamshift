@@ -164,9 +164,13 @@ class Atom_utils(object):
         return template % (atom_index, segid, residue_number, residue_type, atom_name)
 
     @staticmethod
-    def _get_pretty_atom_name(atom_index):
+    def _format_pretty_atom_name(segid,residue_num,atom_name):
+        return "%s:%i@%s" % (segid,residue_num,atom_name)
+
+    @staticmethod
+    def _get_pretty_atom_name_from_index(atom_index):
         data = Atom_utils._get_atom_info_from_index(atom_index)
-        return "%s:%i@%s" % data
+        return Atom_utils._format_pretty_atom_name(*data)
 
     @staticmethod
     def _get_atom_names(atoms,template  = "%-5i '%4s' %i [%3s] %-4s", joiner=", "):
