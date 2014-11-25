@@ -4055,8 +4055,14 @@ class Xcamshift(PyEnsemblePot):
 
         for elem in data:
             error  = elem.error
+            id  = elem.atom_id
+            if not id in target_atom_ids:
+                atom_name  = Atom_utils._get_pretty_atom_name(id)
+                print "warning: cannot calculate a chemical shift for atom: '%s'" % atom_name
+                continue
+
             if error != None:
-                id  = elem.atom_id
+
                 try:
                     index  = target_atom_ids.index(id)
                 except:
@@ -4069,7 +4075,7 @@ class Xcamshift(PyEnsemblePot):
                 energy_term_cache.replace_component(index, component)
 
             weight = elem.weight
-            id  = elem.atom_id
+
             index  = target_atom_ids.index(id)
             component = list(energy_term_cache.get_component(index))
             if weight != component[4]:
