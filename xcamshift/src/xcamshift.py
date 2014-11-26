@@ -4058,7 +4058,8 @@ class Xcamshift(PyEnsemblePot):
             id  = elem.atom_id
             if not id in target_atom_ids:
                 atom_name  = Atom_utils._get_pretty_atom_name_from_index(id)
-                print "warning: cannot calculate a chemical shift for atom: '%s'" % atom_name
+                print "NOTE: the shift from atom: '%s'  can't act as a restraint." % atom_name
+
                 continue
 
             if error != None:
