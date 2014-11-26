@@ -1062,10 +1062,14 @@ class TestXcamshift(unittest2.TestCase):
         self.assertEqual(result,EXPECTED_2)
 
 
+    def test_last_and_first_residue_constraints_ok(self):
+        xcamshift = Xcamshift()
+
+        xcamshift.addRestraints(open('test_data/3_ala/3ala_xplor_extended.shifts').read())
 
 def run_tests():
-#     unittest2.main(module='test.test_xcamshift',failfast=True)
-    unittest2.main(module='test.test_xcamshift',defaultTest='TestXcamshift.test_new_fast_non_bonded_list')
+     unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_last_and_first_residue_constraints_ok')
+
 
 if __name__ == "__main__":
     run_tests()
