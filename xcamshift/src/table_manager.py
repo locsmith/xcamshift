@@ -13,7 +13,7 @@ Created on 30 Dec 2011
 
 @author: garyt
 '''
-import os
+import os,sys
 from yaml import load
 from distance_table import Distance_table
 from random_coil_table import Random_coil_table
@@ -89,12 +89,23 @@ class Table_manager(object):
         Constructor
         '''
 
-        self.search_paths = paths + ['.',self.DEFAULT_DIRECTORY]
+
+        self.search_paths = paths + ['.',
+                                     self.DEFAULT_DIRECTORY,
+                                     self._get_program_database__path(),
+                                     self._get_distribution_database_path()]
+
         self.tables ={}
         self._known_table_types = set()
         self._table_index = {}
 
         add_access_to_yaml_list_based_keys()
+
+    def _get_program_database__path(self):
+        return os.path.join(os.path.dirname(os.path.realpath(sys.executable)),'..','databases','xcamshift')
+
+    def _get_distribution_database_path(self):
+        return os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','data')
 
     def __str__(self):
         result = []
