@@ -1787,6 +1787,7 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
 
         def __init__(self, atom, spheres, table):
 
+            self.complete = False
             chem_type_indexer = Non_bonded_potential.Chem_type_indexer(Table_manager.get_default_table_manager())
         #            self.exponent  =  table.get_exponent(sphere)
 
@@ -1794,18 +1795,24 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
             # TODO this is not efficient
             segid,residue_type, atom_name = Atom_utils._get_atom_info_from_index(atom.index())
             residue_type = Atom_utils._get_residue_type_from_atom_id(atom.index())
+
             raw_chem_type = table.get_chem_type_conversion(residue_type,atom_name,raw_chem_type)
-            chem_type = table.get_chem_type_translation(raw_chem_type)
-            self.atom_index = atom.index()
+            if raw_chem_type in table.get_chem_types():
+                chem_type = table.get_chem_type_translation(raw_chem_type)
+            else:
+                chem_type = None
+
+            if chem_type != None:
+                self.atom_index = atom.index()
 
 
-            self.chem_type_ids = []
-            for sphere in spheres:
-                chem_type_key = chem_type,sphere
-                chem_type_id  = chem_type_indexer.get_index_for_key(chem_type_key)
-                self.chem_type_ids.append(chem_type_id)
+                self.chem_type_ids = []
+                for sphere in spheres:
+                    chem_type_key = chem_type,sphere
+                    chem_type_id  = chem_type_indexer.get_index_for_key(chem_type_key)
+                    self.chem_type_ids.append(chem_type_id)
 
-            self.complete = True
+                self.complete = True
 
     def _get_all_spheres(self, table_manager, residue_types):
         seen_residue_types = set()
@@ -2012,27 +2019,39 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
 
     class Non_bonded_coefficient_context(object):
 
-        def __init__(self, chem_type, sphere, non_bonded_tables):
+        def __init__(self, atom, sphere, non_bonded_tables):
+            self.complete =  False
             table_manager = Table_manager.get_default_table_manager()
             chem_type_indexer  = Non_bonded_potential.Chem_type_indexer(table_manager)
             sphere_indexer =  Non_bonded_potential.Sphere_indexer(table_manager)
 
             self.sphere_id =  sphere_indexer.get_index_for_key(sphere)
 
-            chem_type_key = chem_type,sphere
-            self.chem_type_id = chem_type_indexer.get_index_for_key(chem_type_key)
+
+
+
 
             self.exponent  =  non_bonded_tables[0].get_exponent(sphere)
 
             self.coefficients = []
 
-
+            raw_chem_type = Atom_utils._get_chem_type(atom)
+            chem_type = None
             for table in self._sort_tables_by_index(non_bonded_tables):
-                for target_atom in table.get_target_atoms():
-                    self.coefficients.append(table.get_non_bonded_coefficient(target_atom,sphere,*chem_type))
+                if raw_chem_type in table.get_chem_types():
+                    chem_type  = table.get_chem_type_translation(raw_chem_type)
+
+            if chem_type !=None:
+                for table in self._sort_tables_by_index(non_bonded_tables):
+
+                    for target_atom in table.get_target_atoms():
+                        self.coefficients.append(table.get_non_bonded_coefficient(target_atom,sphere,*chem_type))
 
 
-            self.complete =  True
+                chem_type_key = chem_type,sphere
+                self.chem_type_id = chem_type_indexer.get_index_for_key(chem_type_key)
+
+                self.complete =  True
 
         def _sort_tables_by_index(self,tables):
             table_map = {}
@@ -2062,14 +2081,14 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
         results = []
         residue_types = self._table_manager.get_all_known_residue_types()
         non_bonded_tables  = [self._table_manager.get_non_bonded_table(residue_type) for residue_type in residue_types]
-        chem_type = self.get_translated_chem_type(atom, table)
-        for sphere in table.get_spheres():
 
-            key =  sphere, chem_type
+        for sphere in table.get_spheres():
+            key =  sphere, Atom_utils._get_chem_type(atom)
             if not key in self._seen_spheres_and_chem_types:
-                context = Non_bonded_coefficient_factory.Non_bonded_coefficient_context(chem_type, sphere, non_bonded_tables)
-                results.append(context)
-                self._seen_spheres_and_chem_types.add(key)
+                context = Non_bonded_coefficient_factory.Non_bonded_coefficient_context(atom, sphere, non_bonded_tables)
+                if context.complete:
+                    results.append(context)
+                    self._seen_spheres_and_chem_types.add(key)
 
         return results
 

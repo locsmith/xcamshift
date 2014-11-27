@@ -38,6 +38,7 @@ from cython.shift_calculators import Out_array
 from ensembleSimulation import   EnsembleSimulation
 from array import array
 from cython.shift_calculators import Non_bonded_bins
+from varTensorTools import create_VarTensor
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -1067,8 +1068,17 @@ class TestXcamshift(unittest2.TestCase):
 
         xcamshift.addRestraints(open('test_data/3_ala/3ala_xplor_extended.shifts').read())
 
+    def test_atoms_of_unknown_chemical_type_are_ok(self):
+
+        tensor = create_VarTensor('test')
+
+        xcamshift = Xcamshift()
+
+        xcamshift.addRestraints(open('test_data/3_ala/3ala_xplor.shifts').read())
+
+
 def run_tests():
-     unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_last_and_first_residue_constraints_ok')
+     unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_atoms_of_unknown_chemical_type_are_ok')
 
 
 if __name__ == "__main__":
