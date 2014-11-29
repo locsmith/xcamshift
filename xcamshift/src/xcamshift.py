@@ -116,6 +116,13 @@ class Atom_component_factory(Component_factory):
     def  _translate_atom_name(self, atom_name,context):
         return atom_name
 
+
+    def _report_context_messages(self, contexts):
+        for context in contexts:
+            if context.has_messages():
+                print >> sys.stderr, context.get_messages(), ' (%s)' % context.get_name()
+
+
     def create_atom_components(self, component_list, table, selected_atoms):
         for atom in selected_atoms:
             contexts = self._build_contexts(atom, table)
@@ -124,11 +131,29 @@ class Atom_component_factory(Component_factory):
                     value = self._get_component_for_atom(atom, context)
                     if value != None:
                         component_list.add_component(value)
+        self._report_context_messages(contexts)
 
     def get_table_name(self):
         return 'ATOM'
 
-class DihedralContext(object):
+class Context(object):
+    def __init__(self,name):
+        self._name = name
+        self._messages = []
+
+    def get_name(self):
+        return self._name
+
+    def _add_message(self, message):
+        self._messages.append(message)
+
+    def has_messages(self):
+        return len(self._messages) > 0
+
+    def get_messages(self):
+        return ', '.join(self._messages)
+
+class DihedralContext(Context):
 
         def _translate_atom_name_from_table(self, residue_type, atom_name,table):
             return  table.get_translation_from_table(residue_type,atom_name)
@@ -153,6 +178,7 @@ class DihedralContext(object):
             return target_atom_1
 
         def __init__(self, from_atom, dihedral_key ,table):
+            super(DihedralContext, self).__init__('Dihedral')
 
             self._table = table
 
@@ -229,13 +255,14 @@ class Dihedral_component_factory(Atom_component_factory):
     def _translate_atom_name(self, atom_name,context):
         return context._table.get_translation(atom_name)
 
-class DistanceContext:
+class DistanceContext(Context):
 
     def _translate_atom_name_from_table(self, residue_type, atom_name,table):
         return  table.get_translation_from_table(residue_type,atom_name)
 
 
     def __init__(self, from_atom, offset, to_atom_name ,table):
+        super(DistanceContext, self).__init__('Distance')
 
         self.complete = False
         self._table = table
@@ -322,12 +349,13 @@ class Distance_component_factory(Atom_component_factory):
         return 'ATOM'
 
 #TODO: check if previous residue offsets are included
-class Random_coil_context :
+class Random_coil_context(Context):
 
     def _translate_atom_name_to_table(self, residue_type, atom_name,table):
         return  table.get_translation_to_table(residue_type,atom_name)
 
     def __init__(self,atom,offset,table):
+        super(Random_coil_context, self).__init__('Random coil')
 
         self.complete = False
 
@@ -349,8 +377,9 @@ class Random_coil_context :
 
             self.complete = True
 
-class Disulphide_context :
+class Disulphide_context (Context):
     def __init__(self,atom,table):
+        super(Disulphide_context, self).__init__('Disulphide')
         self.complete = False
 
         self._table = table
@@ -399,7 +428,7 @@ class Random_coil_component_factory(Atom_component_factory):
     def get_table_name(self):
         return 'ATOM'
 
-class ExtraContext(object):
+class ExtraContext(Context):
 
     def _translate_atom_name_from_table(self, residue_type, atom_name,table):
         return  table.get_translation_from_table(residue_type,atom_name)
@@ -418,6 +447,7 @@ class ExtraContext(object):
         return target_atom_1
 
     def __init__(self, from_atom, key_1, key_2 ,table):
+        super(ExtraContext, self).__init__('Extra')
 
         self.complete = False
         self._table = table
@@ -482,14 +512,15 @@ class Extra_component_factory(Atom_component_factory):
     def get_table_name(self):
         return 'ATOM'
 
-class Sidechain_context():
+class Sidechain_context(Context):
 
 
 
     def __init__(self, from_atom, residue_type, sidechain_atom_selection, table):
-
+        super(Sidechain_context, self).__init__('Sidechain')
         self._table = table
         self.complete =  False
+        self.message = None
 
         from_atom_index = from_atom.index()
 
@@ -506,9 +537,12 @@ class Sidechain_context():
 
                 self.complete = True
         else:
-            message = "NOTICE: couldn't find the atom %s"
+            message = "NOTICE: couldn't find the atom %s (%s)"
             data = segment, sidechain_residue_number, sidechain_atom_selection
-            print >> sys.stderr, message % Atom_utils._format_pretty_atom_name(*data)
+            residue_type =  Atom_utils._get_residue_type_from_atom_id(from_atom_index)
+            pretty_name = Atom_utils._format_pretty_atom_name(*data)
+            message = message % (pretty_name,residue_type)
+            self._add_message( message)
 
 class Sidechain_component_factory(Atom_component_factory):
 
@@ -527,6 +561,7 @@ class Sidechain_component_factory(Atom_component_factory):
             for sidechain_atom in table.get_sidechain_atoms(residue_type):
                 context = Sidechain_context(atom, residue_type, sidechain_atom,table)
                 contexts.append(context)
+
         return contexts
 
     def  _get_component_for_atom(self, target_atom, context):
@@ -1408,12 +1443,14 @@ class Backbone_atom_indexer:
         return result
 
 
-class Ring_backbone_context(object,Backbone_atom_indexer):
+class Ring_backbone_context(Context,Backbone_atom_indexer):
 
     def _translate_atom_name_to_table(self, residue_type, atom_name,table):
         return  table.get_translation_to_table(residue_type,atom_name)
 
     def __init__(self, atom, table):
+        Context.__init__(self,'Ring backbone')
+
         self.complete =  False
 
         self.target_atom_id  =  atom.index()
@@ -1781,12 +1818,12 @@ class Non_bonded_remote_component_factory(Atom_component_factory):
     def is_residue_acceptable(self, segment, residue_number, segment_manager):
         return True
 
-    class Remote_non_bonded_context(Backbone_atom_indexer):
+    class Remote_non_bonded_context(Context,Backbone_atom_indexer):
 
 
 
         def __init__(self, atom, spheres, table):
-
+            Context.__init__(self,'Remote non bond')
             self.complete = False
             chem_type_indexer = Non_bonded_potential.Chem_type_indexer(Table_manager.get_default_table_manager())
         #            self.exponent  =  table.get_exponent(sphere)
@@ -2017,9 +2054,10 @@ class Non_bonded_coefficient_factory(Atom_component_factory):
         self._table_manager = Table_manager.get_default_table_manager()
 
 
-    class Non_bonded_coefficient_context(object):
+    class Non_bonded_coefficient_context(Context):
 
         def __init__(self, atom, sphere, non_bonded_tables):
+            super(Non_bonded_coefficient_factory.Non_bonded_coefficient_context, self).__init__('Non bonded coefficient')
             self.complete =  False
             table_manager = Table_manager.get_default_table_manager()
             chem_type_indexer  = Non_bonded_potential.Chem_type_indexer(table_manager)
@@ -2831,7 +2869,7 @@ class Hbond_backbone_acceptor_indexer(Hbond_backbone_indexer_base):
     def get_name(self):
         return 'hbond acceptor'
 
-class Hydrogen_bond_context:
+class Hydrogen_bond_context(Context):
 
     def _translate_atom_name_to_table(self, residue_type, atom_name,table):
         return  table.get_translation_to_table(residue_type,atom_name)
@@ -2839,6 +2877,8 @@ class Hydrogen_bond_context:
 
 
     def __init__(self,atom,offset_data,table, indexer):
+        super(Hydrogen_bond_context, self).__init__('Hydrogen bond')
+
         segid, res_num,atom_name = Atom_utils._get_atom_info_from_index(atom.index())
         offset, offset_atom_name =  offset_data
 
@@ -2902,8 +2942,9 @@ class Hydrogen_bond_component_factory(Atom_component_factory):
 
 
 
-class Hydrogen_bond_base_donor_acceptor_context(object):
-    def __init__(self, atom, table, type_indexer, backbone_hydrogen_bond_indexer):
+class Hydrogen_bond_base_donor_acceptor_context(Context):
+    def __init__(self, atom, table, type_indexer, backbone_hydrogen_bond_indexer, name):
+        super(Hydrogen_bond_base_donor_acceptor_context, self).__init__(name)
         self.complete = False
 
         self.direct_atom_id = atom.index()
@@ -2945,7 +2986,7 @@ class Hydrogen_bond_donor_context(Hydrogen_bond_base_donor_acceptor_context):
     def __init__(self,atom,table,atom_type_indexer, backbone_indexer):
         #TODO could we avoid static methods for this
         self.type = DONOR
-        super(Hydrogen_bond_donor_context, self).__init__(atom, table, atom_type_indexer, backbone_indexer)
+        super(Hydrogen_bond_donor_context, self).__init__(atom, table, atom_type_indexer, backbone_indexer, 'Hydrogen bond donor')
 
     def get_donor_acceptor_types(self,table):
         return  table.get_donor_types()
@@ -2959,7 +3000,7 @@ class Hydrogen_bond_acceptor_context(Hydrogen_bond_base_donor_acceptor_context):
 
     def __init__(self,atom, table,atom_type_indexer, backbone_indexer):
         self.type = ACCEPTOR
-        super(Hydrogen_bond_acceptor_context, self).__init__(atom, table, atom_type_indexer, backbone_indexer)
+        super(Hydrogen_bond_acceptor_context, self).__init__(atom, table, atom_type_indexer, backbone_indexer, 'Hydrogen bond acceptor')
 
     def get_donor_acceptor_types(self,table):
         return  table.get_acceptor_types()
