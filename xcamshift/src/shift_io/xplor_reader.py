@@ -7,21 +7,28 @@ import re
 from collections import namedtuple
 from atomSel import AtomSel
 import sys
+from __builtin__ import file
 
 Shift_data = namedtuple('Shift_data', ('atom_id','shift','error','weight','atom_class'))
 DEFAULT_CLASS='DEFAULT'
 DEFAULT_WEIGHT=1.0
 
+class IOException (Exception):
+    def __init__(self,message,line_number,line_value,file_name):
+        message = 'Error reading shifts [%s] at line %i in %s\n\tline data: |%s|' % (message,line_number,file_name,line_value)
+        super(IOException, self).__init__(message)
+        self._file_name =  file_name
+        self._line_number = line_number
+        self._message = message
+        self._line_value = line_value
+
 class Xplor_reader:
-    def __init__(self):
-        pass
+    def __init__(self,file_name = '\'unknown file\''):
+        self._file_name = file_name
 
 
     def raise_exception(self, msg):
-        line_position = 'line %i in input, line data:\n|%s|' % (self.line_index+1, self.line)
-        msg = '%s %s' % (msg, line_position)
-
-        raise Exception(msg)
+        raise IOException(msg,self.line_index+1, self.line,self._file_name)
 
 
 
@@ -67,7 +74,8 @@ class Xplor_reader:
 
 
     def raise_bad_statement(self,name):
-        return self.raise_exception("line doesn't contain a correctly formated %s statement:\n%s" % (name,self.line))
+        msg = "line doesn't contain a correctly formated statement for %s" %name
+        return self.raise_exception(msg)
 
     def read(self,lines):
         msg = "WARNING reading cs data from %s with a very primitive xplor data reader"
@@ -150,7 +158,7 @@ class Xplor_reader:
                         self.raise_bad_statement('class')
 
             if line_complete != True:
-                raise Exception("unexpected expression |%s|" % self.line)
+                self.raise_exception("unexpected expression \'%s\'"  % self.line)
         return results
 
 
