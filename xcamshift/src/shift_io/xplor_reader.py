@@ -91,6 +91,9 @@ class Xplor_reader:
             if comment_start > -1:
                 self.line =  self.line[:comment_start]
 
+            if len(self.line.strip()) == 0:
+                continue
+
             for matcher,name,range in matchers:
 
                 if not self.line.upper().startswith(name):

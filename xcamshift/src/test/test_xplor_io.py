@@ -129,8 +129,16 @@ class Test(unittest2.TestCase):
             Xplor_reader().read("class 1 0")
 
     def test_comments_are_allowed(self):
+        Xplor_reader().read("! this is a comment")
+
         Xplor_reader().read("assign (resid 20 and name HA) 1.0 ! this is also a comment")
 
+
+    def test_empty_lines_allowed(self):
+        data = '''assign ( resid 2 and name C ) 177.477 0.1
+
+                  assign ( resid 3 and name C ) 175.002 0.1'''
+        Xplor_reader().read(data)
 
 
 if __name__ == "__main__":
