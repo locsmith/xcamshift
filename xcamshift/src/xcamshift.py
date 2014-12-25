@@ -4126,18 +4126,14 @@ class Xcamshift(PyEnsemblePot):
             id  = elem.atom_id
             if not id in target_atom_ids:
                 atom_name  = Atom_utils._get_pretty_atom_name_from_index(id)
-                print "NOTE: the shift from atom: '%s'  can't act as a restraint." % atom_name
+                print >> sys.stderr, "NOTE: the shift from atom: '%s'  can't act as a restraint [typically atom is missing or residue is at N/C terminus]." % atom_name
 
                 continue
 
             if error != None:
 
-                try:
-                    index  = target_atom_ids.index(id)
-                except:
-                    selection_string = Atom_utils._get_atom_info_from_index(id)
-                    msg = "WARNING ignoring %s it is not an active atom for chemical shift calculation\ncontinuing..."
-                    print msg % selection_string
+                index  = target_atom_ids.index(id)
+
                 component = list(energy_term_cache.get_component(index))
                 component[1] = elem.error
                 component = tuple(component)
