@@ -608,6 +608,7 @@ class Base_potential(object):
         self._cache_list_data = {}
         self._freeze  = False
         self._simulation = simulation
+        self._bad_segments= set()
 
         #TODO: this can go in the end... we just need some more clever logic in the get
         self._shift_calculator = None
@@ -723,12 +724,13 @@ class Base_potential(object):
 
     def _check_segment_length(self, segment):
         segment_info = self._segment_manager.get_segment_info(segment)
+        
         if segment_info.segment_length < 3:
-            template = "Warning: segment '%s' only contains < 3 residues (%i) and will be ignored"
-            message = template % (segment, segment_info.segment_length)
-            print >> sys.stderr, message
-        return segment_info
-
+            result = False
+        else:
+            result = True
+            
+        return result
 
     def _create_components_for_residue(self, name, segment, target_residue_number, atom_selection):
         selected_atoms = intersection(Atom_utils._select_atom_with_translation(segment, target_residue_number), atom_selection)
@@ -746,12 +748,18 @@ class Base_potential(object):
         global_atom_selection = AtomSel(global_atom_selection)
         for segment in self._segment_manager.get_segments():
 
-            if self._check_segment_length(segment):
+            if not segment in self._bad_segments or self._check_segment_length(segment):
                 segment_info = self._segment_manager.get_segment_info(segment)
                 for residue_number in range(segment_info.first_residue,segment_info.last_residue+1):
                     residue_atom_selection = Atom_utils._select_atom_with_translation(segment, residue_number)
                     target_atom_selection = intersection(residue_atom_selection,global_atom_selection)
                     self._create_components_for_residue(name,segment, residue_number, target_atom_selection)
+            else:
+                template = "Warning: segment '%s' only contains < 3 residues (%i) and will be ignored"
+                message = template % (segment, segment_info.segment_length)
+                print >> sys.stderr, message
+
+                self._bad_segments.add(segment)
 
 
     def _add_component_factory(self, component_factory):
