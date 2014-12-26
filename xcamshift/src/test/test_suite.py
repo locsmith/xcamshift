@@ -28,7 +28,7 @@ from test.test_xcamshift_aga import TestXcamshiftAGA
 from test.test_xcamshift_vin import TestXcamshiftVIN
 from test.test_xcamshift_agfa import TestXcamshiftAGFA
 from test.test_xcamshift_agaga import TestXcamshiftAGAGA
-from test.test_xcamshift_gb3 import TestXcamshiftGB3
+from test import test_xcamshift_gb3
 from test.test_cython_non_bonded_list import Test_cython_non_boned_list
 from test.test_xcamshift_acaggaca import TestXcamshiftACAGGACA
 from test.test_xcamshift_hbond_ingktlkg import TestXcamshiftHBondINGKTLKG
@@ -58,7 +58,6 @@ def load_tests(loader, tests, pattern):
                 TestXcamshiftACAGGACA,
                 TestXcamshiftHBondINGKTLKG,
                 TestXcamshiftPrintShifts
-#                TestXcamshiftGB3
 )
     
     suite = unittest2.TestSuite()
@@ -71,6 +70,7 @@ def load_tests(loader, tests, pattern):
                 setattr(module,'fast',True)
             
     test_list = [loader.loadTestsFromTestCase(test_case) for test_case in test_list]
+    test_list.append(loader.loadTestsFromName('TestXcamshiftGB3.test_total_forces_and_energy_10_step', test_xcamshift_gb3))
     
     suite.addTests(test_list)
     
