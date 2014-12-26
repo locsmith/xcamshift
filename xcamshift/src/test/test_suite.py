@@ -32,9 +32,6 @@ from test.test_cython_non_bonded_list import Test_cython_non_boned_list
 from test.test_xcamshift_acaggaca import TestXcamshiftACAGGACA
 from test.test_xcamshift_hbond_ingktlkg import TestXcamshiftHBondINGKTLKG
 from test.test_xcamshift_print_shifts import TestXcamshiftPrintShifts
-import sys
-
-fast = False
 
 def load_tests(loader, tests, pattern):
 
@@ -60,13 +57,6 @@ def load_tests(loader, tests, pattern):
 )
 
     suite = unittest2.TestSuite()
-
-
-    if fast:
-        for test_case in test_list:
-            module  =  sys.modules[test_case.__module__]
-            if hasattr(module,'fast'):
-                setattr(module,'fast',True)
 
     test_list = [loader.loadTestsFromTestCase(test_case) for test_case in test_list]
     test_list.append(loader.loadTestsFromName('TestXcamshiftGB3.test_total_forces_and_energy_10_step', test_xcamshift_gb3))
