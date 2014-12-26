@@ -586,7 +586,6 @@ class TestXcamshiftGB3(unittest2.TestCase):
 
         for i,file_name in enumerate(gb3_10_steps.gb3_files):
                 PDBTool("test_data/gb3_10_steps/%s" % file_name).read()
-                print 'coord file',file_name
                 if i == 0:
                     xcamshift.reset()
                     self._clear_caches()
@@ -949,7 +948,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
             result = checker.needs_update()
 
             #print i, file_name, result,checker, (end-start).seconds()*1000.0
-            
+
             if result == True:
                 self.assertTrue(i in expected_true)
 
