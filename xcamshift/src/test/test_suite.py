@@ -4,11 +4,10 @@
 # are made available under the terms of the GNU Lesser Public License v3.0
 # which accompanies this distribution, and is available at
 # http://www.gnu.org/licenses/lgpl-3.0.html
-# 
+#
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
-from test.test_xcamshift_hbond_ingktlkg import TestXcamshiftHBondINGKTLKG
 '''
 Created on 25 Jan 2012
 
@@ -59,27 +58,27 @@ def load_tests(loader, tests, pattern):
                 TestXcamshiftHBondINGKTLKG,
                 TestXcamshiftPrintShifts
 )
-    
+
     suite = unittest2.TestSuite()
-    
-    
+
+
     if fast:
         for test_case in test_list:
             module  =  sys.modules[test_case.__module__]
             if hasattr(module,'fast'):
                 setattr(module,'fast',True)
-            
+
     test_list = [loader.loadTestsFromTestCase(test_case) for test_case in test_list]
     test_list.append(loader.loadTestsFromName('TestXcamshiftGB3.test_total_forces_and_energy_10_step', test_xcamshift_gb3))
-    
+
     suite.addTests(test_list)
-    
+
     return suite
 
 def run_tests():
     unittest2.main(verbosity=10)
-    
+
 if __name__=="__main__":
     run_tests()
-    
+
 
