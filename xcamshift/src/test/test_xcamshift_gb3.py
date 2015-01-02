@@ -182,6 +182,7 @@ class TestXcamshiftGB3(unittest2.TestCase):
     def _get_xcamshift(self):
         xcamshift = Xcamshift()
         xcamshift.set_non_bonded_checker(Xcamshift.INCREMENTED_NON_BONDED_CHECKER)
+        xcamshift._energy_calculator.set_compatabilty(True)
         return xcamshift
 
     def _get_xcamshift_no_hbond(self):
