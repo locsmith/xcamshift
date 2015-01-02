@@ -43,7 +43,7 @@ import ctypes
 from component_list import  Component_list, Native_component_list
 from ensembleSimulation import EnsembleSimulation as pyEnsembleSimulation
 from cython.fast_segment_manager import Segment_Manager
-import math
+import sys,math
 cdef double PI = math.pi
 
 
@@ -2022,6 +2022,7 @@ cdef class Fast_energy_calculator:
     cdef float[:] _observed_shifts
     cdef bint _verbose
     cdef int calls
+    cdef bint _compatability
 
     def __init__(self):
         self._energy_term_cache =  NULL
@@ -2029,7 +2030,11 @@ cdef class Fast_energy_calculator:
         self._observed_shifts =  None
         self._verbose = False
         self.calls = 0
+        self._compatability = False
 
+    def set_compatabilty(self, bint compatability):
+        self._compatability = compatability
+        print >> sys.stderr, 'WARNING energy calculator compatibility set to ',`self._compatability`
 
     def set_verbose(self,on):
         self._verbose = on
@@ -2132,16 +2137,34 @@ cdef class Fast_energy_calculator:
             end_harmonic = energy_terms[0].end_harmonic
             scale_harmonic = energy_terms[0].scale_harmonic
 
+            #TODO: remove compatibility flag see ticket #74
+            # the original energy function wasn't symmetrical with respect to
+            # negative and positive errors see ticket #74 However, to maintain compatibility
+            # with the GB3 test data set which is currently hard to reproduce we have to add a
+            # compatibility flag...
+            if self._compatability == True:
+                if adjusted_shift_diff < end_harmonic:
+                    atom_energy = (adjusted_shift_diff/scale_harmonic)**2
+                else:
+                    tanh_amplitude = energy_terms[0].tanh_amplitude
+                    tanh_elongation = energy_terms[0].tanh_elongation
+                    tanh_y_offset = energy_terms[0].tanh_y_offset
 
-            if adjusted_shift_diff < end_harmonic:
-                atom_energy = (adjusted_shift_diff/scale_harmonic)**2
+                    tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
+                    atom_energy = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset
             else:
-                tanh_amplitude = energy_terms[0].tanh_amplitude
-                tanh_elongation = energy_terms[0].tanh_elongation
-                tanh_y_offset = energy_terms[0].tanh_y_offset
+                if fabs(adjusted_shift_diff) < end_harmonic:
+                    atom_energy = (adjusted_shift_diff/scale_harmonic)**2
+                else:
 
-                tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
-                atom_energy = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset
+
+                    tanh_amplitude = energy_terms[0].tanh_amplitude
+                    tanh_elongation = energy_terms[0].tanh_elongation
+                    tanh_y_offset = energy_terms[0].tanh_y_offset
+
+                    tanh_argument = tanh_elongation * (fabs(adjusted_shift_diff) - end_harmonic)
+                    atom_energy = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset
+
 
             energy += atom_energy * energy_terms[0].weight
         return energy
