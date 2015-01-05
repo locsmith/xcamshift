@@ -2119,6 +2119,7 @@ cdef class Fast_energy_calculator:
         cdef float tanh_argument
         cdef float energy
         cdef float shift_diff
+        cdef bint test
 
 
         cdef float shift_diffs
@@ -2142,29 +2143,25 @@ cdef class Fast_energy_calculator:
             # negative and positive errors see ticket #74 However, to maintain compatibility
             # with the GB3 test data set which is currently hard to reproduce we have to add a
             # compatibility flag...
+
             if self._compatability == True:
-                if adjusted_shift_diff < end_harmonic:
-                    atom_energy = (adjusted_shift_diff/scale_harmonic)**2
-                else:
-                    tanh_amplitude = energy_terms[0].tanh_amplitude
-                    tanh_elongation = energy_terms[0].tanh_elongation
-                    tanh_y_offset = energy_terms[0].tanh_y_offset
-
-                    tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
-                    atom_energy = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset
+                test = adjusted_shift_diff < end_harmonic
             else:
-                if fabs(adjusted_shift_diff) < end_harmonic:
-                    atom_energy = (adjusted_shift_diff/scale_harmonic)**2
+                test = fabs(adjusted_shift_diff) < end_harmonic
+
+            if test:
+                atom_energy = (adjusted_shift_diff/scale_harmonic)**2
+            else:
+                tanh_amplitude = energy_terms[0].tanh_amplitude
+                tanh_elongation = energy_terms[0].tanh_elongation
+                tanh_y_offset = energy_terms[0].tanh_y_offset
+
+                if self._compatability == True:
+                    tanh_argument = tanh_elongation * (adjusted_shift_diff - end_harmonic)
                 else:
-
-
-                    tanh_amplitude = energy_terms[0].tanh_amplitude
-                    tanh_elongation = energy_terms[0].tanh_elongation
-                    tanh_y_offset = energy_terms[0].tanh_y_offset
-
                     tanh_argument = tanh_elongation * (fabs(adjusted_shift_diff) - end_harmonic)
-                    atom_energy = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset
 
+                atom_energy = tanh_amplitude * tanh(tanh_argument) + tanh_y_offset
 
             energy += atom_energy * energy_terms[0].weight
         return energy
