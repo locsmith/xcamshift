@@ -3410,6 +3410,9 @@ class Hydrogen_bond_potential(Base_potential):
             raise Exception(name)
         return result
 
+ENERGY_TERM_CACHE_ERROR = 1
+ENERGY_TERM_CACHE_WEIGHT = 4
+
 class Xcamshift(PyEnsemblePot):
 
 
@@ -4113,39 +4116,41 @@ class Xcamshift(PyEnsemblePot):
         self._prepare(TARGET_ATOM_IDS_CHANGED, None)
         #TODO: do we need a  set froze here
 
+    def _set_energy_term_cache_elem(self,atom_id, field_index, error):
+        target_atom_ids  = self._get_active_target_atom_ids()
+        energy_term_cache = self._get_energy_term_cache()
+
+        if error != None:
+
+            index  = target_atom_ids.index(atom_id)
+
+            component = list(energy_term_cache.get_component(index))
+            component[field_index] = error
+            component = tuple(component)
+            energy_term_cache.replace_component(index, component)
+
+
+    def _set_error(self,atom_id, error):
+        self._set_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_ERROR, error)
+
+    def _set_weight(self,atom_id, weight):
+        self._set_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_WEIGHT, weight)
+
     def addRestraints(self,lines):
         data = Xplor_reader().read(lines)
         observed_shifts = Observed_shift_table(data,format='xplor')
         self.set_observed_shifts(observed_shifts)
 
-        energy_term_cache = self._get_energy_term_cache()
         target_atom_ids  = self._get_active_target_atom_ids()
 
         for elem in data:
-            error  = elem.error
-            id  = elem.atom_id
-            if not id in target_atom_ids:
-                atom_name  = Atom_utils._get_pretty_atom_name_from_index(id)
-                print >> sys.stderr, "NOTE: the shift from atom: '%s'  can't act as a restraint [typically atom is missing or residue is at N/C terminus]." % atom_name
 
+            if not elem.atom_id in target_atom_ids:
+                atom_name  = Atom_utils._get_pretty_atom_name_from_index(elem.atom_id)
+                print >> sys.stderr, "NOTE: the shift from atom: '%s'  can't act as a restraint [typically atom is missing or residue is at N/C terminus]." % atom_name
                 continue
 
-            if error != None:
-
-                index  = target_atom_ids.index(id)
-
-                component = list(energy_term_cache.get_component(index))
-                component[1] = elem.error
-                component = tuple(component)
-                energy_term_cache.replace_component(index, component)
-
-            weight = elem.weight
-
-            index  = target_atom_ids.index(id)
-            component = list(energy_term_cache.get_component(index))
-            if weight != component[4]:
-                component[4] =  weight
-                component = tuple(component)
-                energy_term_cache.replace_component(index, component)
+            self._set_error(elem.atom_id,elem.error)
+            self._set_weight(elem.atom_id, elem.weight)
 
 
