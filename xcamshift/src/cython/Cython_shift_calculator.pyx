@@ -2018,6 +2018,7 @@ cdef class New_fast_non_bonded_calculator(Fast_non_bonded_calculator):
 
 cdef class Fast_energy_calculator:
     cdef Constant_cache* _energy_term_cache
+    cdef object _energy_term_cache_strong_ref
     cdef CDSVector[double]  *_theory_shifts
     cdef float[:] _observed_shifts
     cdef bint _verbose
@@ -2031,6 +2032,9 @@ cdef class Fast_energy_calculator:
         self._verbose = False
         self.calls = 0
         self._compatability = False
+        # references to caches converted to c pointers have to be strongly
+        # held for at least the lifetime of the c pointer they are converted to
+        self._energy_term_cache_strong_ref = None
 
     def set_compatabilty(self, bint compatability):
         self._compatability = compatability
@@ -2046,6 +2050,7 @@ cdef class Fast_energy_calculator:
         self._theory_shifts = calculated_shifts.get_data()
 
     def set_energy_term_cache(self, energy_term_cache ):
+        self._energy_term_cache_strong_ref = energy_term_cache
         self._energy_term_cache =  <Constant_cache*> <size_t> ctypes.addressof(energy_term_cache)
 
     cdef Constant_cache* _get_energy_terms(self, int target_atom_index):
