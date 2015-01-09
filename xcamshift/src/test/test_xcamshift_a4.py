@@ -4,7 +4,7 @@
 # are made available under the terms of the GNU Lesser Public License v3.0
 # which accompanies this distribution, and is available at
 # http://www.gnu.org/licenses/lgpl-3.0.html
-# 
+#
 # Contributors:
 #     gary thompson - initial API and implementation
 #-------------------------------------------------------------------------------
@@ -661,18 +661,19 @@ class TestXcamshiftA4(unittest2.TestCase):
         self._test_force_sets(xcamshift, expected_energy, expected_forces)
 
 
-    def test_energy_penalty(self):
-        calculator =  Fast_energy_calculator()
+    KEY_2_CA = '', 2, 'CA'
+    def _setup_test_energy_penalties(self, key):
+        calculator = Fast_energy_calculator()
 
-        key = '', 2, 'CA'
         shift_table = ala_4.ala_4_expected_shifts
-        shift_table = {key: shift_table[key]}
+        shift_table = {key:shift_table[key]}
         observed_shifts = Observed_shift_table(shift_table)
 
-        target_atom_ids =  Atom_utils.find_atom_ids(*key)
 
-        xcamshift =  Xcamshift()
+
+        xcamshift = Xcamshift()
         xcamshift.set_observed_shifts(observed_shifts)
+
         cache = xcamshift._get_energy_term_cache().get_native_components()
         calculator.set_energy_term_cache(cache)
 
@@ -680,24 +681,55 @@ class TestXcamshiftA4(unittest2.TestCase):
         calculated_shifts[0] = shift_table[key]
         calculator.set_calculated_shifts(calculated_shifts)
 
-        expected_energies  =  ala_4.ala_4_CA_2_energies_for_shift_offsets
+
+        return shift_table, calculator, xcamshift
+
+    def test_energy_penalty(self):
+
+        expected_energies = ala_4.ala_4_CA_2_energies_for_shift_offsets
+
+        shift_table, calculator, xcamshift = self._setup_test_energy_penalties(self.KEY_2_CA)
+
         max_offset = max(expected_energies.keys())
+
+        target_atom_ids = Atom_utils.find_atom_ids(*self.KEY_2_CA)
 
         for offset in range(-max_offset,max_offset):
 
             offset_shift_table = copy.copy(shift_table)
-            offset_shift_table[key] += offset
+            offset_shift_table[self.KEY_2_CA] += offset
             observed_shifts = Observed_shift_table(offset_shift_table)
             calculator.set_observed_shifts(observed_shifts.get_native_shifts(target_atom_ids))
 
             expected_energy = expected_energies[abs(offset)]
             self.assertAlmostEqual(calculator(array.array('i',[0]),None),expected_energy,places=4)
 
+    def test_energy_penalty_error(self):
 
+        atom_id= Atom_utils.find_atom_ids(*self.KEY_2_CA)[0]
+
+        shift_table, calculator, xcamshift = self._setup_test_energy_penalties(self.KEY_2_CA)
+        target_atom_ids = Atom_utils.find_atom_ids(*self.KEY_2_CA)
+
+        for error in ala_4.ala_4_CA_2_energies_for_error:
+            xcamshift._set_error(atom_id, error)
+            expected_energies = ala_4.ala_4_CA_2_energies_for_error[error]
+            max_offset = max(expected_energies.keys())
+
+            for offset in range(-max_offset,max_offset):
+                offset_shift_table = copy.copy(shift_table)
+                offset_shift_table[self.KEY_2_CA] += offset
+                observed_shifts = Observed_shift_table(offset_shift_table)
+                xcamshift._set_error(atom_id,error)
+                calculator.set_observed_shifts(observed_shifts.get_native_shifts(target_atom_ids))
+                calculator.set_energy_term_cache(xcamshift._get_energy_term_cache().get_native_components())
+
+                expected_energy = expected_energies[abs(offset)]
+                self.assertAlmostEqual(calculator(array.array('i',[0]),None),expected_energy,places=4)
 
 def run_tests():
-    unittest2.main(module='test.test_xcamshift_a4')
-#     unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.testNonBondedForceFactorsSmoothed')
+#     unittest2.main(module='test.test_xcamshift_a4')
+    unittest2.main(module='test.test_xcamshift_a4',defaultTest='TestXcamshiftA4.test_energy_penalty_error')
 
 if __name__ == "__main__":
     run_tests()
