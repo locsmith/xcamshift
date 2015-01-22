@@ -3706,6 +3706,9 @@ class Xcamshift(PyEnsemblePot):
         self._prepare(SHIFT_DATA_CHANGED,None)
         self._prepare(TARGET_ATOM_IDS_CHANGED,None)
 
+    def _get_observed_shifts(self):
+        return self._shift_table
+
 
     def _calc_single_atom_shift(self,target_atom_id):
         #TODO: could be better
@@ -4152,5 +4155,8 @@ class Xcamshift(PyEnsemblePot):
 
             self._set_error(elem.atom_id,elem.error)
             self._set_weight(elem.atom_id, elem.weight)
+
+    def numRestraints(self):
+        return len(self._get_observed_shifts())
 
 

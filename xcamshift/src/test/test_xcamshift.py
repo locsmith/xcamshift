@@ -1076,9 +1076,17 @@ class TestXcamshift(unittest2.TestCase):
 
         xcamshift.addRestraints(open('test_data/3_ala/3ala_xplor.shifts').read())
 
+    def test_count_shifts_correct(self):
 
+        xcamshift = Xcamshift()
+
+        xcamshift.addRestraints(open('test_data/3_ala/3ala_xplor.shifts').read())
+
+        self.assertEqual(xcamshift.numRestraints(),6)
+
+        #test_data/io/cs.dat
 def run_tests():
-     unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_atoms_of_unknown_chemical_type_are_ok')
+    unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_count_shifts_correct')
 
 
 if __name__ == "__main__":
