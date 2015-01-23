@@ -91,6 +91,10 @@ class Observed_shift_table(object):
     def __len__(self):
         return len(self._chemical_shifts)
 
+    def __delitem__(self,index):
+        del self._chemical_shifts[index]
+        self._native_shifts = None
+
     def __str__(self):
 
         result  = ["shift table", "-----------",""]
