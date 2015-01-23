@@ -1084,9 +1084,16 @@ class TestXcamshift(unittest2.TestCase):
 
         self.assertEqual(xcamshift.numRestraints(),6)
 
-        #test_data/io/cs.dat
+    def test_count_extended_shifts_correct(self):
+
+        xcamshift = Xcamshift()
+
+        xcamshift.addRestraints(open('test_data/3_ala/3ala_xplor_extended.shifts').read())
+
+        self.assertEqual(xcamshift.numRestraints(),6)
+
 def run_tests():
-    unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_count_shifts_correct')
+    unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_count_extended_shifts_correct')
 
 
 if __name__ == "__main__":

@@ -4151,6 +4151,7 @@ class Xcamshift(PyEnsemblePot):
             if not elem.atom_id in target_atom_ids:
                 atom_name  = Atom_utils._get_pretty_atom_name_from_index(elem.atom_id)
                 print >> sys.stderr, "NOTE: the shift from atom: '%s'  can't act as a restraint [typically atom is missing or residue is at N/C terminus]." % atom_name
+                del  observed_shifts[elem.atom_id]
                 continue
 
             self._set_error(elem.atom_id,elem.error)
