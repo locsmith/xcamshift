@@ -140,6 +140,17 @@ class Test(unittest2.TestCase):
                   assign ( resid 3 and name C ) 175.002 0.1'''
         Xplor_reader().read(data)
 
+    def test_recording_of_comments(self):
+        data = ''' ! unrecorded comment
+                  assign ( resid 2 and name C ) 177.477 0.1   ! comment 1
+                  assign ( resid 3 and name C ) 175.002 0.1   ! comment 2
+                  assign ( resid 2 and name CA)  56.012 0.1'''
+
+        result  = Xplor_reader().read(data)
+
+        self.assertEqual(result[0].comment, ' comment 1')
+        self.assertEqual(result[1].comment, ' comment 2')
+        self.assertEqual(result[2].comment, None)
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_alvins_data']

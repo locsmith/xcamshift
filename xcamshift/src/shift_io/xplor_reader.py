@@ -9,7 +9,7 @@ from atomSel import AtomSel
 import sys
 from __builtin__ import file
 
-Shift_data = namedtuple('Shift_data', ('atom_id','shift','error','weight','atom_class'))
+Shift_data = namedtuple('Shift_data', ('atom_id','shift','error','weight','atom_class', 'comment'))
 DEFAULT_CLASS='DEFAULT'
 DEFAULT_WEIGHT=1.0
 
@@ -86,6 +86,7 @@ class Xplor_reader:
         weight = DEFAULT_WEIGHT
         atom_class = DEFAULT_CLASS
 
+
         assign_keyword_re = re.compile('^\s*[Aa][Ss][Ss][Ii][Gg]?[Nn]?\s+(\(.*\))\s+(.+)')
         weight_keyword_re = re.compile('^\s*[Ww][Ee][Ii][Gg][Hh]?[Tt]?\s+(.+)')
         class_keyword_re = re.compile('^\s*[Cc][Ll][Aa][Ss][Ss]?\s+(.+)')
@@ -93,10 +94,12 @@ class Xplor_reader:
         matchers = (assign_keyword_re,'ASSI',(1,3)),(weight_keyword_re,'WEIG',(0,2)),(class_keyword_re,'CLAS',(0,2))
         for self.line_index,self.line in enumerate(lines.strip().split("\n")):
             line_complete = False
+            comment  = None
 
             self.line = self.line.strip()
             comment_start =  self.line.find('!')
             if comment_start > -1:
+                comment = self.line[comment_start+1:]
                 self.line =  self.line[:comment_start]
 
             if len(self.line.strip()) == 0:
@@ -125,7 +128,7 @@ class Xplor_reader:
 
                         error = self.get_error_or_default_error(shift_fields)
 
-                        result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=error,weight=weight,atom_class=atom_class)
+                        result  = Shift_data(atom_id=atom_id,shift=shift_fields[0],error=error,weight=weight,atom_class=atom_class, comment=comment)
 
                         results.append(result)
                         line_complete = True
