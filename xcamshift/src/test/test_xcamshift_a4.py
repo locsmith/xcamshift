@@ -712,7 +712,7 @@ class TestXcamshiftA4(unittest2.TestCase):
         target_atom_ids = Atom_utils.find_atom_ids(*self.KEY_2_CA)
 
         for error in ala_4.ala_4_CA_2_energies_for_error:
-            xcamshift._set_error(atom_id, error)
+            xcamshift._set_restraint_error(atom_id, error)
             expected_energies = ala_4.ala_4_CA_2_energies_for_error[error]
             max_offset = max(expected_energies.keys())
 
@@ -720,7 +720,7 @@ class TestXcamshiftA4(unittest2.TestCase):
                 offset_shift_table = copy.copy(shift_table)
                 offset_shift_table[self.KEY_2_CA] += offset
                 observed_shifts = Observed_shift_table(offset_shift_table)
-                xcamshift._set_error(atom_id,error)
+                xcamshift._set_restraint_error(atom_id,error)
                 calculator.set_observed_shifts(observed_shifts.get_native_shifts(target_atom_ids))
                 calculator.set_energy_term_cache(xcamshift._get_energy_term_cache().get_native_components())
 

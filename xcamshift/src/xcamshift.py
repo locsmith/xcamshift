@@ -724,12 +724,12 @@ class Base_potential(object):
 
     def _check_segment_length(self, segment):
         segment_info = self._segment_manager.get_segment_info(segment)
-        
+
         if segment_info.segment_length < 3:
             result = False
         else:
             result = True
-            
+
         return result
 
     def _create_components_for_residue(self, name, segment, target_residue_number, atom_selection):
@@ -4119,6 +4119,14 @@ class Xcamshift(PyEnsemblePot):
         self._prepare(TARGET_ATOM_IDS_CHANGED, None)
         #TODO: do we need a  set froze here
 
+    def _get_energy_term_cache_elem(self,atom_id, field_index):
+        target_atom_ids  = self._get_active_target_atom_ids()
+        energy_term_cache = self._get_energy_term_cache()
+
+        index  = target_atom_ids.index(atom_id)
+
+        return energy_term_cache[index][field_index]
+
     def _set_energy_term_cache_elem(self,atom_id, field_index, error):
         target_atom_ids  = self._get_active_target_atom_ids()
         energy_term_cache = self._get_energy_term_cache()
@@ -4132,11 +4140,16 @@ class Xcamshift(PyEnsemblePot):
             component = tuple(component)
             energy_term_cache.replace_component(index, component)
 
+    def _get_restraint_error(self,atom_id):
+        return self._get_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_ERROR)
 
-    def _set_error(self,atom_id, error):
+    def _set_restraint_error(self,atom_id, error):
         self._set_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_ERROR, error)
 
-    def _set_weight(self,atom_id, weight):
+    def _get_restraint_weight(self,atom_id):
+        return self._get_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_WEIGHT)
+
+    def _set_restraint_weight(self,atom_id, weight):
         self._set_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_WEIGHT, weight)
 
     def addRestraints(self,lines):
@@ -4154,8 +4167,8 @@ class Xcamshift(PyEnsemblePot):
                 del  observed_shifts[elem.atom_id]
                 continue
 
-            self._set_error(elem.atom_id,elem.error)
-            self._set_weight(elem.atom_id, elem.weight)
+            self._set_restraint_error(elem.atom_id,elem.error)
+            self._set_restraint_weight(elem.atom_id, elem.weight)
 
     def numRestraints(self):
         return len(self._get_observed_shifts())

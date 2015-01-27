@@ -1092,8 +1092,31 @@ class TestXcamshift(unittest2.TestCase):
 
         self.assertEqual(xcamshift.numRestraints(),6)
 
+    def test_get_restraint_weights_and_errors(self):
+
+        xcamshift = Xcamshift()
+
+        restraints =  ''' assign ( resid 2 and name C )  177.477
+                          assign ( resid 2 and name CB ) 5.0 0.1
+                          weight 0.2
+                          assign ( resid 2 and name CA)  56.012 0.1
+        '''
+
+        xcamshift.addRestraints(restraints)
+
+        expected  = {
+            ('',2,'C')  : (0.5098248,1.0),
+            ('',2,'CB')  : (0.1,1.0),
+            ('',2,'CA') : (0.1,0.2)
+        }
+
+        for atom_spec in (('',2,'C'),('',2,'CB'),('',2,'CA')):
+            atom_id = Atom_utils.find_atom_ids(*atom_spec)[0]
+            self.assertAlmostEqual(expected[atom_spec][0],xcamshift._get_restraint_error(atom_id))
+            self.assertAlmostEqual(expected[atom_spec][1],xcamshift._get_restraint_weight(atom_id))
+
 def run_tests():
-    unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_count_extended_shifts_correct')
+    unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_get_restraint_weights_and_errors')
 
 
 if __name__ == "__main__":
