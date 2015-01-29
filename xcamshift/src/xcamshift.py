@@ -4234,7 +4234,6 @@ class Xcamshift(PyEnsemblePot):
     def restraints(self):
         result = []
         observed_shifts = self._get_observed_shifts()
-        energy_term_cache = self._get_energy_term_cache()
         for target_atom_id in  self._get_active_target_atom_ids():
             if target_atom_id in observed_shifts:
                 result.append(Xcamshift._Restraint(target_atom_id,self))
