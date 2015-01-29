@@ -3455,6 +3455,7 @@ class Xcamshift(PyEnsemblePot):
 
         self._prepare(STRUCTURE_CHANGED, None)
 
+        self._comments = {}
 
 
 
@@ -4152,6 +4153,15 @@ class Xcamshift(PyEnsemblePot):
     def _set_restraint_weight(self,atom_id, weight):
         self._set_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_WEIGHT, weight)
 
+    def _get_restraint_comment(self,atom_id):
+        result = ""
+        if atom_id in self._comments:
+            result = self._comments[atom_id]
+        return result
+
+    def _set_restraint_comment(self,atom_id, comment):
+        self._comments[atom_id]=comment
+
     def addRestraints(self,lines):
         data = Xplor_reader().read(lines)
         observed_shifts = Observed_shift_table(data,format='xplor')
@@ -4169,6 +4179,7 @@ class Xcamshift(PyEnsemblePot):
 
             self._set_restraint_error(elem.atom_id,elem.error)
             self._set_restraint_weight(elem.atom_id, elem.weight)
+            self._set_restraint_comment(elem.atom_id, elem.comment)
 
     def numRestraints(self):
         return len(self._get_observed_shifts())

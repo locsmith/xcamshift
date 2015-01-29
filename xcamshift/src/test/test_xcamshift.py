@@ -1115,8 +1115,35 @@ class TestXcamshift(unittest2.TestCase):
             self.assertAlmostEqual(expected[atom_spec][0],xcamshift._get_restraint_error(atom_id))
             self.assertAlmostEqual(expected[atom_spec][1],xcamshift._get_restraint_weight(atom_id))
 
+    def test_get_set_restraint_comments(self):
+        xcamshift = Xcamshift()
+
+        restraints = '\n'.join(('! unrecorded comment',
+                                'assign ( resid 2 and name C ) 177.477 0.1   ! comment 1',
+                                'assign ( resid 2 and name CB ) 5.0 0.1      ! comment 2 ',
+                                'assign ( resid 2 and name CA)  56.012 0.1'))
+
+
+        xcamshift.addRestraints(restraints)
+
+        expected  = {
+            ('',2,'C')  : ' comment 1',
+            ('',2,'CB') : ' comment 2 ',
+            ('',2,'CA') : None
+        }
+
+        for atom_spec in expected:
+            atom_id = Atom_utils.find_atom_ids(*atom_spec)[0]
+            self.assertEqual(expected[atom_spec],xcamshift._get_restraint_comment(atom_id))
+
+        atom_id = Atom_utils.find_atom_ids('', 2, 'CA')[0]
+        new_comment = 'new_comment'
+        xcamshift._set_restraint_comment(atom_id, new_comment)
+        self.assertEqual(xcamshift._get_restraint_comment(atom_id), new_comment)
+
+
 def run_tests():
-    unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_get_restraint_weights_and_errors')
+    unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_get_set_restraint_comments')
 
 
 if __name__ == "__main__":
