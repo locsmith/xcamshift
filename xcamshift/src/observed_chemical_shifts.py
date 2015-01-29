@@ -95,6 +95,18 @@ class Observed_shift_table(object):
         del self._chemical_shifts[index]
         self._native_shifts = None
 
+    def __contains__(self, atom_id):
+        return atom_id in self._chemical_shifts.keys()
+
+
+    def __getitem__(self,index):
+        result = None
+        if index in self._chemical_shifts:
+            result  = self._chemical_shifts[index]
+        else:
+            raise KeyError('shift with atom id %i not found' % index)
+        return result
+
     def __str__(self):
 
         result  = ["shift table", "-----------",""]

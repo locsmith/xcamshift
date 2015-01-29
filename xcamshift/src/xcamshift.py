@@ -3459,6 +3459,7 @@ class Xcamshift(PyEnsemblePot):
 
 
 
+
     def set_verbose(self,on=True):
         for potential in self.potential:
             potential.set_verbose(on)
@@ -4183,5 +4184,60 @@ class Xcamshift(PyEnsemblePot):
 
     def numRestraints(self):
         return len(self._get_observed_shifts())
+
+
+    class _Restraint(object):
+        def __init__(self, atom_id, xcamshift_pot):
+            self._xcamshift_pot = xcamshift_pot
+            self.atom_id  =  atom_id
+
+        def calcd(self): # - the most recent calculated value.
+            result = float('nan')
+            if self._atom_id in self._xcamshift_pot._ensemble_shift_cache:
+                result = self._xcamshift_pot._ensemble_shift_cache[self._atom_id]
+            return result
+
+
+        def obs(self): #    - the observed value.
+            result = float('nan')
+            if self._atom_id in self._xcamshift_pot._get_observed_shifts():
+                result  =  self._xcamshift_pot._get_observed_shifts()[self._atom_id]
+            return result
+
+        def diff(self):
+            return self.calcd() - self.obs()
+
+        def err(self): #         - input error value.
+            return self._xcamshift_pot._get_error(self._atom_id)
+
+        def weight(self):
+            return self._xcamshift_pot._get_weight(self._atom_id) #      - weight for this restraint.
+
+        def comment(self):
+            return 'no comment !'#     - associated comment.
+
+        def name(self):
+            Atom_utils._get_atom_name_from_index(self._atom_id)  # - return a descriptive string.
+
+        def setObs(self, value):
+            self._xcamshift_pot._observed_shifts[self._atom_id] = value
+
+        def setWeight(self,weight):
+            self._xcamshift_pot._set_weight(self._atom_id, weight)
+  #calcd2()      - XXX
+  #obs2()        - XXX
+
+
+#   setObs(val)   - set the obs value.
+#   setErr(val)   - set the err value.
+
+    def restraints(self):
+        result = []
+        observed_shifts = self._get_observed_shifts()
+        energy_term_cache = self._get_energy_term_cache()
+        for target_atom_id in  self._get_active_target_atom_ids():
+            if target_atom_id in observed_shifts:
+                result.append(Xcamshift._Restraint(target_atom_id,self))
+        return tuple(result)
 
 
