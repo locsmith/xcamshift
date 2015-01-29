@@ -1204,6 +1204,7 @@ class TestXcamshift(unittest2.TestCase):
             self.assertAlmostEqual(restraint.err(),expected_obs[name][1])
             self.assertEqual(`restraint.calcd()`,'nan')
             self.assertEqual(restraint.weight(),expected_weights[name])
+            self.assertEqual(`restraint.diff()`,'nan')
 
         xcamshift._shift_cache = 53.217,18.507,177.759
 
@@ -1213,6 +1214,7 @@ class TestXcamshift(unittest2.TestCase):
         for restraint in restraints:
             name = restraint.name()
             self.assertAlmostEqual(restraint.calcd(),expected_calcd[name],places=3)
+            self.assertAlmostEqual(restraint.diff(),expected_calcd[name]-expected_obs[name][0])
 
 def run_tests():
     unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_xcamshift_restraints_class')
