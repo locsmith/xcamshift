@@ -1165,6 +1165,16 @@ class TestXcamshift(unittest2.TestCase):
                 ' 2 ALA C'
         ]
 
+#         177.477 0.1   ! comment 1',
+#                                 'assign ( resid 2 and name CB ) 5.0 0.1      ! comment 2 ',
+#                                 'assign ( resid 2 and name CA)  56.012 0.1
+
+        expected_obs = {
+                ' 2 ALA C'  : 177.477,
+                ' 2 ALA CB' :   5.000,
+                ' 2 ALA CA' :  56.012
+        }
+
         restraints = xcamshift.restraints()
 
         self.assertLengthIs(restraints, len(expected_comments))
@@ -1176,6 +1186,7 @@ class TestXcamshift(unittest2.TestCase):
         for restraint in restraints:
             name = restraint.name()
             self.assertEqual(restraint.comment(),expected_comments[name])
+            self.assertAlmostEqual(restraint.obs(),expected_obs[name])
 
 
 #             atom_id = Atom_utils.find_atom_ids(*atom_spec)[0]
