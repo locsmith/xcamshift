@@ -4158,6 +4158,8 @@ class Xcamshift(PyEnsemblePot):
         result = ""
         if atom_id in self._comments:
             result = self._comments[atom_id]
+        if result == None:
+            result = ''
         return result
 
     def _set_restraint_comment(self,atom_id, comment):
@@ -4214,7 +4216,7 @@ class Xcamshift(PyEnsemblePot):
             return self._xcamshift_pot._get_weight(self._atom_id) #      - weight for this restraint.
 
         def comment(self):
-            return 'no comment !'#     - associated comment.
+            return self._xcamshift_pot._get_restraint_comment(self._atom_id)#     - associated comment.
 
         def name(self):
             fields = Atom_utils._get_atom_info_from_index(self._atom_id)
