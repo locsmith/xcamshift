@@ -4189,7 +4189,7 @@ class Xcamshift(PyEnsemblePot):
     class _Restraint(object):
         def __init__(self, atom_id, xcamshift_pot):
             self._xcamshift_pot = xcamshift_pot
-            self.atom_id  =  atom_id
+            self._atom_id  =  atom_id
 
         def calcd(self): # - the most recent calculated value.
             result = float('nan')
@@ -4217,7 +4217,9 @@ class Xcamshift(PyEnsemblePot):
             return 'no comment !'#     - associated comment.
 
         def name(self):
-            Atom_utils._get_atom_name_from_index(self._atom_id)  # - return a descriptive string.
+            fields = Atom_utils._get_atom_info_from_index(self._atom_id)
+            residue_name = Atom_utils._get_residue_type_from_atom_id(self._atom_id)
+            return ' '.join((fields[0],`fields[1]`,residue_name,fields[2]))
 
         def setObs(self, value):
             self._xcamshift_pot._observed_shifts[self._atom_id] = value

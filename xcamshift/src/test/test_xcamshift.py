@@ -1153,15 +1153,24 @@ class TestXcamshift(unittest2.TestCase):
 
         xcamshift.addRestraints(restraints_text)
 
-        expected  = {
+        expected_comments  = {
             ('',2,'C')  : ' comment 1',
             ('',2,'CB') : ' comment 2 ',
             ('',2,'CA') : ''
         }
 
+        expected_names = [
+                ' 2 ALA CA',
+                ' 2 ALA CB',
+                ' 2 ALA C'
+        ]
+
         restraints = xcamshift.restraints()
-        self.assertLengthIs(restraints, len(expected))
-#         for resrtaint in :
+        self.assertLengthIs(restraints, len(expected_comments))
+        for restraint in restraints:
+            self.assertTrue(restraint.name() in expected_names)
+            expected_names.remove(restraint.name())
+
 #             atom_id = Atom_utils.find_atom_ids(*atom_spec)[0]
 #             self.assertEqual(expected[atom_spec],xcamshift._get_restraint_comment(atom_id))
 
