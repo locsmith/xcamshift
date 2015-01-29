@@ -1147,7 +1147,7 @@ class TestXcamshift(unittest2.TestCase):
 
         restraints_text = '\n'.join(('! unrecorded comment',
                                 'assign ( resid 2 and name C ) 177.477 0.1   ! comment 1',
-                                'assign ( resid 2 and name CB ) 5.0 0.1      ! comment 2 ',
+                                'assign ( resid 2 and name CB ) 5.0 0.2      ! comment 2 ',
                                 'assign ( resid 2 and name CA)  56.012 0.1'))
 
 
@@ -1170,9 +1170,9 @@ class TestXcamshift(unittest2.TestCase):
 #                                 'assign ( resid 2 and name CA)  56.012 0.1
 
         expected_obs = {
-                ' 2 ALA C'  : 177.477,
-                ' 2 ALA CB' :   5.000,
-                ' 2 ALA CA' :  56.012
+                ' 2 ALA C'  : (177.477,0.1),
+                ' 2 ALA CB' :   (5.000,0.2),
+                ' 2 ALA CA' :  (56.012,0.1)
         }
 
         restraints = xcamshift.restraints()
@@ -1186,7 +1186,8 @@ class TestXcamshift(unittest2.TestCase):
         for restraint in restraints:
             name = restraint.name()
             self.assertEqual(restraint.comment(),expected_comments[name])
-            self.assertAlmostEqual(restraint.obs(),expected_obs[name])
+            self.assertAlmostEqual(restraint.obs(),expected_obs[name][0])
+            self.assertAlmostEqual(restraint.err(),expected_obs[name][1])
 
 
 #             atom_id = Atom_utils.find_atom_ids(*atom_spec)[0]
