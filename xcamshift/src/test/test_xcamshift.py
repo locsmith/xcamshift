@@ -1147,6 +1147,7 @@ class TestXcamshift(unittest2.TestCase):
 
         restraints_text = '\n'.join(('! unrecorded comment',
                                 'assign ( resid 2 and name C ) 177.477 0.1   ! comment 1',
+                                'weight 2.0',
                                 'assign ( resid 2 and name CB ) 5.0 0.2      ! comment 2 ',
                                 'assign ( resid 2 and name CA)  56.012 0.1'))
 
@@ -1181,6 +1182,13 @@ class TestXcamshift(unittest2.TestCase):
             ' 2 ALA CA' :  53.217
         }
 
+
+        expected_weights  = {
+            ' 2 ALA C'  : 1.0,
+            ' 2 ALA CB' : 2.0,
+            ' 2 ALA CA' : 2.0
+        }
+
         restraints = xcamshift.restraints()
 
         self.assertLengthIs(restraints, len(expected_comments))
@@ -1195,6 +1203,7 @@ class TestXcamshift(unittest2.TestCase):
             self.assertAlmostEqual(restraint.obs(),expected_obs[name][0])
             self.assertAlmostEqual(restraint.err(),expected_obs[name][1])
             self.assertEqual(`restraint.calcd()`,'nan')
+            self.assertEqual(restraint.weight(),expected_weights[name])
 
         xcamshift._shift_cache = 53.217,18.507,177.759
 

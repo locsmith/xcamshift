@@ -4216,7 +4216,7 @@ class Xcamshift(PyEnsemblePot):
             return self._xcamshift_pot._get_restraint_error(self._atom_id)
 
         def weight(self):
-            return self._xcamshift_pot._get_weight(self._atom_id) #      - weight for this restraint.
+            return self._xcamshift_pot._get_restraint_weight(self._atom_id) #      - weight for this restraint.
 
         def comment(self):
             return self._xcamshift_pot._get_restraint_comment(self._atom_id)#     - associated comment.
