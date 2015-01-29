@@ -92,11 +92,11 @@ class Xplor_reader:
         class_keyword_re = re.compile('^\s*[Cc][Ll][Aa][Ss][Ss]?\s+(.+)')
 
         matchers = (assign_keyword_re,'ASSI',(1,3)),(weight_keyword_re,'WEIG',(0,2)),(class_keyword_re,'CLAS',(0,2))
-        for self.line_index,self.line in enumerate(lines.strip().split("\n")):
+        for self.line_index,self.line in enumerate(lines.split("\n")):
             line_complete = False
             comment  = None
 
-            self.line = self.line.strip()
+            self.line = self.line.lstrip()
             comment_start =  self.line.find('!')
             if comment_start > -1:
                 comment = self.line[comment_start+1:]
