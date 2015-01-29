@@ -4195,8 +4195,11 @@ class Xcamshift(PyEnsemblePot):
 
         def calcd(self): # - the most recent calculated value.
             result = float('nan')
-            if self._atom_id in self._xcamshift_pot._ensemble_shift_cache:
-                result = self._xcamshift_pot._ensemble_shift_cache[self._atom_id]
+            if self._xcamshift_pot._shift_cache != None:
+                active_atom_ids  = self._xcamshift_pot._get_active_target_atom_ids()
+                if self._atom_id in active_atom_ids:
+                    offset =  active_atom_ids.index(self._atom_id)
+                    result = self._xcamshift_pot._shift_cache[offset]
             return result
 
 
@@ -4210,7 +4213,7 @@ class Xcamshift(PyEnsemblePot):
             return self.calcd() - self.obs()
 
         def err(self): #         - input error value.
-            return self._xcamshift_pot._get_error(self._atom_id)
+            return self._xcamshift_pot._get_restraint_error(self._atom_id)
 
         def weight(self):
             return self._xcamshift_pot._get_weight(self._atom_id) #      - weight for this restraint.
