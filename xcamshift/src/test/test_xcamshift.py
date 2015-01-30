@@ -1129,7 +1129,7 @@ class TestXcamshift(unittest2.TestCase):
         expected  = {
             ('',2,'C')  : ' comment 1',
             ('',2,'CB') : ' comment 2 ',
-            ('',2,'CA') : None
+            ('',2,'CA') : ''
         }
 
         for atom_spec in expected:
