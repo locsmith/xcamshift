@@ -16,8 +16,9 @@ Created on 24 Jan 2012
 from python_utils import tupleit
 from utils import Atom_utils
 from  cython.shift_calculators import allocate_array
+from UserDict import DictMixin
 
-class Observed_shift_table(object):
+class Observed_shift_table(DictMixin):
     '''
     classdocs
     '''
@@ -57,6 +58,12 @@ class Observed_shift_table(object):
                 raise Exception(msg)
 
         return result
+
+    def add_shifts(self,shift_table):
+        for atom_id in shift_table:
+            self._chemical_shifts[atom_id] =  shift_table[atom_id]
+        self._native_shifts = None
+
 
     def get_chemical_shift(self,atom_index):
         return self._chemical_shifts[atom_index]
@@ -98,6 +105,8 @@ class Observed_shift_table(object):
     def __contains__(self, atom_id):
         return atom_id in self._chemical_shifts.keys()
 
+    def keys(self):
+        return self._chemical_shifts.keys()
 
     def __getitem__(self,index):
         result = None
@@ -106,6 +115,9 @@ class Observed_shift_table(object):
         else:
             raise KeyError('shift with atom id %i not found' % index)
         return result
+
+    def __setitem__(self,index,value):
+        self._chemical_shifts[index]=value
 
     def __str__(self):
 

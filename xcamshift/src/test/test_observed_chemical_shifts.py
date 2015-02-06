@@ -80,15 +80,18 @@ class TestObservedShiftTable(unittest2.TestCase):
         expected_keys = set(self.EXPECTED_ALA_3_KEYS_LONG)
         self._test_shift_keys(test_keys,expected_keys)
 
-    def testObservedShiftTableValues(self):
-        shift_table = self.create_ala_3_shift_table()
 
+    def _check_shifts(self, shift_table, test_shifts):
         for elem in shift_table.dump_observed_shifts():
             short_atom_key = elem[0][1:]
             value = elem[1]
-
-            expected = ala_3_test_shifts_harmonic[short_atom_key]
+            expected = test_shifts[short_atom_key]
             self.assertAlmostEqual(expected, value)
+
+    def testObservedShiftTableValues(self):
+        shift_table = self.create_ala_3_shift_table()
+
+        self._check_shifts(shift_table,ala_3_test_shifts_harmonic)
 
     def testIndexToAtomId(self):
         shift_table = self.create_ala_3_shift_table()
@@ -110,6 +113,38 @@ class TestObservedShiftTable(unittest2.TestCase):
         del shift_table[12]
         self.assertEqual(len(shift_table),5)
         self.assertTrue(('', 2, 'N') not in self._get_keys(shift_table))
+
+
+    def test_add_shifts(self):
+        shift_table = self.create_ala_3_shift_table()
+        shift_table_2 = Observed_shift_table({(2, "C") : 179.7749})
+        target_atom_ids = 12, 13, 14, 15, 16, 20
+
+        self._check_shifts(shift_table,ala_3_test_shifts_harmonic)
+
+        old_dump = `shift_table.get_native_shifts(target_atom_ids)`
+        shift_table.add_shifts(shift_table_2)
+
+        new_dump =  `shift_table.get_native_shifts(target_atom_ids)`
+        self.assertNotEqual(new_dump,old_dump)
+
+        altered_shifts = dict(ala_3_test_shifts_harmonic)
+        altered_shifts[(2, "C")] =  179.7749
+        self._check_shifts(shift_table,altered_shifts)
+
+        del shift_table[12]
+        del altered_shifts[(2, "N")]
+        self._check_shifts(shift_table,altered_shifts)
+
+        altered_shifts[(2, "N")] =  120
+        shift_table_3 =  Observed_shift_table({(2, "N") : 120.00})
+        shift_table.add_shifts(shift_table_3)
+        self._check_shifts(shift_table,altered_shifts)
+
+        new_dump_2 =  `shift_table.get_native_shifts(target_atom_ids)`
+        self.assertNotEqual(new_dump_2,new_dump)
+
+#TODO this doen't have a test of native access...
 
 if __name__ == "__main__":
     unittest2.main()
