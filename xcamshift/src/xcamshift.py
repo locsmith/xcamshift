@@ -3457,6 +3457,8 @@ class Xcamshift(PyEnsemblePot):
 
         self._comments = {}
 
+        self._restraint_weights = {}
+        self._restraint_errors = {}
 
 
 
@@ -3701,7 +3703,10 @@ class Xcamshift(PyEnsemblePot):
         return result
 
     def set_observed_shifts(self, shift_table):
-        self._shift_table  =  shift_table
+        if shift_table == None:
+            self._shift_table  =  shift_table
+        else:
+            self._shift_table.add_shifts(shift_table)
         #TODO: could be better
         self._shift_cache =  None
         self._energy_term_cache =  None
@@ -3985,6 +3990,11 @@ class Xcamshift(PyEnsemblePot):
                 seen_types[table_key] =  self._get_constants(residue_type, atom_name)
             cache_data = [target_atom_index]
             cache_data.extend(seen_types[table_key])
+            if target_atom_index in self._restraint_errors:
+                cache_data[ENERGY_TERM_CACHE_ERROR] = self._restraint_errors[target_atom_index]
+            if target_atom_index in self._restraint_weights:
+                cache_data[ENERGY_TERM_CACHE_WEIGHT] = self._restraint_weights[target_atom_index]
+
             cache_data = tuple(cache_data)
             cache.add_component(cache_data)
 
@@ -4143,16 +4153,25 @@ class Xcamshift(PyEnsemblePot):
             energy_term_cache.replace_component(index, component)
 
     def _get_restraint_error(self,atom_id):
-        return self._get_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_ERROR)
+        if atom_id in self._restraint_errors and self._restraint_errors[atom_id]:
+            result = self._restraint_errors[atom_id]
+        else:
+            result = self._get_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_ERROR)
+        return result
 
     def _set_restraint_error(self,atom_id, error):
-        self._set_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_ERROR, error)
+        self._restraint_errors[atom_id] = error
+        if self._energy_term_cache != None:
+            self._active_target_atom_ids =  None
+            self._set_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_ERROR, error)
 
     def _get_restraint_weight(self,atom_id):
         return self._get_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_WEIGHT)
 
     def _set_restraint_weight(self,atom_id, weight):
-        self._set_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_WEIGHT, weight)
+        self._restraint_weights[atom_id] = weight
+        if self._energy_term_cache != None:
+            self._set_energy_term_cache_elem(atom_id, ENERGY_TERM_CACHE_WEIGHT, weight)
 
     def _get_restraint_comment(self,atom_id):
         result = ""
@@ -4166,23 +4185,33 @@ class Xcamshift(PyEnsemblePot):
         self._comments[atom_id]=comment
 
     def addRestraints(self,lines):
+        self._energy_term_cache =  None
         data = Xplor_reader().read(lines)
-        observed_shifts = Observed_shift_table(data,format='xplor')
-        self.set_observed_shifts(observed_shifts)
+        for elem in data:
+            if elem.error != None:
+                self._set_restraint_error(elem.atom_id,elem.error)
+            if elem.weight != None:
+                self._set_restraint_weight(elem.atom_id, elem.weight)
+            self._set_restraint_comment(elem.atom_id, elem.comment)
+
+        new_observed_shifts = Observed_shift_table(data,format='xplor')
+        self.set_observed_shifts(new_observed_shifts)
 
         target_atom_ids  = self._get_active_target_atom_ids()
 
         for elem in data:
-
             if not elem.atom_id in target_atom_ids:
                 atom_name  = Atom_utils._get_pretty_atom_name_from_index(elem.atom_id)
                 print >> sys.stderr, "NOTE: the shift from atom: '%s'  can't act as a restraint [typically atom is missing or residue is at N/C terminus]." % atom_name
-                del  observed_shifts[elem.atom_id]
+                #TODO: this is highly inelegant the target atom ids are created when the shift table
+                # is created but we can't check if they are bad until after they are created...
+                del  self._shift_table[elem.atom_id]
+                if elem.atom_id in self._restraint_errors:
+                    del self._restraint_errors[elem.atom_id]
+                if elem.atom_id in self._restraint_weights:
+                    del self._restraint_weights[elem.atom_id]
                 continue
 
-            self._set_restraint_error(elem.atom_id,elem.error)
-            self._set_restraint_weight(elem.atom_id, elem.weight)
-            self._set_restraint_comment(elem.atom_id, elem.comment)
 
     def numRestraints(self):
         return len(self._get_observed_shifts())
@@ -4226,11 +4255,20 @@ class Xcamshift(PyEnsemblePot):
             residue_name = Atom_utils._get_residue_type_from_atom_id(self._atom_id)
             return ' '.join((fields[0],`fields[1]`,residue_name,fields[2]))
 
-        def setObs(self, value):
+        def setObs(self, value,error=None):
             self._xcamshift_pot._observed_shifts[self._atom_id] = value
+            if error != None:
+                self._xcamshift_pot._set_restraint_error(self._atom_id, error)
 
         def setWeight(self,weight):
-            self._xcamshift_pot._set_weight(self._atom_id, weight)
+            self._xcamshift_pot._set_restraint_weight(self._atom_id, weight)
+
+#
+#         def calcd2(self):
+#             return self.calcd()**2
+#
+#         def obs2(self):
+#             return self.obs()**2
   #calcd2()      - XXX
   #obs2()        - XXX
 

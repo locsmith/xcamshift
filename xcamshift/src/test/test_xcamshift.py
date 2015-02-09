@@ -39,6 +39,7 @@ from ensembleSimulation import   EnsembleSimulation
 from array import array
 from cython.shift_calculators import Non_bonded_bins
 from varTensorTools import create_VarTensor
+from collections import namedtuple
 
 TOTAL_ENERGY = 'total'
 def text_keys_to_atom_ids(keys, segment = '*'):
@@ -1142,79 +1143,96 @@ class TestXcamshift(unittest2.TestCase):
         self.assertEqual(xcamshift._get_restraint_comment(atom_id), new_comment)
 
 
-    def test_xcamshift_restraints_class(self):
-        xcamshift = Xcamshift()
 
-        restraints_text = '\n'.join(('! unrecorded comment',
-                                'assign ( resid 2 and name C ) 177.477 0.1   ! comment 1',
-                                'weight 2.0',
-                                'assign ( resid 2 and name CB ) 5.0 0.2      ! comment 2 ',
-                                'assign ( resid 2 and name CA)  56.012 0.1'))
-
-
-        xcamshift.addRestraints(restraints_text)
-
-        expected_comments  = {
-            ' 2 ALA C'  : ' comment 1',
-            ' 2 ALA CB' : ' comment 2 ',
-            ' 2 ALA CA' : ''
-        }
-
-        expected_names = [
-                ' 2 ALA CA',
-                ' 2 ALA CB',
-                ' 2 ALA C'
-        ]
-
-#         177.477 0.1   ! comment 1',
-#                                 'assign ( resid 2 and name CB ) 5.0 0.1      ! comment 2 ',
-#                                 'assign ( resid 2 and name CA)  56.012 0.1
-
-        expected_obs = {
-                ' 2 ALA C'  : (177.477,0.1),
-                ' 2 ALA CB' :   (5.000,0.2),
-                ' 2 ALA CA' :  (56.012,0.1)
-        }
-
-        expected_calcd = {
-            ' 2 ALA C'  : 177.759,
-            ' 2 ALA CB' :  18.507,
-            ' 2 ALA CA' :  53.217
-        }
-
-
-        expected_weights  = {
-            ' 2 ALA C'  : 1.0,
-            ' 2 ALA CB' : 2.0,
-            ' 2 ALA CA' : 2.0
-        }
+    def _check_restraints(self, xcamshift,test_data):
 
         restraints = xcamshift.restraints()
+        self.assertLengthIs(restraints, len(test_data.expected_comments))
 
-        self.assertLengthIs(restraints, len(expected_comments))
-
+        expected_names  = list(test_data.expected_names)
         for restraint in restraints:
             self.assertTrue(restraint.name() in expected_names)
             expected_names.remove(restraint.name())
 
         for restraint in restraints:
             name = restraint.name()
-            self.assertEqual(restraint.comment(),expected_comments[name])
-            self.assertAlmostEqual(restraint.obs(),expected_obs[name][0])
-            self.assertAlmostEqual(restraint.err(),expected_obs[name][1])
-            self.assertEqual(`restraint.calcd()`,'nan')
-            self.assertEqual(restraint.weight(),expected_weights[name])
-            self.assertEqual(`restraint.diff()`,'nan')
+            self.assertEqual(restraint.comment(), test_data.expected_comments[name])
+            self.assertAlmostEqual(restraint.obs(), test_data.expected_obs[name][0])
+            self.assertAlmostEqual(restraint.err(), test_data.expected_obs[name][1])
 
-        xcamshift._shift_cache = 53.217,18.507,177.759
+            self.assertEqual(restraint.weight(), test_data.expected_weights[name])
 
-# this crashes and produces incosistent results!
-#         xcamshift.calcEnergy()
-#
+
+        xcamshift._shift_cache = test_data.shift_cache
+    # this crashes and produces inconsistent results!
+    #         xcamshift.calcEnergy()
+    #
+
         for restraint in restraints:
             name = restraint.name()
-            self.assertAlmostEqual(restraint.calcd(),expected_calcd[name],places=3)
-            self.assertAlmostEqual(restraint.diff(),expected_calcd[name]-expected_obs[name][0])
+            self.assertAlmostEqual(restraint.calcd(), test_data.expected_calcd[name], places=3)
+            self.assertAlmostEqual(restraint.diff(), test_data.expected_calcd[name] - test_data.expected_obs[name][0])
+
+    def test_xcamshift_restraints_class(self):
+        xcamshift = Xcamshift()
+
+        restraints_text = '\n'.join(('! unrecorded comment',
+                                'assign ( resid 2 and name C )  177.477 0.1      ! comment 1',
+                                'weight 2.0',
+                                'assign ( resid 2 and name CB ) 5.0     0.2      ! comment 2 ',
+                                'assign ( resid 2 and name CA)  56.012  0.1'))
+
+        Test_data  = namedtuple('Test_data', ('expected_comments','expected_names',
+                                               'expected_obs','expected_calcd',
+                                               'expected_weights','shift_cache'))
+
+        test_data = Test_data(expected_comments = {' 2 ALA C':' comment 1',
+                                       ' 2 ALA CB':' comment 2 ',
+                                       ' 2 ALA CA':''},
+
+                              expected_names = [' 2 ALA CA',
+                                                ' 2 ALA CB',
+                                                ' 2 ALA C'],
+                               expected_obs = {
+                                    ' 2 ALA C':(177.477, 0.1),
+                                    ' 2 ALA CB':(5.000, 0.2),
+                                    ' 2 ALA CA':(56.012, 0.1)},
+
+                              expected_calcd = {' 2 ALA C':177.759,
+                                                ' 2 ALA CB':18.507,
+                                                ' 2 ALA CA':53.217},
+
+                              expected_weights = {' 2 ALA C':1.0,
+                                                  ' 2 ALA CB':2.0,
+                                                  ' 2 ALA CA':2.0},
+
+                              shift_cache = [53.217, 18.507, 177.759]
+                        )
+
+        xcamshift.addRestraints(restraints_text)
+
+        restraints =xcamshift.restraints()
+
+        for restraint in restraints:
+            self.assertEqual(`restraint.calcd()`, 'nan')
+            self.assertEqual(`restraint.diff()`, 'nan')
+
+        self._check_restraints(xcamshift,test_data)
+
+        restraints_text_2 = '''weight 7.0
+                               assign ( resid 2 and name HN )  8.5 0.3      ! comment 3'''
+
+        xcamshift.addRestraints(restraints_text_2)
+
+        new_name = ' 2 ALA HN'
+        test_data.expected_comments[new_name] = ' comment 3'
+        test_data.expected_names.append(new_name)
+        test_data.expected_obs[new_name] = (8.5, 0.3)
+        test_data.expected_weights[new_name] = 7.0
+        test_data.expected_calcd[new_name] =  8.237
+        test_data.shift_cache.insert(0,8.237)
+        self._check_restraints(xcamshift,test_data)
+
 
 def run_tests():
     unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_xcamshift_restraints_class')
