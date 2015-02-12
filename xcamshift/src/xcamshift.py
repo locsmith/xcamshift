@@ -54,6 +54,7 @@ from cython.shift_calculators import Fast_distance_shift_calculator, Fast_dihedr
 from dihedral import Dihedral
 from simulation import currentSimulation
 from vec3 import dot,Vec3
+from collections import namedtuple
 
 
 class Component_factory(object):
@@ -3703,10 +3704,7 @@ class Xcamshift(PyEnsemblePot):
         return result
 
     def set_observed_shifts(self, shift_table):
-        if shift_table == None:
-            self._shift_table  =  shift_table
-        else:
-            self._shift_table.add_shifts(shift_table)
+        self._shift_table.add_shifts(shift_table)
         #TODO: could be better
         self._shift_cache =  None
         self._energy_term_cache =  None
@@ -4255,26 +4253,26 @@ class Xcamshift(PyEnsemblePot):
             residue_name = Atom_utils._get_residue_type_from_atom_id(self._atom_id)
             return ' '.join((fields[0],`fields[1]`,residue_name,fields[2]))
 
-        def setObs(self, value,error=None):
-            self._xcamshift_pot._observed_shifts[self._atom_id] = value
-            if error != None:
-                self._xcamshift_pot._set_restraint_error(self._atom_id, error)
+        def setObs(self, shift):
+            Shift = namedtuple('Shift', ('atom_id','shift'))
+
+            data = Shift(shift = shift, atom_id=self._atom_id)
+            shift_table = Observed_shift_table((data,), format='xplor')
+            self._xcamshift_pot.set_observed_shifts(shift_table)
+
+        def setErr(self,error):
+            self._xcamshift_pot._set_restraint_error(self._atom_id, error)
+
 
         def setWeight(self,weight):
             self._xcamshift_pot._set_restraint_weight(self._atom_id, weight)
 
-#
-#         def calcd2(self):
-#             return self.calcd()**2
-#
-#         def obs2(self):
-#             return self.obs()**2
-  #calcd2()      - XXX
-  #obs2()        - XXX
 
+        def calcd2(self):
+            return self.calcd()**2
 
-#   setObs(val)   - set the obs value.
-#   setErr(val)   - set the err value.
+        def obs2(self):
+            return self.obs()**2
 
     def restraints(self):
         result = []

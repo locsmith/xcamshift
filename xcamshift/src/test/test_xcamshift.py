@@ -1161,17 +1161,37 @@ class TestXcamshift(unittest2.TestCase):
             self.assertAlmostEqual(restraint.err(), test_data.expected_obs[name][1])
 
             self.assertEqual(restraint.weight(), test_data.expected_weights[name])
+            self.assertEqual(restraint.obs2(),restraint.obs()* restraint.obs())
 
 
-        xcamshift._shift_cache = test_data.shift_cache
     # this crashes and produces inconsistent results!
     #         xcamshift.calcEnergy()
     #
+        xcamshift._shift_cache = test_data.shift_cache
 
         for restraint in restraints:
             name = restraint.name()
             self.assertAlmostEqual(restraint.calcd(), test_data.expected_calcd[name], places=3)
             self.assertAlmostEqual(restraint.diff(), test_data.expected_calcd[name] - test_data.expected_obs[name][0])
+            self.assertEqual(restraint.calcd2(),restraint.calcd()* restraint.calcd())
+
+        for i,restraint in enumerate(restraints):
+            restraint.setErr(restraint.err()*float(i+1))
+            restraint.setWeight(restraint.weight()*float(i+1))
+            restraint.setObs(restraint.obs()*float(i+1))
+
+        for i,restraint in enumerate(restraints):
+            name = restraint.name()
+            self.assertAlmostEqual(restraint.err(),test_data.expected_obs[name][1]*float(i+1))
+            self.assertAlmostEqual(restraint.weight(),test_data.expected_weights[name]*float(i+1))
+            self.assertAlmostEqual(restraint.obs(),test_data.expected_obs[name][0]*float(i+1))
+
+            self.assertAlmostEqual(xcamshift._shift_table[test_data.atom_ids[name]],test_data.expected_obs[name][0]*float(i+1))
+            self.assertAlmostEqual(xcamshift._get_restraint_weight(test_data.atom_ids[name]),test_data.expected_weights[name]*float(i+1))
+            restraint.setErr(restraint.err()/float(i+1))
+            restraint.setWeight(restraint.weight()/float(i+1))
+            restraint.setObs(restraint.obs()/float(i+1))
+
 
     def test_xcamshift_restraints_class(self):
         xcamshift = Xcamshift()
@@ -1184,7 +1204,7 @@ class TestXcamshift(unittest2.TestCase):
 
         Test_data  = namedtuple('Test_data', ('expected_comments','expected_names',
                                                'expected_obs','expected_calcd',
-                                               'expected_weights','shift_cache'))
+                                               'expected_weights','shift_cache', 'atom_ids'))
 
         test_data = Test_data(expected_comments = {' 2 ALA C':' comment 1',
                                        ' 2 ALA CB':' comment 2 ',
@@ -1193,7 +1213,7 @@ class TestXcamshift(unittest2.TestCase):
                               expected_names = [' 2 ALA CA',
                                                 ' 2 ALA CB',
                                                 ' 2 ALA C'],
-                               expected_obs = {
+                              expected_obs = {
                                     ' 2 ALA C':(177.477, 0.1),
                                     ' 2 ALA CB':(5.000, 0.2),
                                     ' 2 ALA CA':(56.012, 0.1)},
@@ -1205,6 +1225,10 @@ class TestXcamshift(unittest2.TestCase):
                               expected_weights = {' 2 ALA C':1.0,
                                                   ' 2 ALA CB':2.0,
                                                   ' 2 ALA CA':2.0},
+
+                              atom_ids = {' 2 ALA C':20,
+                                          ' 2 ALA CB':16,
+                                          ' 2 ALA CA':14},
 
                               shift_cache = [53.217, 18.507, 177.759]
                         )
@@ -1225,6 +1249,7 @@ class TestXcamshift(unittest2.TestCase):
         xcamshift.addRestraints(restraints_text_2)
 
         new_name = ' 2 ALA HN'
+        test_data.atom_ids[new_name]=13
         test_data.expected_comments[new_name] = ' comment 3'
         test_data.expected_names.append(new_name)
         test_data.expected_obs[new_name] = (8.5, 0.3)
