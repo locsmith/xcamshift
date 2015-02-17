@@ -55,6 +55,7 @@ from dihedral import Dihedral
 from simulation import currentSimulation
 from vec3 import dot,Vec3
 from collections import namedtuple
+from cmath import isnan
 
 
 class Component_factory(object):
@@ -3427,8 +3428,10 @@ class Xcamshift(PyEnsemblePot):
 
 
 
-    def __init__(self, name="xcamshift_instance", verbose=False):
+    def __init__(self, name="xcamshift_instance", scale = 1.0, threshold =0.0, verbose=False):
         super(Xcamshift, self).__init__(name)
+        self.setScale(scale)
+        self.setThreshold(threshold)
         self.potential = [
                           RandomCoilShifts(self.ensembleSimulation()),
                           Distance_potential(self.ensembleSimulation()),
@@ -3461,7 +3464,7 @@ class Xcamshift(PyEnsemblePot):
         self._restraint_weights = {}
         self._restraint_errors = {}
 
-
+        self._threshold = 0.0
 
     def set_verbose(self,on=True):
         for potential in self.potential:
@@ -4281,5 +4284,31 @@ class Xcamshift(PyEnsemblePot):
             if target_atom_id in observed_shifts:
                 result.append(Xcamshift._Restraint(target_atom_id,self))
         return tuple(result)
+
+    def threshold(self):
+        return self._threshold
+
+    def setThreshold(self, threshold):
+        self._threshold =  float(threshold)
+
+    def violations(self):
+        #todo should chech for modified and calcenergy
+        result = 0
+        for restraint in self.restraints():
+            if abs(restraint.diff()) > ((self.threshold() * restraint.err()) + restraint.err()):
+                result += 1
+        return result
+#         violated  = []
+#         for restraint in self.restraints():
+#             if not isnan(restraint.calcd()):
+#                 plus_error = restraint.obs() + restraint.err()
+#                 minus_error = restraint.obs() - restraint.err()
+#                 if restraint.calcd() > plus_error or  restraint.calcd() < minus_error:
+#                     violated.append(restraint)
+#
+#         for restraint in violated:
+#             line_data = (restraint.name() , '%-7.3f' % restraint.calcd(), '%-7.3f' %  restraint.obs(), '%-7.3f' % restraint.err())
+#             print '%10s %10s %10s %10s' % line_data
+
 
 

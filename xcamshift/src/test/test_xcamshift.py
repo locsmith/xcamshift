@@ -1258,9 +1258,37 @@ class TestXcamshift(unittest2.TestCase):
         test_data.shift_cache.insert(0,8.237)
         self._check_restraints(xcamshift,test_data)
 
+    def _dict_to_shifts(self,shift_dict):
+        lines  = []
+        for key in sorted(shift_dict.keys()):
+
+            fields  = list(key)
+            fields.append(shift_dict[key])
+            fields =  tuple(fields)
+            lines.append('assign (resid %i and name %s) %4.3f' % fields)
+        return '\n'.join(lines)
+
+    def test_violations(self):
+        xcamshift = Xcamshift()
+        xcamshift.remove_named_sub_potential('HBOND')
+        xcamshift.addRestraints(open('test_data/3_ala/3ala_xplor.shifts').read())
+
+        xcamshift.calcEnergy()
+        self.assertEqual(xcamshift.violations(),0);
+
+        xcamshift.addRestraints(self._dict_to_shifts(ala_3.ala_3_test_shifts_harmonic))
+
+        xcamshift.calcEnergy()
+        self.assertEqual(xcamshift.violations(),6);
+
+        xcamshift.setThreshold(3.5)
+        xcamshift.calcEnergy()
+        self.assertEqual(xcamshift.violations(),3);
+
+
 
 def run_tests():
-    unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_xcamshift_restraints_class')
+    unittest2.main(module='test.test_xcamshift',failfast=True,defaultTest='TestXcamshift.test_violations')
 
 
 if __name__ == "__main__":
