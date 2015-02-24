@@ -1368,6 +1368,10 @@ cdef class Fast_hydrogen_bond_calculator:
     cdef bint _verbose
     cdef EnsembleSimulation* _simulation
     cdef int _min_residue_seperation
+    cdef object _components_python
+    cdef object _parameters_python
+    cdef object _donors_python
+    cdef object _acceptors_python
 
     def __init__(self,simulation,cutoff_distance=5.0):
         self._simulation = simulationAsNative(simulation)
@@ -1376,23 +1380,32 @@ cdef class Fast_hydrogen_bond_calculator:
         self._cutoff_distance =  cutoff_distance
         self._verbose =  False
 
+        self._components_python = None
+        self._parameters_python = None
+        self._donors_python = None
+        self._acceptors_python = None
+
 
     def set_verbose(self,on):
         self._verbose=on
 
     cdef   int _bytes_to_components(self, data, Hydrogen_bond_component** target_pointer):
+        self._components_python = data
         target_pointer[0] =  <Hydrogen_bond_component*> <size_t> ctypes.addressof(data)
         return len(data)/ sizeof(Hydrogen_bond_component)
 
     cdef  int _bytes_to_parameters(self,data, Hydrogen_bond_parameter** target_pointer):
+        self._parameters_python = data
         target_pointer[0] =  <Hydrogen_bond_parameter*> <size_t> ctypes.addressof(data)
         return len(data)/ sizeof(Hydrogen_bond_parameter)
 
     cdef  int _bytes_to_donor_lookup(self,data, Hydrogen_bond_donor_lookup** target_pointer):
+        self._donors_python = data
         target_pointer[0] =  <Hydrogen_bond_donor_lookup*> <size_t> ctypes.addressof(data)
         return len(data)/ sizeof(Hydrogen_bond_donor_lookup)
 
     cdef  int _bytes_to_acceptor_lookup(self,data, Hydrogen_bond_acceptor_lookup** target_pointer):
+        self._acceptors_python = data
         target_pointer[0] =  <Hydrogen_bond_acceptor_lookup*> <size_t> ctypes.addressof(data)
         return len(data)/ sizeof(Hydrogen_bond_acceptor_lookup)
 
@@ -1824,6 +1837,8 @@ cdef class Fast_non_bonded_calculator:
     cdef CDSVector[int] residue_numbers
     cdef CDSVector[FixedVector[char,FIVE]] segids
     cdef CDSVector[Vec3] positions
+    cdef _target_components_python
+    cdef _remote_components_python
 
     def __init__(self,simulation, min_residue_seperation,cutoff_distance=5.0,jitter=0.2):
         self._simulation = simulationAsNative(simulation)
@@ -1833,6 +1848,8 @@ cdef class Fast_non_bonded_calculator:
         self._jitter = jitter
         self._full_cutoff_distance =  self._cutoff_distance + self._jitter
         self._verbose =  False
+        self._target_components_python = None
+        self._remote_components_python = None
 
 
     def set_verbose(self,on):
@@ -1878,12 +1895,12 @@ cdef class Fast_non_bonded_calculator:
 
 
     cdef   int _bytes_to_target_components(self, data, Non_bonded_target_component** target_pointer):
-
+        self._target_components_python =  data
         target_pointer[0] =  <Non_bonded_target_component*> <size_t> ctypes.addressof(data)
         return len(data)/ sizeof(Non_bonded_target_component)
 
     cdef   int _bytes_to_remote_components(self, data, Non_bonded_remote_atom_component** remote_pointer):
-
+        self._remote_components_python =  data
         remote_pointer[0] =  <Non_bonded_remote_atom_component*> <size_t> ctypes.addressof(data)
         return len(data)/ sizeof(Non_bonded_remote_atom_component)
 
