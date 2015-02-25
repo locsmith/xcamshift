@@ -20,12 +20,12 @@ class TestXcamshiftPrintShifts(unittest2.TestCase):
     def _clear_caches(self):
         Atom_utils.clear_cache()
         Segment_Manager.reset_segment_manager()
-        
+
     def setUp(self):
         initStruct("test_data/gb3/gb3.psf")
         PDBTool("test_data/gb3/gb3_refined_II.pdb").read()
         self._clear_caches()
-        
+
 
 
     def _get_xcamshift(self):
@@ -36,17 +36,17 @@ class TestXcamshiftPrintShifts(unittest2.TestCase):
         class WritableObject:
             def __init__(self):
                 self.content = []
-                
+
             def write(self, string):
                 self.content.append(string)
-            
+
 
         output = WritableObject()
 
         xcamshift =  self._get_xcamshift()
         xcamshift.remove_named_sub_potential('HBOND', quiet=True)
-        xcamshift.print_shifts(out=output)
-        
+        xcamshift.print_shifts()
+
         #print ''.join(output.content)
         contents = output.content
         contents  =  ''.join(contents)
@@ -58,7 +58,7 @@ class TestXcamshiftPrintShifts(unittest2.TestCase):
                 fields =  line.split()
                 names =  fields [3:]
             else:
-                
+
                 if line[0] == '|':
                     line=line[1:]
                 field_1,rest = line.split('|')
@@ -66,7 +66,7 @@ class TestXcamshiftPrintShifts(unittest2.TestCase):
                 fields.extend(rest.split())
                 segid,resid = fields[:2]
                 resid=int(resid)
-                
+
                 for name,shift in zip(names,fields[3:]):
                     self.assertEqual(segid, '')
                     key = ('',resid,name)
@@ -76,7 +76,7 @@ class TestXcamshiftPrintShifts(unittest2.TestCase):
                         shift=float(shift)
                         #TODO test data is not accurate enough to test within 3dp.due to rounding errors..
                         self.assertAlmostEqual(shift,gb3_shifts[key],places=2,msg=`key`)
-            
+
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
