@@ -2,9 +2,9 @@ XCamShift
 =========
 
 
-XCamShift (XCS) is a new implementation of the camshift chemical shift force field[^1] for XPLOR-NIH [^2]. The camshaft implementation has a number of interesting and useful features
+XCamShift (XCS) is a new implementation of the camshift chemical shift force field[^1] for XPLOR-NIH [^2]. The camshift implementation has a number of interesting and useful features
 
-* It is very thoroughly tested against the original camshaft implementation in almost [^3] and has a large and full test suite which checks that XCS produces results that are identical with camshaft in almost.
+* It is very thoroughly tested against the original camshift implementation in almost [^3] and has a large and full test suite which checks that XCS produces results that are identical with camshift in almost.
 * XCS uses cython[^4] to give a forcefield with native performance written in python
 * XCS provides extensions against the standard camshift forcefield including the ability to carry out  ensemble calculations, weighting of shift terms and variable well widths to allow for variation in statistical errors in measured chemical shift.
 * XCS is modular and individual chemical shift terms can be re weighted during calculations and there is scope for whole components of the force field [e.g hydrogen bonding, aromatic ring currents etc] to be modified or replaced independently. 
@@ -18,7 +18,7 @@ The Details
 
 ###Installation
 
-XCamShift can be installed from pre compiled binaries or can be compiled on the users own computer targeting a particular installation of xplor-nih. The precompiled binary python modules include all the software required to run XCS and do not require any other software to be installed other than XPLOR-NIH    
+XCamShift can be installed from pre compiled binaries or can be compiled on the users own computer targeting a particular installation of xplor-nih. The precompiled binary python modules includes all the software required to run XCS and you should not require any other software to be installed other than XPLOR-NIH    
 
 download XCamShift binaries (xplor nih 2.35):
 
@@ -26,16 +26,18 @@ download XCamShift binaries (xplor nih 2.35):
 2. OSX i686 (32 bit) - coming
 3. Linux x86_64 (64 bit)
 4. Linux x86_64 (32 bit) - coming
-6. sources: see Downloading the source from Gihub [below](#download_source) 
+6. sources: see downloading the source from Gihub [below](#download_source) 
 
-To install the XCamShift (see ~~setting paths~~ below if you want to use XCamShifts without modifying your xplor-nih installation):
+> note: to install the XCamShift carry out steps given directly below, otherwise if you want to use XCamShift without modifying your xplor-nih installation see the section [setting paths](#setting-paths) below
 
-> note: in the following <code>xxx</code> refers to a specific version e.g. v1, <code>\<platform\></code> and may include a computer platform  e.g. OSX or Linux  and a cpu architecture <code>\<architecture\></code> e.g. x86_64 or i686
+----
+
+> note: in the following <code>xxx</code> refers to a specific version e.g. v1, <code>\<platform\></code> is a computer platform  e.g. OSX or Linux  and <code>\<architecture\></code> is a cpu architecture  e.g. x86_64 or i686
 
 
-0. if md5sum is installed check the md5sum of the download is correct <code>md5sum XCamShift_xxx.tgz</code> 
+0. if md5sum is installed check the md5sum of the download is correct <code>md5sum XCamShift_xxx.tgz</code>  [on OS X you will need <code>md5 -r XCamShift_xxx.tgz</code> instead]
 1. extract the XCamShift_xxx.tgz into a convenient temporary directory using the command <code>tar -zxvf XCamShift_xxx.tgz</code> 
-2. move the .so files in xcamshaft_xxx/modules into the folder <code>python/bin.\<platform>\_\<architecture></code> in you xplor installation; on OSX \<platform> will be Darwin_\<XX> (where \<XX> is the darwin version) and just Linux for linux. \<architecture> will be either X86_64 or i686 for 64 and 32 bit computers respectively.
+2. move the .so files in xcamshift_xxx/modules into the folder <code>python/bin.\<platform>\_\<architecture></code> in you xplor installation; on OSX \<platform> will be Darwin_\<XX> (where \<XX> is the darwin version) and just Linux for linux. \<architecture> will be either X86_64 or i686 for 64 and 32 bit computers respectively.
 3. Move the directory database/XCamShift which contains the forcefield definition into the database directory of your XPLOR-NIH installation.
 4. test the installation by running the script <code>src/suite.py</code> with the command line <code>pyXplor src/suite.py</code>. You shouldn't see any errors of the form <code>fail</code> or <code>error</code> or <code>abnormal program termination</code>; any of these show a bug is present and should be reported as described in bug reporting below.
 
@@ -64,9 +66,9 @@ the format of a chemical shift restraint file is detail below under restraints
     XCamShift.setScale(6) # this will change the weights of all terms
 
 
-######Format of there camshaft restraint list
+######Format of the xcamshift restraint list
 
-camshaft restraint files are typical xplor restraints files and accept acclamation marks (!) as comments that run to the end of lines. The format is
+camshift restraint files are typical xplor restraints files and accept acclamation marks (!) as comments that run to the end of lines. The format is
 
     <weight-statement>|<class-statement>| <assign-statement>
 
@@ -79,7 +81,7 @@ the <code>weight</code> and <code>\<class></code> statement set weights for all 
 
 An example of an XCamShift restraint file would be 
 
-    class TEST                                     ! comment
+    class TEST                                     ! this is a comment
     assign ( resid 2 and name C ) 177.477          ! restraint with default error
     weight 2.0
     assign ( resid 3 and name C ) 175.002 0.1      ! error is 0.1 weight 2.0
@@ -138,7 +140,7 @@ The chemical shifts predicted by XCamShift can be printed using the methods <cod
     |AGB3|    54       VAL    4.4473  59.3198   8.6110 121.8589 173.1164  32.8183
     |AGB3|    55       THR    4.8757  60.3260   8.6678 120.6908 173.4372  71.6735
 
-note that missing chemical shifts which are mythically possible e.g. GLY CB are replaced by a <code>.</code> and that segids are wrapped with a  <code>||</code> pair to make spaces visible.
+note that missing chemical shifts which are structuraly possible e.g. GLY CB are replaced by a <code>.</code> and that segids are wrapped with a  <code>||</code> pair to make spaces visible.
 
 
 ###Rebuilding XCamShift
@@ -149,9 +151,9 @@ You should only need to recompile XCamShift if you want to make changes to the c
 
 To rebuild the camshift tables (it is unlikely that you will need to do this!)  if you are running on an older version of python you may need to build argparse[^5] and add it to the <code>PYTHONPATH</code>
 
-####[Downloading the source from Gihub](id:download_source)
+####[Downloading the source from Github](id:download_source)
 
-source code can be downloaded from the github master branch using the following command <code></code>
+source code can be downloaded from the github master branch using the following link: <code>locsmith/xcamshift/archive/master.zip</code> to clone the complete repository us the the following command <code>git clone https://github.com/locsmith/xcamshift.git</code>
 
 
 ####Rebuilding the C code
@@ -162,18 +164,15 @@ source code can be downloaded from the github master branch using the following 
 4. edit <code>build_all.py</code> and change the variables
 5. run <code>build_all.py</code>
 
-####Setting Paths
+####[Setting Paths](id:setting_paths)
 XCamShift can be tested without modifying xplor-nih by adding the following to you PYTHONPATH
 
 <code>\<XCamShift-directory\>/src/cython:\<XCamShift-directory\>/XCamShift/src</code>
 
 where <XCamShift-directory> is the directory that contains the XCamShift distribution
 
-if they are not installed already you will also have to add python paths for
 
-1. nanotime
-2. unittest2
-3. PyYAML
+If it is not installed you will also need to install PyYAML[^8] and add it's installation directory to the <code>PYTHONPATH</code> variable
 
 ####Testing XCamShift
 
@@ -181,64 +180,44 @@ If XCamShift is installed or the paths are correctly set XCamShift can be tested
 
 <code>pyXplor \<XCamShift-directory\>/src/test/test_XCamShift_print_shifts.py</code>
 
+if they are not installed already you will also have to add python paths for the following python packages if you want to run the tests
+
+1. nanotime[^7]
+2. unittest2[^6]
 
 ####Reporting bugs
 
 Bugs happen! XCamShift is well test but new code, please report bugs (or make requests for enhancements or even submit enhancements!) on the XCamShift github site: 
 
-The author can also be contacted at 'g dot s dot thompson at leeds dot ac dot uk'
+The author can also be contacted at <code>g dot s dot thompson at leeds dot ac dot uk</code>
+
+####Caveats
+1. XCamShift calculates chemical shifts for hydrogen bonds but doesn't calculate any forces in the same manner as the original version. The hydrogen bond shift calculator can be disabled using the following code <code>\<xcamshift-potential\>.remove_named_sub_potential('HBOND')</code> where <code>\<xcamshift-potential\></code> is the xcamshift potential instance.
 
 
 ###Tested versions
 
-* __Targeted version of Camshift:__ XCamShift is currently tested against version 1.35.0 of camshift which is implemented in almost XXX.yyyy.
+* __Targeted version of Camshift:__ XCamShift is currently tested against version 1.35.0 of camshift which is implemented in almost 1.04.
 * __Supported versions of XPLOR-NIH:__ XCamShift currently supports version of XPLOR-NIH from 2.31 to 2.35 and the precompiled binaries are compiled against XPLOR-NIH 2.35.Please note that for some versions of xplor-nih before 2.35 you may need to recompile from source as the interface for the ensemble code has changed (this definitely included xplor-nih 2.33).  
-* * __Compiler environment:__ XCamShift binaries are compiled with GCC version 4.8.2 on OSX and Cython 0.20.2 (Note Cython is only required if the python code is modified XCamShift can be re-compiled from the C++ source without Cython being present).
-* __Targteted platforms:__ XCamShift can be used on OSX and Linux under either a 32Bit or 64Bit intel environment (however 32bit OSX is not tested). 
-
-    
-###Todo
+*  __Compiler environment:__ XCamShift binaries are compiled with GCC version 4.8.2 on OSX and Cython 0.20.2 (Note Cython is only required if the python code is modified, XCamShift can be re-compiled from the C++ source without Cython being present).
+* __Targetted platforms:__ XCamShift can be used on OSX and Linux under either a 32Bit or 64Bit intel environment (however 32bit OSX is not tested). 
 
 
-1. list all restraints add and remove restraints **done restraints work**
-3. list violations  **done**
-5. setup of ensemble calculations and weighting
-7. listing calculated shifts
-12. fill in  refs
-13. test release 
-14. hold all c data structures in cython **done**
-14. release
-11. modified non bonded potential
-12. re weighting individual forcefield components
-13. hbonds
-15. format of forcefield component files
-15. list status of all forcefield components
-15.  set weights for classes 
-16.  properly use modified
-17.  check restraint base class properly implemented
-15. test atom subsets
-16. clean code and make sure 
-17. integration with ccpn
-18. listing the shift table
-19. add holds for all native structures
-20. vectorised calculations...
-21. make restraints true restraints
-22. add signal catchers
-23. propogate exception from cython
-24. all calls should go through the kitchen handler
-25. remove dependancy on unittest2
- 
+###Citing XCamShift
+
+There is currently no paper for XCamShift (I hope there will be one soon!). Until there is please cite: __XCamShift__ G.S.Thompson, Astbury Centre for Structural Molecular Biology, University of Leeds, UK [http://github.com/locsmith/xcamshift]
+
+###References
 
 
-
-
-
-
-[^1]: camshift reference
-[^2]: xplor nih
-[^3]: almost
-[^4]: cython
-[^5]: argparse
+[^1]: __camshift:__ Kohlhoff, K.J. et al. 2009. Fast and accurate predictions of protein NMR chemical shifts from interatomic distances. _Journal of the American Chemical Society_. **131** (39),pp.13894–13895. Robustelli, P. et al. 2010. Using NMR chemical shifts as structural restraints in molecular dynamics simulations of proteins. _Structure_. **18** (8),pp.923–933. [Kai Kohlhoff's thesis](http://research.microsoft.com/pubs/72347/Kai Kohlhoff - Protein chemical%20shifts.pdf) "Protein Chemical Shifts as Structural Restraints in Molecular Dynamics Simulations, University of Cambridge, England, May, 2008
+[^2]: [__xplor-nih:__](http://nmr.cit.nih.gov/xplor-nih/)  Schwieters, C.D. et al. 2003. The Xplor-NIH NMR molecular structure determination package. _J. Magn. Reson_. **160** (1),pp.65–73. Schwieters, C.D. et al. 2006. Using Xplor NIH for NMR molecular structure determination. _Progress in Nuclear Magnetic Resonance Spectroscopy_. **48** ,pp.47–62.
+[^3]: [__almost:__](http://www.open-almost.org.) Fu, B. et al. 2014. ALMOST: An all atom molecular simulation toolkit for protein structure determination. _Journal of computational chemistry_. **35** (14),pp.1101–1105.
+[^4]: [__cython__](http:// cython.org/) C extensions for python (an optimising static compiler for both the Python programming language and the extended Cython programming language) 
+[^5]: [__argparse__](https://code.google.com/p/argparse/) part of python since version 2.7, for earlier versions of python
+[^6]: [__unittest2:__](https://code.google.com/p/unittest-ext/) a back port of the unit testing code from python 3+ 
+[^7]: [__nanotime:__](http://github.com/jbenet/nanotime/tree/master/python) a nano second resolution timing service for python 
+[^8]: [__pyyaml:__](http://pyyaml.org/) an implementation of the yaml markup language for python, you may also wish to install libyaml to get a much faster runtime
 
 
 
