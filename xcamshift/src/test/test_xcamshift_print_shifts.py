@@ -45,7 +45,7 @@ class TestXcamshiftPrintShifts(unittest2.TestCase):
 
         xcamshift =  self._get_xcamshift()
         xcamshift.remove_named_sub_potential('HBOND', quiet=True)
-        xcamshift.print_shifts()
+        xcamshift.print_shifts(output)
 
         #print ''.join(output.content)
         contents = output.content
