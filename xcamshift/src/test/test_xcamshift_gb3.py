@@ -20,7 +20,7 @@ from protocol import initStruct
 from pdbTool import PDBTool
 import unittest2
 from xcamshift import  Xcamshift
-from shift_calculators import CDSSharedVectorFloat
+from cython.shift_calculators import CDSSharedVectorFloat
 from atomSel import AtomSel
 from test import gb3, gb3_10_steps
 from test import  util_for_testing
