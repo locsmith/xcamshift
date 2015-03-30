@@ -22,6 +22,7 @@ from test.test_component_list import Test_component_list,Test_native_component_l
 from test.test_xcamshift_afa import TestXcamshiftAFA
 from test.test_xcamshift_a4 import TestXcamshiftA4
 from test.test_python_utils import Test_python_utils
+#TODO move importesr test to its own suite
 from test.test_table_importers import Test_table_importers
 from test.test_xcamshift_aga import TestXcamshiftAGA
 from test.test_xcamshift_vin import TestXcamshiftVIN
@@ -45,7 +46,8 @@ def load_tests(loader, tests, pattern):
                 Test_native_component_list,
                 TestXcamshiftA4,
                 Test_python_utils,
-                Test_table_importers,
+                # todo move to its own suite
+                #Test_table_importers,
                 TestXcamshiftAGA,
                 TestXcamshiftVIN,
                 TestXcamshiftAGFA,
