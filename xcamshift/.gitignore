@@ -32,3 +32,8 @@ xplor.log.*
 suppress_xplor.supp
 .gitignore
 *(Case Conflict*
+NMRDG2014/
+.refactorings/
+*.launch
+.gitignore
+*.profile
