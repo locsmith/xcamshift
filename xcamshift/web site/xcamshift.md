@@ -20,25 +20,39 @@ The Details
 
 XCamShift can be installed from pre compiled binaries or can be compiled on the users own computer targeting a particular installation of xplor-nih. The precompiled binary python modules includes all the software required to run XCS and you should not require any other software to be installed other than XPLOR-NIH    
 
-download XCamShift binaries (xplor nih 2.35):
 
-1. OSX x86_64 (64 bit)
-2. OSX i686 (32 bit) - coming
-3. Linux x86_64 (64 bit)
-4. Linux x86_64 (32 bit) - coming
-6. sources: see downloading the source from Gihub [below](#download_source) 
+1. OSX x86_64 (64 bit): xcamshift_1.0_osx_x86_64.tgz (check sum xcamshift_1.0_osx_x86_64.tgz.md5sum)
+2. Linux x86_64 (64 bit)
+3. Linux x86_64 (32 bit) - coming
+4. OSX i686 (32 bit) - available if required
+6. sources: see downloading the source from Github [below](#download_source) 
 
-> note: to install the XCamShift carry out steps given directly below, otherwise if you want to use XCamShift without modifying your xplor-nih installation see the section [setting paths](#setting-paths) below
+before you install you should 
 
-----
-
-> note: in the following <code>xxx</code> refers to a specific version e.g. v1, <code>\<platform\></code> is a computer platform  e.g. OSX or Linux  and <code>\<architecture\></code> is a cpu architecture  e.g. x86_64 or i686
+1. if md5sum is installed checks the md5sum of the download is correct <code>md5sum XCamShift_xxx.tgz</code>  [on OS X you will need <code>md5 -r XCamShift_xxx.tgz</code> instead]. The md5sum is stored in XCamShift_xxx_md5.txt 
+2. extracts the archive XCamShift_xxx.tgz into a convenient temporary directory using the command <code>tar -zxvf XCamShift_xxx.tgz</code>
 
 
-0. if md5sum is installed check the md5sum of the download is correct <code>md5sum XCamShift_xxx.tgz</code>  [on OS X you will need <code>md5 -r XCamShift_xxx.tgz</code> instead]
-1. extract the XCamShift_xxx.tgz into a convenient temporary directory using the command <code>tar -zxvf XCamShift_xxx.tgz</code> 
-2. move the .so files in xcamshift_xxx/modules into the folder <code>python/bin.\<platform>\_\<architecture></code> in you xplor installation; on OSX \<platform> will be Darwin_\<XX> (where \<XX> is the darwin version) and just Linux for linux. \<architecture> will be either X86_64 or i686 for 64 and 32 bit computers respectively.
-3. Move the directory database/XCamShift which contains the forcefield definition into the database directory of your XPLOR-NIH installation.
+the easiest way to install XCamShift is to run the installation command
+ 
+        install_dist.sh <dist_dir> <install_dir>
+
+which is included with the distribution. When using this command replace <code>\<dist_dir\></code> with the path to the directory that contains the xcamshift distribution (this is the directory that contains the <code>install_dist.sh</code> file itself) and <code>install_dir</code> is the directory that contains the particular xplor distribution to install into.
+
+
+
+> __NOTE 1.__  if you want to use XCamShift without modifying your xplor-nih installation see the section [setting paths](#setting-paths) below
+
+>----
+
+> __NOTE 2.__  In summary this is what install_dist.sh does
+ ( in the following <code>xxx</code> refers to a specific version e.g. v1, <code>\<platform\></code> is a computer platform  e.g. OSX or Linux  and <code>\<architecture\></code> is a cpu architecture  e.g. x86_64 or i686)
+
+
+ 
+> 1. move the .so files in xcamshift_xxx/modules into the folder <code>python/bin.\<platform>\_\<architecture></code> in you xplor installation; on OSX \<platform> will be Darwin_\<XX> (where \<XX> is the darwin version) and just Linux for linux. \<architecture> will be either X86_64 or i686 for 64 and 32 bit computers respectively.
+2. Move the directory database/XCamShift which contains the forcefield definition into the database directory of your XPLOR-NIH installation.
+3. copy the contents of the camshift_xxx/python directory into the python directory of your xplor distribution
 4. test the installation by running the script <code>src/suite.py</code> with the command line <code>pyXplor src/suite.py</code>. You shouldn't see any errors of the form <code>fail</code> or <code>error</code> or <code>abnormal program termination</code>; any of these show a bug is present and should be reported as described in bug reporting below.
 
 
