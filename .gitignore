@@ -33,3 +33,7 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+xcamshift/.settings
+.DS_Store
+.dropbox
+hift/src/cython/cython_debug
