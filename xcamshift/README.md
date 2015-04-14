@@ -240,9 +240,9 @@ There is currently no paper for XCamShift (I hope there will be one soon!). Unti
 
 4. [__cython__](http:// cython.org/) C extensions for python (an optimising static compiler for both the Python programming language and the extended Cython programming language) 
 
-5.  [__argparse__](https://code.google.com/p/argparse/) part of python since version 2.7, for earlier versions of python
+5.  [__argparse__](https://code.google.com/p/argparse/) has been part of python since version 2.7, for earlier versions of python download and install the separate package from the link
  
-6. [__unittest2:__](https://code.google.com/p/unittest-ext/) a back port of the unit testing code from python 3+ 
+6. [__unittest2:__](https://code.google.com/p/unittest-ext/) a back port of the unit testing code from python 3+ to python 2.x
 
 7. [__nanotime:__](http://github.com/jbenet/nanotime/tree/master/python) a nano second resolution timing service for python 
 
