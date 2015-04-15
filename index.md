@@ -1,3 +1,6 @@
+----
+layout: xcamshift index file
+----
 XCamShift
 =========
 
