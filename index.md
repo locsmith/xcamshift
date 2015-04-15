@@ -24,8 +24,7 @@ The Details
 
 XCamShift can be installed from pre compiled binaries or can be compiled on the users own computer targeting a particular installation of xplor-nih. The precompiled binary python modules includes all the software required to run XCS and you should not require any other software to be installed other than XPLOR-NIH    
 
-
-1. OSX x86_64 (64 bit): [xcamshift_1.0_osx_x86_64.tgz](https://github.com/locsmith/xcamshift/blob/master/xcamshift/dist/1.0/xcamshift_1.0_osx_x86_64.tgz?raw=true) ([md5sum 175caca4db8d9aea9dbe3803130c0546](https://github.com/locsmith/xcamshift/blob/master/xcamshift/dist/1.0/xcamshift_1.0_osx_x86_64.tgz.md5sum))
+1. OSX x86_64 (64 bit): [xcamshift_1.0_osx_x86_64.tgz](https://github.com/locsmith/xcamshift/raw/master/xcamshift/dist/1.0/xcamshift_1.0_osx_x86_64.tgz) ([md5sum 175caca4db8d9aea9dbe3803130c0546](https://github.com/locsmith/xcamshift/blob/master/xcamshift/dist/1.0/xcamshift_1.0_osx_x86_64.tgz.md5sum))
 2. Linux x86_64 (64 bit)
 3. Linux x86_64 (32 bit) - coming
 4. OSX i686 (32 bit) - available if required
