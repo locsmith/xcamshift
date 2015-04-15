@@ -1,5 +1,5 @@
 ----
-layout: xcamshift index file
+layout: xcamshift index file v2
 title: xcamshift README
 ----
 XCamShift
