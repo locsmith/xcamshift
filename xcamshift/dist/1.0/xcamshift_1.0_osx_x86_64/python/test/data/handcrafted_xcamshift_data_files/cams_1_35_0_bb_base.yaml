@@ -1,0 +1,72 @@
+# backbone distance dependant chemical shift coefficients for non PRO and GLY residues from from camshift 1.35.0
+#
+# cs =  b * c[i,j,k] **d
+# 
+# d is given by the value exponent
+# cs is chemical shift / angstrom
+# b is given by the value scaling
+# c is the coefficient which is looked up by i and j for row and columns respect 
+# i is the offset to the previous, current, or subsequent residue and is one of [-1,0,1]  
+# j is the atom name of the atom in the current residue
+# k is the atom name of the atom in the previous, current, or subsequent residue 
+#
+# example
+#
+#                       cs =  b * c[i,j,k] **d
+#
+#                       d is given by the value exponent
+#                       cs is chemical shift / angstrom
+#                       b is given by the value scaling
+#                       c is the coefficient which is looked up by i and j for row and columns respect
+#                       j is the offset to the previous, current, or subsequent residue and is one of -1,0,1
+#                       i is the atom name of the atom in the current residue
+#                       k is the atom name of the atom in the previous, current, or subsequent residue
+#
+#                       example
+#
+#                       for the effective of HA in the previous residue on an N in the current resiue
+#                          i = -1
+#                          j = HA
+#                          k = N
+#
+#                          the value is 1.0 * 0.10495380090732243 ** 1.0
+#
+# TODO needs final check
+---
+weigth:      1.0
+exponent:    1.0
+type:        "base"
+scaling:     1.0
+to_atoms:    ["N","HN","CA","HA","C","O"]
+from_atoms:  ["HN","N","HA","CA","C","CB"]
+offsets:     [-1,0,1]
+translation_table: {OT1 : "O", HT1: "HN", HA1 : "HA"}
+
+   
+data:
+  -1:
+        C  :  {C:  ,           CA :   5.03891585, CB :  -1.20336692, HN :   ,           HA :   ,           N  :  10.74798119}
+        CA :  {C: -0.32287181, CA :  -0.31716524, CB :  -0.16511808, HN :   0.71842808, HA :   ,           N  :   ,         }
+        HN :  {C:  ,           CA :   ,           CB :   ,           HN :   ,           HA :   ,           N  :   ,         }
+        HA :  {C: -0.35652045, CA :  -2.29509578, CB :   0.41374536, HN :  -1.24314885, HA :   0.08675461, N  :  -3.32873168}
+        N  :  {C: -0.03352569, CA :  -0.55144913, CB :  -0.29543558, HN :  -0.72200643, HA :   0.10495380, N  :  -0.98960879}
+        O  :  {C: -0.40079985, CA :  -0.94860556, CB :   0.98724231, HN :   ,           HA :  -0.35325987, N  :  -1.63517348}
+  
+  0:
+        C  :  {C:  ,           CA :   6.21118245, CB :  -5.79223552, HN :   0.35616903, HA :   ,           N  :   1.78597557}
+        CA :  {C:  ,           CA :   ,           CB :   ,           HN :   ,           HA :   ,           N  : -15.90545650}
+        HN :  {C: -0.34221965, CA :   3.92039890, CB :  -0.76756197, HN :   ,           HA :  -0.23275377, N  :  -3.53912681}
+        HA :  {C:  ,           CA :   7.88841004, CB :   1.52041077, HN :   0.06477266, HA :   ,           N  :  -2.18822008}
+        N  :  {C:  ,           CA :   ,           CB :   3.60511174, HN :   ,           HA :   ,           N  :   ,         }
+        O  :  {C:  ,           CA :   3.69658156, CB :   1.21206604, HN :  -0.58204688, HA :   0.17447584, N  :   4.22624222}
+  
+  1:
+        C  :  {C: -0.84479724, CA :   0.55775056, CB :   0.11095702, HN :  -0.03674563, HA :   0.11174639, N  :   0.04926912}
+        CA :  {C: -1.49475252, CA :   0.84317832, CB :  -2.43181958, HN :   0.31533333, HA :  -0.05329675, N  :  -3.51511847}
+        HN :  {C:  ,           CA :   1.05757982, CB :   0.94604629, HN :   ,           HA :   0.14871171, N  :   4.16960255}
+        HA :  {C: -0.19452342, CA :  -0.00684194, CB :   0.12905429, HN :  -0.04764241, HA :   0.03882038, N  :   0.78412727}
+        N  :  {C:  ,           CA :   0.89000452, CB :   1.14412989, HN :  -0.43914257, HA :   ,           N  :   1.05030176}
+        O  :  {C:  ,           CA :   ,           CB :   ,           HN :   ,           HA :   ,           N  :   ,         }
+
+
+

@@ -1,0 +1,39 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013-2015 Gary Thompson & The University of Leeds.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v3.0
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-3.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
+# ring current coefficients for camshift 1.35.0
+# NOTE / TODO: coeeficients for 5 and 6 member rings may currently be swapped for TRP
+---
+
+target_atoms :  ["HA", "CA", "HN", "N", "C", "CB"]
+translations : {[GLY,HA1] : HA}
+
+# Note the order of atoms in these declarations matter, t
+# they effect the direction of the ring normal 
+# the order should be going from the ring join point going round the ring 
+# favouring lower numbered atoms first??
+rings : {
+     PHE : { "6":  ["CG","CD1","CE1","CZ","CE2","CD2"]},
+     TYR : { "6" : ["CG","CD1","CE1","CZ","CE2","CD2"]},
+     #TODO: not corrected for ring order from here on in? think I have done it now 
+     TRP : { "6" : ["CD2","CE2","CZ2","CH2","CZ3","CE3"],
+             "5" : ["CG","CD1","NE1","CE2","CD2"]},
+     HIS : { "5" : ["CG","ND1","CD2","CE1","NE2"]}
+
+}
+
+# these values  are mutiplied by 1000 before they are used by the ring table class (this matches camshifts impementation)
+data:
+        [PHE, '6'] : {HA:  0.01971062, CA:  0.01072141, HN: 0.02481257, N: -0.01218927, C:  0.03794751, CB:  0.02288919}
+        [TYR, '6'] : {HA:  0.01873760, CA:  0.00664620, HN: 0.01908843, N: -0.03254413, C:  0.03216841, CB:  0.02200801}
+        [TRP, '6'] : {HA:  0.01128724, CA:  0.02502347, HN: 0.01997920, N: -0.01960351, C:  0.00247940, CB:  0.02738360}
+        [TRP, '5'] : {HA:  0.02024717, CA:  0.00604011, HN: 0.02555470, N: -0.01349241, C:  0.03445683, CB:  0.01925690}
+        [HIS, '5'] : {HA:  0.01191301, CA:  0.00367517, HN: 0.01303134, N: -0.01102191, C:  0.01762562, CB:  0.01311193}
+

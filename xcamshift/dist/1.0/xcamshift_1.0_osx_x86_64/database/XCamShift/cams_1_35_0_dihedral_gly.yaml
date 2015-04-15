@@ -1,0 +1,15 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013-2015 Gary Thompson & The University of Leeds.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v3.0
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-3.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
+data:
+           [[C,  -1], [N,   0], [CA,  0], [C,   0]] : {HA:    0.48647639, CA:    0.41690988, HN:   0.23489739, N:    0.25764437, C:    0.10995090, CB:    ,         }
+           [[N,   0], [CA,  0], [C,   0], [N,   1]] : {HA:    0.23534655, CA:    0.28422757, HN:  -0.02110992, N:    0.17627569, C:    0.14108610, CB:    ,         }
+           [[N,   0], [CA,  0], [CB,  0], [CG,  0]] : {HA:    0.04178908, CA:    0.09250304, HN:  -0.23585281, N:    0.15828057, C:    0.41173752, CB:    ,         }
+
