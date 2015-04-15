@@ -18,7 +18,6 @@ test_data_old
 test_data
 test_data_old
 *.c
-*.tgz
 src/tools
 .idea
 core
