@@ -1,5 +1,6 @@
 ----
 layout: xcamshift index file
+title: xcamshift README
 ----
 XCamShift
 =========
