@@ -2,10 +2,10 @@ XCamShift
 =========
 
 
-XCamShift (XCS) is a new implementation of the camshift chemical shift force field[^1] for XPLOR-NIH [^2]. The camshift implementation has a number of interesting and useful features
+XCamShift (XCS) is a new implementation of the camshift chemical shift force field[1](#references) for XPLOR-NIH [2](#references). The camshift implementation has a number of interesting and useful features
 
-* It is very thoroughly tested against the original camshift implementation in almost [^3] and has a large and full test suite which checks that XCS produces results that are identical with camshift in almost.
-* XCS uses cython[^4] to give a forcefield with native performance written in python
+* It is very thoroughly tested against the original camshift implementation in almost [3](#references) and has a large and full test suite which checks that XCS produces results that are identical with camshift in almost.
+* XCS uses cython[4](#references) to give a forcefield with native performance written in python
 * XCS provides extensions against the standard camshift forcefield including the ability to carry out  ensemble calculations, weighting of shift terms and variable well widths to allow for variation in statistical errors in measured chemical shift.
 * XCS is modular and individual chemical shift terms can be re weighted during calculations and there is scope for whole components of the force field [e.g hydrogen bonding, aromatic ring currents etc] to be modified or replaced independently. 
 * XCS provides simple human readable files defining the components of the force field.
@@ -163,7 +163,7 @@ You should only need to recompile XCamShift if you want to make changes to the c
 
 ####Pre requisites
 
-To rebuild the camshift tables (it is unlikely that you will need to do this!)  if you are running on an older version of python you may need to build argparse[^5] and add it to the <code>PYTHONPATH</code>
+To rebuild the camshift tables (it is unlikely that you will need to do this!)  if you are running on an older version of python you may need to build argparse[5](#references) and add it to the <code>PYTHONPATH</code>
 
 ####[Downloading the source from Github](id:download_source)
 
@@ -186,7 +186,7 @@ XCamShift can be tested without modifying xplor-nih by adding the following to y
 where <XCamShift-directory> is the directory that contains the XCamShift distribution
 
 
-If it is not installed you will also need to install PyYAML[^8] and add it's installation directory to the <code>PYTHONPATH</code> variable
+If it is not installed you will also need to install PyYAML[8](#references) and add it's installation directory to the <code>PYTHONPATH</code> variable
 
 ####Testing XCamShift
 
@@ -196,8 +196,8 @@ If XCamShift is installed or the paths are correctly set XCamShift can be tested
 
 if they are not installed already you will also have to add python paths for the following python packages if you want to run the tests
 
-1. nanotime[^7]
-2. unittest2[^6]
+1. nanotime[7](#references)
+2. unittest2[6](#references)
 
 ####Reporting bugs
 
@@ -221,17 +221,32 @@ The author can also be contacted at <code>g dot s dot thompson at leeds dot ac d
 
 There is currently no paper for XCamShift (I hope there will be one soon!). Until there is please cite: __XCamShift__ G.S.Thompson, Astbury Centre for Structural Molecular Biology, University of Leeds, UK [http://github.com/locsmith/xcamshift]
 
-###References
+<h2 id="references">References</h2>
 
 
-[^1]: __camshift:__ Kohlhoff, K.J. et al. 2009. Fast and accurate predictions of protein NMR chemical shifts from interatomic distances. _Journal of the American Chemical Society_. **131** (39),pp.13894–13895. Robustelli, P. et al. 2010. Using NMR chemical shifts as structural restraints in molecular dynamics simulations of proteins. _Structure_. **18** (8),pp.923–933. [Kai Kohlhoff's thesis](http://research.microsoft.com/pubs/72347/Kai Kohlhoff - Protein chemical%20shifts.pdf) "Protein Chemical Shifts as Structural Restraints in Molecular Dynamics Simulations, University of Cambridge, England, May, 2008
-[^2]: [__xplor-nih:__](http://nmr.cit.nih.gov/xplor-nih/)  Schwieters, C.D. et al. 2003. The Xplor-NIH NMR molecular structure determination package. _J. Magn. Reson_. **160** (1),pp.65–73. Schwieters, C.D. et al. 2006. Using Xplor NIH for NMR molecular structure determination. _Progress in Nuclear Magnetic Resonance Spectroscopy_. **48** ,pp.47–62.
-[^3]: [__almost:__](http://www.open-almost.org.) Fu, B. et al. 2014. ALMOST: An all atom molecular simulation toolkit for protein structure determination. _Journal of computational chemistry_. **35** (14),pp.1101–1105.
-[^4]: [__cython__](http:// cython.org/) C extensions for python (an optimising static compiler for both the Python programming language and the extended Cython programming language) 
-[^5]: [__argparse__](https://code.google.com/p/argparse/) part of python since version 2.7, for earlier versions of python
-[^6]: [__unittest2:__](https://code.google.com/p/unittest-ext/) a back port of the unit testing code from python 3+ 
-[^7]: [__nanotime:__](http://github.com/jbenet/nanotime/tree/master/python) a nano second resolution timing service for python 
-[^8]: [__pyyaml:__](http://pyyaml.org/) an implementation of the yaml markup language for python, you may also wish to install libyaml to get a much faster runtime
+1.  Kohlhoff, K.J. et al. 2009. Fast and accurate predictions of protein NMR chemical shifts from interatomic distances. _Journal of the American Chemical Society_. **131** (39),pp.13894–13895.
+  
+	Robustelli, P. et al. 2010. Using NMR chemical shifts as structural restraints in molecular dynamics simulations of proteins. _Structure_. **18** (8),pp.923–933. 
+	
+	[__Kai Kohlhoff's thesis__](http://research.microsoft.com/pubs/72347/Kai Kohlhoff - Protein chemical%20shifts.pdf) "Protein Chemical Shifts as Structural Restraints in Molecular Dynamics Simulations, University of Cambridge, England, May, 2008
+	
+2.  [__xplor-nih__](http://nmr.cit.nih.gov/xplor-nih/)  Schwieters, C.D. et al. 2003. The Xplor-NIH NMR molecular structure determination package. _J. Magn. Reson_. **160** (1),pp.65–73. Schwieters, C.D. et al. 2006. 
+    
+    
+    Using Xplor NIH for NMR molecular structure determination. _Progress in Nuclear Magnetic Resonance Spectroscopy_. **48** ,pp.47–62.
+    
+3.  [__almost__](http://www.open-almost.org.) Fu, B. et al. 2014. ALMOST: An all atom molecular simulation toolkit for protein structure determination. _Journal of computational chemistry_. **35** (14),pp.1101–1105.
+
+
+4. [__cython__](http:// cython.org/) C extensions for python (an optimising static compiler for both the Python programming language and the extended Cython programming language) 
+
+5.  [__argparse__](https://code.google.com/p/argparse/) has been part of python since version 2.7, for earlier versions of python download and install the separate package from the link
+ 
+6. [__unittest2:__](https://code.google.com/p/unittest-ext/) a back port of the unit testing code from python 3+ to python 2.x
+
+7. [__nanotime:__](http://github.com/jbenet/nanotime/tree/master/python) a nano second resolution timing service for python 
+
+8. [__pyyaml:__](http://pyyaml.org/) an implementation of the yaml markup language for python, you may also wish to install libyaml to get a much faster runtime
 
 
 

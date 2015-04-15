@@ -1,0 +1,55 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013-2015 Gary Thompson & The University of Leeds.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v3.0
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-3.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
+# backbone distance dependant chemical shift coefficients for non PRO and GLY residues from from camshift 1.35.0
+#
+# cs =  b * c[i,j,k] **d
+# 
+# d is given by the value exponent
+# cs is chemical shift / angstrom
+# b is given by the value scaling
+# c is the coefficient which is looked up by i and j for row and columns respect 
+# i is the offset to the previous, current, or subsequent residue and is one of [-1,0,1]  
+# j is the atom name of the atom in the current residue
+# k is the atom name of the atom in the previous, current, or subsequent residue 
+#
+# example
+#
+#                       cs =  b * c[i,j,k] **d
+#
+#                       d is given by the value exponent
+#                       cs is chemical shift (ppm) / angstrom
+#                       b is given by the value scaling
+#                       c is the coefficient which is looked up by i and j for row and columns respect
+#                       j is the offset to the previous, current, or subsequent residue and is one of -1,0,1
+#                       i is the atom name of the atom in the current residue
+#                       k is the atom name of the atom in the previous, current, or subsequent residue
+#
+#                       example
+#
+#                       for the effective of HA in the previous residue on an N in the current resiue
+#                          i = -1
+#                          j = HA
+#                          k = N
+#
+#                          the value is 1.0 * 0.10495380090732243 ** 1.0
+#
+# TODO needs final check
+---
+weight:      1.0
+exponent:    1.0
+type:        "base"
+scaling:     1.0
+to_atoms:    ["N","HN","CA","HA","C","O"]
+from_atoms:  ["HN","N","HA","CA","C","CB"]
+offsets:     [-1,0,1]
+translation_table: {OT1 : "O", HT1: "HN", HA1 : "HA"}
+
+%s
