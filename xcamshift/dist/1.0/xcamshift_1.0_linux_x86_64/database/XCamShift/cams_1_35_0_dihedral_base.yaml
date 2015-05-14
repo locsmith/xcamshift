@@ -1,0 +1,25 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013-2015 Gary Thompson & The University of Leeds.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v3.0
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-3.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
+# coefficients for dihedral angle based shifts from camshift 1.35.0
+---
+
+exponent : 1.0
+offsets : [-1,0,1]
+target_atoms : ["HA", "CA", "HN", "N", "C", "CB"]
+dihedral_atoms : ["C", "N", "O", "CA", "C", "CB", "CG"]
+translations : {CG : "OG"}
+
+
+data:
+           [[C,  -1], [N,   0], [CA,  0], [C,   0]] : {HA:    0.39606483, CA:    0.47780154, HN:   0.14048572, N:    0.13061770, C:   -0.06636460, CB:    0.63683724}
+           [[N,   0], [CA,  0], [C,   0], [N,   1]] : {HA:    0.17695397, CA:    0.36928022, HN:   0.20914379, N:    0.19138527, C:    0.05968663, CB:    0.72419990}
+           [[N,   0], [CA,  0], [CB,  0], [CG,  0]] : {HA:   -0.02777688, CA:    0.18783520, HN:  -0.23636566, N:    0.21263432, C:    0.27785224, CB:    0.14387780}
+
