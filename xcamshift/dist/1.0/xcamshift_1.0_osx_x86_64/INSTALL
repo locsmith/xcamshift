@@ -1,0 +1,26 @@
+Installation
+
+to make an installation you should run the installation command
+
+        install_dist.sh <dist_dir> <install_dir>
+
+which is included with the distribution. When using this command replace
+<dist_dir> with the path to the directory that contains the xcamshift
+distribution (this is the directory that contains the install_dist.sh
+file itself) and install_dir is the directory that contains the
+particular xplor distribution to install into.
+
+  NOTE if you want to use XCamShift without modifying your xplor-nih
+  installation see the section _setting paths_ of the README
+
+More information on
+
+-   using xcamshift
+-   data formats
+-   other installation options
+-   recompilation
+-   citing xcamshift
+-   contacting the author
+-   etc...
+
+are available in the README or on the website

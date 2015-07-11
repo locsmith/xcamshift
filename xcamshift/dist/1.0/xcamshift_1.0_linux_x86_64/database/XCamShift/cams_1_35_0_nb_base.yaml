@@ -1,0 +1,122 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013-2015 Gary Thompson & The University of Leeds.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v3.0
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-3.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
+# non bonded coefficients for camshift 1.35.0
+---
+
+target_atoms :  ["C", "CA", "CB", "HA", "HN", "N"]
+translations : {[GLY,HA1] : HA}
+
+# chem type translations
+#
+# SP2 
+#
+#  TRP CG CX, CD1 CW, CD2 CB, CE2 CN, CE3 CA, CZ2  CA, CZ3 CA, CH2 CA
+#  ASP CG C, OD1 OC, OD2 OC
+#  GLU CD C, OE1 OC, OE2 OC
+#  ARG CZ C
+#  HIS CG CC, ND1 NA, CD2 CV, CE1 CR, NE2 NB
+#  PHE CG CA, CD1 CA, CD2 CA, CE1 CA, CE2 CA, CZ CA
+#  TYR CG CA, CD1 CA, CD2 CA, CE1 CA, CE2 CA, CZ C
+#  ASN CG C, OD1 O
+#  GLN CD C, OE1 O
+#
+# SP3
+#
+#  ALA  NH1 CT 
+#  ARG  NH1 CT NC2
+#  ASN  NH1 CT NH2
+#  ASP  NH1 CT 
+#  CYS  NH1 CT S
+#  GLN  NH1 CT NH2
+#  GLU  NH1 CT 
+#  GLY  NH1 CT 
+#  HIS  NH1 CT 
+#  ILE  NH1 CT 
+#  LEU  NH1 CT 
+#  LYS  NH1 CT NH3
+#  MET  NH1 CT S 
+#  PHE  NH1 CT 
+#  PRO  N   CT CP
+#  SER  NH1 CT OH
+#  THR  NH1 CT OH 
+#  TRP  NH1 CT NA 
+#  TYR  NH1 CT OH 
+#  VAL  NH1 CT
+# 
+# sp3 backbone chemical types: NH1 N CT
+# sp3 side chain chemical types: NC2 NH2 S NH3 CP NA OH 
+#
+
+# Note ~ converts to None which we use for any
+chem_type_conversions: {
+   [TRP,NE1]  :   N,
+   [~  ,OT1] :  OH,
+   [~  ,OT2] :  OH 
+}
+
+chem_type_translations: {
+    HA  :  [H,None], HC  :  [H, None],   H  :  [H,None],
+    
+    O   :  [O, SP2], C   :  [C, SP2],
+    
+    CA  :  [C, SP2], CB  :  [C, SP2],   CC  :  [C, SP2], CN  :  [C, SP2],
+    CR  :  [C, SP2], CV  :  [C, SP2],   CW  :  [C, SP2], CX  :  [C, SP2],
+    
+    NA  :  [N, SP2], NB  :  [N, SP2],
+    
+    OC  :  [O, SP2],
+    
+    CT  :  [C, SP3],
+    
+    NH1 :  [N, SP3], N   :  [N, SP3],
+    
+    CP   : [C, SP3],
+    
+    NC2  : [N, SP3], NH2  : [N, SP3], NH3  : [N, SP3],
+
+    OH   : [O, SP3],
+
+    S    : [S, SP3]
+    
+}
+
+data:  
+
+      sphere_1:  
+
+              exponent:   -3.0
+
+              [H,  None] :   {HA:    0.67156524, CA:    3.45070708, HN:   1.45522451, N:   34.69758895, C:    1.23202594, CB:    4.89970530}
+
+              [C,   SP3] :   {HA:   -2.96778542, CA:  -10.34727086, HN:  -5.38132481, N:  -70.57316994, C:    2.76538561, CB:  -14.77231196}
+              [N,   SP3] :   {HA:   -1.62145663, CA:  -12.59824662, HN:   2.50539145, N:  -88.71419716, C:   31.32384113, CB:  -14.86605302}
+              [O,   SP3] :   {HA:    0.13518000, CA:   -3.56646498, HN:   3.30338130, N:   15.27153804, C:   31.17200091, CB:   -4.18988718}
+              [S,   SP3] :   {HA:    6.27579997, CA: -101.81223165, HN:  -0.87741677, N:   89.18257287, C:    0.46315016, CB:   25.29069988}
+
+              [C,   SP2] :   {HA:   -0.20351043, CA:   -9.75443295, HN: -14.43258974, N:  -43.34560180, C:  -27.91771982, CB:   -1.66199419}
+              [N,   SP2] :   {HA:    1.23550834, CA:   -9.62853420, HN:  17.49884203, N:   78.05125884, C:   40.25708259, CB:    0.74617175}
+              [O,   SP2] :   {HA:    8.18294274, CA:   -8.64950933, HN:   9.14079861, N:   53.27459290, C:   24.04775683, CB:   -9.21507953}
+
+      sphere_2:  
+
+              exponent:    1.0
+
+              [H,  None] :   {HA:   -0.00355627, CA:   -0.00496903, HN:   0.01160623, N:   -0.13249139, C:   -0.03145172, CB:   -0.01111435}
+
+              [C,   SP3] :   {HA:    0.00269808, CA:    0.03402181, HN:  -0.00695503, N:   -0.03051322, C:   -0.01495914, CB:    0.04392046}
+              [N,   SP3] :   {HA:    0.00938013, CA:    0.04742062, HN:  -0.06317628, N:    0.34500777, C:   -0.00693069, CB:    0.04372265}
+              [O,   SP3] :   {HA:    0.00138918, CA:    0.00415487, HN:   0.00123584, N:    0.08547495, C:   -0.06245054, CB:   -0.01258782}
+              [S,   SP3] :   {HA:   -0.03268416, CA:    0.35924500, HN:   0.01294720, N:   -0.33121360, C:   -0.01976053, CB:   -0.07934733}
+
+              [C,   SP2] :   {HA:   -0.00608414, CA:    0.02546181, HN:   0.03525999, N:    0.04021852, C:    0.06582257, CB:    0.01224295}
+              [N,   SP2] :   {HA:   -0.02045189, CA:    0.02578969, HN:  -0.04912076, N:   -0.25537695, C:   -0.08098028, CB:   -0.03537011}
+              [O,   SP2] :   {HA:   -0.03805426, CA:    0.04481924, HN:  -0.02839073, N:   -0.18478899, C:   -0.10612241, CB:    0.03094620}
+

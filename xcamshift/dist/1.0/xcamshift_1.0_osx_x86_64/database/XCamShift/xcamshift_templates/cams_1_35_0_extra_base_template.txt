@@ -1,0 +1,21 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013-2015 Gary Thompson & The University of Leeds.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v3.0
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-3.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
+# camshift 1.35.0 extra distance table
+# note / TODO some of the atom pairs in here duplicate the BB table entries... is this a bug?
+---
+exponent: 1.0
+extra_atoms_1:   ["C", "CA", "CG", "HN", "N", "O"]
+extra_atoms_2:   ["C", "CA", "CB", "HA", "N"]
+extra_offsets_1: [-1, 0 , 1]
+extra_offsets_2: [-1, 0 , 1] 
+target_atoms: ["HA", "CA", "HN", "N", "C", "CB"]
+
+%s

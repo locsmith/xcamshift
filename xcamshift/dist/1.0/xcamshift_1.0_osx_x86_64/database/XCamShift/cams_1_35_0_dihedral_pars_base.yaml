@@ -1,0 +1,51 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013-2015 Gary Thompson & The University of Leeds.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v3.0
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-3.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
+# parameters for dihedral angle based shifts from camshift 1.35.0
+---
+
+offsets : [-1,0,1]
+target_atoms : ["HA", "CA", "HN", "N", "C", "CB"]
+dihedral_atoms : ["C", "N", "O", "CA", "C", "CB", "CG"]
+translations : { [SER, OG] : CG, [GLY,HA1] : HA,
+                 [CYS,SG]  : CG,
+                 [ILE,CG1] : CG, [VAL,CG1] : CG,
+                 [THR,OG1] : CG}
+parameters : [0, 1, 2, 3, 4]
+
+data: {
+
+    # phi
+    [[C, -1],  [N, 0], [CA, 0], [C, 0]] : {
+                0 : {    HA :     0.3,           CA :      1.5,    HN :    -0.4,          N :   -2.1,    C :   0.9,     CB :    1    },
+                1 : {    HA :     0.4,           CA :     -3,      HN :    -0.3,          N :   -1.2,    C :  -2.9,     CB :    1.8  },
+                2 : {    HA :     0,             CA :      0,      HN :     0.2,          N :    0.2,    C :  -1.2,     CB :    0    },
+                3 : {    HA :     0.1,           CA :      2.45,   HN :     3.6,          N :    3.2,    C :   2.4,     CB :    0.8  },
+                4 : {    HA :     3,             CA :     -2.7,    HN :    -3.4,          N :   -2.7,    C :  -2.5,     CB :    2.5  }
+    },
+    
+    # psi
+    [[N,  0],  [CA, 0], [C , 0], [N, 1]] : {
+                0 : {    HA :    -0.170287,      CA :     -0.4,    HN :    -0.104686,     N :   -1.4,    C :  -0.7,     CB :    0.5  },
+                1 : {    HA :     0.278618,      CA :     -1.5,    HN :     0.174676,     N :    2.2,    C :  -0.9,     CB :    2    },
+                2 : {    HA :     0.0609298,     CA :      0.7,    HN :     0.0639679,    N :    0.3,    C :   0,       CB :    0.8  },
+                3 : {    HA :     2.48692,       CA :      4.8,    HN :     3.51401,      N :    4.2,    C :   5.1,     CB :   -0.6  },
+                4 : {    HA :    -3.07025,       CA :     -8.4,    HN :    -2.82811,      N :   -2.5,    C :  -8.3,     CB :    2.6  }
+    },
+    
+    # chi1
+    [[N, 0], [CA, 0], [CB, 0], [CG, 0]] : {
+                0 : {    HA :    -0.0244394,     CA :      0.1,    HN :     0.0343048,    N :    0.5,    C :   0.1,     CB :   -0.4  },
+                1 : {    HA :    -0.137248,      CA :      0.9,    HN :     0.0448763,    N :    1.2,    C :  -0.5,     CB :    0.5  },
+                2 : {    HA :     0.0560274,     CA :      0.6,    HN :     0.0406634,    N :   -0.1,    C :  -0.1,     CB :    1.1  },
+                3 : {    HA :    -5.42115,       CA :     -6,      HN :     3.42026,      N :    2.2,    C :  19.9,     CB :    8.9  },
+                4 : {    HA :     2.27543,       CA :      2.2,    HN :     4.15534,      N :    2.9,    C :  11,       CB :   11    }
+    }
+}

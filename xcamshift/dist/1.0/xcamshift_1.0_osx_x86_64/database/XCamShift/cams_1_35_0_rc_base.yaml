@@ -1,0 +1,92 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2013-2015 Gary Thompson & The University of Leeds.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser Public License v3.0
+# which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-3.0.html
+# 
+# Contributors:
+#     gary thompson - initial API and implementation
+#-------------------------------------------------------------------------------
+# backbone random coil chemical shifts from camshift 1.35.0
+---
+
+residue_type : BASE
+table_type : RANDOM_COIL
+offsets:   [-1,0,1]
+atoms:     [HA, CA, HN, N, C, CB]
+translations: {[GLY,HA1]: HA}
+data: {
+
+  
+   -1 : {
+          ALA : {  HA  : ,           CA : ,            HN : ,       N : -0.2,      C : ,         CB  : ,    },
+          ARG : {  HA  : ,           CA : ,            HN : ,       N :  1.45,     C : ,         CB  : ,    },
+          ASN : {  HA  : ,           CA : ,            HN : ,       N :  1.15,     C : ,         CB  : ,    },
+          ASP : {  HA  : ,           CA : ,            HN : ,       N :  1.18,     C : ,         CB  : ,    },
+          CYS : {  HA  : ,           CA : ,            HN : ,       N :  2.43,     C : ,         CB  : ,    },
+          GLN : {  HA  : ,           CA : ,            HN : ,       N :  1.57,     C : ,         CB  : ,    },
+          GLU : {  HA  : ,           CA : ,            HN : ,       N :  1.8,      C : ,         CB  : ,    },
+          GLY : {  HA  : ,           CA : ,            HN : ,       N :  1.07,     C :                      },
+          HIS : {  HA  : ,           CA : ,            HN : ,       N :  1.2,      C : ,         CB  : ,    },
+          ILE : {  HA  : ,           CA : ,            HN : ,       N :  4.14,     C : ,         CB  : ,    },
+          LEU : {  HA  : ,           CA : ,            HN : ,       N :  1.5,      C : ,         CB  : ,    },
+          LYS : {  HA  : ,           CA : ,            HN : ,       N :  1.55,     C : ,         CB  : ,    },
+          MET : {  HA  : ,           CA : ,            HN : ,       N :  1.33,     C : ,         CB  : ,    },
+          PHE : {  HA  : ,           CA : ,            HN : ,       N :  1.25,     C : ,         CB  : ,    },
+          PRO : {  HA  : ,           CA : ,                         N :  0.6,      C : ,         CB  : ,    },
+          SER : {  HA  : ,           CA : ,            HN : ,       N :  2.59,     C : ,         CB  : ,    },
+          THR : {  HA  : ,           CA : ,            HN : ,       N :  3.2,      C : ,         CB  : ,    },
+          TRP : {  HA  : ,           CA : ,            HN : ,       N :  1.64,     C : ,         CB  : ,    },
+          TYR : {  HA  : ,           CA : ,            HN : ,       N :  1.75,     C : ,         CB  : ,    },
+          VAL : {  HA  : ,           CA : ,            HN : ,       N :  3.83,     C : ,         CB  : ,    }
+        },
+        
+    0 : {
+          ALA : {  HA : 4.432847,    CA : 52.26644,    HN : 8.24,   N : 123.8,    C : 177.1,    CB : 19.0  },
+          ARG : {  HA : 4.35015,     CA : 56.24026,    HN : 8.23,   N : 120.5,    C : 176.5,    CB : 30.3  },
+          ASN : {  HA : 4.806587,    CA : 53.30902,    HN : 8.30,   N : 118.7,    C : 175.5,    CB : 39.0  },
+          ASP : {  HA : 4.725179,    CA : 54.158222,   HN : 8.34,   N : 120.4,    C : 177.2,    CB : 40.8  },
+          CYS : {  HA : 4.65,        CA : 57.791772,   HN : 8.32,   N : 118.6,    C : 175.1,    CB : 41.8  },
+          GLN : {  HA : 4.405826,    CA : 56.062813,   HN : 8.32,   N : 119.8,    C : 176.3,    CB : 30.1  },
+          GLU : {  HA : 4.364552,    CA : 56.503798,   HN : 8.42,   N : 120.2,    C : 176.1,    CB : 29.7  },
+          GLY : {  HA : 3.97,        CA : 45.486533,   HN : 8.33,   N : 108.8,    C : 173.6                },
+          HIS : {  HA : 4.615947,    CA : 55.660394,   HN : 8.32,   N : 118.2,    C : 175.1,    CB : 32.0  },
+          ILE : {  HA : 4.193333,    CA : 61.206185,   HN : 8.05,   N : 119.9,    C : 176.8,    CB : 37.5  },
+          LEU : {  HA : 4.402746,    CA : 54.957697,   HN : 8.16,   N : 121.8,    C : 177.1,    CB : 41.9  },
+          LYS : {  HA : 4.36807,     CA : 56.243301,   HN : 8.29,   N : 120.4,    C : 176.5,    CB : 32.3  },
+          MET : {  HA : 4.461933,    CA : 55.367,      HN : 8.28,   N : 119.6,    C : 175.5,    CB : 32.8  },
+          PHE : {  HA : 4.430244,    CA : 57.64624,    HN : 8.3,    N : 120.3,    C : 175.8,    CB : 39.3  },
+          PRO : {  HA : 4.658447,    CA : 63.066266,                N : ,         C : 176.0,    CB : 31.7  },
+          SER : {  HA : 4.504638,    CA : 58.144025,   HN : 8.31,   N : 115.7,    C : 173.7,    CB : 62.7  },
+          THR : {  HA : 4.324869,    CA : 62.54202,    HN : 8.15,   N : 113.6,    C : 175.2,    CB : 68.1  },
+          TRP : {  HA : 4.412784,    CA : 56.208648,   HN : 8.15,   N : 121.3,    C : 175.8,    CB : 28.3  },
+          TYR : {  HA : 4.339301,    CA : 57.33818,    HN : 8.12,   N : 120.3,    C : 175.7,    CB : 38.7  },
+          VAL : {  HA : 4.086605,    CA : 62.512466,   HN : 8.03,   N : 119.2,    C : 177.1,    CB : 31.7  }
+        },
+        
+    1 : {
+          ALA : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          ARG : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          ASN : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          ASP : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          CYS : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          GLN : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          GLU : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          GLY : {  HA  : ,           CA : ,            HN : ,       N :   ,        C :                      },
+          HIS : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          ILE : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          LEU : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          LYS : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          MET : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          PHE : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          PRO : {  HA  : ,           CA : ,                         N :   ,        C : ,         CB  : ,    },
+          SER : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          THR : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          TRP : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          TYR : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    },
+          VAL : {  HA  : ,           CA : ,            HN : ,       N :   ,        C : ,         CB  : ,    }
+        },
+
+}
+
