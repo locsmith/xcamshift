@@ -30,7 +30,7 @@ cython_debug_info*
 xplor.log.*
 suppress_xplor.supp
 .gitignore
-*(Case Conflict*
+*\(Case Conflict*
 NMRDG2014/
 .refactorings/
 *.launch
